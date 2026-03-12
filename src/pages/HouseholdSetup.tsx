@@ -178,6 +178,12 @@ export default function HouseholdSetup() {
         Add member
       </button>
 
+      {!isNew && (
+        <div>
+          <Link to={`/household/${id}/ingredients`}>Manage ingredients</Link>
+        </div>
+      )}
+
       <div>
         <button type="button" onClick={handleSave}>
           Save household

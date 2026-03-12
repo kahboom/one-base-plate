@@ -243,7 +243,7 @@
         "Save the ingredient set",
         "Verify ingredients are available to the planner"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": ["F002"]
     },
     {

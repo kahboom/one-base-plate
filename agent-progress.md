@@ -35,5 +35,15 @@
 - Created 7 tests covering add/remove for all three constraint types plus re-open persistence
 - Verified: tsc --noEmit passes, vitest passes (22 tests), all F003 steps satisfied
 
+### F004 - Household ingredients (2026-03-12)
+- Created IngredientManager page (src/pages/IngredientManager.tsx) for adding/removing ingredients
+- Supports all 8 category types (protein, carb, veg, fruit, dairy, snack, freezer, pantry)
+- Common tag quick-add buttons (quick, mashable, rescue, staple, batch-friendly) plus custom tags
+- Freezer friendly and baby safe with adaptation checkboxes
+- Added route `/household/:householdId/ingredients` in App.tsx
+- Added "Manage ingredients" link in HouseholdSetup for saved households
+- Created 5 tests covering add across categories, tagging, tag removal, ingredient removal, and re-open persistence
+- Verified: tsc --noEmit passes, vitest passes (27 tests), all F004 steps satisfied
+
 ## Next Task
-- **F004** — User can define pantry, fridge, freezer, and staple ingredients
+- **F005** — User can create or select a base meal made from reusable components
