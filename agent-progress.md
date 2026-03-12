@@ -45,5 +45,14 @@
 - Created 5 tests covering add across categories, tagging, tag removal, ingredient removal, and re-open persistence
 - Verified: tsc --noEmit passes, vitest passes (27 tests), all F004 steps satisfied
 
+### F005 - Base meal creation (2026-03-12)
+- Created BaseMealManager page (src/pages/BaseMealManager.tsx) for creating/editing base meals
+- Meals built from household ingredients as components with role (protein/carb/veg/sauce/topping) and quantity
+- Supports time estimate, difficulty level, rescue eligibility, and default prep method
+- Added route `/household/:householdId/meals` in App.tsx
+- Added "Manage base meals" link in HouseholdSetup for saved households
+- Created 5 tests covering meal creation with components, metadata, removal, and re-open persistence
+- Verified: tsc --noEmit passes, vitest passes (32 tests), all F005 steps satisfied
+
 ## Next Task
-- **F005** — User can create or select a base meal made from reusable components
+- **F006** — Planner generates one base meal with per-person assembly variants
