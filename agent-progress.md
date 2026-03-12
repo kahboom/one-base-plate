@@ -26,5 +26,14 @@
 - Created 8 tests covering storage CRUD, household creation with 4 members of mixed roles, re-opening persisted households, member removal, and household list display
 - Verified: tsc --noEmit passes, vitest passes (15 tests), vite build succeeds
 
+### F003 - Member profile constraints (2026-03-12)
+- Created MemberProfile page (src/pages/MemberProfile.tsx) for editing safe foods, hard-no foods, and preparation rules
+- Safe foods and hard-no foods: add/remove list with text input
+- Preparation rules: ingredient + rule pairs with add/remove
+- Added route `/household/:householdId/member/:memberId` in App.tsx
+- Added "Edit profile" link in HouseholdSetup MemberForm for saved households
+- Created 7 tests covering add/remove for all three constraint types plus re-open persistence
+- Verified: tsc --noEmit passes, vitest passes (22 tests), all F003 steps satisfied
+
 ## Next Task
-- **F003** — User can record safe foods, hard-no foods, and preparation rules for each household member
+- **F004** — User can define pantry, fridge, freezer, and staple ingredients

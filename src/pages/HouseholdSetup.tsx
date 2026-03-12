@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import type { Household, HouseholdMember, MemberRole, TextureLevel } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 
@@ -35,10 +35,12 @@ function MemberForm({
   member,
   onChange,
   onRemove,
+  householdId,
 }: {
   member: HouseholdMember;
   onChange: (updated: HouseholdMember) => void;
   onRemove: () => void;
+  householdId: string | undefined;
 }) {
   return (
     <fieldset data-testid={`member-${member.id}`}>
@@ -84,6 +86,12 @@ function MemberForm({
           ))}
         </select>
       </label>
+
+      {householdId && (
+        <Link to={`/household/${householdId}/member/${member.id}`}>
+          Edit profile
+        </Link>
+      )}
 
       <button type="button" onClick={onRemove}>
         Remove member
@@ -162,6 +170,7 @@ export default function HouseholdSetup() {
           member={member}
           onChange={(updated) => updateMember(i, updated)}
           onRemove={() => removeMember(i)}
+          householdId={isNew ? undefined : id}
         />
       ))}
 

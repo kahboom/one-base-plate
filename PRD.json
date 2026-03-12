@@ -227,7 +227,7 @@
         "Re-open the profile",
         "Verify all constraints are preserved exactly"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": ["F002"]
     },
     {
