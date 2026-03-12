@@ -1,0 +1,18 @@
+{
+  "id": "BM001",
+  "name": "Simple pasta with protein and veg",
+  "components": [
+    { "ingredientId": "pasta", "role": "carb", "quantity": "400g" },
+    { "ingredientId": "chicken-breast", "role": "protein", "quantity": "500g" },
+    { "ingredientId": "broccoli", "role": "veg", "quantity": "1 head" },
+    { "ingredientId": "tomato-sauce", "role": "sauce", "quantity": "1 jar" }
+  ],
+  "defaultPrep": "Cook pasta. Grill or pan-fry protein. Steam veg. Serve components separately for easy assembly.",
+  "estimatedTimeMinutes": 30,
+  "difficulty": "easy",
+  "rescueEligible": true,
+  "wasteReuseHints": [
+    "Leftover pasta works for next-day lunch",
+    "Extra chicken can be sliced for sandwiches"
+  ]
+}

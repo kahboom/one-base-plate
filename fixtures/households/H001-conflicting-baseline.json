@@ -1,0 +1,60 @@
+{
+  "id": "H001",
+  "name": "Conflicting household baseline",
+  "members": [
+    {
+      "id": "M001",
+      "name": "Alex",
+      "role": "adult",
+      "safeFoods": ["rice", "chicken breast", "broccoli", "pasta"],
+      "hardNoFoods": ["mushrooms", "blue cheese"],
+      "preparationRules": [
+        { "ingredient": "chicken breast", "rule": "Must be sliced thin and fully cooked through, no pink" },
+        { "ingredient": "broccoli", "rule": "Must be steamed, not raw or roasted" }
+      ],
+      "textureLevel": "regular",
+      "allergens": [],
+      "notes": "ARFID-like constraints. Prefers components separated on the plate."
+    },
+    {
+      "id": "M002",
+      "name": "Jordan",
+      "role": "adult",
+      "safeFoods": ["pasta", "rice", "salmon", "avocado", "mushrooms"],
+      "hardNoFoods": [],
+      "preparationRules": [],
+      "textureLevel": "regular",
+      "allergens": ["tree nuts"],
+      "notes": "Flexible eater, avoids tree nuts due to allergy."
+    },
+    {
+      "id": "M003",
+      "name": "Riley",
+      "role": "toddler",
+      "safeFoods": ["pasta", "bread", "banana", "cheese", "peas"],
+      "hardNoFoods": ["spicy sauce", "raw onion"],
+      "preparationRules": [
+        { "ingredient": "pasta", "rule": "Must be small shapes like penne or fusilli" }
+      ],
+      "textureLevel": "soft",
+      "allergens": [],
+      "notes": "Picky eater. Will reject unfamiliar foods but sometimes accepts them on second exposure."
+    },
+    {
+      "id": "M004",
+      "name": "Sam",
+      "role": "baby",
+      "safeFoods": ["sweet potato", "banana", "avocado", "rice"],
+      "hardNoFoods": ["honey", "whole nuts", "raw egg"],
+      "preparationRules": [
+        { "ingredient": "sweet potato", "rule": "Mash or cut into finger-safe strips" }
+      ],
+      "textureLevel": "mashable",
+      "allergens": [],
+      "notes": "6 months, no teeth yet. BLW-style finger foods plus purees."
+    }
+  ],
+  "ingredients": [],
+  "baseMeals": [],
+  "weeklyPlans": []
+}

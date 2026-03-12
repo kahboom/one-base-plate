@@ -1,0 +1,569 @@
+{
+  "project": {
+    "name": "OneBasePlate",
+    "slug": "one-base-plate",
+    "version": "0.1.0",
+    "status": "draft",
+    "goal": "Reduce grocery stress, separate cooking events, takeaway reliance, and food waste in households with overlapping but conflicting food preferences, including ARFID-style preparation constraints, picky children, and babies requiring texture-adapted food.",
+    "northStar": "One base meal, multiple household-specific assemblies, with a merged grocery list and low-decision rescue mode.",
+    "primarySuccessMetrics": [
+      "Reduce takeaway dinners per week",
+      "Reduce number of separate cooking events per day",
+      "Increase percentage of dinners assembled from one shared base",
+      "Reduce food waste from unused ingredients",
+      "Reduce time spent deciding what to cook"
+    ],
+    "nonGoals": [
+      "Building a massive public recipe marketplace in v1",
+      "Advanced nutrition coaching or medical advice",
+      "Live grocery delivery integrations in v1",
+      "Social/sharing/community features in v1",
+      "Fully automated AI meal generation without explicit household constraints"
+    ]
+  },
+  "anthropicLongRunningAgentAlignment": {
+    "intent": "Structure the repo and work plan so a long-running coding agent can make safe incremental progress across sessions.",
+    "principles": [
+      "Use a dedicated initializer/setup phase before feature implementation begins.",
+      "Represent requirements as a structured JSON feature list with pass/fail status rather than freeform notes.",
+      "Work on one feature at a time and leave the codebase in a clean, mergeable state after each session.",
+      "Persist progress in a progress log plus git history so future sessions can recover context quickly.",
+      "Start each session by reading the feature list, recent progress, and repository state.",
+      "Run end-to-end verification before marking any feature as passing.",
+      "Favor deterministic fixtures and explicit acceptance steps over vague goals."
+    ],
+    "requiredArtifacts": [
+      "PRD.json",
+      "agent-progress.md",
+      "init.sh",
+      "fixtures/households/*.json",
+      "fixtures/meals/*.json",
+      "tests/e2e/*",
+      "README.md"
+    ],
+    "sessionLoop": [
+      "Run init.sh and verify the app boots successfully.",
+      "Read agent-progress.md and recent git log entries.",
+      "Read PRD.json and select the highest-priority feature with passes=false and no blocked dependencies.",
+      "Implement only that feature and any strictly necessary enabling refactor.",
+      "Run unit tests and end-to-end checks relevant to the feature.",
+      "Update only the affected passes fields and append a short progress summary.",
+      "Commit the work with a descriptive message."
+    ]
+  },
+  "personas": [
+    {
+      "id": "P1",
+      "name": "Constraint-led adult eater",
+      "description": "Adult with ARFID-like or highly specific preparation constraints.",
+      "needs": [
+        "Food prepared in an acceptable way",
+        "Predictability and separation of components",
+        "Low-risk options when plans change"
+      ]
+    },
+    {
+      "id": "P2",
+      "name": "Picky toddler",
+      "description": "Young child with a small set of accepted foods and fast-changing tolerance.",
+      "needs": [
+        "At least one safe food on the plate",
+        "Simple repeatable options",
+        "Low-conflict meal assembly"
+      ]
+    },
+    {
+      "id": "P3",
+      "name": "Weaning baby",
+      "description": "Baby requiring soft, mashable, or finger-safe texture adaptations.",
+      "needs": [
+        "Texture-appropriate versions of household meals",
+        "Quick identification of suitable components",
+        "Simple substitutions when base meal is unsuitable"
+      ]
+    },
+    {
+      "id": "P4",
+      "name": "Busy home-working adult",
+      "description": "Adult with limited time who wants low-decision household planning.",
+      "needs": [
+        "Fast weekly planning",
+        "Merged grocery list",
+        "Low-effort rescue meals",
+        "Predictable system that reduces mental load"
+      ]
+    }
+  ],
+  "coreConcepts": {
+    "baseMeal": "A flexible meal made of components that can be assembled differently for each household member.",
+    "assemblyVariant": "A per-person presentation of the base meal that respects preferences, preparation constraints, and texture needs.",
+    "safeFood": "A reliably accepted ingredient or meal component for a person.",
+    "rescueMeal": "A low-effort meal generated for high-stress or low-time situations using pantry/freezer staples first.",
+    "overlapScore": "A score showing how many household members can eat a given ingredient or base meal with acceptable modifications."
+  },
+  "dataModel": {
+    "entities": [
+      {
+        "name": "HouseholdMember",
+        "fields": [
+          "id",
+          "name",
+          "role (adult|toddler|baby)",
+          "safeFoods[]",
+          "hardNoFoods[]",
+          "preparationRules[]",
+          "textureLevel",
+          "allergens[]",
+          "notes"
+        ]
+      },
+      {
+        "name": "Ingredient",
+        "fields": [
+          "id",
+          "name",
+          "category (protein|carb|veg|fruit|dairy|snack|freezer|pantry)",
+          "tags[]",
+          "shelfLifeHint",
+          "freezerFriendly",
+          "babySafeWithAdaptation"
+        ]
+      },
+      {
+        "name": "BaseMeal",
+        "fields": [
+          "id",
+          "name",
+          "components[]",
+          "defaultPrep",
+          "estimatedTimeMinutes",
+          "difficulty",
+          "rescueEligible",
+          "wasteReuseHints[]"
+        ]
+      },
+      {
+        "name": "AssemblyVariant",
+        "fields": [
+          "id",
+          "baseMealId",
+          "memberId",
+          "instructions[]",
+          "requiresExtraPrep",
+          "safeFoodIncluded"
+        ]
+      },
+      {
+        "name": "WeeklyPlan",
+        "fields": [
+          "id",
+          "days[]",
+          "selectedBaseMeals[]",
+          "generatedGroceryList[]",
+          "notes"
+        ]
+      }
+    ]
+  },
+  "technicalApproach": {
+    "suggestedStack": {
+      "frontend": "Next.js or Vite + React",
+      "language": "TypeScript",
+      "styling": "Minimal CSS or Tailwind",
+      "storage": "Local-first JSON or IndexedDB/localStorage for v1",
+      "tests": "Vitest + Playwright",
+      "deployment": "Local/private first; optional Vercel later"
+    },
+    "architectureNotes": [
+      "Prefer local-first storage for rapid MVP delivery and privacy.",
+      "Keep the rule engine explicit and deterministic before adding AI generation.",
+      "Ship fixtures for 3-5 representative households to support repeatable development and testing.",
+      "Treat the PRD feature list as the source of truth for incremental implementation."
+    ]
+  },
+  "features": [
+    {
+      "id": "F001",
+      "phase": 0,
+      "priority": "P0",
+      "category": "agent-harness",
+      "description": "Repository initializer creates bootstrap artifacts for long-running agent work",
+      "steps": [
+        "Create project scaffold and package metadata",
+        "Add init.sh to install dependencies and start the local app",
+        "Add agent-progress.md with initial status and conventions",
+        "Add PRD.json to repo root as the structured source of truth",
+        "Add sample fixtures for at least one representative household"
+      ],
+      "passes": true,
+      "dependencies": []
+    },
+    {
+      "id": "F002",
+      "phase": 0,
+      "priority": "P0",
+      "category": "functional",
+      "description": "User can create a household with multiple members and role types",
+      "steps": [
+        "Navigate to household setup",
+        "Add at least four members with adult, toddler, and baby roles",
+        "Save the household profile",
+        "Re-open the household",
+        "Verify all members persist correctly"
+      ],
+      "passes": false,
+      "dependencies": ["F001"]
+    },
+    {
+      "id": "F003",
+      "phase": 0,
+      "priority": "P0",
+      "category": "functional",
+      "description": "User can record safe foods, hard-no foods, and preparation rules for each household member",
+      "steps": [
+        "Open a member profile",
+        "Add safe foods, hard-no foods, and preparation rules",
+        "Save the profile",
+        "Re-open the profile",
+        "Verify all constraints are preserved exactly"
+      ],
+      "passes": false,
+      "dependencies": ["F002"]
+    },
+    {
+      "id": "F004",
+      "phase": 0,
+      "priority": "P0",
+      "category": "functional",
+      "description": "User can define pantry, fridge, freezer, and staple ingredients",
+      "steps": [
+        "Navigate to household ingredients",
+        "Add ingredients across pantry, fridge, and freezer categories",
+        "Tag ingredients with properties such as quick, mashable, or rescue",
+        "Save the ingredient set",
+        "Verify ingredients are available to the planner"
+      ],
+      "passes": false,
+      "dependencies": ["F002"]
+    },
+    {
+      "id": "F005",
+      "phase": 1,
+      "priority": "P0",
+      "category": "functional",
+      "description": "User can create or select a base meal made from reusable components",
+      "steps": [
+        "Navigate to base meals",
+        "Create a meal from components such as protein, carb, and veg",
+        "Set time and rescue eligibility metadata",
+        "Save the base meal",
+        "Verify it appears in meal selection"
+      ],
+      "passes": false,
+      "dependencies": ["F004"]
+    },
+    {
+      "id": "F006",
+      "phase": 1,
+      "priority": "P0",
+      "category": "functional",
+      "description": "Planner generates one base meal with per-person assembly variants",
+      "steps": [
+        "Open the planner for a household with saved constraints",
+        "Select or generate a base meal",
+        "View assembly instructions for each member",
+        "Verify each member receives a compatible version or an explicit fallback",
+        "Verify the plan clearly identifies shared versus extra preparation"
+      ],
+      "passes": false,
+      "dependencies": ["F003", "F005"]
+    },
+    {
+      "id": "F007",
+      "phase": 1,
+      "priority": "P0",
+      "category": "functional",
+      "description": "Planner adapts baby servings into texture-safe versions for a no-teeth weaning stage",
+      "steps": [
+        "Open a generated meal that includes a baby household member",
+        "Inspect the baby assembly instructions",
+        "Verify the output transforms unsuitable textures into soft, mashable, or finger-safe guidance",
+        "Verify obviously unsafe suggestions are excluded",
+        "Verify the baby variant stays tied to the same base meal where possible"
+      ],
+      "passes": false,
+      "dependencies": ["F006"]
+    },
+    {
+      "id": "F008",
+      "phase": 1,
+      "priority": "P0",
+      "category": "functional",
+      "description": "Planner ensures toddler plate includes at least one safe food",
+      "steps": [
+        "Generate a meal for a household with a toddler profile",
+        "Inspect the toddler assembly variant",
+        "Verify at least one marked safe food is included",
+        "If no direct fit exists, verify an explicit fallback safe food is suggested",
+        "Verify the output never silently omits toddler compatibility"
+      ],
+      "passes": false,
+      "dependencies": ["F006"]
+    },
+    {
+      "id": "F009",
+      "phase": 1,
+      "priority": "P1",
+      "category": "functional",
+      "description": "Planner computes overlap score for ingredients and meals",
+      "steps": [
+        "Open ingredient or meal details",
+        "View overlap score and compatibility summary",
+        "Verify score reflects how many household members can eat it directly or with acceptable adaptation",
+        "Verify members with hard-no conflicts are clearly identified",
+        "Verify overlap score is used in meal ranking"
+      ],
+      "passes": false,
+      "dependencies": ["F003", "F005"]
+    },
+    {
+      "id": "F010",
+      "phase": 1,
+      "priority": "P0",
+      "category": "functional",
+      "description": "User can generate a low-decision weekly plan from available meals and ingredients",
+      "steps": [
+        "Open weekly planning",
+        "Generate a five- or seven-day plan",
+        "Verify each day contains a base meal and per-person variants",
+        "Verify repeated ingredients are reused intentionally across the week",
+        "Verify the plan can be saved and re-opened"
+      ],
+      "passes": false,
+      "dependencies": ["F006", "F009"]
+    },
+    {
+      "id": "F011",
+      "phase": 1,
+      "priority": "P0",
+      "category": "functional",
+      "description": "App produces one merged grocery list from the weekly plan",
+      "steps": [
+        "Generate and save a weekly plan",
+        "Open the grocery list",
+        "Verify repeated ingredients are consolidated",
+        "Verify pantry or already-owned items can be excluded",
+        "Verify the list is readable and grouped by category"
+      ],
+      "passes": false,
+      "dependencies": ["F010"]
+    },
+    {
+      "id": "F012",
+      "phase": 1,
+      "priority": "P0",
+      "category": "functional",
+      "description": "Rescue mode generates the fastest acceptable meal using household staples first",
+      "steps": [
+        "Open rescue mode",
+        "Choose a scenario such as low-energy, low-time, or everyone-melting-down",
+        "Generate a rescue meal",
+        "Verify the output prioritizes freezer or pantry staples when available",
+        "Verify the output still includes per-person assemblies"
+      ],
+      "passes": false,
+      "dependencies": ["F003", "F004", "F006"]
+    },
+    {
+      "id": "F013",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "User can pin household-approved meals into a rotation",
+      "steps": [
+        "Generate or open a meal that worked well",
+        "Pin it to the household rotation",
+        "Open the rotation view",
+        "Verify pinned meals are saved and reusable",
+        "Verify future planning can prioritize pinned meals"
+      ],
+      "passes": false,
+      "dependencies": ["F006"]
+    },
+    {
+      "id": "F014",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "User can mark meals as success, partial success, or failure and capture quick notes",
+      "steps": [
+        "Open a planned meal after serving",
+        "Record an outcome and optional notes",
+        "Save the result",
+        "Re-open meal history",
+        "Verify the outcome is persisted and visible"
+      ],
+      "passes": false,
+      "dependencies": ["F010"]
+    },
+    {
+      "id": "F015",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "Planner learns from meal outcomes to rank reliable meals higher",
+      "steps": [
+        "Record several successful and failed meal outcomes",
+        "Generate a new plan",
+        "Verify meals with stronger success history are ranked higher when constraints are similar",
+        "Verify hard-no or repeated-failure meals are deprioritized",
+        "Verify ranking remains explainable to the user"
+      ],
+      "passes": false,
+      "dependencies": ["F014"]
+    },
+    {
+      "id": "F016",
+      "phase": 0,
+      "priority": "P0",
+      "category": "non-functional",
+      "description": "App loads quickly and supports same-session editing without noticeable lag for a typical household",
+      "steps": [
+        "Launch the app with a representative fixture household",
+        "Navigate across setup, planning, and grocery screens",
+        "Edit member constraints and regenerate a plan",
+        "Verify interactions feel immediate for local MVP use",
+        "Verify no screen hangs or crashes during normal flows"
+      ],
+      "passes": false,
+      "dependencies": ["F001"]
+    },
+    {
+      "id": "F017",
+      "phase": 0,
+      "priority": "P0",
+      "category": "non-functional",
+      "description": "All critical planning flows are covered by deterministic fixtures and end-to-end tests",
+      "steps": [
+        "Run the automated test suite",
+        "Verify household setup flow is covered",
+        "Verify base meal planning flow is covered",
+        "Verify rescue mode is covered",
+        "Verify grocery list generation is covered"
+      ],
+      "passes": false,
+      "dependencies": ["F001", "F012"]
+    },
+    {
+      "id": "F018",
+      "phase": 0,
+      "priority": "P0",
+      "category": "ux",
+      "description": "Planner explains why a meal was recommended and what the trade-offs are",
+      "steps": [
+        "Generate a meal recommendation",
+        "Inspect the explanation panel",
+        "Verify the app states why the meal fits the household",
+        "Verify any extra prep or fallback requirements are surfaced",
+        "Verify the explanation is brief and understandable"
+      ],
+      "passes": false,
+      "dependencies": ["F006", "F009"]
+    },
+    {
+      "id": "F019",
+      "phase": 0,
+      "priority": "P0",
+      "category": "ux",
+      "description": "Planner allows quick editing of a single member without redoing the whole household setup",
+      "steps": [
+        "Open an existing household",
+        "Edit one member's constraints",
+        "Save changes",
+        "Regenerate the meal plan",
+        "Verify only the relevant compatibility results change"
+      ],
+      "passes": false,
+      "dependencies": ["F003", "F006"]
+    },
+    {
+      "id": "F020",
+      "phase": 2,
+      "priority": "P2",
+      "category": "functional",
+      "description": "User can export or print the weekly plan and grocery list",
+      "steps": [
+        "Open a saved weekly plan",
+        "Choose export or print",
+        "Verify the plan includes daily meals, per-person variants, and grocery list",
+        "Verify formatting is readable",
+        "Verify exported output matches the saved plan"
+      ],
+      "passes": false,
+      "dependencies": ["F010", "F011"]
+    }
+  ],
+  "milestones": [
+    {
+      "id": "M1",
+      "name": "Scaffold + household constraints",
+      "includes": ["F001", "F002", "F003", "F004", "F016"]
+    },
+    {
+      "id": "M2",
+      "name": "Base meal planning MVP",
+      "includes": ["F005", "F006", "F007", "F008", "F009", "F018", "F019"]
+    },
+    {
+      "id": "M3",
+      "name": "Weekly planning + grocery list",
+      "includes": ["F010", "F011", "F012", "F017"]
+    },
+    {
+      "id": "M4",
+      "name": "Learning loop + convenience features",
+      "includes": ["F013", "F014", "F015", "F020"]
+    }
+  ],
+  "fixtureHouseholds": [
+    {
+      "id": "H001",
+      "name": "Conflicting household baseline",
+      "description": "One adult with strict preparation constraints, one picky toddler, one no-teeth weaning baby, and one adult with unrelated preferences.",
+      "purpose": "Primary fixture for MVP testing"
+    },
+    {
+      "id": "H002",
+      "name": "Two adults plus toddler",
+      "description": "Simpler fixture used to prove the planner still works when no baby adaptations are needed.",
+      "purpose": "Regression coverage"
+    },
+    {
+      "id": "H003",
+      "name": "Single caregiver plus two children",
+      "description": "Used to test rescue mode and low-time planning flows.",
+      "purpose": "Stress and fallback coverage"
+    }
+  ],
+  "implementationOrder": [
+    "F001",
+    "F002",
+    "F003",
+    "F004",
+    "F005",
+    "F006",
+    "F007",
+    "F008",
+    "F018",
+    "F019",
+    "F009",
+    "F010",
+    "F011",
+    "F012",
+    "F017",
+    "F013",
+    "F014",
+    "F015",
+    "F020"
+  ]
+}

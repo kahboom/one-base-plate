@@ -1,0 +1,42 @@
+{
+  "id": "H002",
+  "name": "Two adults plus toddler",
+  "members": [
+    {
+      "id": "M005",
+      "name": "Casey",
+      "role": "adult",
+      "safeFoods": ["rice", "chicken", "pasta", "tomatoes"],
+      "hardNoFoods": ["shellfish"],
+      "preparationRules": [],
+      "textureLevel": "regular",
+      "allergens": ["shellfish"],
+      "notes": ""
+    },
+    {
+      "id": "M006",
+      "name": "Morgan",
+      "role": "adult",
+      "safeFoods": ["pasta", "beef", "peppers", "rice"],
+      "hardNoFoods": [],
+      "preparationRules": [],
+      "textureLevel": "regular",
+      "allergens": [],
+      "notes": ""
+    },
+    {
+      "id": "M007",
+      "name": "Finley",
+      "role": "toddler",
+      "safeFoods": ["pasta", "bread", "cheese", "corn"],
+      "hardNoFoods": ["spicy sauce"],
+      "preparationRules": [],
+      "textureLevel": "soft",
+      "allergens": [],
+      "notes": "Prefers plain flavors."
+    }
+  ],
+  "ingredients": [],
+  "baseMeals": [],
+  "weeklyPlans": []
+}
