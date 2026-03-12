@@ -17,5 +17,14 @@
 - Updated init.sh to install deps, type-check, run tests, and start dev server
 - Verified: tsc --noEmit passes, vitest passes, vite build succeeds
 
+### F002 - Household setup with multiple members (2026-03-12)
+- Created localStorage storage layer (src/storage.ts) with CRUD operations for households
+- Created HouseholdList page showing saved households with create/delete actions
+- Created HouseholdSetup page with member management (add/remove members, set name/role/texture)
+- Added react-router-dom routing in App.tsx (extracted BrowserRouter to main.tsx for testability)
+- Installed @testing-library/user-event for interaction tests
+- Created 8 tests covering storage CRUD, household creation with 4 members of mixed roles, re-opening persisted households, member removal, and household list display
+- Verified: tsc --noEmit passes, vitest passes (15 tests), vite build succeeds
+
 ## Next Task
-- **F002** — User can create a household with multiple members and role types
+- **F003** — User can record safe foods, hard-no foods, and preparation rules for each household member

@@ -1,9 +1,13 @@
+import { Routes, Route } from "react-router-dom";
+import HouseholdList from "./pages/HouseholdList";
+import HouseholdSetup from "./pages/HouseholdSetup";
+
 function App() {
   return (
-    <div>
-      <h1>OneBasePlate</h1>
-      <p>One base meal, multiple household-specific assemblies.</p>
-    </div>
+    <Routes>
+      <Route path="/" element={<HouseholdList />} />
+      <Route path="/household/:id" element={<HouseholdSetup />} />
+    </Routes>
   );
 }
 
