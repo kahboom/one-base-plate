@@ -7,6 +7,7 @@ import BaseMealManager from "./pages/BaseMealManager";
 import Planner from "./pages/Planner";
 import WeeklyPlanner from "./pages/WeeklyPlanner";
 import Home from "./pages/Home";
+import MealDetail from "./pages/MealDetail";
 
 function App() {
   return (
@@ -25,6 +26,10 @@ function App() {
       <Route
         path="/household/:householdId/meals"
         element={<BaseMealManager />}
+      />
+      <Route
+        path="/household/:householdId/meal/:mealId"
+        element={<MealDetail />}
       />
       <Route
         path="/household/:householdId/planner"

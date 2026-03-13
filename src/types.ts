@@ -41,6 +41,7 @@ export interface Ingredient {
 
 export interface MealComponent {
   ingredientId: string;
+  alternativeIngredientIds?: string[];
   role: "protein" | "carb" | "veg" | "sauce" | "topping";
   quantity: string;
 }

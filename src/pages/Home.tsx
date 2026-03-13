@@ -95,6 +95,7 @@ export default function Home() {
                   members={household.members}
                   ingredients={household.ingredients}
                   overlap={overlap}
+                  detailUrl={`/household/${householdId}/meal/${meal.id}`}
                 />
               ))}
             </div>

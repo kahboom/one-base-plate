@@ -19,6 +19,47 @@ function matchesFood(food: string, ingredientName: string): boolean {
   return food.toLowerCase() === ingredientName.toLowerCase();
 }
 
+export function getAllIngredientIds(component: MealComponent): string[] {
+  const ids = [component.ingredientId];
+  if (component.alternativeIngredientIds) {
+    ids.push(...component.alternativeIngredientIds);
+  }
+  return ids;
+}
+
+function pickBestIngredient(
+  component: MealComponent,
+  member: HouseholdMember,
+  ingredients: Ingredient[],
+): string {
+  const ids = getAllIngredientIds(component);
+  if (ids.length === 1) return ids[0]!;
+
+  let bestId = ids[0]!;
+  let bestScore = -Infinity;
+
+  for (const id of ids) {
+    const name = resolveIngredientName(id, ingredients);
+    const ing = ingredients.find((i) => i.id === id);
+    const { compatibility } = getMemberIngredientCompatibility(name, ing, member);
+
+    let score = 0;
+    if (compatibility === "direct") score = 3;
+    else if (compatibility === "with-adaptation") score = 1;
+    else score = -1; // conflict
+
+    // Bonus for safe food match
+    if (member.safeFoods.some((s) => matchesFood(s, name))) score += 2;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestId = id;
+    }
+  }
+
+  return bestId;
+}
+
 function isComponentExcluded(
   component: MealComponent,
   member: HouseholdMember,
@@ -179,8 +220,9 @@ export function computeMealOverlap(
     let needsAdaptation = false;
 
     for (const component of meal.components) {
-      const name = resolveIngredientName(component.ingredientId, ingredients);
-      const ing = ingredients.find((i) => i.id === component.ingredientId);
+      const bestId = pickBestIngredient(component, member, ingredients);
+      const name = resolveIngredientName(bestId, ingredients);
+      const ing = ingredients.find((i) => i.id === bestId);
       const { compatibility, conflict } = getMemberIngredientCompatibility(name, ing, member);
 
       if (compatibility === "conflict") {
@@ -263,7 +305,8 @@ export function generateMealExplanation(
   for (const member of members) {
     if (member.role !== "toddler" && member.role !== "baby") continue;
     const hasSafeFood = meal.components.some((c) => {
-      const name = resolveIngredientName(c.ingredientId, ingredients);
+      const bestId = pickBestIngredient(c, member, ingredients);
+      const name = resolveIngredientName(bestId, ingredients);
       return member.safeFoods.some((s) => matchesFood(s, name));
     });
     if (!hasSafeFood) {
@@ -289,7 +332,8 @@ export function generateShortReason(
     for (const member of members) {
       if (member.role === "toddler" || member.role === "baby") {
         const hasSafe = meal.components.some((c) => {
-          const name = resolveIngredientName(c.ingredientId, ingredients);
+          const bestId = pickBestIngredient(c, member, ingredients);
+          const name = resolveIngredientName(bestId, ingredients);
           return member.safeFoods.some((s) => matchesFood(s, name));
         });
         if (hasSafe) return `${member.name}'s safe food included`;
@@ -393,14 +437,28 @@ export function generateAssemblyVariants(
     const babyUnsafeNames: string[] = [];
 
     for (const component of meal.components) {
-      if (isComponentExcluded(component, member, ingredients)) {
-        const name = resolveIngredientName(component.ingredientId, ingredients);
+      // For multi-option components, pick the best ingredient for this member
+      const hasAlternatives = component.alternativeIngredientIds && component.alternativeIngredientIds.length > 0;
+      let resolvedComponent = component;
+
+      if (hasAlternatives) {
+        const bestId = pickBestIngredient(component, member, ingredients);
+        if (bestId !== component.ingredientId) {
+          resolvedComponent = { ...component, ingredientId: bestId, alternativeIngredientIds: undefined };
+          const chosenName = resolveIngredientName(bestId, ingredients);
+          const allNames = getAllIngredientIds(component).map((id) => resolveIngredientName(id, ingredients));
+          instructions.push(`Protein option: ${chosenName} (from ${allNames.join(", ")})`);
+        }
+      }
+
+      if (isComponentExcluded(resolvedComponent, member, ingredients)) {
+        const name = resolveIngredientName(resolvedComponent.ingredientId, ingredients);
         excludedNames.push(name);
-      } else if (isBabyUnsafe(component, member, ingredients)) {
-        const name = resolveIngredientName(component.ingredientId, ingredients);
+      } else if (isBabyUnsafe(resolvedComponent, member, ingredients)) {
+        const name = resolveIngredientName(resolvedComponent.ingredientId, ingredients);
         babyUnsafeNames.push(name);
       } else {
-        includedComponents.push(component);
+        includedComponents.push(resolvedComponent);
       }
     }
 

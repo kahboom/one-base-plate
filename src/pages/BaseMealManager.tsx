@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { BaseMeal, MealComponent, Ingredient } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, FieldLabel, EmptyState } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, FieldLabel, EmptyState, Chip } from "../components/ui";
 
 type ComponentRole = MealComponent["role"];
 const COMPONENT_ROLES: ComponentRole[] = ["protein", "carb", "veg", "sauce", "topping"];
@@ -32,6 +32,21 @@ function ComponentForm({
   onChange: (updated: MealComponent) => void;
   onRemove: () => void;
 }) {
+  const alternatives = component.alternativeIngredientIds ?? [];
+  const usedIds = new Set([component.ingredientId, ...alternatives]);
+
+  function addAlternative(ingredientId: string) {
+    if (!ingredientId || usedIds.has(ingredientId)) return;
+    onChange({ ...component, alternativeIngredientIds: [...alternatives, ingredientId] });
+  }
+
+  function removeAlternative(ingredientId: string) {
+    onChange({
+      ...component,
+      alternativeIngredientIds: alternatives.filter((id) => id !== ingredientId),
+    });
+  }
+
   return (
     <div data-testid={`component-${component.ingredientId || "empty"}`} className="mb-3 rounded-sm border border-border-light p-3">
       <div className="space-y-3">
@@ -46,6 +61,40 @@ function ComponentForm({
                 {ing.name} ({ing.category})
               </option>
             ))}
+          </Select>
+        </FieldLabel>
+
+        {alternatives.length > 0 && (
+          <div data-testid="alternatives-list">
+            <span className="mb-1 block text-xs font-medium text-text-secondary">Alternative options:</span>
+            <div className="flex flex-wrap gap-1">
+              {alternatives.map((altId) => {
+                const ing = ingredients.find((i) => i.id === altId);
+                return (
+                  <span key={altId} className="inline-flex items-center gap-1">
+                    <Chip variant="info">{ing?.name ?? altId}</Chip>
+                    <Button variant="ghost" small onClick={() => removeAlternative(altId)}>x</Button>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <FieldLabel label="Add alternative">
+          <Select
+            value=""
+            onChange={(e) => addAlternative(e.target.value)}
+            data-testid="add-alternative"
+          >
+            <option value="">Add alternative ingredient...</option>
+            {ingredients
+              .filter((ing) => !usedIds.has(ing.id))
+              .map((ing) => (
+                <option key={ing.id} value={ing.id}>
+                  {ing.name} ({ing.category})
+                </option>
+              ))}
           </Select>
         </FieldLabel>
 

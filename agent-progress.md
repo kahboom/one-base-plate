@@ -260,5 +260,19 @@ Audited all completed UI features against uiSpec screen acceptance criteria. PRD
 #### Summary
 All completed features satisfy their referenced screen acceptance criteria for the currently implemented scope. Remaining gaps are exclusively blocked on features not yet in the implementation queue (F012, F014, F022, F026, F027, F028, F029, F011, F020). No visual gaps or regressions from the styling/mobile refactor.
 
+### F028 - Planner supports multi-protein base meals under one shared meal structure (2026-03-13)
+- Added `alternativeIngredientIds?: string[]` to `MealComponent` type for multi-protein support
+- Added `getAllIngredientIds` and `pickBestIngredient` helpers to planner engine
+- `pickBestIngredient` scores each protein option per member: compatibility (direct/adaptation/conflict) + safe food bonus
+- Updated `generateAssemblyVariants` to resolve best protein per member and add "Protein option: X" instructions when swapping from primary
+- Updated `computeMealOverlap` to evaluate best protein option per member instead of raw primary ingredient
+- Updated `generateMealExplanation` and `generateShortReason` to use `pickBestIngredient` for safe food checks
+- Updated BaseMealManager ComponentForm with add/remove alternative ingredient UI (Select dropdown + Chip list)
+- Created MealDetail page (src/pages/MealDetail.tsx) at `/household/:householdId/meal/:mealId` — shows meal as one shared structure with protein alternatives, per-member assembly variants with compatibility chips
+- Updated MealCard with `detailUrl` prop and Link-based Details button
+- Added MealDetail route to App.tsx, updated Home to pass `detailUrl` to MealCards
+- Created 10 tests: 5 engine tests (best protein pick, alternative on conflict, overlap scoring, single-protein unchanged, no duplication), 2 editor UI tests (add/remove alternatives), 3 Meal Detail tests (structure display, member variants, single shared structure)
+- Verified: tsc --noEmit passes, vitest passes (168 tests), all F028 steps satisfied
+
 ## Next Task
-- **F028** — Planner supports multi-protein base meals under one shared meal structure
+- **F029** — Meal detail page shows recipe links, notes, and per-member adaptations

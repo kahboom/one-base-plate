@@ -877,7 +877,7 @@
         "Open Meal Detail and verify the meal reads as one shared structure with multiple protein paths",
         "Generate a plan and verify per-member variants can choose different protein options under the same base meal"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F005",
         "F006"

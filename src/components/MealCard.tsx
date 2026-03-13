@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { BaseMeal, HouseholdMember, Ingredient } from "../types";
 import type { OverlapResult } from "../planner";
 import { computeMealOverlap, generateShortReason } from "../planner";
@@ -10,6 +11,7 @@ export interface MealCardProps {
   overlap?: OverlapResult;
   onAssign?: () => void;
   onOpen?: () => void;
+  detailUrl?: string;
   compact?: boolean;
 }
 
@@ -32,6 +34,7 @@ export default function MealCard({
   overlap: overlapProp,
   onAssign,
   onOpen,
+  detailUrl,
   compact = false,
 }: MealCardProps) {
   const overlap = overlapProp ?? computeMealOverlap(meal, members, ingredients);
@@ -115,6 +118,16 @@ export default function MealCard({
             >
               Details
             </Button>
+          )}
+          {detailUrl && !onOpen && (
+            <Link to={detailUrl}>
+              <Button
+                small
+                data-testid={`detail-link-${meal.id}`}
+              >
+                Details
+              </Button>
+            </Link>
           )}
         </div>
       )}
