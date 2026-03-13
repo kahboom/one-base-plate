@@ -6,6 +6,7 @@ import {
   generateAssemblyVariants,
   computeMealOverlap,
   generateMealExplanation,
+  computeOutcomeScore,
 } from "../planner";
 import type { OverlapResult, MealExplanation } from "../planner";
 import MealCard from "../components/MealCard";
@@ -70,10 +71,13 @@ export default function Planner() {
 
   const rankedMeals = useMemo(() => {
     if (!household) return [];
+    const outcomes = household.mealOutcomes ?? [];
     return [...household.baseMeals].sort((a, b) => {
-      const overlapA = mealOverlaps.get(a.id);
-      const overlapB = mealOverlaps.get(b.id);
-      return (overlapB?.score ?? 0) - (overlapA?.score ?? 0);
+      const overlapA = mealOverlaps.get(a.id)?.score ?? 0;
+      const overlapB = mealOverlaps.get(b.id)?.score ?? 0;
+      const outcomeA = computeOutcomeScore(a.id, outcomes).score;
+      const outcomeB = computeOutcomeScore(b.id, outcomes).score;
+      return (overlapB + outcomeB) - (overlapA + outcomeA);
     });
   }, [household, mealOverlaps]);
 
@@ -87,6 +91,7 @@ export default function Planner() {
           selectedMeal,
           household.members,
           household.ingredients,
+          household.mealOutcomes ?? [],
         )
       : undefined,
   [selectedMeal, household]);
@@ -132,6 +137,7 @@ export default function Planner() {
                     members={household.members}
                     ingredients={household.ingredients}
                     overlap={overlap}
+                    outcomes={household.mealOutcomes ?? []}
                     pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
                     onPin={() => handleTogglePin(meal.id)}
                     onOpen={() => handleSelectMeal(meal.id)}

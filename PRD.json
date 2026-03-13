@@ -528,7 +528,7 @@
         "Verify hard-no or repeated-failure meals are deprioritized",
         "Verify ranking remains explainable to the user"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F014"
       ]

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { Household } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { computeMealOverlap } from "../planner";
+import { computeMealOverlap, computeOutcomeScore } from "../planner";
 import MealCard from "../components/MealCard";
 import { PageShell, PageHeader, Card, Section, NavBar } from "../components/ui";
 
@@ -22,12 +22,14 @@ export default function Home() {
 
   const topMeals = useMemo(() => {
     if (!household) return [];
+    const outcomes = household.mealOutcomes ?? [];
     return [...household.baseMeals]
       .map((meal) => ({
         meal,
         overlap: computeMealOverlap(meal, household.members, household.ingredients),
+        outcomeScore: computeOutcomeScore(meal.id, outcomes).score,
       }))
-      .sort((a, b) => b.overlap.score - a.overlap.score)
+      .sort((a, b) => (b.overlap.score + b.outcomeScore) - (a.overlap.score + a.outcomeScore))
       .slice(0, 3);
   }, [household]);
 
@@ -125,6 +127,7 @@ export default function Home() {
                   meal={meal}
                   members={household.members}
                   ingredients={household.ingredients}
+                  outcomes={household.mealOutcomes ?? []}
                   pinned
                   onPin={() => handleTogglePin(meal.id)}
                   detailUrl={`/household/${householdId}/meal/${meal.id}`}
@@ -147,6 +150,7 @@ export default function Home() {
                   members={household.members}
                   ingredients={household.ingredients}
                   overlap={overlap}
+                  outcomes={household.mealOutcomes ?? []}
                   pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
                   onPin={() => handleTogglePin(meal.id)}
                   detailUrl={`/household/${householdId}/meal/${meal.id}`}

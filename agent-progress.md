@@ -404,6 +404,21 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 14 tests: 7 outcome recording tests (button display, form open, success/failure/partial recording with persistence, existing outcome display, cancel, disabled save), 4 meal history tests (empty state, outcomes display, date/day display, nav links), 2 navigation tests (weekly planner link, home link), 1 save disabled test
 - Verified: tsc --noEmit passes (pre-existing unused import in f013), vitest passes (340 tests), vite build succeeds
 
+### F015 - Planner learns from meal outcomes to rank reliable meals higher (2026-03-13)
+- Added `computeOutcomeScore` function to planner engine scoring meals based on outcome history: +2 per success, +0.5 per partial, -3 per failure
+- Human-readable labels: "household favorite" (3+ successes), "reliable choice" (successes, no failures), "mixed results", "often doesn't work", "repeated failures"
+- Updated `generateWeeklyPlan` to accept optional `outcomes` parameter — outcome scores are added to per-meal scoring alongside overlap, reuse, pinned, and repeat-penalty factors
+- Updated `generateMealExplanation` to include "Past results" trade-off with label and success/failure counts when outcomes exist
+- Updated `generateShortReason` to prioritize outcome-based labels: "Household favorite" for 3+ successes, "Often doesn't work" for failures with no successes
+- Updated Planner page ranking to combine overlap + outcome scores; passes outcomes to MealCard and explanation
+- Updated Home page top suggestions ranking to include outcome scores
+- Updated WeeklyPlanner to pass outcomes to `generateWeeklyPlan`
+- All MealCard instances across Planner, Home, and WeeklyPlanner now receive `outcomes` prop for short reason display
+- Fixed pre-existing unused import in f013 test file
+- Created 21 tests: 7 `computeOutcomeScore` tests (zero, positive, negative, favorite, partial, filtering, mixed), 3 weekly plan tests (ranking, deprioritization, backwards compatibility), 3 explanation tests (favorite, failure, empty), 3 short reason tests (favorite, failure, normal), 3 Planner UI tests (card reason, grid ranking, explanation panel), 2 explainability tests (labels, counts)
+- Verified: tsc --noEmit passes, vitest passes (361 tests), all F015 steps satisfied
+
 ## Next Task
-- **F015** — Planner learns from meal outcomes to rank reliable meals higher (Phase 2, P1, depends on F014✅)
-  - Remaining incomplete features with satisfied deps: F015 (Phase 2/P1), F020 (Phase 2/P2)
+- **F020** — User can export or print the weekly plan and grocery list (Phase 2, P2, depends on F010✅, F011✅)
+  - **F030** — Planner learns household compatibility patterns from outcomes and quick edits (Phase 2, P1, depends on F014✅, F015✅, F018✅, F019✅)
+  - Remaining incomplete features with satisfied deps: F020 (Phase 2/P2), F030 (Phase 2/P1)

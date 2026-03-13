@@ -7,6 +7,7 @@ import type {
   Ingredient,
   IngredientCategory,
   MealComponent,
+  MealOutcome,
 } from "./types";
 
 function resolveIngredientName(
@@ -270,6 +271,7 @@ export function generateMealExplanation(
   meal: BaseMeal,
   members: HouseholdMember[],
   ingredients: Ingredient[],
+  outcomes: MealOutcome[] = [],
 ): MealExplanation {
   const overlap = computeMealOverlap(meal, members, ingredients);
   const tradeOffs: string[] = [];
@@ -316,6 +318,14 @@ export function generateMealExplanation(
     }
   }
 
+  // Outcome-based insights
+  const outcomeScore = computeOutcomeScore(meal.id, outcomes);
+  if (outcomeScore.total > 0) {
+    if (outcomeScore.label) {
+      tradeOffs.push(`Past results: ${outcomeScore.label} (${outcomeScore.successCount} success, ${outcomeScore.failureCount} failure)`);
+    }
+  }
+
   return { summary, tradeOffs };
 }
 
@@ -323,7 +333,13 @@ export function generateShortReason(
   meal: BaseMeal,
   members: HouseholdMember[],
   ingredients: Ingredient[],
+  outcomes: MealOutcome[] = [],
 ): string {
+  // Outcome-based reasons take priority when strong signal
+  const outcomeScore = computeOutcomeScore(meal.id, outcomes);
+  if (outcomeScore.successCount >= 3) return "Household favorite";
+  if (outcomeScore.failureCount > 0 && outcomeScore.successCount === 0) return "Often doesn't work";
+
   const overlap = computeMealOverlap(meal, members, ingredients);
 
   if (overlap.score === overlap.total) {
@@ -353,6 +369,48 @@ export function generateShortReason(
   if (overlap.score === 0) return "Conflicts for all members";
 
   return `Fits ${overlap.score} of ${overlap.total} members`;
+}
+
+export interface OutcomeScore {
+  score: number;
+  successCount: number;
+  partialCount: number;
+  failureCount: number;
+  total: number;
+  label: string;
+}
+
+export function computeOutcomeScore(
+  mealId: string,
+  outcomes: MealOutcome[],
+): OutcomeScore {
+  const mealOutcomes = outcomes.filter((o) => o.baseMealId === mealId);
+  const successCount = mealOutcomes.filter((o) => o.outcome === "success").length;
+  const partialCount = mealOutcomes.filter((o) => o.outcome === "partial").length;
+  const failureCount = mealOutcomes.filter((o) => o.outcome === "failure").length;
+  const total = mealOutcomes.length;
+
+  // +2 per success, +0.5 per partial, -3 per failure
+  const score = successCount * 2 + partialCount * 0.5 - failureCount * 3;
+
+  let label = "";
+  if (total === 0) {
+    label = "";
+  } else if (failureCount > 0 && successCount === 0) {
+    label = "repeated failures";
+  } else if (failureCount > successCount) {
+    label = "often doesn't work";
+  } else if (successCount >= 3) {
+    label = "household favorite";
+  } else if (successCount >= 1 && failureCount === 0) {
+    label = "reliable choice";
+  } else if (successCount > failureCount) {
+    label = "mostly works";
+  } else {
+    label = "mixed results";
+  }
+
+  return { score, successCount, partialCount, failureCount, total, label };
 }
 
 export interface GroceryPreview {
@@ -426,10 +484,17 @@ export function generateWeeklyPlan(
   ingredients: Ingredient[],
   numDays: number = 7,
   pinnedMealIds: string[] = [],
+  outcomes: MealOutcome[] = [],
 ): DayPlan[] {
   if (meals.length === 0 || numDays <= 0) return [];
 
   const pinnedSet = new Set(pinnedMealIds);
+
+  const outcomeScores = new Map<string, number>();
+  for (const meal of meals) {
+    const os = computeOutcomeScore(meal.id, outcomes);
+    outcomeScores.set(meal.id, os.score);
+  }
 
   const rankedMeals = [...meals]
     .map((meal) => ({
@@ -465,7 +530,10 @@ export function generateWeeklyPlan(
         // Bonus for pinned meals
         const pinnedBonus = pinnedSet.has(meal.id) ? 2 : 0;
 
-        const score = overlap.score + reuseBonus * 0.5 - repeatPenalty + pinnedBonus;
+        // Outcome-based bonus/penalty
+        const outcomeBonus = outcomeScores.get(meal.id) ?? 0;
+
+        const score = overlap.score + reuseBonus * 0.5 - repeatPenalty + pinnedBonus + outcomeBonus;
         if (score > bestScore) {
           bestScore = score;
           bestMeal = meal;

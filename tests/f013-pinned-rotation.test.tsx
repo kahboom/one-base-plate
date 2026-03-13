@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import type { Household, BaseMeal, Ingredient, HouseholdMember } from "../src/types";
-import { generateWeeklyPlan, computeMealOverlap } from "../src/planner";
+import { generateWeeklyPlan } from "../src/planner";
 
 /* ---------- shared fixture ---------- */
 const members: HouseholdMember[] = [

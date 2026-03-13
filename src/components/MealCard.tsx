@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { BaseMeal, HouseholdMember, Ingredient } from "../types";
+import type { BaseMeal, HouseholdMember, Ingredient, MealOutcome } from "../types";
 import type { OverlapResult } from "../planner";
 import { computeMealOverlap, generateShortReason } from "../planner";
 import { Chip, Button } from "./ui";
@@ -9,6 +9,7 @@ export interface MealCardProps {
   members: HouseholdMember[];
   ingredients: Ingredient[];
   overlap?: OverlapResult;
+  outcomes?: MealOutcome[];
   onAssign?: () => void;
   onOpen?: () => void;
   onPin?: () => void;
@@ -36,6 +37,7 @@ export default function MealCard({
   members,
   ingredients,
   overlap: overlapProp,
+  outcomes = [],
   onAssign,
   onOpen,
   onPin,
@@ -46,7 +48,7 @@ export default function MealCard({
   selected = false,
 }: MealCardProps) {
   const overlap = overlapProp ?? computeMealOverlap(meal, members, ingredients);
-  const shortReason = generateShortReason(meal, members, ingredients);
+  const shortReason = generateShortReason(meal, members, ingredients, outcomes);
   const isHighOverlap = overlap.score === overlap.total;
   const needsExtraPrep = overlap.memberDetails.some(
     (d) => d.compatibility === "with-adaptation",

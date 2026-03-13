@@ -43,6 +43,7 @@ export default function WeeklyPlanner() {
       household.ingredients,
       numDays,
       household.pinnedMealIds ?? [],
+      household.mealOutcomes ?? [],
     );
 
     const newPlan: WeeklyPlan = {
@@ -315,6 +316,7 @@ export default function WeeklyPlanner() {
                     members={household.members}
                     ingredients={household.ingredients}
                     overlap={overlap}
+                    outcomes={household.mealOutcomes ?? []}
                     draggable
                     selected={selectedMealId === meal.id}
                     pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
