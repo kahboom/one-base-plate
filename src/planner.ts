@@ -272,6 +272,7 @@ export function generateMealExplanation(
   members: HouseholdMember[],
   ingredients: Ingredient[],
   outcomes: MealOutcome[] = [],
+  patterns?: LearnedPatterns,
 ): MealExplanation {
   const overlap = computeMealOverlap(meal, members, ingredients);
   const tradeOffs: string[] = [];
@@ -326,6 +327,28 @@ export function generateMealExplanation(
     }
   }
 
+  // Pattern-based insights
+  if (patterns && patterns.insights.length > 0) {
+    const mealIngredientIds = new Set(
+      meal.components.flatMap((c) => getAllIngredientIds(c)),
+    );
+    const relevantInsights = patterns.insights.filter((insight) => {
+      // Show prep rule and safe food insights if relevant to this meal
+      if (insight.includes("prep tend to work") || insight.includes("safe foods for kids")) {
+        return true;
+      }
+      // Show ingredient insights only if this meal uses the ingredient
+      for (const id of mealIngredientIds) {
+        const name = resolveIngredientName(id, ingredients);
+        if (insight.toLowerCase().includes(name.toLowerCase())) return true;
+      }
+      return false;
+    });
+    for (const insight of relevantInsights.slice(0, 3)) {
+      tradeOffs.push(`Learned: ${insight}`);
+    }
+  }
+
   return { summary, tradeOffs };
 }
 
@@ -334,11 +357,19 @@ export function generateShortReason(
   members: HouseholdMember[],
   ingredients: Ingredient[],
   outcomes: MealOutcome[] = [],
+  patterns?: LearnedPatterns,
 ): string {
   // Outcome-based reasons take priority when strong signal
   const outcomeScore = computeOutcomeScore(meal.id, outcomes);
   if (outcomeScore.successCount >= 3) return "Household favorite";
   if (outcomeScore.failureCount > 0 && outcomeScore.successCount === 0) return "Often doesn't work";
+
+  // Pattern-based reasons when patterns are learned
+  if (patterns && patterns.insights.length > 0) {
+    const patternScore = computePatternScore(meal, patterns, members, ingredients);
+    if (patternScore >= 3) return "Matches household patterns";
+    if (patternScore <= -3) return "Clashes with learned preferences";
+  }
 
   const overlap = computeMealOverlap(meal, members, ingredients);
 
@@ -496,6 +527,13 @@ export function generateWeeklyPlan(
     outcomeScores.set(meal.id, os.score);
   }
 
+  // Learn compatibility patterns from outcomes and member edits
+  const patterns = learnCompatibilityPatterns(outcomes, meals, members, ingredients);
+  const patternScores = new Map<string, number>();
+  for (const meal of meals) {
+    patternScores.set(meal.id, computePatternScore(meal, patterns, members, ingredients));
+  }
+
   const rankedMeals = [...meals]
     .map((meal) => ({
       meal,
@@ -533,7 +571,10 @@ export function generateWeeklyPlan(
         // Outcome-based bonus/penalty
         const outcomeBonus = outcomeScores.get(meal.id) ?? 0;
 
-        const score = overlap.score + reuseBonus * 0.5 - repeatPenalty + pinnedBonus + outcomeBonus;
+        // Pattern-based bonus from learned compatibility patterns
+        const patternBonus = patternScores.get(meal.id) ?? 0;
+
+        const score = overlap.score + reuseBonus * 0.5 - repeatPenalty + pinnedBonus + outcomeBonus + patternBonus;
         if (score > bestScore) {
           bestScore = score;
           bestMeal = meal;
@@ -690,6 +731,214 @@ export function generateRescueMeals(
           : "doable with a little prep";
     return { meal, overlap, variants, prepSummary, confidence };
   });
+}
+
+export interface LearnedPatterns {
+  ingredientScores: Map<string, number>;
+  prepRuleBoost: number;
+  safeFoodBoost: number;
+  insights: string[];
+}
+
+export function learnCompatibilityPatterns(
+  outcomes: MealOutcome[],
+  meals: BaseMeal[],
+  members: HouseholdMember[],
+  ingredients: Ingredient[],
+): LearnedPatterns {
+  const ingredientScores = new Map<string, number>();
+  const insights: string[] = [];
+
+  if (outcomes.length === 0) {
+    return { ingredientScores, prepRuleBoost: 0, safeFoodBoost: 0, insights };
+  }
+
+  // Track per-ingredient success/failure from outcomes
+  const ingredientSuccesses = new Map<string, number>();
+  const ingredientFailures = new Map<string, number>();
+
+  // Track prep rule and safe food correlation
+  let prepRuleMealsSuccess = 0;
+  let prepRuleMealsTotal = 0;
+  let safeFoodMealsSuccess = 0;
+  let safeFoodMealsTotal = 0;
+
+  // Track protein choices in successful vs failed meals
+  const proteinSuccesses = new Map<string, number>();
+  const proteinFailures = new Map<string, number>();
+
+  for (const outcome of outcomes) {
+    const meal = meals.find((m) => m.id === outcome.baseMealId);
+    if (!meal) continue;
+
+    const delta = outcome.outcome === "success" ? 1 : outcome.outcome === "failure" ? -1 : 0.25;
+
+    // Score each ingredient in the meal
+    for (const component of meal.components) {
+      const allIds = getAllIngredientIds(component);
+      for (const id of allIds) {
+        ingredientScores.set(id, (ingredientScores.get(id) ?? 0) + delta);
+      }
+
+      if (outcome.outcome === "success") {
+        for (const id of allIds) {
+          ingredientSuccesses.set(id, (ingredientSuccesses.get(id) ?? 0) + 1);
+        }
+      } else if (outcome.outcome === "failure") {
+        for (const id of allIds) {
+          ingredientFailures.set(id, (ingredientFailures.get(id) ?? 0) + 1);
+        }
+      }
+
+      // Track protein preferences
+      if (component.role === "protein") {
+        const bestIds = new Set<string>();
+        for (const member of members) {
+          bestIds.add(pickBestIngredient(component, member, ingredients));
+        }
+        for (const pid of bestIds) {
+          if (outcome.outcome === "success") {
+            proteinSuccesses.set(pid, (proteinSuccesses.get(pid) ?? 0) + 1);
+          } else if (outcome.outcome === "failure") {
+            proteinFailures.set(pid, (proteinFailures.get(pid) ?? 0) + 1);
+          }
+        }
+      }
+    }
+
+    // Check if prep rules were relevant to this meal
+    const hasPrepRuleRelevance = members.some((member) =>
+      member.preparationRules.some((rule) =>
+        meal.components.some((c) => {
+          const name = resolveIngredientName(c.ingredientId, ingredients);
+          return matchesFood(rule.ingredient, name);
+        }),
+      ),
+    );
+    if (hasPrepRuleRelevance) {
+      prepRuleMealsTotal++;
+      if (outcome.outcome === "success") prepRuleMealsSuccess++;
+    }
+
+    // Check safe food coverage for toddlers/babies
+    const childMembers = members.filter((m) => m.role === "toddler" || m.role === "baby");
+    if (childMembers.length > 0) {
+      const hasSafeFoodCoverage = childMembers.some((member) =>
+        meal.components.some((c) => {
+          const bestId = pickBestIngredient(c, member, ingredients);
+          const name = resolveIngredientName(bestId, ingredients);
+          return member.safeFoods.some((s) => matchesFood(s, name));
+        }),
+      );
+      if (hasSafeFoodCoverage) {
+        safeFoodMealsTotal++;
+        if (outcome.outcome === "success") safeFoodMealsSuccess++;
+      }
+    }
+  }
+
+  // Compute prep rule boost
+  let prepRuleBoost = 0;
+  if (prepRuleMealsTotal >= 2) {
+    const rate = prepRuleMealsSuccess / prepRuleMealsTotal;
+    if (rate >= 0.7) {
+      prepRuleBoost = 1.5;
+      const ruleNames = [...new Set(
+        members.flatMap((m) => m.preparationRules.map((r) => r.rule.toLowerCase())),
+      )];
+      if (ruleNames.length > 0) {
+        insights.push(`Meals with "${ruleNames[0]}" prep tend to work well`);
+      }
+    }
+  }
+
+  // Compute safe food boost
+  let safeFoodBoost = 0;
+  if (safeFoodMealsTotal >= 2) {
+    const rate = safeFoodMealsSuccess / safeFoodMealsTotal;
+    if (rate >= 0.7) {
+      safeFoodBoost = 1.5;
+      insights.push("Meals including safe foods for kids succeed more often");
+    }
+  }
+
+  // Generate ingredient-level insights
+  for (const [id, successes] of ingredientSuccesses) {
+    const failures = ingredientFailures.get(id) ?? 0;
+    const total = successes + failures;
+    if (total >= 2 && successes > failures) {
+      const name = resolveIngredientName(id, ingredients);
+      insights.push(`${name} appears in successful meals`);
+    }
+  }
+  for (const [id, failures] of ingredientFailures) {
+    const successes = ingredientSuccesses.get(id) ?? 0;
+    const total = successes + failures;
+    if (total >= 2 && failures > successes) {
+      const name = resolveIngredientName(id, ingredients);
+      insights.push(`${name} often appears in failed meals`);
+    }
+  }
+
+  // Protein preference insights
+  for (const [pid, successes] of proteinSuccesses) {
+    const failures = proteinFailures.get(pid) ?? 0;
+    if (successes >= 2 && successes > failures) {
+      const name = resolveIngredientName(pid, ingredients);
+      insights.push(`${name} is a preferred protein choice`);
+    }
+  }
+
+  return { ingredientScores, prepRuleBoost, safeFoodBoost, insights };
+}
+
+export function computePatternScore(
+  meal: BaseMeal,
+  patterns: LearnedPatterns,
+  members: HouseholdMember[],
+  ingredients: Ingredient[],
+): number {
+  let score = 0;
+
+  // Sum ingredient-level scores
+  for (const component of meal.components) {
+    const allIds = getAllIngredientIds(component);
+    for (const id of allIds) {
+      score += patterns.ingredientScores.get(id) ?? 0;
+    }
+  }
+
+  // Apply prep rule boost if meal uses prep rules
+  if (patterns.prepRuleBoost > 0) {
+    const hasPrepRuleRelevance = members.some((member) =>
+      member.preparationRules.some((rule) =>
+        meal.components.some((c) => {
+          const name = resolveIngredientName(c.ingredientId, ingredients);
+          return matchesFood(rule.ingredient, name);
+        }),
+      ),
+    );
+    if (hasPrepRuleRelevance) {
+      score += patterns.prepRuleBoost;
+    }
+  }
+
+  // Apply safe food boost if meal covers child safe foods
+  if (patterns.safeFoodBoost > 0) {
+    const childMembers = members.filter((m) => m.role === "toddler" || m.role === "baby");
+    const hasSafeFoodCoverage = childMembers.some((member) =>
+      meal.components.some((c) => {
+        const bestId = pickBestIngredient(c, member, ingredients);
+        const name = resolveIngredientName(bestId, ingredients);
+        return member.safeFoods.some((s) => matchesFood(s, name));
+      }),
+    );
+    if (hasSafeFoodCoverage) {
+      score += patterns.safeFoodBoost;
+    }
+  }
+
+  return score;
 }
 
 export function generateAssemblyVariants(

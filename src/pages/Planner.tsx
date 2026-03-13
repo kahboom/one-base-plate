@@ -7,8 +7,10 @@ import {
   computeMealOverlap,
   generateMealExplanation,
   computeOutcomeScore,
+  learnCompatibilityPatterns,
+  computePatternScore,
 } from "../planner";
-import type { OverlapResult, MealExplanation } from "../planner";
+import type { OverlapResult, MealExplanation, LearnedPatterns } from "../planner";
 import MealCard from "../components/MealCard";
 import { PageShell, PageHeader, Card, Button, Chip, Section, EmptyState } from "../components/ui";
 
@@ -69,6 +71,13 @@ export default function Planner() {
     return map;
   }, [household]);
 
+  const patterns = useMemo<LearnedPatterns | undefined>(() => {
+    if (!household) return undefined;
+    const outcomes = household.mealOutcomes ?? [];
+    if (outcomes.length === 0) return undefined;
+    return learnCompatibilityPatterns(outcomes, household.baseMeals, household.members, household.ingredients);
+  }, [household]);
+
   const rankedMeals = useMemo(() => {
     if (!household) return [];
     const outcomes = household.mealOutcomes ?? [];
@@ -77,9 +86,11 @@ export default function Planner() {
       const overlapB = mealOverlaps.get(b.id)?.score ?? 0;
       const outcomeA = computeOutcomeScore(a.id, outcomes).score;
       const outcomeB = computeOutcomeScore(b.id, outcomes).score;
-      return (overlapB + outcomeB) - (overlapA + outcomeA);
+      const patternA = patterns ? computePatternScore(a, patterns, household.members, household.ingredients) : 0;
+      const patternB = patterns ? computePatternScore(b, patterns, household.members, household.ingredients) : 0;
+      return (overlapB + outcomeB + patternB) - (overlapA + outcomeA + patternA);
     });
-  }, [household, mealOverlaps]);
+  }, [household, mealOverlaps, patterns]);
 
   const selectedOverlap = selectedMealId
     ? mealOverlaps.get(selectedMealId)
@@ -92,9 +103,10 @@ export default function Planner() {
           household.members,
           household.ingredients,
           household.mealOutcomes ?? [],
+          patterns,
         )
       : undefined,
-  [selectedMeal, household]);
+  [selectedMeal, household, patterns]);
 
   function handleTogglePin(mealId: string) {
     if (!household) return;
@@ -138,6 +150,7 @@ export default function Planner() {
                     ingredients={household.ingredients}
                     overlap={overlap}
                     outcomes={household.mealOutcomes ?? []}
+                    patterns={patterns}
                     pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
                     onPin={() => handleTogglePin(meal.id)}
                     onOpen={() => handleSelectMeal(meal.id)}

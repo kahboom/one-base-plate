@@ -418,7 +418,23 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 21 tests: 7 `computeOutcomeScore` tests (zero, positive, negative, favorite, partial, filtering, mixed), 3 weekly plan tests (ranking, deprioritization, backwards compatibility), 3 explanation tests (favorite, failure, empty), 3 short reason tests (favorite, failure, normal), 3 Planner UI tests (card reason, grid ranking, explanation panel), 2 explainability tests (labels, counts)
 - Verified: tsc --noEmit passes, vitest passes (361 tests), all F015 steps satisfied
 
+### F030 - Planner learns household compatibility patterns from outcomes and quick edits (2026-03-13)
+- Added `learnCompatibilityPatterns` function to planner engine that analyzes outcome history to extract:
+  - **Ingredient-level scores**: Each ingredient gets +1 per success, -1 per failure, +0.25 per partial across all meals using it
+  - **Prep rule success patterns**: Detects when meals with prep rules (e.g. "sauce separate") consistently succeed (≥70% rate with ≥2 samples) and applies a +1.5 boost
+  - **Safe food coverage patterns**: Detects when meals including child safe foods consistently succeed and applies a +1.5 boost
+  - **Protein preference detection**: Tracks which proteins appear in successful vs failed meals to identify preferred choices
+- Added `computePatternScore` function that scores any meal against learned patterns by summing ingredient scores + prep rule boost + safe food boost
+- Integrated pattern scoring into `generateWeeklyPlan` alongside existing overlap, reuse, pinned, and outcome scoring
+- Updated `generateMealExplanation` to accept optional `patterns` parameter — shows up to 3 relevant "Learned:" insights filtered to the meal's ingredients
+- Updated `generateShortReason` to show "Matches household patterns" (score ≥3) or "Clashes with learned preferences" (score ≤-3) when patterns exist, below outcome-based priority
+- Updated `MealCard` component with optional `patterns` prop passed through to `generateShortReason`
+- Updated Planner page: computes patterns via `useMemo`, passes to meal ranking (overlap + outcome + pattern), explanation, and MealCard
+- Updated Home page: computes patterns and integrates into top suggestions ranking and MealCard display
+- All pattern insights use concise, explainable language (e.g. "chicken appears in successful meals", "Meals with 'serve separate' prep tend to work well")
+- Created 27 tests: 8 `learnCompatibilityPatterns` engine tests (empty, positive/negative scoring, ingredient insights, prep rule pattern, safe food pattern, protein preference, partial scores), 5 `computePatternScore` tests (empty, sum, prep rule boost, safe food boost, no boost), 3 weekly plan integration tests (boost, deprioritize, backwards compatible), 4 explanation tests (includes insights, filters unrelated, prep rule insight, concise), 3 short reason tests (matches patterns, clashes, outcome priority), 2 Planner UI tests (grid ranking, explanation panel), 1 Home UI test (suggestions ranking), 1 MealCard reason test
+- Verified: tsc --noEmit passes, vitest passes (388 tests), all F030 steps satisfied
+
 ## Next Task
 - **F020** — User can export or print the weekly plan and grocery list (Phase 2, P2, depends on F010✅, F011✅)
-  - **F030** — Planner learns household compatibility patterns from outcomes and quick edits (Phase 2, P1, depends on F014✅, F015✅, F018✅, F019✅)
-  - Remaining incomplete features with satisfied deps: F020 (Phase 2/P2), F030 (Phase 2/P1)
+  - Only remaining incomplete feature with satisfied deps: F020 (Phase 2/P2)

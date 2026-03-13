@@ -922,7 +922,7 @@
         "Verify meals with stronger household fit are ranked higher while hard-no or repeated-failure paths are deprioritized",
         "Verify ranking changes remain explainable to the user in concise language"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F014",
         "F015",

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { Household } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { computeMealOverlap, computeOutcomeScore } from "../planner";
+import { computeMealOverlap, computeOutcomeScore, learnCompatibilityPatterns, computePatternScore } from "../planner";
 import MealCard from "../components/MealCard";
 import { PageShell, PageHeader, Card, Section, NavBar } from "../components/ui";
 
@@ -20,6 +20,13 @@ export default function Home() {
     setLoaded(true);
   }, [householdId]);
 
+  const patterns = useMemo(() => {
+    if (!household) return undefined;
+    const outcomes = household.mealOutcomes ?? [];
+    if (outcomes.length === 0) return undefined;
+    return learnCompatibilityPatterns(outcomes, household.baseMeals, household.members, household.ingredients);
+  }, [household]);
+
   const topMeals = useMemo(() => {
     if (!household) return [];
     const outcomes = household.mealOutcomes ?? [];
@@ -28,10 +35,11 @@ export default function Home() {
         meal,
         overlap: computeMealOverlap(meal, household.members, household.ingredients),
         outcomeScore: computeOutcomeScore(meal.id, outcomes).score,
+        patternScore: patterns ? computePatternScore(meal, patterns, household.members, household.ingredients) : 0,
       }))
-      .sort((a, b) => (b.overlap.score + b.outcomeScore) - (a.overlap.score + a.outcomeScore))
+      .sort((a, b) => (b.overlap.score + b.outcomeScore + b.patternScore) - (a.overlap.score + a.outcomeScore + a.patternScore))
       .slice(0, 3);
-  }, [household]);
+  }, [household, patterns]);
 
   const pinnedMeals = useMemo(() => {
     if (!household) return [];
@@ -151,6 +159,7 @@ export default function Home() {
                   ingredients={household.ingredients}
                   overlap={overlap}
                   outcomes={household.mealOutcomes ?? []}
+                  patterns={patterns}
                   pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
                   onPin={() => handleTogglePin(meal.id)}
                   detailUrl={`/household/${householdId}/meal/${meal.id}`}
