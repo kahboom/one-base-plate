@@ -55,7 +55,7 @@ export default function Home() {
                   <div
                     key={label}
                     data-testid={`strip-${label.toLowerCase()}`}
-                    className="min-w-[90px] flex-shrink-0 rounded-sm border border-border-light bg-surface p-2 text-center shadow-card"
+                    className="min-w-[80px] flex-shrink-0 rounded-md border border-border-light bg-surface px-2 py-3 text-center shadow-card"
                   >
                     <strong className="text-sm font-semibold text-text-primary">{label}</strong>
                     <p className="mt-1 text-xs text-text-secondary">
@@ -87,7 +87,7 @@ export default function Home() {
         <Section>
           <div data-testid="top-suggestions">
             <h2 className="mb-3 text-xl font-semibold text-text-primary">Top suggestions</h2>
-            <div className="flex flex-wrap gap-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {topMeals.map(({ meal, overlap }) => (
                 <MealCard
                   key={meal.id}
@@ -104,11 +104,8 @@ export default function Home() {
 
       <NavBar>
         <Link to={`/household/${householdId}/weekly`} className="text-sm font-medium text-brand hover:underline">Weekly planner</Link>
-        <span className="text-text-muted">|</span>
         <Link to={`/household/${householdId}/planner`} className="text-sm font-medium text-brand hover:underline">Meal planner</Link>
-        <span className="text-text-muted">|</span>
         <Link to={`/household/${householdId}`} className="text-sm font-medium text-brand hover:underline">Household setup</Link>
-        <span className="text-text-muted">|</span>
         <Link to="/" className="text-sm font-medium text-brand hover:underline">All households</Link>
       </NavBar>
     </PageShell>

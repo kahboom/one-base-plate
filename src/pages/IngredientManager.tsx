@@ -81,7 +81,7 @@ function IngredientForm({
         <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
           <input
             type="checkbox"
-            className="h-[18px] w-[18px] accent-brand"
+            className="h-5 w-5 accent-brand"
             checked={ingredient.freezerFriendly}
             onChange={(e) =>
               onChange({ ...ingredient, freezerFriendly: e.target.checked })
@@ -93,7 +93,7 @@ function IngredientForm({
         <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
           <input
             type="checkbox"
-            className="h-[18px] w-[18px] accent-brand"
+            className="h-5 w-5 accent-brand"
             checked={ingredient.babySafeWithAdaptation}
             onChange={(e) =>
               onChange({ ...ingredient, babySafeWithAdaptation: e.target.checked })

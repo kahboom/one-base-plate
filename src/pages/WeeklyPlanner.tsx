@@ -121,7 +121,7 @@ export default function WeeklyPlanner() {
       {household.baseMeals.length === 0 ? (
         <EmptyState>No base meals available. Add meals before generating a plan.</EmptyState>
       ) : (
-        <div className="mb-4 flex items-center gap-3">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
             Days to plan:
             <Select
@@ -140,7 +140,7 @@ export default function WeeklyPlanner() {
         </div>
       )}
 
-      <div data-testid="day-cards" className="mt-4 flex flex-wrap gap-4">
+      <div data-testid="day-cards" className="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {daySlots.map((dayLabel) => {
           const dayIndex = plan?.days.findIndex((d) => d.day === dayLabel) ?? -1;
           const dayPlan = dayIndex >= 0 ? plan!.days[dayIndex]! : null;
@@ -174,7 +174,7 @@ export default function WeeklyPlanner() {
         <Section>
           <div data-testid="suggested-tray" className="mt-6">
             <h2 className="mb-3 text-xl font-semibold text-text-primary">Suggested meals</h2>
-            <div className="flex flex-wrap gap-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {[...household.baseMeals]
                 .map((meal) => ({
                   meal,
@@ -230,7 +230,7 @@ function DayCard({
   return (
     <div
       data-testid={`day-${dayLabel.toLowerCase()}`}
-      className={`min-w-[140px] flex-1 rounded-md p-3 shadow-card ${
+      className={`rounded-md p-4 shadow-card ${
         isEmpty
           ? "border border-dashed border-border-default bg-bg"
           : "border border-border-light bg-surface"
@@ -242,7 +242,7 @@ function DayCard({
         <>
           <p className="mt-1 text-sm text-text-primary">{mealName}</p>
           <small className="text-xs text-text-muted">Overlap: {overlapLabel}</small>
-          <div className="mt-1 flex gap-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             <Button
               small
               onClick={() => setExpanded(!expanded)}

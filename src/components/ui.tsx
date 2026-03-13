@@ -13,7 +13,7 @@ export function PageShell({ children }: { children: ReactNode }) {
 export function PageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-8">
-      <h1 className="text-3xl font-bold tracking-tight text-text-primary">{title}</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">{title}</h1>
       {subtitle && <p className="mt-1 text-base text-text-muted">{subtitle}</p>}
     </div>
   );
@@ -50,7 +50,7 @@ export function CardGrid({ children, compact = false }: { children: ReactNode; c
 type ButtonVariant = "default" | "primary" | "danger" | "ghost";
 
 const btnBase =
-  "inline-flex items-center justify-center font-medium rounded-sm transition-colors cursor-pointer min-h-[40px] text-sm focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2";
+  "inline-flex items-center justify-center font-medium rounded-sm transition-colors cursor-pointer min-h-[44px] text-sm focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2";
 
 const btnVariants: Record<ButtonVariant, string> = {
   default:
@@ -74,7 +74,7 @@ export function Button({
 }) {
   return (
     <button
-      className={`${btnBase} ${small ? "px-2 py-1 text-xs min-h-[32px]" : "px-4 py-2"} ${btnVariants[variant]} ${className}`}
+      className={`${btnBase} ${small ? "px-3 py-1.5 text-xs min-h-[36px]" : "px-4 py-2"} ${btnVariants[variant]} ${className}`}
       {...props}
     />
   );
@@ -87,7 +87,7 @@ export function Input({
 }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`w-full rounded-sm border border-border-default bg-surface px-4 py-2 text-base text-text-primary min-h-[40px] transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light ${className}`}
+      className={`w-full rounded-sm border border-border-default bg-surface px-4 py-2 text-base text-text-primary min-h-[44px] transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light ${className}`}
       {...props}
     />
   );
@@ -99,7 +99,7 @@ export function Select({
 }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={`rounded-sm border border-border-default bg-surface px-4 py-2 text-base text-text-primary min-h-[40px] transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light ${className}`}
+      className={`rounded-sm border border-border-default bg-surface px-4 py-2 text-base text-text-primary min-h-[44px] transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light ${className}`}
       {...props}
     />
   );
@@ -168,7 +168,7 @@ export function Section({ title, children }: { title?: string; children: ReactNo
 /* ---------- Nav bar ---------- */
 export function NavBar({ children }: { children: ReactNode }) {
   return (
-    <nav className="mt-8 flex flex-wrap items-center gap-3 border-t border-border-light pt-4">
+    <nav className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border-light pt-4">
       {children}
     </nav>
   );
@@ -177,7 +177,7 @@ export function NavBar({ children }: { children: ReactNode }) {
 /* ---------- Form row ---------- */
 export function FormRow({ children }: { children: ReactNode }) {
   return (
-    <div className="mb-2 flex flex-wrap items-end gap-2">
+    <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
       {children}
     </div>
   );
@@ -185,5 +185,5 @@ export function FormRow({ children }: { children: ReactNode }) {
 
 /* ---------- Action group ---------- */
 export function ActionGroup({ children }: { children: ReactNode }) {
-  return <div className="mt-8 flex gap-3">{children}</div>;
+  return <div className="mt-8 flex flex-col gap-3 sm:flex-row">{children}</div>;
 }

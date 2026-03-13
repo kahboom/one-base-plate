@@ -180,13 +180,9 @@ export default function HouseholdSetup() {
       {!isNew && (
         <NavBar>
           <Link to={`/household/${id}/ingredients`} className="text-sm font-medium text-brand hover:underline">Manage ingredients</Link>
-          <span className="text-text-muted">|</span>
           <Link to={`/household/${id}/meals`} className="text-sm font-medium text-brand hover:underline">Manage base meals</Link>
-          <span className="text-text-muted">|</span>
           <Link to={`/household/${id}/planner`} className="text-sm font-medium text-brand hover:underline">Meal planner</Link>
-          <span className="text-text-muted">|</span>
           <Link to={`/household/${id}/weekly`} className="text-sm font-medium text-brand hover:underline">Weekly planner</Link>
-          <span className="text-text-muted">|</span>
           <Link to={`/household/${id}/home`} className="text-sm font-medium text-brand hover:underline">Home</Link>
         </NavBar>
       )}

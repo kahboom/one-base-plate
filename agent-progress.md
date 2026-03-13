@@ -181,5 +181,24 @@
 - Created 15 new tests: 3 PageHeader consistency, 3 FieldLabel stacked layout, 7 empty state verification, 2 contrast/focus/flow integrity
 - Verified: tsc --noEmit passes, vitest passes (145 tests), vite build succeeds
 
+### F033 - Core screens are mobile-friendly with touch-first responsive layouts (2026-03-13)
+- Reviewed all styled screens and shared primitives for mobile width issues
+- **ui.tsx touch targets**: Bumped Button min-h from 40px→44px, small buttons from 32px→36px with wider padding (px-3 py-1.5). Input/Select min-h bumped to 44px for finger-friendly tapping
+- **ui.tsx responsive PageHeader**: Title uses `text-2xl sm:text-3xl` for smaller mobile headings
+- **ui.tsx stacking layouts**: ActionGroup and FormRow now use `flex-col sm:flex-row` to stack vertically on mobile
+- **NavBar**: Increased gap spacing (`gap-x-4 gap-y-2`) and removed all pipe separator `|` spans from HouseholdSetup and Home nav links for clean wrap behavior on narrow screens
+- **Planner meal card grid**: Converted from `flex flex-wrap` to responsive `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+- **WeeklyPlanner day cards**: Converted from `flex flex-wrap` with `min-w/flex-1` to responsive `grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4` with increased card padding
+- **WeeklyPlanner suggested tray**: Converted to responsive grid layout
+- **WeeklyPlanner controls**: Stacks vertically on mobile with `flex-col sm:flex-row`
+- **Home top suggestions**: Converted to responsive grid `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+- **Home weekly strip**: Touch-friendly card sizing with `py-3` padding, maintains horizontal scroll (`overflow-x-auto`)
+- **HouseholdList cards**: Stack name/actions vertically on narrow screens with `flex-col sm:flex-row`
+- **MealCard**: Full-width on mobile (`w-full sm:w-auto`) so cards don't overflow narrow screens
+- **Checkboxes**: Increased from h-[18px]/w-[18px] to h-5/w-5 for better touch targets
+- **Viewport meta**: Confirmed `width=device-width, initial-scale=1.0` present in index.html
+- Created 13 new tests: touch target sizes, responsive header, card layouts, NavBar pipe removal, ActionGroup stacking, weekly strip scroll, planner tap interaction, viewport meta
+- Verified: tsc --noEmit passes, vitest passes (158 tests), vite build succeeds
+
 ## Next Task
-- **F033** — Core screens are mobile-friendly with touch-first responsive layouts
+- **F031** — Agent audits uiSpec alignment after the shared styling and mobile foundation are in place

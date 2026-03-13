@@ -163,7 +163,7 @@ function MealForm({
         <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
           <input
             type="checkbox"
-            className="h-[18px] w-[18px] accent-brand"
+            className="h-5 w-5 accent-brand"
             checked={meal.rescueEligible}
             onChange={(e) => onChange({ ...meal, rescueEligible: e.target.checked })}
           />

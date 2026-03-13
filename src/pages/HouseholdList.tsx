@@ -34,7 +34,7 @@ export default function HouseholdList() {
 
         <div className="space-y-3">
           {households.map((h) => (
-            <Card key={h.id} className="flex items-center justify-between">
+            <Card key={h.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <Link to={`/household/${h.id}/home`} className="text-lg font-semibold text-brand hover:underline">
                   {h.name}

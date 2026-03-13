@@ -791,7 +791,7 @@
         "Verify the week view works as a horizontal scroll or stacked-card layout on mobile and that planner interactions still support tap-to-assign.",
         "Adjust any existing layouts or components that became brittle during the styling refactor instead of layering one-off fixes."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F025"
       ],

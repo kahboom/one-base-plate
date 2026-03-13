@@ -97,7 +97,7 @@ export default function Planner() {
         <EmptyState>No base meals available. Add meals first.</EmptyState>
       ) : (
         <Section title="Choose a meal">
-          <div data-testid="meal-card-grid" className="mb-6 flex flex-wrap gap-4">
+          <div data-testid="meal-card-grid" className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {rankedMeals.map((meal) => {
               const overlap = mealOverlaps.get(meal.id);
               const isSelected = meal.id === selectedMealId;

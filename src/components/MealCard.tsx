@@ -44,7 +44,7 @@ export default function MealCard({
   return (
     <div
       data-testid={`meal-card-${meal.id}`}
-      className={`rounded-md border border-border-light bg-surface shadow-card transition-shadow hover:shadow-card-hover ${compact ? "min-w-[160px] p-3" : "min-w-[220px] p-4"}`}
+      className={`w-full rounded-md border border-border-light bg-surface shadow-card transition-shadow hover:shadow-card-hover sm:w-auto ${compact ? "sm:min-w-[160px] p-3" : "sm:min-w-[220px] p-4"}`}
     >
       <div className="mb-2">
         <strong className={compact ? "text-[0.95rem]" : "text-lg"}>
