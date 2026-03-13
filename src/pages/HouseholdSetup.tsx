@@ -183,6 +183,8 @@ export default function HouseholdSetup() {
           <Link to={`/household/${id}/ingredients`}>Manage ingredients</Link>
           {" | "}
           <Link to={`/household/${id}/meals`}>Manage base meals</Link>
+          {" | "}
+          <Link to={`/household/${id}/planner`}>Meal planner</Link>
         </div>
       )}
 

@@ -2,8 +2,8 @@
   "project": {
     "name": "OneBasePlate",
     "slug": "one-base-plate",
-    "version": "0.1.0",
-    "status": "draft",
+    "version": "0.2.0",
+    "status": "draft-finalized",
     "goal": "Reduce grocery stress, separate cooking events, takeaway reliance, and food waste in households with overlapping but conflicting food preferences, including ARFID-style preparation constraints, picky children, and babies requiring texture-adapted food.",
     "northStar": "One base meal, multiple household-specific assemblies, with a merged grocery list and low-decision rescue mode.",
     "primarySuccessMetrics": [
@@ -30,7 +30,8 @@
       "Persist progress in a progress log plus git history so future sessions can recover context quickly.",
       "Start each session by reading the feature list, recent progress, and repository state.",
       "Run end-to-end verification before marking any feature as passing.",
-      "Favor deterministic fixtures and explicit acceptance steps over vague goals."
+      "Favor deterministic fixtures and explicit acceptance steps over vague goals.",
+      "When a feature references uiSpec screens, read those screen definitions before implementation and verification."
     ],
     "requiredArtifacts": [
       "PRD.json",
@@ -39,12 +40,15 @@
       "fixtures/households/*.json",
       "fixtures/meals/*.json",
       "tests/e2e/*",
-      "README.md"
+      "README.md",
+      "onebase-ui-spec.json",
+      "uiSpec (embedded in PRD.json)"
     ],
     "sessionLoop": [
       "Run init.sh and verify the app boots successfully.",
       "Read agent-progress.md and recent git log entries.",
       "Read PRD.json and select the highest-priority feature with passes=false and no blocked dependencies.",
+      "Read any uiSpec screen definitions referenced by the selected feature before making changes.",
       "Implement only that feature and any strictly necessary enabling refactor.",
       "Run unit tests and end-to-end checks relevant to the feature.",
       "Update only the affected passes fields and append a short progress summary.",
@@ -99,7 +103,10 @@
     "assemblyVariant": "A per-person presentation of the base meal that respects preferences, preparation constraints, and texture needs.",
     "safeFood": "A reliably accepted ingredient or meal component for a person.",
     "rescueMeal": "A low-effort meal generated for high-stress or low-time situations using pantry/freezer staples first.",
-    "overlapScore": "A score showing how many household members can eat a given ingredient or base meal with acceptable modifications."
+    "overlapScore": "A score showing how many household members can eat a given ingredient or base meal with acceptable modifications.",
+    "multiProteinBaseMeal": "A base meal with one shared structure and multiple selectable protein paths so household members can receive different proteins without splitting the meal into separate dinners.",
+    "recipeLink": "An optional external or internal link attached to a base meal to support repeatable preparation, shortcuts, or meal-kit references.",
+    "rescueMode": "A planning mode for nights when time, energy, or household tolerance is low, prioritizing the fastest acceptable dinner using staples first."
   },
   "dataModel": {
     "entities": [
@@ -126,7 +133,11 @@
           "tags[]",
           "shelfLifeHint",
           "freezerFriendly",
-          "babySafeWithAdaptation"
+          "babySafeWithAdaptation",
+          "proteinRole",
+          "sauceRole",
+          "linkableRecipes[]",
+          "notes"
         ]
       },
       {
@@ -139,7 +150,18 @@
           "estimatedTimeMinutes",
           "difficulty",
           "rescueEligible",
-          "wasteReuseHints[]"
+          "wasteReuseHints[]",
+          "structureType",
+          "proteinOptions[]",
+          "defaultProteinOptionIds[]",
+          "carbOptions[]",
+          "optionalSauces[]",
+          "flavorUpgrades[]",
+          "recipeLinks[]",
+          "notes",
+          "visualTags[]",
+          "effortLevel",
+          "overlapHints[]"
         ]
       },
       {
@@ -150,7 +172,14 @@
           "memberId",
           "instructions[]",
           "requiresExtraPrep",
-          "safeFoodIncluded"
+          "safeFoodIncluded",
+          "selectedProteinOptionId",
+          "selectedCarbOptionId",
+          "selectedSauceOptionId",
+          "variantLabel",
+          "notes",
+          "fallbackSafeFoodIds[]",
+          "confidence"
         ]
       },
       {
@@ -160,7 +189,11 @@
           "days[]",
           "selectedBaseMeals[]",
           "generatedGroceryList[]",
-          "notes"
+          "notes",
+          "weekStartDate",
+          "dayAssignments[]",
+          "calendarViewState",
+          "draftSuggestions[]"
         ]
       }
     ]
@@ -178,7 +211,11 @@
       "Prefer local-first storage for rapid MVP delivery and privacy.",
       "Keep the rule engine explicit and deterministic before adding AI generation.",
       "Ship fixtures for 3-5 representative households to support repeatable development and testing.",
-      "Treat the PRD feature list as the source of truth for incremental implementation."
+      "Treat the PRD feature list as the source of truth for incremental implementation.",
+      "Model multi-protein meals explicitly so the planner can treat one shared structure as a single dinner with different protein paths.",
+      "Keep recipe links and preparation notes on BaseMeal so service shortcuts and household-specific tips can persist.",
+      "Implement the weekly planner as a visual mini-calendar with meal cards before adding advanced learning behaviors.",
+      "Treat the companion UI spec as the screen-level source of truth for layout, readability, and interaction polish."
     ]
   },
   "features": [
@@ -199,6 +236,24 @@
       "dependencies": []
     },
     {
+      "id": "F031",
+      "phase": 0,
+      "priority": "P0",
+      "category": "agent-harness",
+      "description": "Agent uses embedded uiSpec as part of feature verification for all user-facing screens",
+      "steps": [
+        "Read the uiSpec section in PRD.json",
+        "Map existing features to referenced screens using screenToFeatureMap and acceptanceRefs",
+        "Verify user-facing features are not marked passing until matching screen acceptance criteria are met",
+        "Record any UI-specific follow-up work in agent-progress.md when a feature passes functionally but not visually",
+        "Verify PRD.json remains the single source of truth for both task order and screen-level requirements"
+      ],
+      "passes": false,
+      "dependencies": [
+        "F001"
+      ]
+    },
+    {
       "id": "F002",
       "phase": 0,
       "priority": "P0",
@@ -209,10 +264,15 @@
         "Add at least four members with adult, toddler, and baby roles",
         "Save the household profile",
         "Re-open the household",
-        "Verify all members persist correctly"
+        "Verify all members persist correctly and the Household Setup screen still feels guided rather than form-heavy."
       ],
       "passes": true,
-      "dependencies": ["F001"]
+      "dependencies": [
+        "F001"
+      ],
+      "acceptanceRefs": [
+        "S006"
+      ]
     },
     {
       "id": "F003",
@@ -225,10 +285,15 @@
         "Add safe foods, hard-no foods, and preparation rules",
         "Save the profile",
         "Re-open the profile",
-        "Verify all constraints are preserved exactly"
+        "Verify all constraints are preserved exactly and quick edit entry points remain available on Household Setup."
       ],
       "passes": true,
-      "dependencies": ["F002"]
+      "dependencies": [
+        "F002"
+      ],
+      "acceptanceRefs": [
+        "S006"
+      ]
     },
     {
       "id": "F004",
@@ -244,7 +309,9 @@
         "Verify ingredients are available to the planner"
       ],
       "passes": true,
-      "dependencies": ["F002"]
+      "dependencies": [
+        "F002"
+      ]
     },
     {
       "id": "F005",
@@ -256,11 +323,17 @@
         "Navigate to base meals",
         "Create a meal from components such as protein, carb, and veg",
         "Set time and rescue eligibility metadata",
+        "Verify the Base Meal Editor supports structure type, protein options, carb options, and rescue metadata without a dense form layout.",
         "Save the base meal",
-        "Verify it appears in meal selection"
+        "Verify it appears in meal selection and can be reopened from the Base Meal Editor."
       ],
       "passes": true,
-      "dependencies": ["F004"]
+      "dependencies": [
+        "F004"
+      ],
+      "acceptanceRefs": [
+        "S007"
+      ]
     },
     {
       "id": "F006",
@@ -272,11 +345,19 @@
         "Open the planner for a household with saved constraints",
         "Select or generate a base meal",
         "View assembly instructions for each member",
+        "Verify meal cards and meal detail views present the shared base meal and per-person variants clearly.",
         "Verify each member receives a compatible version or an explicit fallback",
-        "Verify the plan clearly identifies shared versus extra preparation"
+        "Verify the plan clearly identifies shared versus extra preparation and reads as one base meal with multiple assemblies."
       ],
-      "passes": false,
-      "dependencies": ["F003", "F005"]
+      "passes": true,
+      "dependencies": [
+        "F003",
+        "F005"
+      ],
+      "acceptanceRefs": [
+        "S002",
+        "S004"
+      ]
     },
     {
       "id": "F007",
@@ -292,7 +373,12 @@
         "Verify the baby variant stays tied to the same base meal where possible"
       ],
       "passes": false,
-      "dependencies": ["F006"]
+      "dependencies": [
+        "F006"
+      ],
+      "acceptanceRefs": [
+        "S004"
+      ]
     },
     {
       "id": "F008",
@@ -308,7 +394,12 @@
         "Verify the output never silently omits toddler compatibility"
       ],
       "passes": false,
-      "dependencies": ["F006"]
+      "dependencies": [
+        "F006"
+      ],
+      "acceptanceRefs": [
+        "S004"
+      ]
     },
     {
       "id": "F009",
@@ -318,13 +409,19 @@
       "description": "Planner computes overlap score for ingredients and meals",
       "steps": [
         "Open ingredient or meal details",
-        "View overlap score and compatibility summary",
+        "View overlap score, compatibility summary, and quick visual indicators on a meal card or details view.",
         "Verify score reflects how many household members can eat it directly or with acceptable adaptation",
         "Verify members with hard-no conflicts are clearly identified",
         "Verify overlap score is used in meal ranking"
       ],
       "passes": false,
-      "dependencies": ["F003", "F005"]
+      "dependencies": [
+        "F003",
+        "F005"
+      ],
+      "acceptanceRefs": [
+        "S002"
+      ]
     },
     {
       "id": "F010",
@@ -334,13 +431,21 @@
       "description": "User can generate a low-decision weekly plan from available meals and ingredients",
       "steps": [
         "Open weekly planning",
+        "Verify the Home screen can link directly into weekly planning and the weekly planner uses a visual mini-calendar rather than a table.",
         "Generate a five- or seven-day plan",
         "Verify each day contains a base meal and per-person variants",
         "Verify repeated ingredients are reused intentionally across the week",
         "Verify the plan can be saved and re-opened"
       ],
       "passes": false,
-      "dependencies": ["F006", "F009"]
+      "dependencies": [
+        "F006",
+        "F009"
+      ],
+      "acceptanceRefs": [
+        "S001",
+        "S003"
+      ]
     },
     {
       "id": "F011",
@@ -353,10 +458,15 @@
         "Open the grocery list",
         "Verify repeated ingredients are consolidated",
         "Verify pantry or already-owned items can be excluded",
-        "Verify the list is readable and grouped by category"
+        "Verify the list is readable, grouped by category, and links back to meals using each ingredient where relevant."
       ],
       "passes": false,
-      "dependencies": ["F010"]
+      "dependencies": [
+        "F010"
+      ],
+      "acceptanceRefs": [
+        "S008"
+      ]
     },
     {
       "id": "F012",
@@ -366,13 +476,22 @@
       "description": "Rescue mode generates the fastest acceptable meal using household staples first",
       "steps": [
         "Open rescue mode",
+        "Verify rescue mode is reachable in one tap from Home and presents a simpler flow than the standard planner.",
         "Choose a scenario such as low-energy, low-time, or everyone-melting-down",
         "Generate a rescue meal",
         "Verify the output prioritizes freezer or pantry staples when available",
-        "Verify the output still includes per-person assemblies"
+        "Verify the output still includes per-person assemblies and can be added to tonight or the week."
       ],
       "passes": false,
-      "dependencies": ["F003", "F004", "F006"]
+      "dependencies": [
+        "F003",
+        "F004",
+        "F006"
+      ],
+      "acceptanceRefs": [
+        "S001",
+        "S005"
+      ]
     },
     {
       "id": "F013",
@@ -388,7 +507,9 @@
         "Verify future planning can prioritize pinned meals"
       ],
       "passes": false,
-      "dependencies": ["F006"]
+      "dependencies": [
+        "F006"
+      ]
     },
     {
       "id": "F014",
@@ -404,7 +525,9 @@
         "Verify the outcome is persisted and visible"
       ],
       "passes": false,
-      "dependencies": ["F010"]
+      "dependencies": [
+        "F010"
+      ]
     },
     {
       "id": "F015",
@@ -420,7 +543,9 @@
         "Verify ranking remains explainable to the user"
       ],
       "passes": false,
-      "dependencies": ["F014"]
+      "dependencies": [
+        "F014"
+      ]
     },
     {
       "id": "F016",
@@ -436,7 +561,9 @@
         "Verify no screen hangs or crashes during normal flows"
       ],
       "passes": false,
-      "dependencies": ["F001"]
+      "dependencies": [
+        "F001"
+      ]
     },
     {
       "id": "F017",
@@ -452,7 +579,10 @@
         "Verify grocery list generation is covered"
       ],
       "passes": false,
-      "dependencies": ["F001", "F012"]
+      "dependencies": [
+        "F001",
+        "F012"
+      ]
     },
     {
       "id": "F018",
@@ -465,10 +595,16 @@
         "Inspect the explanation panel",
         "Verify the app states why the meal fits the household",
         "Verify any extra prep or fallback requirements are surfaced",
-        "Verify the explanation is brief and understandable"
+        "Verify the explanation is brief, understandable, and visible directly on meal cards or in one tap."
       ],
       "passes": false,
-      "dependencies": ["F006", "F009"]
+      "dependencies": [
+        "F006",
+        "F009"
+      ],
+      "acceptanceRefs": [
+        "S002"
+      ]
     },
     {
       "id": "F019",
@@ -481,10 +617,16 @@
         "Edit one member's constraints",
         "Save changes",
         "Regenerate the meal plan",
-        "Verify only the relevant compatibility results change"
+        "Verify only the relevant compatibility results change and the edit path avoids reopening the full household flow."
       ],
       "passes": false,
-      "dependencies": ["F003", "F006"]
+      "dependencies": [
+        "F003",
+        "F006"
+      ],
+      "acceptanceRefs": [
+        "S006"
+      ]
     },
     {
       "id": "F020",
@@ -497,32 +639,304 @@
         "Choose export or print",
         "Verify the plan includes daily meals, per-person variants, and grocery list",
         "Verify formatting is readable",
-        "Verify exported output matches the saved plan"
+        "Verify exported output matches the saved plan and grocery list formatting remains clean for printing."
       ],
       "passes": false,
-      "dependencies": ["F010", "F011"]
+      "dependencies": [
+        "F010",
+        "F011"
+      ],
+      "acceptanceRefs": [
+        "S008"
+      ]
+    },
+    {
+      "id": "F021",
+      "phase": 1,
+      "priority": "P0",
+      "category": "ux",
+      "description": "Weekly planning screen displays meals in a visual mini-calendar layout",
+      "steps": [
+        "Open weekly planning screen",
+        "Display current week as seven visual day cards in the Weekly Planner and as a compact strip when shown from Home.",
+        "Show the base meal assigned to each day",
+        "Allow empty days to display suggested meals",
+        "Verify the layout is readable on both desktop and mobile screens"
+      ],
+      "passes": false,
+      "dependencies": [
+        "F010"
+      ],
+      "acceptanceRefs": [
+        "S001",
+        "S003"
+      ]
+    },
+    {
+      "id": "F022",
+      "phase": 1,
+      "priority": "P0",
+      "category": "ux",
+      "description": "User can drag meal cards into the weekly plan calendar",
+      "steps": [
+        "Open weekly planner",
+        "Display suggested meal cards below the week grid",
+        "Drag a meal card onto a day slot",
+        "Verify the meal attaches to that day",
+        "Verify the weekly plan updates immediately and the interaction also supports tap-to-assign."
+      ],
+      "passes": false,
+      "dependencies": [
+        "F021",
+        "F023"
+      ],
+      "acceptanceRefs": [
+        "S002",
+        "S003"
+      ]
+    },
+    {
+      "id": "F023",
+      "phase": 1,
+      "priority": "P0",
+      "category": "ux",
+      "description": "Meals are displayed as visually readable cards with compatibility indicators",
+      "steps": [
+        "Open meal suggestions",
+        "Render each meal as a large card",
+        "Display meal name, prep time, effort level, and overlap score.",
+        "Display compatibility icons for ARFID adult, toddler, and baby",
+        "Verify cards remain readable, tappable, and draggable on mobile."
+      ],
+      "passes": false,
+      "dependencies": [
+        "F006",
+        "F009"
+      ],
+      "acceptanceRefs": [
+        "S002"
+      ]
+    },
+    {
+      "id": "F024",
+      "phase": 1,
+      "priority": "P1",
+      "category": "ux",
+      "description": "Planner shows visual overlap indicators and trade-offs for meals",
+      "steps": [
+        "Open a meal card",
+        "Display compatibility indicators, trade-offs, and state chips such as high overlap or needs extra prep.",
+        "Highlight meals with high overlap",
+        "Flag meals requiring extra preparation",
+        "Verify indicators are clear and quickly understandable"
+      ],
+      "passes": false,
+      "dependencies": [
+        "F009",
+        "F023"
+      ],
+      "acceptanceRefs": [
+        "S002"
+      ]
+    },
+    {
+      "id": "F025",
+      "phase": 1,
+      "priority": "P0",
+      "category": "ux",
+      "description": "App UI improves readability with card layout, spacing, larger typography, and stronger contrast",
+      "steps": [
+        "Audit primary screens including Home, Weekly Planner, Meal Cards, Rescue Mode, Household Setup, Base Meal Editor, and Grocery List.",
+        "Replace dense lists with card-based layout",
+        "Increase font sizes and spacing",
+        "Ensure color contrast meets accessibility standards",
+        "Verify users can scan meal information quickly without reading long text"
+      ],
+      "passes": false,
+      "dependencies": [
+        "F023"
+      ],
+      "acceptanceRefs": [
+        "S001",
+        "S002",
+        "S003",
+        "S005",
+        "S006",
+        "S007",
+        "S008"
+      ]
+    },
+    {
+      "id": "F026",
+      "phase": 1,
+      "priority": "P1",
+      "category": "ux",
+      "description": "Weekly planner displays preparation effort balance across the week",
+      "steps": [
+        "Open weekly planner",
+        "Display effort labels such as low, medium, or higher effort",
+        "Show estimated prep time for each meal",
+        "Highlight days with multiple high-effort meals",
+        "Verify users can rebalance meals easily from the Weekly Planner."
+      ],
+      "passes": false,
+      "dependencies": [
+        "F021",
+        "F023"
+      ],
+      "acceptanceRefs": [
+        "S003"
+      ]
+    },
+    {
+      "id": "F027",
+      "phase": 1,
+      "priority": "P2",
+      "category": "ux",
+      "description": "Planner provides satisfying visual feedback when meals are added to the week",
+      "steps": [
+        "Drag a meal onto a day",
+        "Display a brief confirmation animation, highlight, or satisfying state change.",
+        "Update overlap indicators and grocery list preview",
+        "Verify feedback is subtle and not distracting",
+        "Verify interactions feel responsive, satisfying, and subtle rather than distracting."
+      ],
+      "passes": false,
+      "dependencies": [
+        "F022"
+      ],
+      "acceptanceRefs": [
+        "S003"
+      ]
+    },
+    {
+      "id": "F028",
+      "phase": 1,
+      "priority": "P0",
+      "category": "functional",
+      "description": "Planner supports multi-protein base meals under one shared meal structure",
+      "steps": [
+        "Open the Base Meal Editor",
+        "Create a base meal with one shared structure and at least two protein options",
+        "Save the meal without duplicating it into separate recipe records",
+        "Open Meal Detail and verify the meal reads as one shared structure with multiple protein paths",
+        "Generate a plan and verify per-member variants can choose different protein options under the same base meal"
+      ],
+      "passes": false,
+      "dependencies": [
+        "F005",
+        "F006"
+      ],
+      "acceptanceRefs": [
+        "S004",
+        "S007"
+      ]
+    },
+    {
+      "id": "F029",
+      "phase": 1,
+      "priority": "P1",
+      "category": "functional",
+      "description": "Base meals can store recipe links and preparation notes",
+      "steps": [
+        "Open the Base Meal Editor",
+        "Add one or more recipe links and freeform preparation notes to a base meal",
+        "Save the meal",
+        "Open Meal Detail and verify recipe links and notes are visible but do not dominate the page",
+        "Verify recipe links support multiple sources and notes support reminders such as Gousto versions or toddler adaptations"
+      ],
+      "passes": false,
+      "dependencies": [
+        "F005"
+      ],
+      "acceptanceRefs": [
+        "S004",
+        "S007"
+      ]
+    },
+    {
+      "id": "F030",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "Planner learns household compatibility patterns from outcomes and quick edits",
+      "steps": [
+        "Record several successful and failed meal outcomes plus one or more quick member edits",
+        "Generate a new recommendation or weekly plan",
+        "Verify the planner recognizes patterns such as sauce-separate preferences, repeated toddler safe foods, or preferred protein choices",
+        "Verify meals with stronger household fit are ranked higher while hard-no or repeated-failure paths are deprioritized",
+        "Verify ranking changes remain explainable to the user in concise language"
+      ],
+      "passes": false,
+      "dependencies": [
+        "F014",
+        "F015",
+        "F018",
+        "F019"
+      ],
+      "acceptanceRefs": [
+        "S001",
+        "S002",
+        "S003",
+        "S006"
+      ]
     }
   ],
   "milestones": [
     {
       "id": "M1",
       "name": "Scaffold + household constraints",
-      "includes": ["F001", "F002", "F003", "F004", "F016"]
+      "includes": [
+        "F001",
+        "F002",
+        "F003",
+        "F004",
+        "F016",
+        "F031"
+      ]
     },
     {
       "id": "M2",
       "name": "Base meal planning MVP",
-      "includes": ["F005", "F006", "F007", "F008", "F009", "F018", "F019"]
+      "includes": [
+        "F005",
+        "F006",
+        "F007",
+        "F008",
+        "F009",
+        "F018",
+        "F019",
+        "F021",
+        "F023",
+        "F024",
+        "F025",
+        "F028",
+        "F029"
+      ]
     },
     {
       "id": "M3",
       "name": "Weekly planning + grocery list",
-      "includes": ["F010", "F011", "F012", "F017"]
+      "includes": [
+        "F010",
+        "F011",
+        "F012",
+        "F017",
+        "F022",
+        "F026",
+        "F027"
+      ]
     },
     {
       "id": "M4",
       "name": "Learning loop + convenience features",
-      "includes": ["F013", "F014", "F015", "F020"]
+      "includes": [
+        "F013",
+        "F014",
+        "F015",
+        "F020",
+        "F030"
+      ]
     }
   ],
   "fixtureHouseholds": [
@@ -547,6 +961,7 @@
   ],
   "implementationOrder": [
     "F001",
+    "F031",
     "F002",
     "F003",
     "F004",
@@ -558,12 +973,307 @@
     "F019",
     "F009",
     "F010",
+    "F021",
+    "F023",
+    "F024",
+    "F025",
+    "F028",
+    "F029",
+    "F022",
+    "F026",
+    "F027",
     "F011",
     "F012",
     "F017",
     "F013",
     "F014",
     "F015",
+    "F030",
     "F020"
+  ],
+  "uiSpec": {
+    "intent": "Embedded screen-level UX requirements for agents that implement features sequentially from this PRD. Agents must consult the referenced screen definitions before marking related UX or functional features as passing.",
+    "productPrinciples": [
+      "Reduce stress, not merely organize it.",
+      "Every core screen should help the user feel more capable within 5 seconds of opening it.",
+      "Prioritize one obvious action per screen.",
+      "Use card-first layouts, large typography, and strong visual hierarchy.",
+      "Make planning feel satisfying without streaks, guilt, or pressure."
+    ],
+    "designSystemDirection": {
+      "tone": [
+        "warm",
+        "supportive",
+        "clear",
+        "lightly playful",
+        "non-judgmental"
+      ],
+      "layout": [
+        "rounded cards",
+        "generous spacing",
+        "large tap targets",
+        "minimal chrome",
+        "short microcopy"
+      ],
+      "interactionStyle": [
+        "tap-to-expand",
+        "drag-and-drop",
+        "subtle motion",
+        "gentle highlights",
+        "clear empty states"
+      ],
+      "avoid": [
+        "dense tables as default UI",
+        "small low-contrast text",
+        "dashboard clutter",
+        "streak mechanics",
+        "clinical language"
+      ]
+    },
+    "screens": [
+      {
+        "id": "S001",
+        "name": "Home",
+        "goal": "Help the user decide tonight's meal quickly or jump into this week's plan.",
+        "primaryActions": [
+          "Generate idea",
+          "Use rescue mode",
+          "View this week's plan"
+        ],
+        "requiredElements": [
+          "Headline such as 'What should we eat tonight?'",
+          "Top 3 high-confidence meal cards",
+          "Mini weekly strip showing the current week",
+          "One-tap rescue mode card",
+          "Recent wins or pinned meals row"
+        ],
+        "acceptance": [
+          "User can reach a tonight decision in two taps or fewer from the home screen",
+          "Home screen does not require scrolling to find the main action",
+          "At least one suggestion clearly explains why it fits the household"
+        ]
+      },
+      {
+        "id": "S002",
+        "name": "Meal Cards",
+        "goal": "Present meals as easy-to-scan options with household fit context.",
+        "requiredElements": [
+          "Meal title",
+          "Prep time",
+          "Effort level",
+          "Overlap score",
+          "Compatibility chips for ARFID adult, toddler, baby, and other adult",
+          "Short reason such as 'sauce separate works' or 'toddler safe food included'",
+          "Quick actions: assign, save, open details"
+        ],
+        "states": [
+          "Suggested",
+          "Pinned",
+          "Rescue eligible",
+          "Needs extra prep",
+          "High overlap"
+        ],
+        "acceptance": [
+          "User can understand the fit of a meal without opening details",
+          "Cards remain legible on small mobile screens",
+          "Cards support both tap-to-open and drag-to-assign behaviors"
+        ]
+      },
+      {
+        "id": "S003",
+        "name": "Weekly Planner",
+        "goal": "Let the user build this week's dinners visually with a mini-calendar.",
+        "requiredElements": [
+          "Seven day cards for the current week",
+          "Assigned meal or empty state per day",
+          "Suggested meal tray below the week",
+          "Drag-and-drop or tap-to-assign interaction",
+          "Visible effort balance for the week",
+          "Grocery preview summary"
+        ],
+        "interactionRules": [
+          "Dragging a meal to a day should immediately assign it",
+          "Assigned days should animate subtly on drop",
+          "Users can tap a day to swap or clear a meal",
+          "Week view should work on mobile as a horizontal scroll or stacked card layout"
+        ],
+        "acceptance": [
+          "User can build a week plan without entering a table or form view",
+          "Plan changes update grocery preview immediately",
+          "The planner remains readable even with all seven days filled"
+        ]
+      },
+      {
+        "id": "S004",
+        "name": "Meal Detail",
+        "goal": "Show one-base-many-plates detail without overwhelming the user.",
+        "requiredElements": [
+          "Base meal hero card",
+          "Protein options",
+          "Carb options",
+          "Optional sauces",
+          "Per-member assembly tabs",
+          "Recipe links section",
+          "Notes section",
+          "Quick pin/save action"
+        ],
+        "acceptance": [
+          "Multi-protein meals read as one shared structure, not separate recipes",
+          "Recipe links are visible but do not dominate the page",
+          "Each household member's variant is reachable in one tap"
+        ]
+      },
+      {
+        "id": "S005",
+        "name": "Rescue Mode",
+        "goal": "Produce the fastest acceptable meal when time, energy, or patience is low.",
+        "requiredElements": [
+          "Scenario picker such as low energy, low time, or everyone melting down",
+          "Optional available ingredient shortcuts",
+          "Top 1-3 rescue meals",
+          "Very short prep summary",
+          "Per-member assembly summary",
+          "One-tap add to tonight or add to week"
+        ],
+        "copyGuidelines": [
+          "Use reassuring language",
+          "Treat rescue mode as normal and supported, not as failure",
+          "Prefer phrases like 'fastest acceptable dinner' or 'good for tired nights'"
+        ],
+        "acceptance": [
+          "User can get a usable dinner idea in under 30 seconds",
+          "Rescue mode favors household safe foods and staples first",
+          "The screen feels simpler than the standard planner"
+        ]
+      },
+      {
+        "id": "S006",
+        "name": "Household Setup",
+        "goal": "Capture constraints quickly without feeling like admin.",
+        "requiredElements": [
+          "Member cards for each household member",
+          "Safe foods input",
+          "Hard-no foods input",
+          "Preparation rules input",
+          "Role selector",
+          "Quick edit entry points"
+        ],
+        "acceptance": [
+          "User can edit one member without reopening the full household flow",
+          "Inputs feel guided and forgiving",
+          "The screen avoids giant forms where possible"
+        ]
+      },
+      {
+        "id": "S007",
+        "name": "Base Meal Editor",
+        "goal": "Let the user define one flexible meal structure with variants, links, and notes.",
+        "requiredElements": [
+          "Meal name",
+          "Structure type",
+          "Protein options",
+          "Carb options",
+          "Optional sauces",
+          "Flavor upgrades",
+          "Recipe links",
+          "Notes",
+          "Rescue eligible toggle",
+          "Effort level selector"
+        ],
+        "acceptance": [
+          "User can create a multi-protein meal in one editor flow",
+          "Notes support reminders such as 'Gousto version works well' or 'blend toddler sauce'",
+          "Recipe links support multiple sources without breaking the local-first flow"
+        ]
+      },
+      {
+        "id": "S008",
+        "name": "Grocery List",
+        "goal": "Show one clean merged shopping list from the weekly plan.",
+        "requiredElements": [
+          "Grouped categories",
+          "Consolidated ingredients",
+          "Already-have toggle",
+          "Links back to meals using that ingredient",
+          "Clean print/export layout"
+        ],
+        "acceptance": [
+          "List is easy to scan on mobile while shopping",
+          "Repeated ingredients are merged clearly",
+          "The list does not feel like a raw debug output"
+        ]
+      }
+    ],
+    "microInteractions": [
+      {
+        "id": "I001",
+        "name": "Meal assigned",
+        "behavior": "A day card briefly highlights and settles when a meal is added.",
+        "purpose": "Makes planning feel satisfying without being noisy."
+      },
+      {
+        "id": "I002",
+        "name": "High-overlap indicator",
+        "behavior": "Compatibility chips brighten subtly for meals with strong overlap.",
+        "purpose": "Helps the user spot likely wins quickly."
+      },
+      {
+        "id": "I003",
+        "name": "Rescue confidence",
+        "behavior": "Rescue suggestions display calm labels such as 'good for tired nights' or '12-minute save'.",
+        "purpose": "Reinforces support rather than pressure."
+      }
+    ]
+  },
+  "screenToFeatureMap": {
+    "S001": [
+      "F010",
+      "F012",
+      "F021"
+    ],
+    "S002": [
+      "F006",
+      "F009",
+      "F018",
+      "F023",
+      "F024",
+      "F025"
+    ],
+    "S003": [
+      "F010",
+      "F021",
+      "F022",
+      "F026",
+      "F027"
+    ],
+    "S004": [
+      "F006",
+      "F028",
+      "F029"
+    ],
+    "S005": [
+      "F012"
+    ],
+    "S006": [
+      "F002",
+      "F003",
+      "F019"
+    ],
+    "S007": [
+      "F005",
+      "F028",
+      "F029"
+    ],
+    "S008": [
+      "F011",
+      "F020"
+    ]
+  },
+  "agentExecutionRules": [
+    "Before implementing a feature, read the feature object and any screen definitions listed in acceptanceRefs or screenToFeatureMap.",
+    "A feature that changes user-facing UI must not be marked passing until both the feature steps and the referenced uiSpec screen acceptance criteria are satisfied.",
+    "When multiple features affect the same screen, preserve existing requiredElements and acceptance criteria for that screen.",
+    "Prefer implementing the minimum vertical slice that makes the referenced screen usable end-to-end before moving to the next feature.",
+    "If a feature adds a new UI element, update the relevant screen implementation instead of creating an inconsistent parallel view."
   ]
 }

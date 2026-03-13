@@ -54,5 +54,15 @@
 - Created 5 tests covering meal creation with components, metadata, removal, and re-open persistence
 - Verified: tsc --noEmit passes, vitest passes (32 tests), all F005 steps satisfied
 
+### F006 - Planner generates per-person assembly variants (2026-03-12)
+- Created assembly variant engine (src/planner.ts) with deterministic per-member variant generation
+- Engine handles: hard-no food exclusion, preparation rule instructions, texture-level adaptations (soft/mashable/pureed), safe food detection, and fallback suggestions for toddlers/babies
+- Created Planner page (src/pages/Planner.tsx) with meal selection dropdown showing shared base and per-person assembly sections
+- Each variant shows: exclusions, prep modifications, texture adaptations, extra prep flag, safe food status
+- Added route `/household/:householdId/planner` in App.tsx
+- Added "Meal planner" link in HouseholdSetup for saved households
+- Created 12 tests: 9 unit tests for the assembly engine covering all constraint types, 3 integration tests for the Planner page UI
+- Verified: tsc --noEmit passes, vitest passes (44 tests), all F006 steps satisfied
+
 ## Next Task
-- **F006** — Planner generates one base meal with per-person assembly variants
+- **F007** — Planner adapts baby servings into texture-safe versions for a no-teeth weaning stage

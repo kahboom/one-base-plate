@@ -4,6 +4,7 @@ import HouseholdSetup from "./pages/HouseholdSetup";
 import MemberProfile from "./pages/MemberProfile";
 import IngredientManager from "./pages/IngredientManager";
 import BaseMealManager from "./pages/BaseMealManager";
+import Planner from "./pages/Planner";
 
 function App() {
   return (
@@ -21,6 +22,10 @@ function App() {
       <Route
         path="/household/:householdId/meals"
         element={<BaseMealManager />}
+      />
+      <Route
+        path="/household/:householdId/planner"
+        element={<Planner />}
       />
     </Routes>
   );
