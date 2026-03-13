@@ -251,12 +251,8 @@
         "Verify all members persist correctly and the Household Setup screen still feels guided rather than form-heavy."
       ],
       "passes": true,
-      "dependencies": [
-        "F001"
-      ],
-      "acceptanceRefs": [
-        "S006"
-      ]
+      "dependencies": ["F001"],
+      "acceptanceRefs": ["S006"]
     },
     {
       "id": "F003",
@@ -272,12 +268,8 @@
         "Verify all constraints are preserved exactly and quick edit entry points remain available on Household Setup."
       ],
       "passes": true,
-      "dependencies": [
-        "F002"
-      ],
-      "acceptanceRefs": [
-        "S006"
-      ]
+      "dependencies": ["F002"],
+      "acceptanceRefs": ["S006"]
     },
     {
       "id": "F004",
@@ -293,9 +285,7 @@
         "Verify ingredients are available to the planner"
       ],
       "passes": true,
-      "dependencies": [
-        "F002"
-      ]
+      "dependencies": ["F002"]
     },
     {
       "id": "F005",
@@ -312,12 +302,8 @@
         "Verify it appears in meal selection and can be reopened from the Base Meal Editor."
       ],
       "passes": true,
-      "dependencies": [
-        "F004"
-      ],
-      "acceptanceRefs": [
-        "S007"
-      ]
+      "dependencies": ["F004"],
+      "acceptanceRefs": ["S007"]
     },
     {
       "id": "F006",
@@ -334,14 +320,8 @@
         "Verify the plan clearly identifies shared versus extra preparation and reads as one base meal with multiple assemblies."
       ],
       "passes": true,
-      "dependencies": [
-        "F003",
-        "F005"
-      ],
-      "acceptanceRefs": [
-        "S002",
-        "S004"
-      ]
+      "dependencies": ["F003", "F005"],
+      "acceptanceRefs": ["S002", "S004"]
     },
     {
       "id": "F007",
@@ -357,12 +337,8 @@
         "Verify the baby variant stays tied to the same base meal where possible"
       ],
       "passes": true,
-      "dependencies": [
-        "F006"
-      ],
-      "acceptanceRefs": [
-        "S004"
-      ]
+      "dependencies": ["F006"],
+      "acceptanceRefs": ["S004"]
     },
     {
       "id": "F008",
@@ -378,12 +354,8 @@
         "Verify the output never silently omits toddler compatibility"
       ],
       "passes": true,
-      "dependencies": [
-        "F006"
-      ],
-      "acceptanceRefs": [
-        "S004"
-      ]
+      "dependencies": ["F006"],
+      "acceptanceRefs": ["S004"]
     },
     {
       "id": "F009",
@@ -399,13 +371,8 @@
         "Verify overlap score is used in meal ranking"
       ],
       "passes": true,
-      "dependencies": [
-        "F003",
-        "F005"
-      ],
-      "acceptanceRefs": [
-        "S002"
-      ]
+      "dependencies": ["F003", "F005"],
+      "acceptanceRefs": ["S002"]
     },
     {
       "id": "F010",
@@ -422,14 +389,8 @@
         "Verify the plan can be saved and re-opened"
       ],
       "passes": true,
-      "dependencies": [
-        "F006",
-        "F009"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S003"
-      ]
+      "dependencies": ["F006", "F009"],
+      "acceptanceRefs": ["S001", "S003"]
     },
     {
       "id": "F011",
@@ -445,13 +406,8 @@
         "Verify the list uses the shared styling system, remains easy to scan on mobile, and links back to meals using each ingredient where relevant."
       ],
       "passes": true,
-      "dependencies": [
-        "F010",
-        "F032"
-      ],
-      "acceptanceRefs": [
-        "S008"
-      ]
+      "dependencies": ["F010", "F032"],
+      "acceptanceRefs": ["S008"]
     },
     {
       "id": "F012",
@@ -468,16 +424,8 @@
         "Verify the output still includes per-person assemblies and can be added to tonight or the week."
       ],
       "passes": true,
-      "dependencies": [
-        "F003",
-        "F004",
-        "F006",
-        "F032"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S005"
-      ]
+      "dependencies": ["F003", "F004", "F006", "F032"],
+      "acceptanceRefs": ["S001", "S005"]
     },
     {
       "id": "F013",
@@ -493,9 +441,7 @@
         "Verify future planning can prioritize pinned meals"
       ],
       "passes": true,
-      "dependencies": [
-        "F006"
-      ]
+      "dependencies": ["F006"]
     },
     {
       "id": "F014",
@@ -511,9 +457,7 @@
         "Verify the outcome is persisted and visible"
       ],
       "passes": true,
-      "dependencies": [
-        "F010"
-      ]
+      "dependencies": ["F010"]
     },
     {
       "id": "F015",
@@ -529,9 +473,7 @@
         "Verify ranking remains explainable to the user"
       ],
       "passes": true,
-      "dependencies": [
-        "F014"
-      ]
+      "dependencies": ["F014"]
     },
     {
       "id": "F016",
@@ -547,9 +489,7 @@
         "Verify no screen hangs or crashes during normal flows"
       ],
       "passes": true,
-      "dependencies": [
-        "F001"
-      ]
+      "dependencies": ["F001"]
     },
     {
       "id": "F017",
@@ -565,10 +505,7 @@
         "Verify grocery list generation is covered"
       ],
       "passes": true,
-      "dependencies": [
-        "F001",
-        "F012"
-      ]
+      "dependencies": ["F001", "F012"]
     },
     {
       "id": "F018",
@@ -584,13 +521,8 @@
         "Verify the explanation is brief, understandable, and visible directly on meal cards or in one tap."
       ],
       "passes": true,
-      "dependencies": [
-        "F006",
-        "F009"
-      ],
-      "acceptanceRefs": [
-        "S002"
-      ]
+      "dependencies": ["F006", "F009"],
+      "acceptanceRefs": ["S002"]
     },
     {
       "id": "F019",
@@ -606,13 +538,8 @@
         "Verify only the relevant compatibility results change and the edit path avoids reopening the full household flow."
       ],
       "passes": true,
-      "dependencies": [
-        "F003",
-        "F006"
-      ],
-      "acceptanceRefs": [
-        "S006"
-      ]
+      "dependencies": ["F003", "F006"],
+      "acceptanceRefs": ["S006"]
     },
     {
       "id": "F020",
@@ -628,13 +555,8 @@
         "Verify exported output matches the saved plan and grocery list formatting remains clean for printing."
       ],
       "passes": true,
-      "dependencies": [
-        "F010",
-        "F011"
-      ],
-      "acceptanceRefs": [
-        "S008"
-      ]
+      "dependencies": ["F010", "F011"],
+      "acceptanceRefs": ["S008"]
     },
     {
       "id": "F021",
@@ -650,13 +572,8 @@
         "Verify the layout is readable on both desktop and mobile screens"
       ],
       "passes": true,
-      "dependencies": [
-        "F010"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S003"
-      ]
+      "dependencies": ["F010"],
+      "acceptanceRefs": ["S001", "S003"]
     },
     {
       "id": "F022",
@@ -672,15 +589,8 @@
         "Verify the weekly plan updates immediately and the interaction also supports tap-to-assign."
       ],
       "passes": true,
-      "dependencies": [
-        "F021",
-        "F023",
-        "F033"
-      ],
-      "acceptanceRefs": [
-        "S002",
-        "S003"
-      ]
+      "dependencies": ["F021", "F023", "F033"],
+      "acceptanceRefs": ["S002", "S003"]
     },
     {
       "id": "F023",
@@ -696,13 +606,8 @@
         "Verify cards remain readable, tappable, and draggable on mobile."
       ],
       "passes": true,
-      "dependencies": [
-        "F006",
-        "F009"
-      ],
-      "acceptanceRefs": [
-        "S002"
-      ]
+      "dependencies": ["F006", "F009"],
+      "acceptanceRefs": ["S002"]
     },
     {
       "id": "F024",
@@ -718,13 +623,8 @@
         "Verify indicators are clear and quickly understandable"
       ],
       "passes": true,
-      "dependencies": [
-        "F009",
-        "F023"
-      ],
-      "acceptanceRefs": [
-        "S002"
-      ]
+      "dependencies": ["F009", "F023"],
+      "acceptanceRefs": ["S002"]
     },
     {
       "id": "F032",
@@ -740,18 +640,8 @@
         "Adjust brittle UI tests that rely on old unstyled DOM structure so they assert accessible behavior instead."
       ],
       "passes": true,
-      "dependencies": [
-        "F005",
-        "F021",
-        "F024"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S002",
-        "S003",
-        "S006",
-        "S007"
-      ]
+      "dependencies": ["F005", "F021", "F024"],
+      "acceptanceRefs": ["S001", "S002", "S003", "S006", "S007"]
     },
     {
       "id": "F025",
@@ -767,16 +657,8 @@
         "Verify the existing flows remain intact after the visual refactor and that users can scan meal information without reading long text."
       ],
       "passes": true,
-      "dependencies": [
-        "F032"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S002",
-        "S003",
-        "S006",
-        "S007"
-      ]
+      "dependencies": ["F032"],
+      "acceptanceRefs": ["S001", "S002", "S003", "S006", "S007"]
     },
     {
       "id": "F033",
@@ -792,16 +674,8 @@
         "Adjust any existing layouts or components that became brittle during the styling refactor instead of layering one-off fixes."
       ],
       "passes": true,
-      "dependencies": [
-        "F025"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S002",
-        "S003",
-        "S006",
-        "S007"
-      ]
+      "dependencies": ["F025"],
+      "acceptanceRefs": ["S001", "S002", "S003", "S006", "S007"]
     },
     {
       "id": "F031",
@@ -817,9 +691,7 @@
         "Verify PRD.json remains the single source of truth for both task order and screen-level requirements"
       ],
       "passes": true,
-      "dependencies": [
-        "F033"
-      ]
+      "dependencies": ["F033"]
     },
     {
       "id": "F026",
@@ -835,13 +707,8 @@
         "Verify users can rebalance meals easily from the Weekly Planner."
       ],
       "passes": true,
-      "dependencies": [
-        "F021",
-        "F023"
-      ],
-      "acceptanceRefs": [
-        "S003"
-      ]
+      "dependencies": ["F021", "F023"],
+      "acceptanceRefs": ["S003"]
     },
     {
       "id": "F027",
@@ -857,12 +724,8 @@
         "Verify interactions feel responsive, satisfying, and subtle rather than distracting."
       ],
       "passes": true,
-      "dependencies": [
-        "F022"
-      ],
-      "acceptanceRefs": [
-        "S003"
-      ]
+      "dependencies": ["F022"],
+      "acceptanceRefs": ["S003"]
     },
     {
       "id": "F028",
@@ -878,14 +741,8 @@
         "Generate a plan and verify per-member variants can choose different protein options under the same base meal"
       ],
       "passes": true,
-      "dependencies": [
-        "F005",
-        "F006"
-      ],
-      "acceptanceRefs": [
-        "S004",
-        "S007"
-      ]
+      "dependencies": ["F005", "F006"],
+      "acceptanceRefs": ["S004", "S007"]
     },
     {
       "id": "F029",
@@ -901,13 +758,8 @@
         "Verify recipe links support multiple sources and notes support reminders such as Gousto versions or toddler adaptations"
       ],
       "passes": true,
-      "dependencies": [
-        "F005"
-      ],
-      "acceptanceRefs": [
-        "S004",
-        "S007"
-      ]
+      "dependencies": ["F005"],
+      "acceptanceRefs": ["S004", "S007"]
     },
     {
       "id": "F030",
@@ -923,31 +775,49 @@
         "Verify ranking changes remain explainable to the user in concise language"
       ],
       "passes": true,
-      "dependencies": [
-        "F014",
-        "F015",
-        "F018",
-        "F019"
+      "dependencies": ["F014", "F015", "F018", "F019"],
+      "acceptanceRefs": ["S001", "S002", "S003", "S006"]
+    },
+    {
+      "id": "F034",
+      "phase": 2,
+      "priority": "P1",
+      "category": "ux",
+      "description": "Guided tour or interactive walkthrough explains how the app works end-to-end",
+      "steps": [
+        "Implement a first-run guided tour or interactive walkthrough that introduces Home, Household Setup, Weekly Planner, Meal Cards, and Grocery List flows.",
+        "Show the tour only on first visit; persist completion state to browser storage (e.g. localStorage key such as onebase-tour-completed).",
+        "Allow users to skip or dismiss the tour at any step.",
+        "Verify the tour does not appear again after completion on subsequent visits.",
+        "Verify the tour aligns with the shared styling foundation and remains readable on mobile."
       ],
-      "acceptanceRefs": [
-        "S001",
-        "S002",
-        "S003",
-        "S006"
-      ]
+      "passes": false,
+      "dependencies": ["F033"],
+      "acceptanceRefs": ["S009"]
+    },
+    {
+      "id": "F035",
+      "phase": 2,
+      "priority": "P1",
+      "category": "ux",
+      "description": "Warning confirmation before deleting a household or other entities",
+      "steps": [
+        "Add a confirmation modal or warning dialog before deleting a household.",
+        "Apply the same confirmation pattern to all destructive delete flows: household members, ingredients, base meals, and other deletable entities.",
+        "Surface the entity name in the warning so the user knows exactly what will be removed.",
+        "Require explicit confirmation (e.g. tap Confirm or Delete) before proceeding; allow Cancel to abort.",
+        "Verify the warning uses the shared styling system and is accessible."
+      ],
+      "passes": false,
+      "dependencies": ["F002", "F004", "F005", "F033"],
+      "acceptanceRefs": ["S006", "S007"]
     }
   ],
   "milestones": [
     {
       "id": "M1",
       "name": "Scaffold + household constraints",
-      "includes": [
-        "F001",
-        "F002",
-        "F003",
-        "F004",
-        "F016"
-      ]
+      "includes": ["F001", "F002", "F003", "F004", "F016"]
     },
     {
       "id": "M2",
@@ -974,26 +844,12 @@
     {
       "id": "M3",
       "name": "Weekly planning + grocery list",
-      "includes": [
-        "F010",
-        "F011",
-        "F012",
-        "F017",
-        "F022",
-        "F026",
-        "F027"
-      ]
+      "includes": ["F010", "F011", "F012", "F017", "F022", "F026", "F027"]
     },
     {
       "id": "M4",
       "name": "Learning loop + convenience features",
-      "includes": [
-        "F013",
-        "F014",
-        "F015",
-        "F020",
-        "F030"
-      ]
+      "includes": ["F013", "F014", "F015", "F020", "F030", "F034", "F035"]
     }
   ],
   "fixtureHouseholds": [
@@ -1048,6 +904,8 @@
     "F014",
     "F015",
     "F030",
+    "F034",
+    "F035",
     "F020"
   ],
   "uiSpec": {
@@ -1261,6 +1119,22 @@
           "Repeated ingredients are merged clearly",
           "The list does not feel like a raw debug output"
         ]
+      },
+      {
+        "id": "S009",
+        "name": "First-Run Tour",
+        "goal": "Introduce new users to how the app works end-to-end without overwhelming them.",
+        "requiredElements": [
+          "Step-through walkthrough of Home, Household Setup, Weekly Planner, Meal Cards, and Grocery List",
+          "Skip or dismiss control on each step",
+          "First-time-only display via browser storage (e.g. localStorage)",
+          "Short, scannable copy per step"
+        ],
+        "acceptance": [
+          "Tour shows only on first visit and does not reappear after completion",
+          "User can exit the tour at any step without losing app state",
+          "Tour aligns with shared styling and remains readable on mobile"
+        ]
       }
     ],
     "microInteractions": [
@@ -1281,66 +1155,25 @@
         "name": "Rescue confidence",
         "behavior": "Rescue suggestions display calm labels such as 'good for tired nights' or '12-minute save'.",
         "purpose": "Reinforces support rather than pressure."
+      },
+      {
+        "id": "I004",
+        "name": "Delete confirmation",
+        "behavior": "Before any destructive delete (household, member, ingredient, base meal), show a confirmation modal with the entity name and require explicit confirmation.",
+        "purpose": "Prevents accidental data loss."
       }
     ]
   },
   "screenToFeatureMap": {
-    "S001": [
-      "F010",
-      "F012",
-      "F021",
-      "F032",
-      "F025",
-      "F033"
-    ],
-    "S002": [
-      "F006",
-      "F009",
-      "F018",
-      "F023",
-      "F024",
-      "F025",
-      "F032",
-      "F033"
-    ],
-    "S003": [
-      "F010",
-      "F021",
-      "F022",
-      "F026",
-      "F027",
-      "F032",
-      "F025",
-      "F033"
-    ],
-    "S004": [
-      "F006",
-      "F028",
-      "F029"
-    ],
-    "S005": [
-      "F012"
-    ],
-    "S006": [
-      "F002",
-      "F003",
-      "F019",
-      "F032",
-      "F025",
-      "F033"
-    ],
-    "S007": [
-      "F005",
-      "F028",
-      "F029",
-      "F032",
-      "F025",
-      "F033"
-    ],
-    "S008": [
-      "F011",
-      "F020"
-    ]
+    "S001": ["F010", "F012", "F021", "F032", "F025", "F033"],
+    "S002": ["F006", "F009", "F018", "F023", "F024", "F025", "F032", "F033"],
+    "S003": ["F010", "F021", "F022", "F026", "F027", "F032", "F025", "F033"],
+    "S004": ["F006", "F028", "F029"],
+    "S005": ["F012"],
+    "S006": ["F002", "F003", "F019", "F032", "F025", "F033", "F035"],
+    "S007": ["F005", "F028", "F029", "F032", "F025", "F033", "F035"],
+    "S008": ["F011", "F020"],
+    "S009": ["F034"]
   },
   "agentExecutionRules": [
     "Before implementing a feature, read the feature object and any screen definitions listed in acceptanceRefs or screenToFeatureMap.",

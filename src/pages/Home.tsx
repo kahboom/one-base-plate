@@ -74,6 +74,26 @@ export default function Home() {
     <PageShell>
       <PageHeader title="What should we eat tonight?" subtitle={household.name} />
 
+      {household.members.length > 0 && (
+        <Section>
+          <h2 className="mb-2 text-lg font-semibold text-text-primary">Household members</h2>
+          <div className="flex flex-wrap gap-2" data-testid="household-members">
+            {household.members.map((m) => (
+              <Link
+                key={m.id}
+                to={`/household/${householdId}/member/${m.id}`}
+                className="rounded-full bg-surface border border-border-light px-3 py-1.5 text-sm text-text-primary hover:border-brand hover:bg-bg"
+              >
+                {m.name || "Unnamed"} <span className="text-text-muted">({m.role})</span>
+              </Link>
+            ))}
+          </div>
+          <Link to={`/household/${householdId}`} className="mt-2 inline-block text-sm font-medium text-brand hover:underline">
+            Edit household setup
+          </Link>
+        </Section>
+      )}
+
       {latestPlan && (
         <Section>
           <div data-testid="weekly-strip">
