@@ -315,7 +315,7 @@ describe("F008: Toddler safe food in planner UI", () => {
       </MemoryRouter>,
     );
 
-    await user.selectOptions(screen.getByRole("combobox"), "meal-pasta");
+    await user.click(screen.getByTestId("selectable-meal-pasta"));
 
     const toddlerSection = screen.getByTestId("variant-m-toddler");
     // Safe food included indicator

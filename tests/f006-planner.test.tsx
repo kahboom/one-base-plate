@@ -231,10 +231,7 @@ describe("F006: Planner page selects meal and shows variants", () => {
     expect(screen.getByText("Meal Planner")).toBeInTheDocument();
     expect(screen.getByText(/Planner Test Family/)).toBeInTheDocument();
 
-    await user.selectOptions(
-      screen.getByRole("combobox"),
-      "meal-pasta",
-    );
+    await user.click(screen.getByTestId("selectable-meal-pasta"));
 
     const planSection = screen.getByTestId("meal-plan");
     expect(within(planSection).getByText("Pasta with chicken and veg")).toBeInTheDocument();
@@ -259,7 +256,7 @@ describe("F006: Planner page selects meal and shows variants", () => {
     const user = userEvent.setup();
     renderPlanner("h-planner");
 
-    await user.selectOptions(screen.getByRole("combobox"), "meal-pasta");
+    await user.click(screen.getByTestId("selectable-meal-pasta"));
 
     expect(screen.getByText("Shared base")).toBeInTheDocument();
     expect(screen.getByText(/pasta \(carb/)).toBeInTheDocument();

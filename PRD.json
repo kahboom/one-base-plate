@@ -730,7 +730,7 @@
         "Flag meals requiring extra preparation",
         "Verify indicators are clear and quickly understandable"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F009",
         "F023"

@@ -149,5 +149,15 @@
 - Created 12 tests: 6 card display tests, 1 compact mode test, 1 action buttons test, 4 short reason engine tests
 - Verified: tsc --noEmit passes, vitest passes (123 tests), all F023 steps satisfied
 
+### F024 - Visual overlap indicators and trade-offs in planner (2026-03-13)
+- Replaced dropdown meal selector in Planner with MealCard grid — meals shown as visual cards ranked by overlap
+- Clicking a card selects it (blue outline) and shows detailed plan below
+- Overlap indicators rendered as color-coded chips (green=compatible, yellow=adaptation, red=conflict) with conflict details on hover
+- Trade-offs rendered as visual chips with color coding (red for conflicts, yellow for extra prep/safe food warnings)
+- High-overlap meals highlighted with "High overlap" state chip; extra prep flagged with "Needs extra prep" chip
+- Updated 6 existing test files (f006, f007, f008, f009, f018, f019) to use MealCard click instead of dropdown selectOptions
+- Created 7 new F024 tests: card grid display, high overlap highlighting, extra prep flagging, overlap indicator chips, trade-off chips, ranking order, indicator clarity
+- Verified: tsc --noEmit passes, vitest passes (130 tests), all F024 steps satisfied
+
 ## Next Task
-- **F024** — Planner shows visual overlap indicators and trade-offs for meals
+- **F025** — App UI improves readability with card layout, spacing, larger typography, and stronger contrast

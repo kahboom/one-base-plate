@@ -115,7 +115,7 @@ describe("F019: Quick edit link appears in planner", () => {
     const user = userEvent.setup();
     renderApp("/household/h-quick/planner");
 
-    await user.selectOptions(screen.getByRole("combobox"), "meal-1");
+    await user.click(screen.getByTestId("selectable-meal-1"));
 
     expect(screen.getByText("Quick edit Parent")).toBeInTheDocument();
     expect(screen.getByText("Quick edit Kid")).toBeInTheDocument();
@@ -128,7 +128,7 @@ describe("F019: Quick edit from planner navigates to member profile", () => {
     const user = userEvent.setup();
     renderApp("/household/h-quick/planner");
 
-    await user.selectOptions(screen.getByRole("combobox"), "meal-1");
+    await user.click(screen.getByTestId("selectable-meal-1"));
     await user.click(screen.getByText("Quick edit Kid"));
 
     // Should be on member profile page
@@ -144,7 +144,7 @@ describe("F019: Edit member and return to planner", () => {
     renderApp("/household/h-quick/planner");
 
     // Select meal and verify Kid has no exclusions initially
-    await user.selectOptions(screen.getByRole("combobox"), "meal-1");
+    await user.click(screen.getByTestId("selectable-meal-1"));
     const kidSection = screen.getByTestId("variant-m-kid");
     expect(within(kidSection).queryByText(/Exclude/)).not.toBeInTheDocument();
 
@@ -163,7 +163,7 @@ describe("F019: Edit member and return to planner", () => {
     expect(screen.getByText("Meal Planner")).toBeInTheDocument();
 
     // Re-select meal to regenerate variants
-    await user.selectOptions(screen.getByRole("combobox"), "meal-1");
+    await user.click(screen.getByTestId("selectable-meal-1"));
 
     // Kid should now have mushrooms excluded
     const updatedKidSection = screen.getByTestId("variant-m-kid");
@@ -181,7 +181,7 @@ describe("F019: Edit avoids full household flow", () => {
     const user = userEvent.setup();
     renderApp("/household/h-quick/planner");
 
-    await user.selectOptions(screen.getByRole("combobox"), "meal-1");
+    await user.click(screen.getByTestId("selectable-meal-1"));
     await user.click(screen.getByText("Quick edit Parent"));
 
     // Should be on member profile, NOT household setup
@@ -197,7 +197,7 @@ describe("F019: Cancel from quick edit returns to planner", () => {
     const user = userEvent.setup();
     renderApp("/household/h-quick/planner");
 
-    await user.selectOptions(screen.getByRole("combobox"), "meal-1");
+    await user.click(screen.getByTestId("selectable-meal-1"));
     await user.click(screen.getByText("Quick edit Kid"));
 
     // Add a hard-no but cancel instead of saving

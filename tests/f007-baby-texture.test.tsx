@@ -336,7 +336,7 @@ describe("F007: Baby variant in planner UI", () => {
       </MemoryRouter>,
     );
 
-    await user.selectOptions(screen.getByRole("combobox"), "meal-pasta");
+    await user.click(screen.getByTestId("selectable-meal-pasta"));
 
     // Baby variant should show texture adaptations
     const babySection = screen.getByTestId("variant-m-baby");

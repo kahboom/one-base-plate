@@ -246,7 +246,7 @@ describe("F009: Meal overlap score", () => {
 });
 
 describe("F009: Overlap display in planner", () => {
-  it("shows overlap scores in meal dropdown ranked by overlap", async () => {
+  it("shows overlap scores in meal cards ranked by overlap", async () => {
     const household: Household = {
       id: "h-overlap",
       name: "Overlap Family",
@@ -286,12 +286,13 @@ describe("F009: Overlap display in planner", () => {
 
     renderPlanner("h-overlap");
 
-    // Meals in dropdown should show overlap scores
-    const options = screen.getAllByRole("option");
-    // First option is "Choose a meal", then ranked: high overlap first
-    expect(options[1]!.textContent).toContain("Pasta broccoli");
-    expect(options[1]!.textContent).toContain("4/4");
-    expect(options[2]!.textContent).toContain("Mushroom chicken");
+    // MealCards should show overlap scores and high overlap first
+    const grid = screen.getByTestId("meal-card-grid");
+    const cards = within(grid).getAllByTestId(/^meal-card-/);
+    // High overlap meal should be first
+    expect(cards[0]!.textContent).toContain("Pasta broccoli");
+    expect(cards[0]!.textContent).toContain("4/4");
+    expect(cards[1]!.textContent).toContain("Mushroom chicken");
   });
 
   it("shows overlap summary when a meal is selected", async () => {
@@ -322,7 +323,7 @@ describe("F009: Overlap display in planner", () => {
     const user = userEvent.setup();
     renderPlanner("h-overlap2");
 
-    await user.selectOptions(screen.getByRole("combobox"), "meal-1");
+    await user.click(screen.getByTestId("selectable-meal-1"));
 
     const overlapSection = screen.getByTestId("overlap-summary");
     expect(within(overlapSection).getByText(/1\/2 members compatible/)).toBeInTheDocument();
@@ -330,7 +331,7 @@ describe("F009: Overlap display in planner", () => {
     // Alex has mushroom conflict
     const alexOverlap = screen.getByTestId("overlap-m-alex");
     expect(alexOverlap.textContent).toContain("conflict");
-    expect(alexOverlap.textContent).toContain("mushrooms");
+    expect(alexOverlap.getAttribute("title")).toContain("mushrooms");
 
     // Jordan is fine
     const jordanOverlap = screen.getByTestId("overlap-m-jordan");

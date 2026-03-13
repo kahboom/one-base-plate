@@ -8,6 +8,19 @@ import {
   generateMealExplanation,
 } from "../planner";
 import type { OverlapResult, MealExplanation } from "../planner";
+import MealCard from "../components/MealCard";
+
+const chipStyle = (bg: string, color: string): React.CSSProperties => ({
+  display: "inline-block",
+  padding: "0.15rem 0.5rem",
+  borderRadius: "999px",
+  fontSize: "0.75rem",
+  fontWeight: 500,
+  background: bg,
+  color,
+  marginRight: "0.25rem",
+  marginBottom: "0.25rem",
+});
 
 export default function Planner() {
   const { householdId } = useParams<{ householdId: string }>();
@@ -95,25 +108,35 @@ export default function Planner() {
       {household.baseMeals.length === 0 ? (
         <p>No base meals available. Add meals first.</p>
       ) : (
-        <div>
-          <label>
-            Select a base meal:{" "}
-            <select
-              value={selectedMealId}
-              onChange={(e) => handleSelectMeal(e.target.value)}
-            >
-              <option value="">Choose a meal</option>
-              {rankedMeals.map((meal) => {
-                const overlap = mealOverlaps.get(meal.id);
-                return (
-                  <option key={meal.id} value={meal.id}>
-                    {meal.name} ({overlap?.score ?? 0}/{overlap?.total ?? 0} overlap)
-                  </option>
-                );
-              })}
-            </select>
-          </label>
-        </div>
+        <>
+          <h2>Choose a meal</h2>
+          <div data-testid="meal-card-grid" style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+            {rankedMeals.map((meal) => {
+              const overlap = mealOverlaps.get(meal.id);
+              const isSelected = meal.id === selectedMealId;
+              return (
+                <div
+                  key={meal.id}
+                  style={{
+                    outline: isSelected ? "2px solid #0d6efd" : "none",
+                    borderRadius: "14px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => handleSelectMeal(meal.id)}
+                  data-testid={`selectable-${meal.id}`}
+                >
+                  <MealCard
+                    meal={meal}
+                    members={household.members}
+                    ingredients={household.ingredients}
+                    overlap={overlap}
+                    onOpen={() => handleSelectMeal(meal.id)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {selectedMeal && (
@@ -131,17 +154,36 @@ export default function Planner() {
                 Overlap: {selectedOverlap.score}/{selectedOverlap.total} members
                 compatible
               </p>
-              <ul>
-                {selectedOverlap.memberDetails.map((d) => (
-                  <li key={d.memberId} data-testid={`overlap-${d.memberId}`}>
-                    {d.memberName}: {d.compatibility === "direct"
-                      ? "compatible"
+              <div data-testid="overlap-indicators">
+                {selectedOverlap.memberDetails.map((d) => {
+                  const colors =
+                    d.compatibility === "direct"
+                      ? { bg: "#d4edda", color: "#155724" }
                       : d.compatibility === "with-adaptation"
-                        ? "compatible with adaptation"
-                        : `conflict — ${d.conflicts.join(", ")}`}
-                  </li>
-                ))}
-              </ul>
+                        ? { bg: "#fff3cd", color: "#856404" }
+                        : { bg: "#f8d7da", color: "#721c24" };
+                  return (
+                    <span
+                      key={d.memberId}
+                      data-testid={`overlap-${d.memberId}`}
+                      style={chipStyle(colors.bg, colors.color)}
+                      title={
+                        d.compatibility === "conflict"
+                          ? d.conflicts.join(", ")
+                          : d.compatibility === "with-adaptation"
+                            ? "Needs adaptation"
+                            : "Compatible"
+                      }
+                    >
+                      {d.memberName}: {d.compatibility === "direct"
+                        ? "compatible"
+                        : d.compatibility === "with-adaptation"
+                          ? "needs adaptation"
+                          : "conflict"}
+                    </span>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -150,14 +192,32 @@ export default function Planner() {
               <h3>Why this meal?</h3>
               <p>{selectedExplanation.summary}</p>
               {selectedExplanation.tradeOffs.length > 0 && (
-                <>
+                <div data-testid="trade-offs">
                   <h4>Trade-offs</h4>
-                  <ul>
-                    {selectedExplanation.tradeOffs.map((t, i) => (
-                      <li key={i}>{t}</li>
-                    ))}
-                  </ul>
-                </>
+                  {selectedExplanation.tradeOffs.map((t, i) => {
+                    const isConflict = t.includes("conflict") || t.includes("(hard-no") || t.includes("(not baby");
+                    const isExtraPrep = t.includes("Extra prep");
+                    const isSafeFood = t.includes("no safe food");
+                    let bg = "#e2e3e5";
+                    let color = "#383d41";
+                    if (isConflict) { bg = "#f8d7da"; color = "#721c24"; }
+                    else if (isSafeFood) { bg = "#fff3cd"; color = "#856404"; }
+                    else if (isExtraPrep) { bg = "#fff3cd"; color = "#856404"; }
+                    return (
+                      <span
+                        key={i}
+                        data-testid={`trade-off-${i}`}
+                        style={{
+                          ...chipStyle(bg, color),
+                          display: "inline-block",
+                          marginBottom: "0.25rem",
+                        }}
+                      >
+                        {t}
+                      </span>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}

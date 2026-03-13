@@ -284,7 +284,7 @@ describe("F018: Explanation panel in planner UI", () => {
       </MemoryRouter>,
     );
 
-    await user.selectOptions(screen.getByRole("combobox"), "meal-1");
+    await user.click(screen.getByTestId("selectable-meal-1"));
 
     const explanation = screen.getByTestId("meal-explanation");
     expect(within(explanation).getByText("Why this meal?")).toBeInTheDocument();
@@ -326,7 +326,7 @@ describe("F018: Explanation panel in planner UI", () => {
       </MemoryRouter>,
     );
 
-    await user.selectOptions(screen.getByRole("combobox"), "meal-2");
+    await user.click(screen.getByTestId("selectable-meal-2"));
 
     const explanation = screen.getByTestId("meal-explanation");
     expect(within(explanation).getByText(/Works for everyone/)).toBeInTheDocument();
