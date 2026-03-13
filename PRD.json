@@ -671,7 +671,7 @@
         "Verify the meal attaches to that day",
         "Verify the weekly plan updates immediately and the interaction also supports tap-to-assign."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F021",
         "F023",

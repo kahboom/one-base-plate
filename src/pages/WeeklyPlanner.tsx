@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { Household, WeeklyPlan, DayPlan, BaseMeal } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { generateWeeklyPlan, computeMealOverlap } from "../planner";
+import { generateWeeklyPlan, computeMealOverlap, generateAssemblyVariants } from "../planner";
 import MealCard from "../components/MealCard";
 import { PageShell, PageHeader, Button, Select, Section, NavBar, EmptyState } from "../components/ui";
 
@@ -16,6 +16,7 @@ export default function WeeklyPlanner() {
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [numDays, setNumDays] = useState(7);
   const [loaded, setLoaded] = useState(false);
+  const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
 
   const loadData = useCallback(() => {
     if (!householdId) return;
@@ -58,6 +59,30 @@ export default function WeeklyPlanner() {
     if (!plan) return;
     const updatedDays = plan.days.filter((_, i) => i !== dayIndex);
     setPlan({ ...plan, days: updatedDays });
+  }
+
+  function assignMealToDay(mealId: string, dayLabel: string) {
+    if (!household) return;
+    const meal = household.baseMeals.find((m) => m.id === mealId);
+    if (!meal) return;
+
+    const variants = generateAssemblyVariants(meal, household.members, household.ingredients);
+    const newDayPlan: DayPlan = { day: dayLabel, baseMealId: mealId, variants };
+
+    setPlan((prev) => {
+      const existingDays = prev?.days ?? [];
+      const filtered = existingDays.filter((d) => d.day !== dayLabel);
+      const updatedDays = [...filtered, newDayPlan];
+      return {
+        id: prev?.id ?? crypto.randomUUID(),
+        days: updatedDays,
+        selectedBaseMeals: [...new Set(updatedDays.map((d) => d.baseMealId))],
+        generatedGroceryList: prev?.generatedGroceryList ?? [],
+        notes: prev?.notes ?? "",
+      };
+    });
+
+    setSelectedMealId(null);
   }
 
   function handleSave() {
@@ -157,6 +182,11 @@ export default function WeeklyPlanner() {
               overlapLabel={dayPlan ? getMealOverlapLabel(dayPlan.baseMealId) : null}
               household={household}
               onClear={dayIndex >= 0 ? () => handleClearDay(dayIndex) : undefined}
+              onDrop={(mealId) => assignMealToDay(mealId, dayLabel)}
+              isAssignTarget={selectedMealId !== null}
+              onTapAssign={() => {
+                if (selectedMealId) assignMealToDay(selectedMealId, dayLabel);
+              }}
             />
           );
         })}
@@ -174,6 +204,12 @@ export default function WeeklyPlanner() {
         <Section>
           <div data-testid="suggested-tray" className="mt-6">
             <h2 className="mb-3 text-xl font-semibold text-text-primary">Suggested meals</h2>
+            {selectedMealId && (
+              <p className="mb-3 text-sm text-brand font-medium" data-testid="assign-prompt">
+                Tap a day to assign {household.baseMeals.find((m) => m.id === selectedMealId)?.name ?? "meal"}.{" "}
+                <button className="underline cursor-pointer" onClick={() => setSelectedMealId(null)}>Cancel</button>
+              </p>
+            )}
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {[...household.baseMeals]
                 .map((meal) => ({
@@ -188,7 +224,9 @@ export default function WeeklyPlanner() {
                     members={household.members}
                     ingredients={household.ingredients}
                     overlap={overlap}
-                    compact
+                    draggable
+                    selected={selectedMealId === meal.id}
+                    onAssign={() => setSelectedMealId(selectedMealId === meal.id ? null : meal.id)}
                   />
                 ))}
             </div>
@@ -214,6 +252,9 @@ function DayCard({
   overlapLabel,
   household,
   onClear,
+  onDrop,
+  isAssignTarget,
+  onTapAssign,
 }: {
   dayLabel: string;
   dayPlan: DayPlan | null;
@@ -223,17 +264,60 @@ function DayCard({
   overlapLabel: string | null;
   household: Household;
   onClear?: () => void;
+  onDrop?: (mealId: string) => void;
+  isAssignTarget?: boolean;
+  onTapAssign?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [justAssigned, setJustAssigned] = useState(false);
   const isEmpty = !dayPlan;
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOver(true);
+  }
+
+  function handleDragLeave() {
+    setDragOver(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const mealId = e.dataTransfer.getData("application/meal-id");
+    if (mealId && onDrop) {
+      onDrop(mealId);
+      setJustAssigned(true);
+      setTimeout(() => setJustAssigned(false), 600);
+    }
+  }
+
+  function handleTapAssign() {
+    if (isAssignTarget && onTapAssign) {
+      onTapAssign();
+      setJustAssigned(true);
+      setTimeout(() => setJustAssigned(false), 600);
+    }
+  }
 
   return (
     <div
       data-testid={`day-${dayLabel.toLowerCase()}`}
-      className={`rounded-md p-4 shadow-card ${
-        isEmpty
-          ? "border border-dashed border-border-default bg-bg"
-          : "border border-border-light bg-surface"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      onClick={handleTapAssign}
+      role={isAssignTarget ? "button" : undefined}
+      className={`rounded-md p-4 shadow-card transition-all duration-200 ${
+        justAssigned
+          ? "border-2 border-brand bg-brand/5 scale-[1.02]"
+          : dragOver
+            ? "border-2 border-brand border-dashed bg-brand/5"
+            : isEmpty
+              ? `border border-dashed bg-bg ${isAssignTarget ? "border-brand cursor-pointer hover:bg-brand/5" : "border-border-default"}`
+              : `border bg-surface ${isAssignTarget ? "border-brand cursor-pointer hover:bg-brand/5" : "border-border-light"}`
       }`}
     >
       <strong className="text-base font-semibold text-text-primary">{dayLabel}</strong>

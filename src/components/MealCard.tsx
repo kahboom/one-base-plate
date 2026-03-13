@@ -13,6 +13,8 @@ export interface MealCardProps {
   onOpen?: () => void;
   detailUrl?: string;
   compact?: boolean;
+  draggable?: boolean;
+  selected?: boolean;
 }
 
 const compatVariant: Record<string, "success" | "warning" | "danger"> = {
@@ -36,6 +38,8 @@ export default function MealCard({
   onOpen,
   detailUrl,
   compact = false,
+  draggable: isDraggable = false,
+  selected = false,
 }: MealCardProps) {
   const overlap = overlapProp ?? computeMealOverlap(meal, members, ingredients);
   const shortReason = generateShortReason(meal, members, ingredients);
@@ -44,10 +48,19 @@ export default function MealCard({
     (d) => d.compatibility === "with-adaptation",
   );
 
+  function handleDragStart(e: React.DragEvent) {
+    e.dataTransfer.setData("application/meal-id", meal.id);
+    e.dataTransfer.effectAllowed = "move";
+  }
+
   return (
     <div
       data-testid={`meal-card-${meal.id}`}
-      className={`w-full rounded-md border border-border-light bg-surface shadow-card transition-shadow hover:shadow-card-hover sm:w-auto ${compact ? "sm:min-w-[160px] p-3" : "sm:min-w-[220px] p-4"}`}
+      draggable={isDraggable}
+      onDragStart={isDraggable ? handleDragStart : undefined}
+      className={`w-full rounded-md border bg-surface shadow-card transition-shadow hover:shadow-card-hover sm:w-auto ${
+        selected ? "border-brand ring-2 ring-brand-light" : "border-border-light"
+      } ${isDraggable ? "cursor-grab active:cursor-grabbing" : ""} ${compact ? "sm:min-w-[160px] p-3" : "sm:min-w-[220px] p-4"}`}
     >
       <div className="mb-2">
         <strong className={compact ? "text-[0.95rem]" : "text-lg"}>

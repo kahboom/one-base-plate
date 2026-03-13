@@ -288,5 +288,19 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 11 tests: 4 editor recipe link tests (add, multiple sources, remove, label fallback), 2 notes tests (add, persist), 5 Meal Detail tests (links display, notes display, hidden when empty, links vs structure prominence)
 - Verified: tsc --noEmit passes, vitest passes (179 tests), vite build succeeds
 
+### F022 - User can drag meal cards into the weekly plan calendar (2026-03-13)
+- Added HTML5 drag-and-drop to MealCard: `draggable` prop, `onDragStart` handler setting `application/meal-id` data
+- Added `selected` prop to MealCard for visual highlight during tap-to-assign flow (brand border + ring)
+- Updated WeeklyPlanner DayCard with drop zone handlers (`onDragOver`, `onDragLeave`, `onDrop`) and visual feedback
+- Added tap-to-assign flow: clicking Assign on a tray MealCard enters selection mode, then tapping any day card assigns the meal
+- Assignment prompt shows which meal is being assigned with a Cancel option
+- `assignMealToDay` generates assembly variants via `generateAssemblyVariants` and updates the plan state immediately
+- Day cards show assign-target styling (brand border, cursor-pointer, hover highlight) when a meal is selected
+- Subtle assignment animation: day card briefly scales up with brand border on drop/assign (600ms transition)
+- Dropping or tapping on an already-filled day replaces the existing meal (swap behavior)
+- Plan and save button appear immediately after first assignment without requiring Generate
+- Created 13 tests: 3 tray display tests (cards shown, assign buttons, draggable attribute), 5 tap-to-assign tests (prompt, assign, clear prompt, cancel, swap), 3 drag-and-drop tests (assign via drop, replace on filled day), 2 plan update tests (variants generated, save button appears)
+- Verified: tsc --noEmit passes, vitest passes (192 tests), vite build succeeds
+
 ## Next Task
-- **F022** — User can drag meal cards into the weekly plan calendar (depends on F021✅, F023✅, F033✅)
+- **F026** — Weekly planner displays preparation effort balance across the week (depends on F021✅, F023✅)
