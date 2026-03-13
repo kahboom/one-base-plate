@@ -353,6 +353,42 @@ export function generateShortReason(
   return `Fits ${overlap.score} of ${overlap.total} members`;
 }
 
+export interface GroceryPreview {
+  uniqueIngredientCount: number;
+  categoryBreakdown: Record<string, number>;
+}
+
+export function computeGroceryPreview(
+  days: DayPlan[],
+  meals: BaseMeal[],
+  ingredients: Ingredient[],
+): GroceryPreview {
+  const ingredientIds = new Set<string>();
+
+  for (const day of days) {
+    const meal = meals.find((m) => m.id === day.baseMealId);
+    if (!meal) continue;
+    for (const component of meal.components) {
+      ingredientIds.add(component.ingredientId);
+      if (component.alternativeIngredientIds) {
+        for (const altId of component.alternativeIngredientIds) {
+          ingredientIds.add(altId);
+        }
+      }
+    }
+  }
+
+  const categoryBreakdown: Record<string, number> = {};
+  for (const id of ingredientIds) {
+    const ing = ingredients.find((i) => i.id === id);
+    if (ing) {
+      categoryBreakdown[ing.category] = (categoryBreakdown[ing.category] ?? 0) + 1;
+    }
+  }
+
+  return { uniqueIngredientCount: ingredientIds.size, categoryBreakdown };
+}
+
 export interface WeekEffortBalance {
   totalPrepMinutes: number;
   effortCounts: { easy: number; medium: number; hard: number };

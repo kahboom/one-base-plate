@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { Household, WeeklyPlan, DayPlan, BaseMeal } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { generateWeeklyPlan, computeMealOverlap, generateAssemblyVariants, computeWeekEffortBalance } from "../planner";
+import { generateWeeklyPlan, computeMealOverlap, generateAssemblyVariants, computeWeekEffortBalance, computeGroceryPreview } from "../planner";
 import MealCard from "../components/MealCard";
 import { PageShell, PageHeader, Button, Select, Section, NavBar, EmptyState, Chip } from "../components/ui";
 
@@ -171,6 +171,7 @@ export default function WeeklyPlanner() {
 
       {plan && plan.days.length > 0 && household && (() => {
         const balance = computeWeekEffortBalance(plan.days, household.baseMeals);
+        const groceryPreview = computeGroceryPreview(plan.days, household.baseMeals, household.ingredients);
         return (
           <div data-testid="effort-balance" className="mt-4 mb-4 rounded-md border border-border-light bg-surface p-4 shadow-card">
             <div className="flex flex-wrap items-center gap-4">
@@ -195,6 +196,23 @@ export default function WeeklyPlanner() {
                 </span>
               )}
             </div>
+            {groceryPreview.uniqueIngredientCount > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border-light pt-3" data-testid="grocery-preview">
+                <span className="text-sm font-semibold text-text-primary">Grocery preview</span>
+                <span className="text-sm text-text-secondary" data-testid="grocery-count">
+                  {groceryPreview.uniqueIngredientCount} ingredient{groceryPreview.uniqueIngredientCount !== 1 ? "s" : ""}
+                </span>
+                <div className="flex gap-2">
+                  {Object.entries(groceryPreview.categoryBreakdown)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([cat, count]) => (
+                      <Chip key={cat} variant="neutral" data-testid={`grocery-cat-${cat}`}>
+                        {count} {cat}
+                      </Chip>
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       })()}
@@ -320,6 +338,7 @@ function DayCard({
   const [expanded, setExpanded] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [justAssigned, setJustAssigned] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const isEmpty = !dayPlan;
   const isHighEffort = meal?.difficulty === "hard";
 
@@ -333,22 +352,27 @@ function DayCard({
     setDragOver(false);
   }
 
+  function triggerAssignFeedback() {
+    setJustAssigned(true);
+    setShowConfirmation(true);
+    setTimeout(() => setJustAssigned(false), 600);
+    setTimeout(() => setShowConfirmation(false), 800);
+  }
+
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setDragOver(false);
     const mealId = e.dataTransfer.getData("application/meal-id");
     if (mealId && onDrop) {
       onDrop(mealId);
-      setJustAssigned(true);
-      setTimeout(() => setJustAssigned(false), 600);
+      triggerAssignFeedback();
     }
   }
 
   function handleTapAssign() {
     if (isAssignTarget && onTapAssign) {
       onTapAssign();
-      setJustAssigned(true);
-      setTimeout(() => setJustAssigned(false), 600);
+      triggerAssignFeedback();
     }
   }
 
@@ -360,7 +384,7 @@ function DayCard({
       onDrop={handleDrop}
       onClick={handleTapAssign}
       role={isAssignTarget ? "button" : undefined}
-      className={`rounded-md p-4 shadow-card transition-all duration-200 ${
+      className={`relative rounded-md p-4 shadow-card transition-all duration-200 ${
         justAssigned
           ? "border-2 border-brand bg-brand/5 scale-[1.02]"
           : dragOver
@@ -371,6 +395,17 @@ function DayCard({
       }`}
     >
       <strong className="text-base font-semibold text-text-primary">{dayLabel}</strong>
+
+      {showConfirmation && (
+        <div
+          data-testid={`confirm-${dayLabel.toLowerCase()}`}
+          className="animate-meal-assigned absolute inset-0 z-10 flex items-center justify-center rounded-md bg-brand/10"
+        >
+          <span className="rounded-pill bg-brand px-3 py-1 text-sm font-medium text-white shadow-card">
+            Meal added
+          </span>
+        </div>
+      )}
 
       {dayPlan && mealName ? (
         <>

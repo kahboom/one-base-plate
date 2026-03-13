@@ -311,5 +311,15 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 12 tests: 4 engine tests (effort counts, total prep time, high-effort day detection, all-easy edge case), 3 UI summary bar tests (display after generate, hidden when no plan, effort chips), 2 day card tests (effort chip, prep time), 1 high-effort warning test, 2 rebalancing tests (clear and reassign, swap updates balance)
 - Verified: tsc --noEmit passes, vitest passes (204 tests), all F026 steps satisfied
 
+### F027 - Planner provides satisfying visual feedback when meals are added to the week (2026-03-13)
+- Added CSS `@keyframes meal-assigned` animation in app.css with scale-in, hold, and fade-out phases (800ms ease-out)
+- Added "Meal added" confirmation overlay to DayCard that appears on both drag-and-drop and tap-to-assign, with animated pill badge over a translucent brand-colored backdrop
+- Confirmation automatically disappears after 800ms; existing justAssigned scale/border highlight reverts after 600ms for layered feedback
+- Added `computeGroceryPreview` function to planner engine returning unique ingredient count and per-category breakdown from the current plan
+- Added grocery preview section to the effort balance bar showing ingredient count and category breakdown chips (e.g. "2 carb", "2 protein", "1 veg")
+- Grocery preview updates immediately when meals are assigned, swapped, or cleared — satisfying S003 "Plan changes update grocery preview immediately"
+- Created 13 tests: 3 engine tests (unique ingredient count, deduplication, category breakdown), 4 confirmation animation tests (tap-assign, drag-drop, auto-dismiss, CSS class), 4 grocery preview tests (shown after generate, hidden without plan, updates on assign, category chips), 2 feedback subtlety tests (scale transition presence, revert after timeout)
+- Verified: tsc --noEmit passes, vitest passes (217 tests), all F027 steps satisfied
+
 ## Next Task
-- **F027** — Planner provides satisfying visual feedback when meals are added to the week (depends on F022✅)
+- **F011** — App produces one merged grocery list from the weekly plan (depends on F010✅, F032✅)

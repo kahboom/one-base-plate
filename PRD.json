@@ -856,7 +856,7 @@
         "Verify feedback is subtle and not distracting",
         "Verify interactions feel responsive, satisfying, and subtle rather than distracting."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F022"
       ],
