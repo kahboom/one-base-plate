@@ -102,5 +102,14 @@
 - Created 10 tests: 5 ingredient overlap, 3 meal overlap, 2 UI integration tests
 - Verified: tsc --noEmit passes, vitest passes (76 tests), all F009 steps satisfied
 
+### F018 - Meal explanation with trade-offs (2026-03-13)
+- Added `generateMealExplanation` function producing a brief summary and trade-off list
+- Summary states household fit: "Works for everyone", "Works for X/Y members — Z has conflicts", etc.
+- Trade-offs surface: specific member conflicts with reasons, extra prep needed for adaptations, toddler/baby missing safe food warnings
+- Planner displays "Why this meal?" panel with summary and trade-offs list below overlap summary
+- Trade-offs section hidden when meal has no trade-offs (clean UI)
+- Created 10 tests: 8 engine tests covering all summary/trade-off scenarios, 2 UI integration tests
+- Verified: tsc --noEmit passes, vitest passes (86 tests), all F018 steps satisfied
+
 ## Next Task
-- **F018** — Planner explains why a meal was recommended and what the trade-offs are (now unblocked)
+- **F010** — User can generate a low-decision weekly plan from available meals and ingredients

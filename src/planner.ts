@@ -216,6 +216,63 @@ export function computeMealOverlap(
   };
 }
 
+export interface MealExplanation {
+  summary: string;
+  tradeOffs: string[];
+}
+
+export function generateMealExplanation(
+  meal: BaseMeal,
+  members: HouseholdMember[],
+  ingredients: Ingredient[],
+): MealExplanation {
+  const overlap = computeMealOverlap(meal, members, ingredients);
+  const tradeOffs: string[] = [];
+
+  const adaptMembers = overlap.memberDetails.filter((d) => d.compatibility === "with-adaptation");
+  const conflictMembers = overlap.memberDetails.filter((d) => d.compatibility === "conflict");
+
+  // Build summary
+  let summary: string;
+  if (overlap.score === overlap.total) {
+    if (adaptMembers.length === 0) {
+      summary = "Works for everyone — no modifications needed.";
+    } else {
+      summary = `Works for everyone — ${adaptMembers.length === 1 ? `${adaptMembers[0]!.memberName} needs` : `${adaptMembers.length} members need`} adaptation.`;
+    }
+  } else if (overlap.score === 0) {
+    summary = "No members can eat this meal without conflicts.";
+  } else {
+    const names = conflictMembers.map((d) => d.memberName).join(", ");
+    summary = `Works for ${overlap.score}/${overlap.total} members — ${names} ${conflictMembers.length === 1 ? "has" : "have"} conflicts.`;
+  }
+
+  // Trade-offs: conflicts
+  for (const d of conflictMembers) {
+    tradeOffs.push(`${d.memberName}: ${d.conflicts.join(", ")}`);
+  }
+
+  // Trade-offs: extra prep needed
+  if (adaptMembers.length > 0) {
+    const names = adaptMembers.map((d) => d.memberName).join(", ");
+    tradeOffs.push(`Extra prep needed for ${names}`);
+  }
+
+  // Trade-offs: toddler/baby safe food coverage
+  for (const member of members) {
+    if (member.role !== "toddler" && member.role !== "baby") continue;
+    const hasSafeFood = meal.components.some((c) => {
+      const name = resolveIngredientName(c.ingredientId, ingredients);
+      return member.safeFoods.some((s) => matchesFood(s, name));
+    });
+    if (!hasSafeFood) {
+      tradeOffs.push(`${member.name} has no safe food in this meal — add a side`);
+    }
+  }
+
+  return { summary, tradeOffs };
+}
+
 export function generateAssemblyVariants(
   meal: BaseMeal,
   members: HouseholdMember[],

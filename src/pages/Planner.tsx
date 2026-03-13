@@ -2,8 +2,12 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { BaseMeal, AssemblyVariant, Household } from "../types";
 import { loadHousehold } from "../storage";
-import { generateAssemblyVariants, computeMealOverlap } from "../planner";
-import type { OverlapResult } from "../planner";
+import {
+  generateAssemblyVariants,
+  computeMealOverlap,
+  generateMealExplanation,
+} from "../planner";
+import type { OverlapResult, MealExplanation } from "../planner";
 
 export default function Planner() {
   const { householdId } = useParams<{ householdId: string }>();
@@ -74,6 +78,15 @@ export default function Planner() {
     ? mealOverlaps.get(selectedMealId)
     : undefined;
 
+  const selectedExplanation: MealExplanation | undefined =
+    selectedMeal && household
+      ? generateMealExplanation(
+          selectedMeal,
+          household.members,
+          household.ingredients,
+        )
+      : undefined;
+
   return (
     <div>
       <h1>Meal Planner</h1>
@@ -129,6 +142,23 @@ export default function Planner() {
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {selectedExplanation && (
+            <div data-testid="meal-explanation">
+              <h3>Why this meal?</h3>
+              <p>{selectedExplanation.summary}</p>
+              {selectedExplanation.tradeOffs.length > 0 && (
+                <>
+                  <h4>Trade-offs</h4>
+                  <ul>
+                    {selectedExplanation.tradeOffs.map((t, i) => (
+                      <li key={i}>{t}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           )}
 

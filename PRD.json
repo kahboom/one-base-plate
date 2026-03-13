@@ -597,7 +597,7 @@
         "Verify any extra prep or fallback requirements are surfaced",
         "Verify the explanation is brief, understandable, and visible directly on meal cards or in one tap."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F006",
         "F009"
