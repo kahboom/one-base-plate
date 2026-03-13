@@ -64,5 +64,15 @@
 - Created 12 tests: 9 unit tests for the assembly engine covering all constraint types, 3 integration tests for the Planner page UI
 - Verified: tsc --noEmit passes, vitest passes (44 tests), all F006 steps satisfied
 
+### F007 - Baby texture-safe adaptations (2026-03-13)
+- Enhanced assembly engine to exclude obviously unsafe ingredients for babies (babySafeWithAdaptation=false) instead of just warning
+- Added role-specific texture transformation guidance: protein→shred/blend, carb→cook very soft/finger-safe pieces, veg→steam very soft/mash/finger-safe strips, sauce→ensure smooth, topping→omit or blend
+- Baby-unsafe ingredients shown as "Not suitable for baby — skip: X" while adaptable components get specific texture instructions
+- Hard-no exclusions and baby-unsafe exclusions work independently and stack
+- Baby variant stays tied to base meal when components can be adapted
+- Updated 2 existing F006 tests to match new baby-exclusion behavior
+- Created 8 new tests: 7 engine tests for baby texture scenarios, 1 UI integration test
+- Verified: tsc --noEmit passes, vitest passes (52 tests), all F007 steps satisfied
+
 ## Next Task
-- **F007** — Planner adapts baby servings into texture-safe versions for a no-teeth weaning stage
+- **F008** — Planner ensures toddler plate includes at least one safe food

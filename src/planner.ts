@@ -39,6 +39,35 @@ function getPreparationInstruction(
   return rule ? `${name}: ${rule.rule}` : null;
 }
 
+function isBabyUnsafe(
+  component: MealComponent,
+  member: HouseholdMember,
+  ingredients: Ingredient[],
+): boolean {
+  if (member.role !== "baby") return false;
+  const ing = ingredients.find((i) => i.id === component.ingredientId);
+  return !!ing && !ing.babySafeWithAdaptation;
+}
+
+function getBabyTextureGuidance(
+  component: MealComponent,
+  ingredients: Ingredient[],
+): string {
+  const name = resolveIngredientName(component.ingredientId, ingredients);
+  switch (component.role) {
+    case "protein":
+      return `${name}: shred finely or blend to safe texture`;
+    case "carb":
+      return `${name}: cook until very soft, cut into finger-safe pieces`;
+    case "veg":
+      return `${name}: steam until very soft, mash or cut into finger-safe strips`;
+    case "sauce":
+      return `${name}: ensure no chunks, serve smooth`;
+    case "topping":
+      return `${name}: omit or blend into base`;
+  }
+}
+
 function getTextureInstruction(
   component: MealComponent,
   member: HouseholdMember,
@@ -46,15 +75,18 @@ function getTextureInstruction(
 ): string | null {
   if (member.textureLevel === "regular") return null;
 
-  const name = resolveIngredientName(component.ingredientId, ingredients);
-  const ing = ingredients.find((i) => i.id === component.ingredientId);
+  if (member.role === "baby" && (member.textureLevel === "mashable" || member.textureLevel === "pureed")) {
+    return getBabyTextureGuidance(component, ingredients);
+  }
 
-  if (member.textureLevel === "mashable" || member.textureLevel === "pureed") {
-    if (ing && !ing.babySafeWithAdaptation) {
-      return `${name}: may not be suitable — check texture safety`;
-    }
-    const verb = member.textureLevel === "pureed" ? "puree" : "mash or cut into small safe pieces";
-    return `${name}: ${verb} before serving`;
+  const name = resolveIngredientName(component.ingredientId, ingredients);
+
+  if (member.textureLevel === "pureed") {
+    return `${name}: puree before serving`;
+  }
+
+  if (member.textureLevel === "mashable") {
+    return `${name}: mash or cut into small safe pieces`;
   }
 
   if (member.textureLevel === "soft") {
@@ -86,10 +118,15 @@ export function generateAssemblyVariants(
     const includedComponents: MealComponent[] = [];
     const excludedNames: string[] = [];
 
+    const babyUnsafeNames: string[] = [];
+
     for (const component of meal.components) {
       if (isComponentExcluded(component, member, ingredients)) {
         const name = resolveIngredientName(component.ingredientId, ingredients);
         excludedNames.push(name);
+      } else if (isBabyUnsafe(component, member, ingredients)) {
+        const name = resolveIngredientName(component.ingredientId, ingredients);
+        babyUnsafeNames.push(name);
       } else {
         includedComponents.push(component);
       }
@@ -97,6 +134,11 @@ export function generateAssemblyVariants(
 
     if (excludedNames.length > 0) {
       instructions.push(`Exclude: ${excludedNames.join(", ")}`);
+    }
+
+    if (babyUnsafeNames.length > 0) {
+      instructions.push(`Not suitable for baby — skip: ${babyUnsafeNames.join(", ")}`);
+      requiresExtraPrep = true;
     }
 
     for (const component of includedComponents) {

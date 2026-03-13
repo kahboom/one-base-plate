@@ -192,17 +192,17 @@ describe("F006: Assembly variant generation engine", () => {
     expect(riley.requiresExtraPrep).toBe(true);
   });
 
-  it("adds texture instructions for baby with mashable texture", () => {
+  it("adds role-specific texture instructions for baby with mashable texture", () => {
     const variants = generateAssemblyVariants(baseMeal, members, ingredients);
     const sam = variants.find((v) => v.memberId === "m-sam")!;
-    expect(sam.instructions.some((i) => i.includes("mash or cut"))).toBe(true);
+    expect(sam.instructions.some((i) => i.includes("finger-safe"))).toBe(true);
     expect(sam.requiresExtraPrep).toBe(true);
   });
 
-  it("flags non-baby-safe ingredients for baby", () => {
+  it("excludes non-baby-safe ingredients for baby", () => {
     const variants = generateAssemblyVariants(baseMeal, members, ingredients);
     const sam = variants.find((v) => v.memberId === "m-sam")!;
-    expect(sam.instructions.some((i) => i.includes("chicken breast") && i.includes("texture safety"))).toBe(true);
+    expect(sam.instructions.some((i) => i.includes("Not suitable for baby") && i.includes("chicken breast"))).toBe(true);
   });
 
   it("suggests fallback safe foods for baby when none match components", () => {
