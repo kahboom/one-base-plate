@@ -46,6 +46,11 @@ export interface MealComponent {
   quantity: string;
 }
 
+export interface RecipeLink {
+  label: string;
+  url: string;
+}
+
 export interface BaseMeal {
   id: string;
   name: string;
@@ -55,6 +60,8 @@ export interface BaseMeal {
   difficulty: "easy" | "medium" | "hard";
   rescueEligible: boolean;
   wasteReuseHints: string[];
+  recipeLinks?: RecipeLink[];
+  notes?: string;
 }
 
 export interface AssemblyVariant {

@@ -900,7 +900,7 @@
         "Open Meal Detail and verify recipe links and notes are visible but do not dominate the page",
         "Verify recipe links support multiple sources and notes support reminders such as Gousto versions or toddler adaptations"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F005"
       ],

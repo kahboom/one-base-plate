@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { BaseMeal, MealComponent, Ingredient } from "../types";
+import type { BaseMeal, MealComponent, Ingredient, RecipeLink } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, FieldLabel, EmptyState, Chip } from "../components/ui";
 
@@ -18,6 +18,8 @@ function createEmptyMeal(): BaseMeal {
     difficulty: "easy",
     rescueEligible: false,
     wasteReuseHints: [],
+    recipeLinks: [],
+    notes: "",
   };
 }
 
@@ -124,6 +126,67 @@ function ComponentForm({
   );
 }
 
+function RecipeLinksEditor({
+  links,
+  onChange,
+}: {
+  links: RecipeLink[];
+  onChange: (links: RecipeLink[]) => void;
+}) {
+  const [newLabel, setNewLabel] = useState("");
+  const [newUrl, setNewUrl] = useState("");
+
+  function addLink() {
+    const trimmedUrl = newUrl.trim();
+    const trimmedLabel = newLabel.trim() || trimmedUrl;
+    if (!trimmedUrl) return;
+    onChange([...links, { label: trimmedLabel, url: trimmedUrl }]);
+    setNewLabel("");
+    setNewUrl("");
+  }
+
+  function removeLink(index: number) {
+    onChange(links.filter((_, i) => i !== index));
+  }
+
+  return (
+    <div className="mt-4" data-testid="recipe-links-editor">
+      <h3 className="mb-2 text-base font-semibold text-text-primary">
+        Recipe links ({links.length})
+      </h3>
+      {links.length > 0 && (
+        <div className="mb-3 space-y-2">
+          {links.map((link, i) => (
+            <div key={i} className="flex items-center gap-2" data-testid={`recipe-link-${i}`}>
+              <Chip variant="info">{link.label}</Chip>
+              <span className="truncate text-xs text-text-muted">{link.url}</span>
+              <Button variant="ghost" small onClick={() => removeLink(i)}>x</Button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          type="text"
+          value={newLabel}
+          onChange={(e) => setNewLabel(e.target.value)}
+          placeholder="Label (e.g. Gousto)"
+          className="sm:max-w-[180px]"
+          data-testid="recipe-link-label"
+        />
+        <Input
+          type="url"
+          value={newUrl}
+          onChange={(e) => setNewUrl(e.target.value)}
+          placeholder="URL"
+          data-testid="recipe-link-url"
+        />
+        <Button small onClick={addLink}>Add link</Button>
+      </div>
+    </div>
+  );
+}
+
 function MealForm({
   meal,
   ingredients,
@@ -219,6 +282,22 @@ function MealForm({
           Rescue eligible
         </label>
       </div>
+
+      <RecipeLinksEditor
+        links={meal.recipeLinks ?? []}
+        onChange={(recipeLinks) => onChange({ ...meal, recipeLinks })}
+      />
+
+      <FieldLabel label="Notes" className="mt-4">
+        <textarea
+          className="w-full rounded-lg border border-border-light bg-surface-card p-3 text-sm text-text-primary placeholder-text-muted focus:border-brand focus:outline-none"
+          rows={3}
+          value={meal.notes ?? ""}
+          onChange={(e) => onChange({ ...meal, notes: e.target.value })}
+          placeholder="e.g. Gousto version works well, blend toddler sauce"
+          data-testid="meal-notes"
+        />
+      </FieldLabel>
 
       <h3 className="mt-4 mb-2 text-base font-semibold text-text-primary">
         Components ({meal.components.length})

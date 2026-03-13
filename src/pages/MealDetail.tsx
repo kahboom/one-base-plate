@@ -68,6 +68,34 @@ export default function MealDetail() {
         ingredientName={ingredientName}
       />
 
+      {meal.recipeLinks && meal.recipeLinks.length > 0 && (
+        <Section title="Recipe links">
+          <div className="space-y-2" data-testid="recipe-links">
+            {meal.recipeLinks.map((link, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-brand hover:underline"
+                  data-testid={`recipe-link-${i}`}
+                >
+                  {link.label}
+                </a>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {meal.notes && (
+        <Section title="Notes">
+          <p className="text-sm text-text-secondary whitespace-pre-wrap" data-testid="meal-notes">
+            {meal.notes}
+          </p>
+        </Section>
+      )}
+
       <Section title="Per-member assembly">
         <div className="space-y-3" data-testid="member-variants">
           {variants.map((variant) => {

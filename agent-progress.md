@@ -274,5 +274,19 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 10 tests: 5 engine tests (best protein pick, alternative on conflict, overlap scoring, single-protein unchanged, no duplication), 2 editor UI tests (add/remove alternatives), 3 Meal Detail tests (structure display, member variants, single shared structure)
 - Verified: tsc --noEmit passes, vitest passes (168 tests), all F028 steps satisfied
 
+### F029 - Base meals can store recipe links and preparation notes (2026-03-13)
+- Added `RecipeLink` interface (`{ label: string; url: string }`) and optional `recipeLinks`/`notes` fields to `BaseMeal` type
+- Fields are optional to support existing saved data without migration (UI handles `undefined` with `??` defaults)
+- Created `RecipeLinksEditor` component in BaseMealManager with add/remove UI for multiple recipe links
+- Each link has a label (defaults to URL if blank) and URL field with responsive stacked layout on mobile
+- Added textarea for freeform notes in MealForm with placeholder guidance
+- Updated MealDetail page with conditional `Recipe links` and `Notes` sections between meal structure and member assembly
+- Recipe links render as clickable `<a>` tags with `target="_blank"`, visible but not dominating the page
+- Notes render as `whitespace-pre-wrap` paragraph for multi-line support
+- Sections hidden when no links or empty notes (clean detail view for meals without these)
+- Updated pasta-base fixture with new fields
+- Created 11 tests: 4 editor recipe link tests (add, multiple sources, remove, label fallback), 2 notes tests (add, persist), 5 Meal Detail tests (links display, notes display, hidden when empty, links vs structure prominence)
+- Verified: tsc --noEmit passes, vitest passes (179 tests), vite build succeeds
+
 ## Next Task
-- **F029** — Meal detail page shows recipe links, notes, and per-member adaptations
+- **F022** — User can drag meal cards into the weekly plan calendar (depends on F021✅, F023✅, F033✅)
