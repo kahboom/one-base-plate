@@ -115,7 +115,7 @@
         "fields": [
           "id",
           "name",
-          "role (adult|toddler|baby)",
+          "role (adult|toddler|baby|pet)",
           "safeFoods[]",
           "hardNoFoods[]",
           "preparationRules[]",
@@ -134,6 +134,7 @@
           "shelfLifeHint",
           "freezerFriendly",
           "babySafeWithAdaptation",
+          "imageUrl (optional)",
           "proteinRole",
           "sauceRole",
           "linkableRecipes[]",
@@ -158,6 +159,7 @@
           "optionalSauces[]",
           "flavorUpgrades[]",
           "recipeLinks[]",
+          "imageUrl (optional)",
           "notes",
           "visualTags[]",
           "effortLevel",
@@ -828,6 +830,104 @@
       "passes": true,
       "dependencies": ["F033"],
       "acceptanceRefs": ["S001", "S003", "S005", "S006"]
+    },
+    {
+      "id": "F037",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "User can add photos to ingredients and base meals via URL or upload",
+      "steps": [
+        "Add optional imageUrl field to ingredients and base meals in the data model.",
+        "In Ingredient Manager and Base Meal Editor, allow user to provide an image URL or upload a file (converted to data URL for local-first storage).",
+        "Display images in card layouts, list thumbnails, and hero-style on Meal Detail.",
+        "Verify images fit within the shared styling system (aspect ratio, borders, rounded corners) and remain readable on mobile."
+      ],
+      "passes": true,
+      "dependencies": ["F032", "F033"],
+      "acceptanceRefs": ["S002", "S004", "S007"]
+    },
+    {
+      "id": "F038",
+      "phase": 2,
+      "priority": "P1",
+      "category": "ux",
+      "description": "Add ingredient or component inline or via modal with discoverable navigation",
+      "steps": [
+        "Add an 'Add new ingredient' flow accessible from Base Meal Manager when adding a component (inline expandable form or modal).",
+        "Add Ingredients and Base meals links to navigation: either a submenu in HouseholdNav or flat links (Ingredients, Base meals) using shared styling.",
+        "Add links from Planner and Weekly Planner empty states to 'Add ingredients' and 'Add base meals' similar to Rescue mode's 'Add some base meals' link.",
+        "Verify users can create an ingredient without leaving the meal editor and that create flows are discoverable from the nav and empty states."
+      ],
+      "passes": false,
+      "dependencies": ["F033", "F036"],
+      "acceptanceRefs": ["S001", "S003", "S006", "S007"]
+    },
+    {
+      "id": "F039",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "User can import and export data as JSON for backup and seeding",
+      "steps": [
+        "Add export: user can download all households (or current household) as a JSON file.",
+        "Add import: user can upload JSON to replace or merge with existing data.",
+        "Add npm script (e.g. npm run seed or npm run db:import) that reads a JSON file, clears storage, and writes the data to the app's storage key.",
+        "Verify exported JSON matches the structure used by loadHouseholds/saveHouseholds and can be re-imported to restore or seed the app."
+      ],
+      "passes": false,
+      "dependencies": ["F001"],
+      "acceptanceRefs": []
+    },
+    {
+      "id": "F040",
+      "phase": 2,
+      "priority": "P1",
+      "category": "agent-harness",
+      "description": "Database cleared and repopulated each build with McGeever family seed",
+      "steps": [
+        "Add fixtures/households/H004-mcgeever.json with McGeever household: Aaron (adult), Rachel (adult), Indy (toddler), Órla (baby), Lex (dog/pet).",
+        "Extend MemberRole to include pet; exclude pet members from assembly variants, overlap scoring, and rescue logic.",
+        "Add seed script (e.g. npm run db:seed) that loads fixtures and writes to storage.",
+        "Wire seeding into build: npm run build clears storage and loads seed data (or app seeds on first load after build).",
+        "Optionally: init.sh or npm run dev can reset and seed on startup for local development."
+      ],
+      "passes": false,
+      "dependencies": ["F001", "F039"],
+      "acceptanceRefs": []
+    },
+    {
+      "id": "F041",
+      "phase": 2,
+      "priority": "P1",
+      "category": "ux",
+      "description": "Clicking a household navigates to Edit setup; remove Household setup from nav",
+      "steps": [
+        "Change HouseholdList: clicking household card/name goes to /household/:id (HouseholdSetup) instead of /household/:id/home.",
+        "Remove 'Household setup' link from HouseholdNav.",
+        "Keep 'Home' link in HouseholdNav so users can reach Home from within a household.",
+        "Remove or repurpose redundant Setup button on household card if it duplicates the main click target.",
+        "Verify clicking a household opens the edit/setup screen and users can reach Home via nav."
+      ],
+      "passes": false,
+      "dependencies": ["F036"],
+      "acceptanceRefs": ["S001", "S006"]
+    },
+    {
+      "id": "F042",
+      "phase": 2,
+      "priority": "P2",
+      "category": "functional",
+      "description": "User can share a mobile-friendly screenshot of the weekly plan via text",
+      "steps": [
+        "Add capability to capture the weekly planner view (or a dedicated share view) as an image.",
+        "Use navigator.share with the image when available, or fallback to download for manual share.",
+        "Ensure the captured view uses shared styling and is readable at mobile sizes when shared.",
+        "Verify the share flow works on mobile and desktop."
+      ],
+      "passes": false,
+      "dependencies": ["F010", "F033"],
+      "acceptanceRefs": ["S003"]
     }
   ],
   "milestones": [
@@ -866,7 +966,7 @@
     {
       "id": "M4",
       "name": "Learning loop + convenience features",
-      "includes": ["F013", "F014", "F015", "F020", "F030", "F034", "F035", "F036"]
+      "includes": ["F013", "F014", "F015", "F020", "F030", "F034", "F035", "F036", "F037", "F038", "F039", "F040", "F041", "F042"]
     }
   ],
   "fixtureHouseholds": [
@@ -887,6 +987,12 @@
       "name": "Single caregiver plus two children",
       "description": "Used to test rescue mode and low-time planning flows.",
       "purpose": "Stress and fallback coverage"
+    },
+    {
+      "id": "H004",
+      "name": "McGeever family",
+      "description": "Aaron (adult), Rachel (adult), Indy (toddler), Órla (baby), Lex (dog). Primary seed data for build-time repopulation.",
+      "purpose": "Default seed household"
     }
   ],
   "implementationOrder": [
@@ -924,7 +1030,13 @@
     "F034",
     "F035",
     "F036",
-    "F020"
+    "F020",
+    "F037",
+    "F038",
+    "F039",
+    "F040",
+    "F041",
+    "F042"
   ],
   "uiSpec": {
     "intent": "Embedded screen-level UX requirements for agents that implement features sequentially from this PRD. Agents must consult the referenced screen definitions before marking related UX or functional features as passing.",
@@ -982,7 +1094,7 @@
           "Mini weekly strip showing the current week",
           "One-tap rescue mode card",
           "Recent wins or pinned meals row",
-          "Consistent nav section linking to Weekly planner, Grocery list, Rescue mode, Meal planner, Household setup, All households"
+          "Consistent nav section linking to Weekly planner, Grocery list, Rescue mode, Meal planner, Ingredients, Base meals, All households"
         ],
         "acceptance": [
           "User can reach a tonight decision in two taps or fewer from the home screen",
@@ -997,6 +1109,7 @@
         "goal": "Present meals as easy-to-scan options with household fit context.",
         "requiredElements": [
           "Meal title",
+          "Optional meal image thumbnail",
           "Prep time",
           "Effort level",
           "Overlap score",
@@ -1028,8 +1141,9 @@
           "Drag-and-drop or tap-to-assign interaction",
           "Visible effort balance for the week",
           "Grocery preview summary",
+          "Share button to capture and share plan as image via text or native share",
           "Back/Home control that navigates to Home (household hub), not to HouseholdSetup",
-          "Consistent nav section (integrated with page layout) linking to sibling screens and Home"
+          "Consistent nav section (integrated with page layout) linking to sibling screens, Ingredients, Base meals, and Home"
         ],
         "interactionRules": [
           "Dragging a meal to a day should immediately assign it",
@@ -1049,7 +1163,7 @@
         "name": "Meal Detail",
         "goal": "Show one-base-many-plates detail without overwhelming the user.",
         "requiredElements": [
-          "Base meal hero card",
+          "Base meal hero card with optional image display",
           "Protein options",
           "Carb options",
           "Optional sauces",
@@ -1101,9 +1215,9 @@
           "Safe foods input",
           "Hard-no foods input",
           "Preparation rules input",
-          "Role selector",
+          "Role selector (adult, toddler, baby, pet)",
           "Quick edit entry points",
-          "Nav section with link to Home (household hub) so user can return to planning flows; nav styled consistently with other screens"
+          "Nav section with links to Home, Ingredients, Base meals, and sibling screens; nav styled consistently (no separate Household setup link when this screen is the edit target)"
         ],
         "acceptance": [
           "User can edit one member without reopening the full household flow",
@@ -1118,6 +1232,7 @@
         "goal": "Let the user define one flexible meal structure with variants, links, and notes.",
         "requiredElements": [
           "Meal name",
+          "Meal image (URL or upload)",
           "Structure type",
           "Protein options",
           "Carb options",
@@ -1126,7 +1241,8 @@
           "Recipe links",
           "Notes",
           "Rescue eligible toggle",
-          "Effort level selector"
+          "Effort level selector",
+          "Add new ingredient inline or via modal when adding component"
         ],
         "acceptance": [
           "User can create a multi-protein meal in one editor flow",
@@ -1144,7 +1260,7 @@
         ],
         "requiredElements": [
           "Grouped categories",
-          "Consolidated ingredients",
+          "Consolidated ingredients (optional thumbnail images)",
           "Already-have toggle",
           "Links back to meals using that ingredient",
           "Clean print/export layout"
@@ -1200,14 +1316,14 @@
     ]
   },
   "screenToFeatureMap": {
-    "S001": ["F010", "F012", "F021", "F032", "F025", "F033", "F036"],
-    "S002": ["F006", "F009", "F018", "F023", "F024", "F025", "F032", "F033"],
-    "S003": ["F010", "F021", "F022", "F026", "F027", "F032", "F025", "F033", "F036"],
-    "S004": ["F006", "F028", "F029"],
+    "S001": ["F010", "F012", "F021", "F032", "F025", "F033", "F036", "F037", "F038"],
+    "S002": ["F006", "F009", "F018", "F023", "F024", "F025", "F032", "F033", "F037"],
+    "S003": ["F010", "F021", "F022", "F026", "F027", "F032", "F025", "F033", "F036", "F038", "F042"],
+    "S004": ["F006", "F028", "F029", "F037"],
     "S005": ["F012", "F036"],
-    "S006": ["F002", "F003", "F019", "F032", "F025", "F033", "F035"],
-    "S007": ["F005", "F028", "F029", "F032", "F025", "F033", "F035"],
-    "S008": ["F011", "F020", "F036"],
+    "S006": ["F002", "F003", "F019", "F032", "F025", "F033", "F035", "F038", "F041"],
+    "S007": ["F005", "F028", "F029", "F032", "F025", "F033", "F035", "F037", "F038"],
+    "S008": ["F011", "F020", "F036", "F037"],
     "S009": ["F034"]
   },
   "agentExecutionRules": [

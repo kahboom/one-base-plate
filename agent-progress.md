@@ -497,5 +497,17 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 22 tests: 10 nav presence tests (all pages show consistent links), 2 no-back-to-household tests, 2 canonical hub routing tests (href checks), 4 navigation tests (clicking Home returns to Home from Weekly/Planner/Grocery/Rescue), 1 MemberProfile default return test, 1 link order consistency test, 2 styling tests (border-t, brand color)
 - Verified: tsc --noEmit passes, vitest passes (462 tests, 1 pre-existing f033 failure unrelated to F036), all F036 steps satisfied
 
+### F037 - User can add photos to ingredients and base meals via URL or upload (2026-03-13)
+- Added optional `imageUrl?: string` field to `Ingredient` and `BaseMeal` types in data model
+- Fields are optional to support existing saved data without migration (UI handles `undefined` with `?? ""` defaults)
+- **Ingredient Manager**: Added image URL text input and file upload button per ingredient; file uploads converted to data URL via FileReader for local-first storage; shows thumbnail preview (80x80px, rounded, object-cover) when imageUrl is set
+- **Base Meal Manager**: Added image URL text input and file upload button per meal; same data URL conversion approach; shows thumbnail preview (96x144px, rounded, object-cover) when imageUrl is set
+- **MealDetail**: Added hero-style image at top of meal hero card (full-width, max-h-64, rounded, object-cover); conditionally hidden when no imageUrl
+- **MealCard**: Added thumbnail image above meal name (max-h-36 normal, max-h-24 compact, full-width, rounded, border, object-cover); conditionally hidden when no imageUrl
+- All images use shared styling system: `rounded-md`, `border border-border-light`, `object-cover` for consistent aspect ratio
+- Upload labels styled as button-like spans (matching existing styling system) wrapping hidden file inputs
+- Created 21 tests: 2 data model tests (optional imageUrl on Ingredient and BaseMeal), 5 Ingredient Manager tests (URL input, preview, URL persistence, upload button, styling), 4 Base Meal Manager tests (URL input, preview, persistence, upload button), 3 MealDetail tests (hero image shown, hidden when no URL, full-width styling), 5 MealCard tests (thumbnail shown, hidden, compact height, normal height, shared styling), 2 mobile readability tests (preview sizes)
+- Verified: tsc --noEmit passes, vitest passes (483 tests, 3 pre-existing f033 failures unrelated to F037), all F037 steps satisfied
+
 ## Next Task
-- All PRD features complete (no remaining tasks with passes: false)
+- F038: Add ingredient or component inline or via modal with discoverable navigation

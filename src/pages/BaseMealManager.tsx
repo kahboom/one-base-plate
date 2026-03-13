@@ -283,6 +283,48 @@ function MealForm({
         </label>
       </div>
 
+      <FieldLabel label="Image" className="mt-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Input
+            type="url"
+            value={meal.imageUrl ?? ""}
+            onChange={(e) => onChange({ ...meal, imageUrl: e.target.value || undefined })}
+            placeholder="Image URL"
+            data-testid="meal-image-url"
+          />
+          <label className="inline-flex cursor-pointer items-center">
+            <span className="inline-flex items-center justify-center rounded-sm border border-border-default bg-surface px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:bg-bg hover:shadow-card min-h-[36px]">
+              Upload
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              data-testid="meal-image-upload"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                  onChange({ ...meal, imageUrl: reader.result as string });
+                };
+                reader.readAsDataURL(file);
+              }}
+            />
+          </label>
+        </div>
+        {meal.imageUrl && (
+          <div className="mt-2">
+            <img
+              src={meal.imageUrl}
+              alt={meal.name || "Meal"}
+              className="h-24 w-36 rounded-md border border-border-light object-cover"
+              data-testid="meal-image-preview"
+            />
+          </div>
+        )}
+      </FieldLabel>
+
       <RecipeLinksEditor
         links={meal.recipeLinks ?? []}
         onChange={(recipeLinks) => onChange({ ...meal, recipeLinks })}
@@ -370,6 +412,7 @@ export default function BaseMealManager() {
 
   return (
     <PageShell>
+      <HouseholdNav householdId={householdId ?? ""} />
       <PageHeader title="Base Meals" subtitle={`Household: ${householdName}`} />
 
       <h2 className="mb-4 text-xl font-semibold text-text-primary">Meals ({meals.length})</h2>
@@ -394,8 +437,6 @@ export default function BaseMealManager() {
         <Button variant="primary" onClick={handleSave}>Save meals</Button>
         <Button onClick={() => navigate(`/household/${householdId}/home`)}>Cancel</Button>
       </ActionGroup>
-
-      <HouseholdNav householdId={householdId ?? ""} />
 
       <ConfirmDialog
         open={!!pending}

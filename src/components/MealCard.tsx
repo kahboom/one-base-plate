@@ -70,6 +70,14 @@ export default function MealCard({
         selected ? "border-brand ring-2 ring-brand-light" : "border-border-light"
       } ${isDraggable ? "cursor-grab active:cursor-grabbing" : ""} ${compact ? "sm:min-w-[160px] p-3" : "sm:min-w-[220px] p-4"}`}
     >
+      {meal.imageUrl && (
+        <img
+          src={meal.imageUrl}
+          alt={meal.name}
+          className={`mb-2 w-full rounded-md border border-border-light object-cover ${compact ? "max-h-24" : "max-h-36"}`}
+          data-testid="meal-card-image"
+        />
+      )}
       <div className="mb-2">
         <strong className={compact ? "text-[0.95rem]" : "text-lg"}>
           {meal.name}

@@ -58,9 +58,18 @@ export default function MealDetail() {
 
   return (
     <PageShell>
+      <HouseholdNav householdId={householdId ?? ""} />
       <PageHeader title={meal.name} subtitle={`Household: ${household.name}`} />
 
       <Card data-testid="meal-hero" className="mb-6">
+        {meal.imageUrl && (
+          <img
+            src={meal.imageUrl}
+            alt={meal.name}
+            className="mb-4 w-full max-h-64 rounded-md border border-border-light object-cover"
+            data-testid="meal-hero-image"
+          />
+        )}
         <div className="flex flex-wrap gap-4 text-sm text-text-secondary">
           <span>Prep: {meal.defaultPrep || "—"}</span>
           <span>{meal.estimatedTimeMinutes} min</span>
@@ -160,8 +169,6 @@ export default function MealDetail() {
           })}
         </div>
       </Section>
-
-      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

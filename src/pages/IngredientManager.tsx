@@ -103,6 +103,48 @@ function IngredientForm({
         </label>
       </div>
 
+      <FieldLabel label="Image" className="mt-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Input
+            type="url"
+            value={ingredient.imageUrl ?? ""}
+            onChange={(e) => onChange({ ...ingredient, imageUrl: e.target.value || undefined })}
+            placeholder="Image URL"
+            data-testid="ingredient-image-url"
+          />
+          <label className="inline-flex cursor-pointer items-center">
+            <span className="inline-flex items-center justify-center rounded-sm border border-border-default bg-surface px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:bg-bg hover:shadow-card min-h-[36px]">
+              Upload
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              data-testid="ingredient-image-upload"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                  onChange({ ...ingredient, imageUrl: reader.result as string });
+                };
+                reader.readAsDataURL(file);
+              }}
+            />
+          </label>
+        </div>
+        {ingredient.imageUrl && (
+          <div className="mt-2">
+            <img
+              src={ingredient.imageUrl}
+              alt={ingredient.name || "Ingredient"}
+              className="h-20 w-20 rounded-md border border-border-light object-cover"
+              data-testid="ingredient-image-preview"
+            />
+          </div>
+        )}
+      </FieldLabel>
+
       <div className="mt-3">
         <strong className="text-sm">Tags: </strong>
         <span className="flex flex-wrap gap-1 mt-1">
@@ -192,6 +234,7 @@ export default function IngredientManager() {
 
   return (
     <PageShell>
+      <HouseholdNav householdId={householdId ?? ""} />
       <PageHeader title="Ingredients" subtitle={`Household: ${householdName}`} />
 
       <h2 className="mb-4 text-xl font-semibold text-text-primary">Items ({ingredients.length})</h2>
@@ -215,8 +258,6 @@ export default function IngredientManager() {
         <Button variant="primary" onClick={handleSave}>Save ingredients</Button>
         <Button onClick={() => navigate(`/household/${householdId}/home`)}>Cancel</Button>
       </ActionGroup>
-
-      <HouseholdNav householdId={householdId ?? ""} />
 
       <ConfirmDialog
         open={!!pending}

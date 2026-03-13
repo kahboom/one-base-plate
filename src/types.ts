@@ -37,6 +37,7 @@ export interface Ingredient {
   shelfLifeHint: string;
   freezerFriendly: boolean;
   babySafeWithAdaptation: boolean;
+  imageUrl?: string;
 }
 
 export interface MealComponent {
@@ -62,6 +63,7 @@ export interface BaseMeal {
   wasteReuseHints: string[];
   recipeLinks?: RecipeLink[];
   notes?: string;
+  imageUrl?: string;
 }
 
 export interface AssemblyVariant {
