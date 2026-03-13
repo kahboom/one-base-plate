@@ -414,7 +414,7 @@
         "Verify members with hard-no conflicts are clearly identified",
         "Verify overlap score is used in meal ranking"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F003",
         "F005"

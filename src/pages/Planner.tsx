@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { BaseMeal, AssemblyVariant, Household } from "../types";
 import { loadHousehold } from "../storage";
-import { generateAssemblyVariants } from "../planner";
+import { generateAssemblyVariants, computeMealOverlap } from "../planner";
+import type { OverlapResult } from "../planner";
 
 export default function Planner() {
   const { householdId } = useParams<{ householdId: string }>();
@@ -55,6 +56,24 @@ export default function Planner() {
     (m) => m.id === selectedMealId,
   );
 
+  const mealOverlaps: Map<string, OverlapResult> = new Map();
+  for (const meal of household.baseMeals) {
+    mealOverlaps.set(
+      meal.id,
+      computeMealOverlap(meal, household.members, household.ingredients),
+    );
+  }
+
+  const rankedMeals = [...household.baseMeals].sort((a, b) => {
+    const overlapA = mealOverlaps.get(a.id);
+    const overlapB = mealOverlaps.get(b.id);
+    return (overlapB?.score ?? 0) - (overlapA?.score ?? 0);
+  });
+
+  const selectedOverlap = selectedMealId
+    ? mealOverlaps.get(selectedMealId)
+    : undefined;
+
   return (
     <div>
       <h1>Meal Planner</h1>
@@ -71,11 +90,14 @@ export default function Planner() {
               onChange={(e) => handleSelectMeal(e.target.value)}
             >
               <option value="">Choose a meal</option>
-              {household.baseMeals.map((meal) => (
-                <option key={meal.id} value={meal.id}>
-                  {meal.name}
-                </option>
-              ))}
+              {rankedMeals.map((meal) => {
+                const overlap = mealOverlaps.get(meal.id);
+                return (
+                  <option key={meal.id} value={meal.id}>
+                    {meal.name} ({overlap?.score ?? 0}/{overlap?.total ?? 0} overlap)
+                  </option>
+                );
+              })}
             </select>
           </label>
         </div>
@@ -89,6 +111,26 @@ export default function Planner() {
             {selectedMeal.estimatedTimeMinutes} min | Difficulty:{" "}
             {selectedMeal.difficulty}
           </p>
+
+          {selectedOverlap && (
+            <div data-testid="overlap-summary">
+              <p>
+                Overlap: {selectedOverlap.score}/{selectedOverlap.total} members
+                compatible
+              </p>
+              <ul>
+                {selectedOverlap.memberDetails.map((d) => (
+                  <li key={d.memberId} data-testid={`overlap-${d.memberId}`}>
+                    {d.memberName}: {d.compatibility === "direct"
+                      ? "compatible"
+                      : d.compatibility === "with-adaptation"
+                        ? "compatible with adaptation"
+                        : `conflict — ${d.conflicts.join(", ")}`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <h3>Shared base</h3>
           <ul>

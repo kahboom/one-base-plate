@@ -105,6 +105,117 @@ function isSafeFoodComponent(
   return member.safeFoods.some((s) => matchesFood(s, name));
 }
 
+export type MemberCompatibility = "direct" | "with-adaptation" | "conflict";
+
+export interface MemberOverlap {
+  memberId: string;
+  memberName: string;
+  compatibility: MemberCompatibility;
+  conflicts: string[];
+}
+
+export interface OverlapResult {
+  score: number;
+  total: number;
+  memberDetails: MemberOverlap[];
+}
+
+function getMemberIngredientCompatibility(
+  ingredientName: string,
+  ingredient: Ingredient | undefined,
+  member: HouseholdMember,
+): { compatibility: MemberCompatibility; conflict: string | null } {
+  if (member.hardNoFoods.some((h) => matchesFood(h, ingredientName))) {
+    return { compatibility: "conflict", conflict: `${ingredientName} (hard-no)` };
+  }
+  if (member.role === "baby" && ingredient && !ingredient.babySafeWithAdaptation) {
+    return { compatibility: "conflict", conflict: `${ingredientName} (not baby-safe)` };
+  }
+  if (
+    member.textureLevel !== "regular" ||
+    member.preparationRules.some((r) => matchesFood(r.ingredient, ingredientName))
+  ) {
+    return { compatibility: "with-adaptation", conflict: null };
+  }
+  return { compatibility: "direct", conflict: null };
+}
+
+export function computeIngredientOverlap(
+  ingredientId: string,
+  members: HouseholdMember[],
+  ingredients: Ingredient[],
+): OverlapResult {
+  const name = resolveIngredientName(ingredientId, ingredients);
+  const ing = ingredients.find((i) => i.id === ingredientId);
+
+  const memberDetails: MemberOverlap[] = members.map((member) => {
+    const { compatibility, conflict } = getMemberIngredientCompatibility(name, ing, member);
+    return {
+      memberId: member.id,
+      memberName: member.name,
+      compatibility,
+      conflicts: conflict ? [conflict] : [],
+    };
+  });
+
+  const compatible = memberDetails.filter((d) => d.compatibility !== "conflict").length;
+
+  return {
+    score: compatible,
+    total: members.length,
+    memberDetails,
+  };
+}
+
+export function computeMealOverlap(
+  meal: BaseMeal,
+  members: HouseholdMember[],
+  ingredients: Ingredient[],
+): OverlapResult {
+  const memberDetails: MemberOverlap[] = members.map((member) => {
+    const conflicts: string[] = [];
+    let hasConflict = false;
+    let needsAdaptation = false;
+
+    for (const component of meal.components) {
+      const name = resolveIngredientName(component.ingredientId, ingredients);
+      const ing = ingredients.find((i) => i.id === component.ingredientId);
+      const { compatibility, conflict } = getMemberIngredientCompatibility(name, ing, member);
+
+      if (compatibility === "conflict") {
+        hasConflict = true;
+        if (conflict) conflicts.push(conflict);
+      } else if (compatibility === "with-adaptation") {
+        needsAdaptation = true;
+      }
+    }
+
+    let compatibility: MemberCompatibility;
+    if (hasConflict) {
+      compatibility = "conflict";
+    } else if (needsAdaptation) {
+      compatibility = "with-adaptation";
+    } else {
+      compatibility = "direct";
+    }
+
+    return {
+      memberId: member.id,
+      memberName: member.name,
+      compatibility,
+      conflicts,
+    };
+  });
+
+  const compatible = memberDetails.filter((d) => d.compatibility !== "conflict").length;
+
+  return {
+    score: compatible,
+    total: members.length,
+    memberDetails,
+  };
+}
+
 export function generateAssemblyVariants(
   meal: BaseMeal,
   members: HouseholdMember[],

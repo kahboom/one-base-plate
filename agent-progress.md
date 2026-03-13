@@ -92,5 +92,15 @@
 - Created 6 tests: quick edit link presence, navigation to profile, edit+save+return with variant change verification, edit-avoids-household-setup, cancel-returns-without-saving, default-returnTo behavior
 - Verified: tsc --noEmit passes, vitest passes (66 tests), all F019 steps satisfied
 
+### F009 - Overlap score for ingredients and meals (2026-03-13)
+- Added `computeIngredientOverlap` and `computeMealOverlap` functions to planner engine
+- Per-member compatibility tracked as "direct", "with-adaptation", or "conflict" with specific conflict reasons
+- Hard-no foods and baby-unsafe ingredients produce conflicts; texture/prep rules produce adaptations
+- Planner dropdown now ranks meals by overlap score (highest first) and shows "X/Y overlap" in each option
+- Selected meal displays overlap summary with per-member compatibility details and conflict reasons
+- Added `OverlapResult`, `MemberOverlap`, and `MemberCompatibility` exported types
+- Created 10 tests: 5 ingredient overlap, 3 meal overlap, 2 UI integration tests
+- Verified: tsc --noEmit passes, vitest passes (76 tests), all F009 steps satisfied
+
 ## Next Task
-- **F009** — Planner computes overlap score for ingredients and meals (unblocks F018)
+- **F018** — Planner explains why a meal was recommended and what the trade-offs are (now unblocked)
