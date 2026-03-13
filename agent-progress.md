@@ -123,5 +123,18 @@
 - Created 14 tests: 8 engine tests (day count, variants, reuse, deduplication, edge cases), 6 UI tests (generate, 5-day, cards, details, save/reopen, empty state)
 - Verified: tsc --noEmit passes, vitest passes (100 tests), all F010 steps satisfied
 
+### F021 - Weekly mini-calendar layout (2026-03-13)
+- Enhanced WeeklyPlanner to always show 7 (or 5) day cards before and after plan generation
+- Empty day cards display suggested meals (ranked by overlap) with italic styling and dashed borders
+- Added "Clear" button per day to remove a meal and show suggestion again
+- Added suggested meal tray below the week grid showing all available meals ranked by overlap
+- Created Home page (src/pages/Home.tsx) with "What should we eat tonight?" headline
+- Home shows compact mini weekly strip (Mon-Sun) when a plan exists, with "View full plan" link
+- Home shows "Start planning" prompt when no plan exists, plus top 3 meal suggestion cards
+- Added route `/household/:householdId/home` in App.tsx
+- HouseholdList now links directly to Home; Home links to weekly planner, meal planner, and setup
+- Created 11 tests: 5 WeeklyPlanner calendar tests (empty cards, suggestions, fill, clear), 1 tray test, 5 Home tests (headline, strip, no-plan, suggestions, strip content)
+- Verified: tsc --noEmit passes, vitest passes (111 tests), all F021 steps satisfied
+
 ## Next Task
-- **F021** — Weekly planning screen displays meals in a visual mini-calendar layout
+- **F023** — Meals are displayed as visually readable cards with compatibility indicators

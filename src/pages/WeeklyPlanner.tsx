@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import type { Household, WeeklyPlan, DayPlan } from "../types";
+import type { Household, WeeklyPlan, DayPlan, BaseMeal } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import { generateWeeklyPlan, computeMealOverlap } from "../planner";
+
+const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function WeeklyPlanner() {
   const { householdId } = useParams<{ householdId: string }>();
@@ -50,6 +52,12 @@ export default function WeeklyPlanner() {
     setPlan(newPlan);
   }
 
+  function handleClearDay(dayIndex: number) {
+    if (!plan) return;
+    const updatedDays = plan.days.filter((_, i) => i !== dayIndex);
+    setPlan({ ...plan, days: updatedDays });
+  }
+
   function handleSave() {
     if (!household || !plan) return;
 
@@ -84,11 +92,25 @@ export default function WeeklyPlanner() {
     return `${overlap.score}/${overlap.total}`;
   }
 
+  function getSuggestedMeal(dayLabel: string): BaseMeal | null {
+    if (!household || household.baseMeals.length === 0) return null;
+    const ranked = [...household.baseMeals]
+      .map((meal) => ({
+        meal,
+        overlap: computeMealOverlap(meal, household.members, household.ingredients),
+      }))
+      .sort((a, b) => b.overlap.score - a.overlap.score);
+    const index = DAY_LABELS.indexOf(dayLabel) % ranked.length;
+    return ranked[index]?.meal ?? null;
+  }
+
   if (!loaded) return null;
 
   if (!household) {
     return <p>Household not found.</p>;
   }
+
+  const daySlots = DAY_LABELS.slice(0, numDays);
 
   return (
     <div>
@@ -116,24 +138,64 @@ export default function WeeklyPlanner() {
         </div>
       )}
 
-      {plan && (
-        <div data-testid="weekly-plan">
-          <div data-testid="day-cards" style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-            {plan.days.map((dayPlan: DayPlan, index: number) => (
-              <DayCard
-                key={index}
-                dayPlan={dayPlan}
-                mealName={getMealName(dayPlan.baseMealId)}
-                overlapLabel={getMealOverlapLabel(dayPlan.baseMealId)}
-                household={household}
-              />
-            ))}
-          </div>
+      <div data-testid="day-cards" style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "1rem" }}>
+        {daySlots.map((dayLabel) => {
+          const dayIndex = plan?.days.findIndex((d) => d.day === dayLabel) ?? -1;
+          const dayPlan = dayIndex >= 0 ? plan!.days[dayIndex]! : null;
+          const suggested = !dayPlan ? getSuggestedMeal(dayLabel) : null;
 
-          <div style={{ marginTop: "1rem" }}>
-            <button type="button" onClick={handleSave} data-testid="save-plan-btn">
-              Save plan
-            </button>
+          return (
+            <DayCard
+              key={dayLabel}
+              dayLabel={dayLabel}
+              dayPlan={dayPlan}
+              dayIndex={dayIndex}
+              suggestedMeal={suggested}
+              mealName={dayPlan ? getMealName(dayPlan.baseMealId) : null}
+              overlapLabel={dayPlan ? getMealOverlapLabel(dayPlan.baseMealId) : null}
+              household={household}
+              onClear={dayIndex >= 0 ? () => handleClearDay(dayIndex) : undefined}
+            />
+          );
+        })}
+      </div>
+
+      {plan && (
+        <div data-testid="weekly-plan" style={{ marginTop: "1rem" }}>
+          <button type="button" onClick={handleSave} data-testid="save-plan-btn">
+            Save plan
+          </button>
+        </div>
+      )}
+
+      {household.baseMeals.length > 0 && (
+        <div data-testid="suggested-tray" style={{ marginTop: "1.5rem" }}>
+          <h2>Suggested meals</h2>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            {[...household.baseMeals]
+              .map((meal) => ({
+                meal,
+                overlap: computeMealOverlap(meal, household.members, household.ingredients),
+              }))
+              .sort((a, b) => b.overlap.score - a.overlap.score)
+              .map(({ meal, overlap }) => (
+                <div
+                  key={meal.id}
+                  data-testid={`tray-meal-${meal.id}`}
+                  style={{
+                    border: "1px solid #ddd",
+                    borderRadius: "8px",
+                    padding: "0.75rem",
+                    minWidth: "120px",
+                  }}
+                >
+                  <strong>{meal.name}</strong>
+                  <br />
+                  <small>{overlap.score}/{overlap.total} overlap</small>
+                  <br />
+                  <small>{meal.estimatedTimeMinutes} min | {meal.difficulty}</small>
+                </div>
+              ))}
           </div>
         </div>
       )}
@@ -147,71 +209,111 @@ export default function WeeklyPlanner() {
         </button>
         {" | "}
         <Link to={`/household/${householdId}/planner`}>Single meal planner</Link>
+        {" | "}
+        <Link to={`/household/${householdId}/home`}>Home</Link>
       </div>
     </div>
   );
 }
 
 function DayCard({
+  dayLabel,
   dayPlan,
+  dayIndex: _dayIndex,
+  suggestedMeal,
   mealName,
   overlapLabel,
   household,
+  onClear,
 }: {
-  dayPlan: DayPlan;
-  mealName: string;
-  overlapLabel: string;
+  dayLabel: string;
+  dayPlan: DayPlan | null;
+  dayIndex: number;
+  suggestedMeal: BaseMeal | null;
+  mealName: string | null;
+  overlapLabel: string | null;
   household: Household;
+  onClear?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const isEmpty = !dayPlan;
 
   return (
     <div
-      data-testid={`day-${dayPlan.day.toLowerCase()}`}
+      data-testid={`day-${dayLabel.toLowerCase()}`}
       style={{
-        border: "1px solid #ccc",
+        border: isEmpty ? "1px dashed #ccc" : "1px solid #ccc",
         borderRadius: "8px",
         padding: "0.75rem",
         minWidth: "140px",
         flex: "1 1 140px",
+        background: isEmpty ? "#fafafa" : "#fff",
       }}
     >
-      <strong>{dayPlan.day}</strong>
-      <p>{mealName}</p>
-      <small>Overlap: {overlapLabel}</small>
+      <strong>{dayLabel}</strong>
 
-      <div>
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          data-testid={`toggle-${dayPlan.day.toLowerCase()}`}
-          style={{ fontSize: "0.8rem", marginTop: "0.25rem" }}
-        >
-          {expanded ? "Hide details" : "Show details"}
-        </button>
-      </div>
-
-      {expanded && (
-        <div data-testid={`details-${dayPlan.day.toLowerCase()}`}>
-          {dayPlan.variants.map((variant) => {
-            const member = household.members.find(
-              (m) => m.id === variant.memberId,
-            );
-            if (!member) return null;
-            return (
-              <div key={variant.id} style={{ marginTop: "0.5rem" }}>
-                <em>
-                  {member.name} ({member.role})
-                  {variant.requiresExtraPrep && " — extra prep"}
-                </em>
-                <ul style={{ margin: "0.25rem 0", paddingLeft: "1.25rem" }}>
-                  {variant.instructions.map((instr, i) => (
-                    <li key={i} style={{ fontSize: "0.85rem" }}>{instr}</li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
+      {dayPlan && mealName ? (
+        <>
+          <p>{mealName}</p>
+          <small>Overlap: {overlapLabel}</small>
+          <div>
+            <button
+              type="button"
+              onClick={() => setExpanded(!expanded)}
+              data-testid={`toggle-${dayLabel.toLowerCase()}`}
+              style={{ fontSize: "0.8rem", marginTop: "0.25rem" }}
+            >
+              {expanded ? "Hide details" : "Show details"}
+            </button>
+            {onClear && (
+              <button
+                type="button"
+                onClick={onClear}
+                data-testid={`clear-${dayLabel.toLowerCase()}`}
+                style={{ fontSize: "0.8rem", marginLeft: "0.5rem" }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {expanded && (
+            <div data-testid={`details-${dayLabel.toLowerCase()}`}>
+              {dayPlan.variants.map((variant) => {
+                const member = household.members.find(
+                  (m) => m.id === variant.memberId,
+                );
+                if (!member) return null;
+                return (
+                  <div key={variant.id} style={{ marginTop: "0.5rem" }}>
+                    <em>
+                      {member.name} ({member.role})
+                      {variant.requiresExtraPrep && " — extra prep"}
+                    </em>
+                    <ul style={{ margin: "0.25rem 0", paddingLeft: "1.25rem" }}>
+                      {variant.instructions.map((instr, i) => (
+                        <li key={i} style={{ fontSize: "0.85rem" }}>{instr}</li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      ) : (
+        <div data-testid={`empty-${dayLabel.toLowerCase()}`}>
+          {suggestedMeal ? (
+            <>
+              <p style={{ color: "#888", fontStyle: "italic" }}>
+                Suggested: {suggestedMeal.name}
+              </p>
+              <small style={{ color: "#999" }}>
+                {suggestedMeal.estimatedTimeMinutes} min | {suggestedMeal.difficulty}
+              </small>
+            </>
+          ) : (
+            <p style={{ color: "#888" }}>No meal planned</p>
+          )}
         </div>
       )}
     </div>

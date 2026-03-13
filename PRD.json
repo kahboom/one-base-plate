@@ -663,7 +663,7 @@
         "Allow empty days to display suggested meals",
         "Verify the layout is readable on both desktop and mobile screens"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F010"
       ],

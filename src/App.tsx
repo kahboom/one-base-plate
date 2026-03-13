@@ -6,11 +6,13 @@ import IngredientManager from "./pages/IngredientManager";
 import BaseMealManager from "./pages/BaseMealManager";
 import Planner from "./pages/Planner";
 import WeeklyPlanner from "./pages/WeeklyPlanner";
+import Home from "./pages/Home";
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<HouseholdList />} />
+      <Route path="/household/:householdId/home" element={<Home />} />
       <Route path="/household/:id" element={<HouseholdSetup />} />
       <Route
         path="/household/:householdId/member/:memberId"

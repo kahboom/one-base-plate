@@ -30,8 +30,10 @@ export default function HouseholdList() {
       <ul>
         {households.map((h) => (
           <li key={h.id}>
-            <Link to={`/household/${h.id}`}>{h.name}</Link>
+            <Link to={`/household/${h.id}/home`}>{h.name}</Link>
             {" "}({h.members.length} member{h.members.length !== 1 ? "s" : ""})
+            {" "}
+            <Link to={`/household/${h.id}`}>Setup</Link>
             {" "}
             <button type="button" onClick={() => handleDelete(h.id)}>
               Delete
