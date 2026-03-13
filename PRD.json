@@ -816,7 +816,7 @@
         "Record any remaining UI-specific follow-up work in agent-progress.md instead of silently leaving visual gaps",
         "Verify PRD.json remains the single source of truth for both task order and screen-level requirements"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F033"
       ]

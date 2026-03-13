@@ -200,5 +200,65 @@
 - Created 13 new tests: touch target sizes, responsive header, card layouts, NavBar pipe removal, ActionGroup stacking, weekly strip scroll, planner tap interaction, viewport meta
 - Verified: tsc --noEmit passes, vitest passes (158 tests), vite build succeeds
 
+### F031 - Agent audits uiSpec alignment after shared styling and mobile foundation (2026-03-13)
+
+Audited all completed UI features against uiSpec screen acceptance criteria. PRD.json remains the single source of truth.
+
+#### Screen Audit Results
+
+**S001 (Home) — mapped features: F010✅ F012❌ F021✅ F032✅ F025✅ F033✅**
+- ✅ Headline "What should we eat tonight?"
+- ✅ Top 3 high-confidence meal cards with short reason
+- ✅ Mini weekly strip (horizontal scroll, touch-friendly)
+- ✅ No-plan prompt with "Start planning" link
+- ✅ Responsive grid, mobile-friendly
+- ⏳ One-tap rescue mode card — blocked on F012
+- ⏳ Recent wins or pinned meals row — blocked on F013/F014
+
+**S002 (Meal Cards) — mapped features: F006✅ F009✅ F018✅ F023✅ F024✅ F025✅ F032✅ F033✅**
+- ✅ Meal title, prep time, effort level, overlap score
+- ✅ Compatibility chips (adult/toddler/baby, color-coded)
+- ✅ Short reason text
+- ✅ State chips: High overlap, Needs extra prep, Rescue eligible
+- ✅ Quick actions: Assign, Details buttons
+- ✅ Cards legible on mobile (full-width, responsive grid)
+- ⏳ Pinned state — blocked on F014
+- ⏳ Drag-to-assign — blocked on F022
+
+**S003 (Weekly Planner) — mapped features: F010✅ F021✅ F022❌ F026❌ F027❌ F032✅ F025✅ F033✅**
+- ✅ Seven day cards in responsive grid
+- ✅ Assigned meal or empty state per day with suggestions
+- ✅ Suggested meal tray below the week
+- ✅ Tap-to-clear interaction on assigned days
+- ✅ Readable with all seven days filled (responsive grid)
+- ✅ Mobile stacked-card layout
+- ⏳ Drag-and-drop assign — blocked on F022
+- ⏳ Visible effort balance — blocked on F026
+- ⏳ Grocery preview summary — blocked on F022/F011
+
+**S006 (Household Setup) — mapped features: F002✅ F003✅ F019✅ F032✅ F025✅ F033✅**
+- ✅ Member cards with card-based layout
+- ✅ Safe foods, hard-no foods, preparation rules inputs (via MemberProfile)
+- ✅ Role selector, texture level selector
+- ✅ Quick edit entry points (Edit profile links, F019 quick edit from planner)
+- ✅ Edit one member without reopening full flow
+- ✅ Inputs feel guided (FieldLabel, empty states)
+- ✅ Avoids giant forms (card-based, stacked on mobile)
+
+**S007 (Base Meal Editor) — mapped features: F005✅ F028❌ F029❌ F032✅ F025✅ F033✅**
+- ✅ Meal name, effort level selector, rescue eligible toggle
+- ✅ Protein/carb/veg/sauce/topping component roles
+- ✅ Multi-protein meal in one editor flow
+- ✅ Card-based layout with FieldLabel, mobile-responsive
+- ⏳ Structure type selector — blocked on F028
+- ⏳ Flavor upgrades — blocked on F028
+- ⏳ Recipe links — blocked on F029
+- ⏳ Notes field — blocked on F028
+
+**S004 (Meal Detail), S005 (Rescue Mode), S008 (Grocery List) — not yet started, blocked on unimplemented features**
+
+#### Summary
+All completed features satisfy their referenced screen acceptance criteria for the currently implemented scope. Remaining gaps are exclusively blocked on features not yet in the implementation queue (F012, F014, F022, F026, F027, F028, F029, F011, F020). No visual gaps or regressions from the styling/mobile refactor.
+
 ## Next Task
-- **F031** — Agent audits uiSpec alignment after the shared styling and mobile foundation are in place
+- **F028** — Planner supports multi-protein base meals under one shared meal structure
