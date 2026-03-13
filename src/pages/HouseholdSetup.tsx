@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { Household, HouseholdMember, MemberRole, TextureLevel } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, NavBar, FieldLabel, EmptyState, ConfirmDialog, useConfirm } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, HouseholdNav, FieldLabel, EmptyState, ConfirmDialog, useConfirm } from "../components/ui";
 
 function createEmptyMember(): HouseholdMember {
   return {
@@ -183,13 +183,7 @@ export default function HouseholdSetup() {
       <Button onClick={addMember} className="mb-4">Add member</Button>
 
       {!isNew && (
-        <NavBar>
-          <Link to={`/household/${id}/ingredients`} className="text-sm font-medium text-brand hover:underline">Manage ingredients</Link>
-          <Link to={`/household/${id}/meals`} className="text-sm font-medium text-brand hover:underline">Manage base meals</Link>
-          <Link to={`/household/${id}/planner`} className="text-sm font-medium text-brand hover:underline">Meal planner</Link>
-          <Link to={`/household/${id}/weekly`} className="text-sm font-medium text-brand hover:underline">Weekly planner</Link>
-          <Link to={`/household/${id}/home`} className="text-sm font-medium text-brand hover:underline">Home</Link>
-        </NavBar>
+        <HouseholdNav householdId={id ?? ""} />
       )}
 
       <ActionGroup>

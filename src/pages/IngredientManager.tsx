@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Ingredient, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, Chip, FieldLabel, EmptyState, ConfirmDialog, useConfirm } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, Chip, FieldLabel, EmptyState, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
   "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
@@ -185,7 +185,7 @@ export default function IngredientManager() {
     if (!household) return;
     household.ingredients = ingredients;
     saveHousehold(household);
-    navigate(`/household/${householdId}`);
+    navigate(`/household/${householdId}/home`);
   }
 
   if (!loaded) return null;
@@ -213,8 +213,10 @@ export default function IngredientManager() {
 
       <ActionGroup>
         <Button variant="primary" onClick={handleSave}>Save ingredients</Button>
-        <Button onClick={() => navigate(`/household/${householdId}`)}>Cancel</Button>
+        <Button onClick={() => navigate(`/household/${householdId}/home`)}>Cancel</Button>
       </ActionGroup>
+
+      <HouseholdNav householdId={householdId ?? ""} />
 
       <ConfirmDialog
         open={!!pending}

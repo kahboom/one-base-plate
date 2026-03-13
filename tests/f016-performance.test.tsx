@@ -145,7 +145,7 @@ describe("F016: Navigation across setup, planning, and grocery screens", () => {
   it("renders RescueMode with scenario picker", () => {
     loadFixture();
     renderRoute("/household/H001/rescue");
-    expect(screen.getByText(/rescue mode/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /rescue mode/i })).toBeInTheDocument();
     expect(screen.getByText(/low energy/i)).toBeInTheDocument();
     expect(screen.getByText(/low time/i)).toBeInTheDocument();
   });

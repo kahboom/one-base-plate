@@ -1,17 +1,15 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import type { Household, WeeklyPlan, DayPlan, BaseMeal, MealOutcome, MealOutcomeResult } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import { generateWeeklyPlan, computeMealOverlap, generateAssemblyVariants, computeWeekEffortBalance, computeGroceryPreview, formatPlanForExport } from "../planner";
 import MealCard from "../components/MealCard";
-import { PageShell, PageHeader, Button, Select, Section, NavBar, EmptyState, Chip, Input } from "../components/ui";
+import { PageShell, PageHeader, Button, Select, Section, EmptyState, Chip, Input, HouseholdNav } from "../components/ui";
 
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function WeeklyPlanner() {
   const { householdId } = useParams<{ householdId: string }>();
-  const navigate = useNavigate();
-
   const [household, setHousehold] = useState<Household | null>(null);
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [numDays, setNumDays] = useState(7);
@@ -354,13 +352,7 @@ export default function WeeklyPlanner() {
         </Section>
       )}
 
-      <NavBar>
-        <Button onClick={() => navigate(`/household/${householdId}`)}>Back to household</Button>
-        <Link to={`/household/${householdId}/planner`} className="text-sm font-medium text-brand hover:underline">Single meal planner</Link>
-        <Link to={`/household/${householdId}/grocery`} className="text-sm font-medium text-brand hover:underline">Grocery list</Link>
-        <Link to={`/household/${householdId}/history`} className="text-sm font-medium text-brand hover:underline">Meal history</Link>
-        <Link to={`/household/${householdId}/home`} className="text-sm font-medium text-brand hover:underline">Home</Link>
-      </NavBar>
+      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

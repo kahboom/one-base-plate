@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import type { BaseMeal, AssemblyVariant, Household } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import {
@@ -12,12 +12,10 @@ import {
 } from "../planner";
 import type { OverlapResult, MealExplanation, LearnedPatterns } from "../planner";
 import MealCard from "../components/MealCard";
-import { PageShell, PageHeader, Card, Button, Chip, Section, EmptyState } from "../components/ui";
+import { PageShell, PageHeader, Card, Chip, Section, EmptyState, HouseholdNav } from "../components/ui";
 
 export default function Planner() {
   const { householdId } = useParams<{ householdId: string }>();
-  const navigate = useNavigate();
-
   const [household, setHousehold] = useState<Household | null>(null);
   const [selectedMealId, setSelectedMealId] = useState<string>("");
   const [variants, setVariants] = useState<AssemblyVariant[]>([]);
@@ -287,9 +285,7 @@ export default function Planner() {
         </Card>
       )}
 
-      <Button onClick={() => navigate(`/household/${householdId}`)}>
-        Back to household
-      </Button>
+      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

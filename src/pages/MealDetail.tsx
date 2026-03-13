@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import type { Household, BaseMeal } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import {
@@ -7,15 +7,13 @@ import {
   computeMealOverlap,
   getAllIngredientIds,
 } from "../planner";
-import { PageShell, PageHeader, Card, Button, Chip, Section } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Chip, Section, HouseholdNav } from "../components/ui";
 
 export default function MealDetail() {
   const { householdId, mealId } = useParams<{
     householdId: string;
     mealId: string;
   }>();
-  const navigate = useNavigate();
-
   const [household, setHousehold] = useState<Household | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -163,7 +161,7 @@ export default function MealDetail() {
         </div>
       </Section>
 
-      <Button onClick={() => navigate(-1)}>Back</Button>
+      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

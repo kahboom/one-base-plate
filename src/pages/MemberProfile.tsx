@@ -30,7 +30,7 @@ export default function MemberProfile() {
     if (found) setMember({ ...found });
   }, [householdId, memberId]);
 
-  const defaultReturn = `/household/${householdId}`;
+  const defaultReturn = `/household/${householdId}/home`;
   const navigateBack = returnTo || defaultReturn;
 
   function handleSave() {

@@ -483,5 +483,19 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 16 tests: 4 household delete tests (dialog shown, name surfaced, confirm deletes, cancel keeps), 3 member remove tests (name shown, confirm removes, cancel keeps), 3 ingredient remove tests (name shown, confirm removes, cancel keeps), 3 meal remove tests (name shown, confirm removes, cancel keeps), 3 styling/accessibility tests (role+aria-label, button elements, not shown by default)
 - Verified: tsc --noEmit passes, vitest passes (441 tests, 1 pre-existing f033 failure unrelated to F035), all F035 steps satisfied
 
+### F036 - Consistent navigation and household hub wayfinding (2026-03-13)
+- Created shared `HouseholdNav` component in `src/components/ui.tsx` with consistent link set: Home, Weekly planner, Meal planner, Grocery list, Rescue mode, Meal history, Household setup, All households
+- Replaced all ad-hoc NavBar contents across 10 pages (Home, Planner, WeeklyPlanner, GroceryList, RescueMode, MealDetail, IngredientManager, BaseMealManager, MealHistory, HouseholdSetup) with the shared `HouseholdNav` component
+- Removed all "Back to household" buttons — Planner and WeeklyPlanner now use `HouseholdNav` instead of standalone Button navigation
+- Replaced MealDetail's `navigate(-1)` "Back" button with `HouseholdNav`
+- Changed all back/cancel navigation targets from `/household/:id` (HouseholdSetup) to `/household/:id/home` (Home) across IngredientManager save/cancel, BaseMealManager save/cancel, and MemberProfile default return
+- Home is now the canonical household hub — all child screens navigate back to Home, not HouseholdSetup
+- Consistent link order and labels across all pages — every household-scoped screen shows the same navigation structure
+- Nav uses shared styling system (NavBar with border-t, flex-wrap, brand-colored links with hover underline)
+- Cleaned up unused imports (Link, useNavigate, NavBar, Button) from pages that no longer need them
+- Updated 3 existing tests: f019 (default return to Home), f016 (getByRole heading for disambiguation), f019 (added Home route)
+- Created 22 tests: 10 nav presence tests (all pages show consistent links), 2 no-back-to-household tests, 2 canonical hub routing tests (href checks), 4 navigation tests (clicking Home returns to Home from Weekly/Planner/Grocery/Rescue), 1 MemberProfile default return test, 1 link order consistency test, 2 styling tests (border-t, brand color)
+- Verified: tsc --noEmit passes, vitest passes (462 tests, 1 pre-existing f033 failure unrelated to F036), all F036 steps satisfied
+
 ## Next Task
-- F036: Consistent navigation and household hub wayfinding (dependencies: F033 — satisfied)
+- All PRD features complete (no remaining tasks with passes: false)

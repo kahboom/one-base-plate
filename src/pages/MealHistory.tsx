@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import type { Household } from "../types";
 import { loadHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Chip, NavBar, EmptyState, Section } from "../components/ui";
+import { PageShell, PageHeader, Card, Chip, HouseholdNav, EmptyState, Section } from "../components/ui";
 
 const outcomeLabels: Record<string, string> = {
   success: "Worked well",
@@ -69,10 +69,7 @@ export default function MealHistory() {
         </Section>
       )}
 
-      <NavBar>
-        <Link to={`/household/${householdId}/weekly`} className="text-sm font-medium text-brand hover:underline">Weekly planner</Link>
-        <Link to={`/household/${householdId}/home`} className="text-sm font-medium text-brand hover:underline">Home</Link>
-      </NavBar>
+      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

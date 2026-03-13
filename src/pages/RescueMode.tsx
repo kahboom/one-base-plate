@@ -8,7 +8,7 @@ import {
   type RescueScenario,
   type RescueMeal,
 } from "../planner";
-import { PageShell, PageHeader, Card, Button, Chip, Section, NavBar, EmptyState } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Chip, Section, HouseholdNav, EmptyState } from "../components/ui";
 
 const SCENARIOS: { id: RescueScenario; label: string; description: string }[] = [
   { id: "low-energy", label: "Low energy", description: "Keep it simple tonight" },
@@ -223,12 +223,7 @@ export default function RescueMode() {
         </EmptyState>
       )}
 
-      <NavBar>
-        <Link to={`/household/${householdId}/home`} className="text-sm font-medium text-brand hover:underline">Home</Link>
-        <Link to={`/household/${householdId}/weekly`} className="text-sm font-medium text-brand hover:underline">Weekly planner</Link>
-        <Link to={`/household/${householdId}/planner`} className="text-sm font-medium text-brand hover:underline">Meal planner</Link>
-        <Link to={`/household/${householdId}`} className="text-sm font-medium text-brand hover:underline">Household setup</Link>
-      </NavBar>
+      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

@@ -825,7 +825,7 @@
         "Apply the same navigation structure across all household-scoped screens: Home as hub, with consistent link order and placement. Ensure nav appears in a consistent location (e.g. bottom of page) and uses clear labels (Weekly planner, Meal planner, Grocery list, Rescue mode, Household setup, All households).",
         "Verify that navigating Household → Home → Weekly planner → Back returns the user to Home, not to HouseholdSetup. Verify the same consistency for Meal planner, Grocery list, and Rescue mode."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": ["F033"],
       "acceptanceRefs": ["S001", "S003", "S005", "S006"]
     }

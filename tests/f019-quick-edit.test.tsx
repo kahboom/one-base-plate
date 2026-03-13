@@ -7,6 +7,7 @@ import { saveHousehold, loadHousehold } from "../src/storage";
 import Planner from "../src/pages/Planner";
 import MemberProfile from "../src/pages/MemberProfile";
 import HouseholdSetup from "../src/pages/HouseholdSetup";
+import Home from "../src/pages/Home";
 
 function seedHousehold(): Household {
   const household: Household = {
@@ -91,6 +92,7 @@ function renderApp(initialPath: string) {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
+        <Route path="/household/:householdId/home" element={<Home />} />
         <Route path="/household/:id" element={<HouseholdSetup />} />
         <Route
           path="/household/:householdId/planner"
@@ -217,7 +219,7 @@ describe("F019: Cancel from quick edit returns to planner", () => {
 });
 
 describe("F019: Member profile preserves returnTo for household setup", () => {
-  it("without returnTo param, save navigates to household setup", async () => {
+  it("without returnTo param, save navigates to home", async () => {
     seedHousehold();
     const user = userEvent.setup();
     renderApp("/household/h-quick/member/m-parent");
@@ -225,7 +227,7 @@ describe("F019: Member profile preserves returnTo for household setup", () => {
     expect(screen.getByText(/Parent — adult/)).toBeInTheDocument();
     await user.click(screen.getByText("Save profile"));
 
-    // Should go to household setup by default
-    expect(screen.getByText("Edit Household")).toBeInTheDocument();
+    // Should go to home by default
+    expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
   });
 });

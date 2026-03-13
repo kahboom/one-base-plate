@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import type { Household, WeeklyPlan, IngredientCategory } from "../types";
 import { loadHousehold } from "../storage";
 import { generateGroceryList, type GroceryListItem } from "../planner";
-import { PageShell, PageHeader, Card, Button, Chip, EmptyState, NavBar } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Chip, EmptyState, HouseholdNav } from "../components/ui";
 
 const CATEGORY_LABELS: Record<IngredientCategory, string> = {
   protein: "Protein",
@@ -66,10 +66,7 @@ export default function GroceryList() {
       <PageShell>
         <PageHeader title="Grocery List" subtitle={`Household: ${household.name}`} />
         <EmptyState>No weekly plan saved yet. Generate and save a plan first.</EmptyState>
-        <NavBar>
-          <Link to={`/household/${householdId}/weekly`} className="text-sm font-medium text-brand hover:underline">Weekly planner</Link>
-          <Link to={`/household/${householdId}/home`} className="text-sm font-medium text-brand hover:underline">Home</Link>
-        </NavBar>
+        <HouseholdNav householdId={householdId ?? ""} />
       </PageShell>
     );
   }
@@ -191,10 +188,7 @@ export default function GroceryList() {
         ))}
       </div>
 
-      <NavBar>
-        <Link to={`/household/${householdId}/weekly`} className="text-sm font-medium text-brand hover:underline">Weekly planner</Link>
-        <Link to={`/household/${householdId}/home`} className="text-sm font-medium text-brand hover:underline">Home</Link>
-      </NavBar>
+      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { BaseMeal, MealComponent, Ingredient, RecipeLink } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, FieldLabel, EmptyState, Chip, ConfirmDialog, useConfirm } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, FieldLabel, EmptyState, Chip, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
 
 type ComponentRole = MealComponent["role"];
 const COMPONENT_ROLES: ComponentRole[] = ["protein", "carb", "veg", "sauce", "topping"];
@@ -363,7 +363,7 @@ export default function BaseMealManager() {
     if (!household) return;
     household.baseMeals = meals;
     saveHousehold(household);
-    navigate(`/household/${householdId}`);
+    navigate(`/household/${householdId}/home`);
   }
 
   if (!loaded) return null;
@@ -392,8 +392,10 @@ export default function BaseMealManager() {
 
       <ActionGroup>
         <Button variant="primary" onClick={handleSave}>Save meals</Button>
-        <Button onClick={() => navigate(`/household/${householdId}`)}>Cancel</Button>
+        <Button onClick={() => navigate(`/household/${householdId}/home`)}>Cancel</Button>
       </ActionGroup>
+
+      <HouseholdNav householdId={householdId ?? ""} />
 
       <ConfirmDialog
         open={!!pending}

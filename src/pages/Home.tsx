@@ -4,7 +4,7 @@ import type { Household } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import { computeMealOverlap, computeOutcomeScore, learnCompatibilityPatterns, computePatternScore } from "../planner";
 import MealCard from "../components/MealCard";
-import { PageShell, PageHeader, Card, Section, NavBar } from "../components/ui";
+import { PageShell, PageHeader, Card, Section, HouseholdNav } from "../components/ui";
 import GuidedTour from "../components/GuidedTour";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -192,15 +192,7 @@ export default function Home() {
         </Section>
       )}
 
-      <NavBar>
-        <Link to={`/household/${householdId}/weekly`} className="text-sm font-medium text-brand hover:underline">Weekly planner</Link>
-        <Link to={`/household/${householdId}/grocery`} className="text-sm font-medium text-brand hover:underline">Grocery list</Link>
-        <Link to={`/household/${householdId}/rescue`} className="text-sm font-medium text-brand hover:underline">Rescue mode</Link>
-        <Link to={`/household/${householdId}/history`} className="text-sm font-medium text-brand hover:underline">Meal history</Link>
-        <Link to={`/household/${householdId}/planner`} className="text-sm font-medium text-brand hover:underline">Meal planner</Link>
-        <Link to={`/household/${householdId}`} className="text-sm font-medium text-brand hover:underline">Household setup</Link>
-        <Link to="/" className="text-sm font-medium text-brand hover:underline">All households</Link>
-      </NavBar>
+      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

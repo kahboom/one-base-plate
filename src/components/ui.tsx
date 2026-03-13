@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import type { ReactNode, ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes } from "react";
+import { Link } from "react-router-dom";
 
 /* ---------- Page shell ---------- */
 export function PageShell({ children }: { children: ReactNode }) {
@@ -172,6 +173,23 @@ export function NavBar({ children }: { children: ReactNode }) {
     <nav className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border-light pt-4">
       {children}
     </nav>
+  );
+}
+
+const navLinkClass = "text-sm font-medium text-brand hover:underline";
+
+export function HouseholdNav({ householdId }: { householdId: string }) {
+  return (
+    <NavBar>
+      <Link to={`/household/${householdId}/home`} className={navLinkClass}>Home</Link>
+      <Link to={`/household/${householdId}/weekly`} className={navLinkClass}>Weekly planner</Link>
+      <Link to={`/household/${householdId}/planner`} className={navLinkClass}>Meal planner</Link>
+      <Link to={`/household/${householdId}/grocery`} className={navLinkClass}>Grocery list</Link>
+      <Link to={`/household/${householdId}/rescue`} className={navLinkClass}>Rescue mode</Link>
+      <Link to={`/household/${householdId}/history`} className={navLinkClass}>Meal history</Link>
+      <Link to={`/household/${householdId}`} className={navLinkClass}>Household setup</Link>
+      <Link to="/" className={navLinkClass}>All households</Link>
+    </NavBar>
   );
 }
 
