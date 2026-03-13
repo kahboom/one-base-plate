@@ -834,7 +834,7 @@
         "Highlight days with multiple high-effort meals",
         "Verify users can rebalance meals easily from the Weekly Planner."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F021",
         "F023"

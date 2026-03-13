@@ -302,5 +302,14 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 13 tests: 3 tray display tests (cards shown, assign buttons, draggable attribute), 5 tap-to-assign tests (prompt, assign, clear prompt, cancel, swap), 3 drag-and-drop tests (assign via drop, replace on filled day), 2 plan update tests (variants generated, save button appears)
 - Verified: tsc --noEmit passes, vitest passes (192 tests), vite build succeeds
 
+### F026 - Weekly planner displays preparation effort balance across the week (2026-03-13)
+- Added `computeWeekEffortBalance` function to planner engine returning effort counts (easy/medium/hard), total prep minutes, and high-effort day names
+- Added week-level effort balance summary bar to WeeklyPlanner showing total prep time, color-coded effort count chips (green=easy, yellow=medium, red=hard), and high-effort day warnings
+- Updated DayCard component to display per-day effort label chip ("Low effort", "Medium effort", "Higher effort") and prep time in minutes
+- High-effort (hard) day cards visually highlighted with danger-colored border
+- Effort balance bar updates dynamically when meals are assigned, swapped, or cleared — users can rebalance from the suggested tray
+- Created 12 tests: 4 engine tests (effort counts, total prep time, high-effort day detection, all-easy edge case), 3 UI summary bar tests (display after generate, hidden when no plan, effort chips), 2 day card tests (effort chip, prep time), 1 high-effort warning test, 2 rebalancing tests (clear and reassign, swap updates balance)
+- Verified: tsc --noEmit passes, vitest passes (204 tests), all F026 steps satisfied
+
 ## Next Task
-- **F026** — Weekly planner displays preparation effort balance across the week (depends on F021✅, F023✅)
+- **F027** — Planner provides satisfying visual feedback when meals are added to the week (depends on F022✅)

@@ -2,9 +2,9 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { Household, WeeklyPlan, DayPlan, BaseMeal } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { generateWeeklyPlan, computeMealOverlap, generateAssemblyVariants } from "../planner";
+import { generateWeeklyPlan, computeMealOverlap, generateAssemblyVariants, computeWeekEffortBalance } from "../planner";
 import MealCard from "../components/MealCard";
-import { PageShell, PageHeader, Button, Select, Section, NavBar, EmptyState } from "../components/ui";
+import { PageShell, PageHeader, Button, Select, Section, NavBar, EmptyState, Chip } from "../components/ui";
 
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -103,8 +103,12 @@ export default function WeeklyPlanner() {
     setHousehold(updatedHousehold);
   }
 
+  function getMeal(mealId: string): BaseMeal | undefined {
+    return household?.baseMeals.find((m) => m.id === mealId);
+  }
+
   function getMealName(mealId: string): string {
-    return household?.baseMeals.find((m) => m.id === mealId)?.name ?? mealId;
+    return getMeal(mealId)?.name ?? mealId;
   }
 
   function getMealOverlapLabel(mealId: string): string {
@@ -165,6 +169,36 @@ export default function WeeklyPlanner() {
         </div>
       )}
 
+      {plan && plan.days.length > 0 && household && (() => {
+        const balance = computeWeekEffortBalance(plan.days, household.baseMeals);
+        return (
+          <div data-testid="effort-balance" className="mt-4 mb-4 rounded-md border border-border-light bg-surface p-4 shadow-card">
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-sm font-semibold text-text-primary">Week effort</span>
+              <span className="text-sm text-text-secondary" data-testid="total-prep-time">
+                {balance.totalPrepMinutes} min total
+              </span>
+              <div className="flex gap-2">
+                {balance.effortCounts.easy > 0 && (
+                  <Chip variant="success" data-testid="effort-easy">{balance.effortCounts.easy} easy</Chip>
+                )}
+                {balance.effortCounts.medium > 0 && (
+                  <Chip variant="warning" data-testid="effort-medium">{balance.effortCounts.medium} medium</Chip>
+                )}
+                {balance.effortCounts.hard > 0 && (
+                  <Chip variant="danger" data-testid="effort-hard">{balance.effortCounts.hard} hard</Chip>
+                )}
+              </div>
+              {balance.highEffortDays.length > 0 && (
+                <span className="text-xs text-text-muted" data-testid="high-effort-warning">
+                  Higher effort: {balance.highEffortDays.join(", ")}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       <div data-testid="day-cards" className="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {daySlots.map((dayLabel) => {
           const dayIndex = plan?.days.findIndex((d) => d.day === dayLabel) ?? -1;
@@ -180,6 +214,7 @@ export default function WeeklyPlanner() {
               suggestedMeal={suggested}
               mealName={dayPlan ? getMealName(dayPlan.baseMealId) : null}
               overlapLabel={dayPlan ? getMealOverlapLabel(dayPlan.baseMealId) : null}
+              meal={dayPlan ? getMeal(dayPlan.baseMealId) : undefined}
               household={household}
               onClear={dayIndex >= 0 ? () => handleClearDay(dayIndex) : undefined}
               onDrop={(mealId) => assignMealToDay(mealId, dayLabel)}
@@ -243,6 +278,18 @@ export default function WeeklyPlanner() {
   );
 }
 
+const effortLabel: Record<string, string> = {
+  easy: "Low effort",
+  medium: "Medium effort",
+  hard: "Higher effort",
+};
+
+const effortChipVariant: Record<string, "success" | "warning" | "danger"> = {
+  easy: "success",
+  medium: "warning",
+  hard: "danger",
+};
+
 function DayCard({
   dayLabel,
   dayPlan,
@@ -250,6 +297,7 @@ function DayCard({
   suggestedMeal,
   mealName,
   overlapLabel,
+  meal,
   household,
   onClear,
   onDrop,
@@ -262,6 +310,7 @@ function DayCard({
   suggestedMeal: BaseMeal | null;
   mealName: string | null;
   overlapLabel: string | null;
+  meal?: BaseMeal;
   household: Household;
   onClear?: () => void;
   onDrop?: (mealId: string) => void;
@@ -272,6 +321,7 @@ function DayCard({
   const [dragOver, setDragOver] = useState(false);
   const [justAssigned, setJustAssigned] = useState(false);
   const isEmpty = !dayPlan;
+  const isHighEffort = meal?.difficulty === "hard";
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
@@ -317,7 +367,7 @@ function DayCard({
             ? "border-2 border-brand border-dashed bg-brand/5"
             : isEmpty
               ? `border border-dashed bg-bg ${isAssignTarget ? "border-brand cursor-pointer hover:bg-brand/5" : "border-border-default"}`
-              : `border bg-surface ${isAssignTarget ? "border-brand cursor-pointer hover:bg-brand/5" : "border-border-light"}`
+              : `border bg-surface ${isAssignTarget ? "border-brand cursor-pointer hover:bg-brand/5" : isHighEffort ? "border-danger" : "border-border-light"}`
       }`}
     >
       <strong className="text-base font-semibold text-text-primary">{dayLabel}</strong>
@@ -325,7 +375,22 @@ function DayCard({
       {dayPlan && mealName ? (
         <>
           <p className="mt-1 text-sm text-text-primary">{mealName}</p>
-          <small className="text-xs text-text-muted">Overlap: {overlapLabel}</small>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <small className="text-xs text-text-muted">Overlap: {overlapLabel}</small>
+            {meal && (
+              <>
+                <small className="text-xs text-text-muted" data-testid={`prep-time-${dayLabel.toLowerCase()}`}>
+                  {meal.estimatedTimeMinutes} min
+                </small>
+                <Chip
+                  variant={effortChipVariant[meal.difficulty] ?? "neutral"}
+                  data-testid={`effort-${dayLabel.toLowerCase()}`}
+                >
+                  {effortLabel[meal.difficulty] ?? meal.difficulty}
+                </Chip>
+              </>
+            )}
+          </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <Button
               small

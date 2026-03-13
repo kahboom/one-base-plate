@@ -353,6 +353,33 @@ export function generateShortReason(
   return `Fits ${overlap.score} of ${overlap.total} members`;
 }
 
+export interface WeekEffortBalance {
+  totalPrepMinutes: number;
+  effortCounts: { easy: number; medium: number; hard: number };
+  highEffortDays: string[];
+}
+
+export function computeWeekEffortBalance(
+  days: DayPlan[],
+  meals: BaseMeal[],
+): WeekEffortBalance {
+  const effortCounts = { easy: 0, medium: 0, hard: 0 };
+  let totalPrepMinutes = 0;
+  const highEffortDays: string[] = [];
+
+  for (const day of days) {
+    const meal = meals.find((m) => m.id === day.baseMealId);
+    if (!meal) continue;
+    effortCounts[meal.difficulty] += 1;
+    totalPrepMinutes += meal.estimatedTimeMinutes;
+    if (meal.difficulty === "hard") {
+      highEffortDays.push(day.day);
+    }
+  }
+
+  return { totalPrepMinutes, effortCounts, highEffortDays };
+}
+
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export function generateWeeklyPlan(
