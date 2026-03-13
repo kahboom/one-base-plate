@@ -468,5 +468,20 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 19 tests: 4 first-run display tests (shows on first visit, hidden after completion, localStorage persistence, reset), 5 step navigation tests (starts at step 1, Home step content, advance through all 5, Get started label, completion persistence), 3 skip/dismiss tests (skip button presence, skip closes and persists, skip from middle step), 2 reappearance tests (not after completion, not after skip), 5 styling/accessibility tests (dialog role, progress dots count, brand color dot, scannable description, mobile max-width)
 - Verified: tsc --noEmit passes, vitest passes (425 tests, 1 pre-existing f033 failure unrelated to F034), all F034 steps satisfied
 
+### F035 - Warning confirmation before deleting a household or other entities (2026-03-13)
+- Created `ConfirmDialog` component in `src/components/ui.tsx` with accessible modal overlay (`role="dialog"`, `aria-label`)
+- Created `useConfirm` hook for managing pending confirmation state with `requestConfirm`, `confirm`, and `cancel` callbacks
+- Dialog surfaces entity name in the warning message ("Are you sure you want to delete/remove X?") and states the action cannot be undone
+- Requires explicit confirmation (Delete/Remove button) or Cancel to abort
+- Applied confirmation pattern to all destructive delete flows:
+  - **HouseholdList**: Delete household — shows household name, confirms with "Delete"
+  - **HouseholdSetup**: Remove member — shows member name, confirms with "Remove"
+  - **IngredientManager**: Remove ingredient — shows ingredient name, confirms with "Remove"
+  - **BaseMealManager**: Remove meal — shows meal name, confirms with "Remove"
+- Dialog uses shared styling system: rounded-md card with shadow-card-hover, danger variant Button for confirm, default Button for cancel
+- Updated 3 existing tests (f002, f004, f005) that clicked Remove directly to go through the confirmation dialog
+- Created 16 tests: 4 household delete tests (dialog shown, name surfaced, confirm deletes, cancel keeps), 3 member remove tests (name shown, confirm removes, cancel keeps), 3 ingredient remove tests (name shown, confirm removes, cancel keeps), 3 meal remove tests (name shown, confirm removes, cancel keeps), 3 styling/accessibility tests (role+aria-label, button elements, not shown by default)
+- Verified: tsc --noEmit passes, vitest passes (441 tests, 1 pre-existing f033 failure unrelated to F035), all F035 steps satisfied
+
 ## Next Task
-- F035: Warning confirmation before deleting a household or other entities (dependencies: F002, F004, F005, F033 — all satisfied)
+- F036: Consistent navigation and household hub wayfinding (dependencies: F033 — satisfied)

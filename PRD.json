@@ -808,7 +808,7 @@
         "Require explicit confirmation (e.g. tap Confirm or Delete) before proceeding; allow Cancel to abort.",
         "Verify the warning uses the shared styling system and is accessible."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": ["F002", "F004", "F005", "F033"],
       "acceptanceRefs": ["S006", "S007"]
     },

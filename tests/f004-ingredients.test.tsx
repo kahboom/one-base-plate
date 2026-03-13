@@ -187,6 +187,9 @@ describe("F004: Remove ingredient", () => {
     const removeButtons = screen.getAllByText("Remove ingredient");
     await user.click(removeButtons[0]!);
 
+    const dialog = screen.getByRole("dialog");
+    await user.click(within(dialog).getByText("Remove"));
+
     expect(screen.getByText("Items (1)")).toBeInTheDocument();
   });
 });

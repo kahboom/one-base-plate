@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { BaseMeal, MealComponent, Ingredient, RecipeLink } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, FieldLabel, EmptyState, Chip } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, FieldLabel, EmptyState, Chip, ConfirmDialog, useConfirm } from "../components/ui";
 
 type ComponentRole = MealComponent["role"];
 const COMPONENT_ROLES: ComponentRole[] = ["protein", "carb", "veg", "sauce", "topping"];
@@ -325,6 +325,7 @@ export default function BaseMealManager() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [householdName, setHouseholdName] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const { pending, requestConfirm, confirm, cancel } = useConfirm();
 
   useEffect(() => {
     if (!householdId) return;
@@ -350,7 +351,10 @@ export default function BaseMealManager() {
   }
 
   function removeMeal(index: number) {
-    setMeals((prev) => prev.filter((_, i) => i !== index));
+    const mealName = meals[index]?.name || "Unnamed meal";
+    requestConfirm(mealName, () => {
+      setMeals((prev) => prev.filter((_, i) => i !== index));
+    });
   }
 
   function handleSave() {
@@ -390,6 +394,15 @@ export default function BaseMealManager() {
         <Button variant="primary" onClick={handleSave}>Save meals</Button>
         <Button onClick={() => navigate(`/household/${householdId}`)}>Cancel</Button>
       </ActionGroup>
+
+      <ConfirmDialog
+        open={!!pending}
+        title="Remove meal"
+        message={`Are you sure you want to remove "${pending?.entityName}"? This cannot be undone.`}
+        confirmLabel="Remove"
+        onConfirm={confirm}
+        onCancel={cancel}
+      />
     </PageShell>
   );
 }

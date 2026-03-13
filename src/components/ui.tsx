@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react";
 import type { ReactNode, ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes } from "react";
 
 /* ---------- Page shell ---------- */
@@ -186,4 +187,55 @@ export function FormRow({ children }: { children: ReactNode }) {
 /* ---------- Action group ---------- */
 export function ActionGroup({ children }: { children: ReactNode }) {
   return <div className="mt-8 flex flex-col gap-3 sm:flex-row">{children}</div>;
+}
+
+/* ---------- Confirm dialog ---------- */
+export function ConfirmDialog({
+  open,
+  title,
+  message,
+  confirmLabel = "Delete",
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-label={title}>
+      <div className="w-full max-w-sm rounded-md border border-border-light bg-surface p-6 shadow-card-hover">
+        <h2 className="mb-2 text-lg font-bold text-text-primary">{title}</h2>
+        <p className="mb-6 text-sm text-text-secondary">{message}</p>
+        <div className="flex gap-3">
+          <Button variant="danger" onClick={onConfirm}>{confirmLabel}</Button>
+          <Button onClick={onCancel}>Cancel</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- useConfirm hook ---------- */
+export function useConfirm() {
+  const [pending, setPending] = useState<{ entityName: string; action: () => void } | null>(null);
+
+  const requestConfirm = useCallback((entityName: string, action: () => void) => {
+    setPending({ entityName, action });
+  }, []);
+
+  const confirm = useCallback(() => {
+    pending?.action();
+    setPending(null);
+  }, [pending]);
+
+  const cancel = useCallback(() => {
+    setPending(null);
+  }, []);
+
+  return { pending, requestConfirm, confirm, cancel };
 }

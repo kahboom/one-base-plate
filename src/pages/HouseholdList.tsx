@@ -2,18 +2,21 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Household } from "../types";
 import { loadHouseholds, deleteHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Button, EmptyState, Section } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, EmptyState, Section, ConfirmDialog, useConfirm } from "../components/ui";
 
 export default function HouseholdList() {
   const [households, setHouseholds] = useState<Household[]>([]);
+  const { pending, requestConfirm, confirm, cancel } = useConfirm();
 
   useEffect(() => {
     setHouseholds(loadHouseholds());
   }, []);
 
-  function handleDelete(id: string) {
-    deleteHousehold(id);
-    setHouseholds(loadHouseholds());
+  function handleDelete(household: Household) {
+    requestConfirm(household.name || "Unnamed household", () => {
+      deleteHousehold(household.id);
+      setHouseholds(loadHouseholds());
+    });
   }
 
   return (
@@ -53,7 +56,7 @@ export default function HouseholdList() {
                 <Link to={`/household/${h.id}`}>
                   <Button small>Setup</Button>
                 </Link>
-                <Button variant="danger" small onClick={() => handleDelete(h.id)}>
+                <Button variant="danger" small onClick={() => handleDelete(h)}>
                   Delete
                 </Button>
               </div>
@@ -61,6 +64,14 @@ export default function HouseholdList() {
           ))}
         </div>
       </Section>
+      <ConfirmDialog
+        open={!!pending}
+        title="Delete household"
+        message={`Are you sure you want to delete "${pending?.entityName}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={confirm}
+        onCancel={cancel}
+      />
     </PageShell>
   );
 }

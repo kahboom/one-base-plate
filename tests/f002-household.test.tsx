@@ -234,6 +234,9 @@ describe("F002: Household setup UI", () => {
     const removeButtons = screen.getAllByText("Remove member");
     await user.click(removeButtons[0]!);
 
+    const dialog = screen.getByRole("dialog");
+    await user.click(within(dialog).getByText("Remove"));
+
     expect(screen.getByText("Members (1)")).toBeInTheDocument();
   });
 });

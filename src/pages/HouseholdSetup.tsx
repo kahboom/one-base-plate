@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { Household, HouseholdMember, MemberRole, TextureLevel } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, NavBar, FieldLabel, EmptyState } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, NavBar, FieldLabel, EmptyState, ConfirmDialog, useConfirm } from "../components/ui";
 
 function createEmptyMember(): HouseholdMember {
   return {
@@ -104,6 +104,7 @@ export default function HouseholdSetup() {
 
   const [household, setHousehold] = useState<Household>(createEmptyHousehold);
   const [loaded, setLoaded] = useState(false);
+  const { pending, requestConfirm, confirm, cancel } = useConfirm();
 
   useEffect(() => {
     if (!isNew && id) {
@@ -131,10 +132,13 @@ export default function HouseholdSetup() {
   }
 
   function removeMember(index: number) {
-    setHousehold((h) => ({
-      ...h,
-      members: h.members.filter((_, i) => i !== index),
-    }));
+    const memberName = household.members[index]?.name || "Unnamed member";
+    requestConfirm(memberName, () => {
+      setHousehold((h) => ({
+        ...h,
+        members: h.members.filter((_, i) => i !== index),
+      }));
+    });
   }
 
   function handleSave() {
@@ -192,6 +196,15 @@ export default function HouseholdSetup() {
         <Button variant="primary" onClick={handleSave}>Save household</Button>
         <Button onClick={() => navigate("/")}>Cancel</Button>
       </ActionGroup>
+
+      <ConfirmDialog
+        open={!!pending}
+        title="Remove member"
+        message={`Are you sure you want to remove "${pending?.entityName}"? This cannot be undone.`}
+        confirmLabel="Remove"
+        onConfirm={confirm}
+        onCancel={cancel}
+      />
     </PageShell>
   );
 }

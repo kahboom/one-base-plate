@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Ingredient, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, Chip, FieldLabel, EmptyState } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, Chip, FieldLabel, EmptyState, ConfirmDialog, useConfirm } from "../components/ui";
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
   "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
@@ -148,6 +148,7 @@ export default function IngredientManager() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [householdName, setHouseholdName] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const { pending, requestConfirm, confirm, cancel } = useConfirm();
 
   useEffect(() => {
     if (!householdId) return;
@@ -172,7 +173,10 @@ export default function IngredientManager() {
   }
 
   function removeIngredient(index: number) {
-    setIngredients((prev) => prev.filter((_, i) => i !== index));
+    const ingredientName = ingredients[index]?.name || "Unnamed ingredient";
+    requestConfirm(ingredientName, () => {
+      setIngredients((prev) => prev.filter((_, i) => i !== index));
+    });
   }
 
   function handleSave() {
@@ -211,6 +215,15 @@ export default function IngredientManager() {
         <Button variant="primary" onClick={handleSave}>Save ingredients</Button>
         <Button onClick={() => navigate(`/household/${householdId}`)}>Cancel</Button>
       </ActionGroup>
+
+      <ConfirmDialog
+        open={!!pending}
+        title="Remove ingredient"
+        message={`Are you sure you want to remove "${pending?.entityName}"? This cannot be undone.`}
+        confirmLabel="Remove"
+        onConfirm={confirm}
+        onCancel={cancel}
+      />
     </PageShell>
   );
 }
