@@ -9,18 +9,7 @@ import {
 } from "../planner";
 import type { OverlapResult, MealExplanation } from "../planner";
 import MealCard from "../components/MealCard";
-
-const chipStyle = (bg: string, color: string): React.CSSProperties => ({
-  display: "inline-block",
-  padding: "0.15rem 0.5rem",
-  borderRadius: "999px",
-  fontSize: "0.75rem",
-  fontWeight: 500,
-  background: bg,
-  color,
-  marginRight: "0.25rem",
-  marginBottom: "0.25rem",
-});
+import { PageShell, Card, Button, Chip, Section } from "../components/ui";
 
 export default function Planner() {
   const { householdId } = useParams<{ householdId: string }>();
@@ -101,27 +90,22 @@ export default function Planner() {
       : undefined;
 
   return (
-    <div>
-      <h1>Meal Planner</h1>
-      <p>Household: {household.name}</p>
+    <PageShell>
+      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">Meal Planner</h1>
+      <p className="mb-6 text-sm text-text-muted">Household: {household.name}</p>
 
       {household.baseMeals.length === 0 ? (
-        <p>No base meals available. Add meals first.</p>
+        <p className="text-text-muted">No base meals available. Add meals first.</p>
       ) : (
-        <>
-          <h2>Choose a meal</h2>
-          <div data-testid="meal-card-grid" style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+        <Section title="Choose a meal">
+          <div data-testid="meal-card-grid" className="mb-6 flex flex-wrap gap-4">
             {rankedMeals.map((meal) => {
               const overlap = mealOverlaps.get(meal.id);
               const isSelected = meal.id === selectedMealId;
               return (
                 <div
                   key={meal.id}
-                  style={{
-                    outline: isSelected ? "2px solid #0d6efd" : "none",
-                    borderRadius: "14px",
-                    cursor: "pointer",
-                  }}
+                  className={`cursor-pointer rounded-lg transition-all ${isSelected ? "outline-2 outline-brand" : ""}`}
                   onClick={() => handleSelectMeal(meal.id)}
                   data-testid={`selectable-${meal.id}`}
                 >
@@ -136,37 +120,32 @@ export default function Planner() {
               );
             })}
           </div>
-        </>
+        </Section>
       )}
 
       {selectedMeal && (
-        <div data-testid="meal-plan">
-          <h2>{selectedMeal.name}</h2>
-          <p>
-            Prep: {selectedMeal.defaultPrep} | Time:{" "}
-            {selectedMeal.estimatedTimeMinutes} min | Difficulty:{" "}
-            {selectedMeal.difficulty}
+        <Card data-testid="meal-plan" className="mb-6">
+          <h2 className="mb-2 text-xl font-semibold text-text-primary">{selectedMeal.name}</h2>
+          <p className="mb-4 text-sm text-text-secondary">
+            Prep: {selectedMeal.defaultPrep} | Time: {selectedMeal.estimatedTimeMinutes} min | Difficulty: {selectedMeal.difficulty}
           </p>
 
           {selectedOverlap && (
-            <div data-testid="overlap-summary">
-              <p>
-                Overlap: {selectedOverlap.score}/{selectedOverlap.total} members
-                compatible
+            <div data-testid="overlap-summary" className="mb-4">
+              <p className="mb-2 text-sm font-medium text-text-primary">
+                Overlap: {selectedOverlap.score}/{selectedOverlap.total} members compatible
               </p>
-              <div data-testid="overlap-indicators">
+              <div data-testid="overlap-indicators" className="flex flex-wrap gap-1">
                 {selectedOverlap.memberDetails.map((d) => {
-                  const colors =
-                    d.compatibility === "direct"
-                      ? { bg: "#d4edda", color: "#155724" }
-                      : d.compatibility === "with-adaptation"
-                        ? { bg: "#fff3cd", color: "#856404" }
-                        : { bg: "#f8d7da", color: "#721c24" };
+                  const variant =
+                    d.compatibility === "direct" ? "success"
+                    : d.compatibility === "with-adaptation" ? "warning"
+                    : "danger";
                   return (
-                    <span
+                    <Chip
                       key={d.memberId}
                       data-testid={`overlap-${d.memberId}`}
-                      style={chipStyle(colors.bg, colors.color)}
+                      variant={variant as "success" | "warning" | "danger"}
                       title={
                         d.compatibility === "conflict"
                           ? d.conflicts.join(", ")
@@ -180,7 +159,7 @@ export default function Planner() {
                         : d.compatibility === "with-adaptation"
                           ? "needs adaptation"
                           : "conflict"}
-                    </span>
+                    </Chip>
                   );
                 })}
               </div>
@@ -188,97 +167,90 @@ export default function Planner() {
           )}
 
           {selectedExplanation && (
-            <div data-testid="meal-explanation">
-              <h3>Why this meal?</h3>
-              <p>{selectedExplanation.summary}</p>
+            <div data-testid="meal-explanation" className="mb-4">
+              <h3 className="mb-1 text-base font-semibold text-text-primary">Why this meal?</h3>
+              <p className="mb-2 text-sm text-text-secondary">{selectedExplanation.summary}</p>
               {selectedExplanation.tradeOffs.length > 0 && (
                 <div data-testid="trade-offs">
-                  <h4>Trade-offs</h4>
-                  {selectedExplanation.tradeOffs.map((t, i) => {
-                    const isConflict = t.includes("conflict") || t.includes("(hard-no") || t.includes("(not baby");
-                    const isExtraPrep = t.includes("Extra prep");
-                    const isSafeFood = t.includes("no safe food");
-                    let bg = "#e2e3e5";
-                    let color = "#383d41";
-                    if (isConflict) { bg = "#f8d7da"; color = "#721c24"; }
-                    else if (isSafeFood) { bg = "#fff3cd"; color = "#856404"; }
-                    else if (isExtraPrep) { bg = "#fff3cd"; color = "#856404"; }
-                    return (
-                      <span
-                        key={i}
-                        data-testid={`trade-off-${i}`}
-                        style={{
-                          ...chipStyle(bg, color),
-                          display: "inline-block",
-                          marginBottom: "0.25rem",
-                        }}
-                      >
-                        {t}
-                      </span>
-                    );
-                  })}
+                  <h4 className="mb-1 text-sm font-semibold text-text-primary">Trade-offs</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedExplanation.tradeOffs.map((t, i) => {
+                      const isConflict = t.includes("conflict") || t.includes("(hard-no") || t.includes("(not baby");
+                      const isExtraPrep = t.includes("Extra prep");
+                      const isSafeFood = t.includes("no safe food");
+                      let variant: "danger" | "warning" | "neutral" = "neutral";
+                      if (isConflict) variant = "danger";
+                      else if (isSafeFood || isExtraPrep) variant = "warning";
+                      return (
+                        <Chip key={i} data-testid={`trade-off-${i}`} variant={variant}>
+                          {t}
+                        </Chip>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
           )}
 
-          <h3>Shared base</h3>
-          <ul>
-            {selectedMeal.components.map((c, i) => {
-              const ing = household.ingredients.find(
-                (ing) => ing.id === c.ingredientId,
+          <Section title="Shared base">
+            <ul className="mb-4 space-y-1 pl-5 text-sm">
+              {selectedMeal.components.map((c, i) => {
+                const ing = household.ingredients.find(
+                  (ing) => ing.id === c.ingredientId,
+                );
+                return (
+                  <li key={i}>
+                    {ing ? ing.name : c.ingredientId} ({c.role}
+                    {c.quantity ? `, ${c.quantity}` : ""})
+                  </li>
+                );
+              })}
+            </ul>
+          </Section>
+
+          <Section title="Per-person assembly">
+            {variants.map((variant) => {
+              const member = household.members.find(
+                (m) => m.id === variant.memberId,
               );
+              if (!member) return null;
               return (
-                <li key={i}>
-                  {ing ? ing.name : c.ingredientId} ({c.role}
-                  {c.quantity ? `, ${c.quantity}` : ""})
-                </li>
+                <div
+                  key={variant.id}
+                  data-testid={`variant-${member.id}`}
+                  className="mb-4 rounded-sm border border-border-light p-3"
+                >
+                  <h4 className="mb-1 text-sm font-semibold text-text-primary">
+                    {member.name} ({member.role})
+                    {variant.requiresExtraPrep && (
+                      <Chip variant="warning" className="ml-2">extra prep needed</Chip>
+                    )}
+                  </h4>
+                  {variant.safeFoodIncluded && (
+                    <p className="mb-1 text-xs text-success">Safe food included</p>
+                  )}
+                  <ul className="mb-2 space-y-0.5 pl-5 text-sm">
+                    {variant.instructions.map((instr, i) => (
+                      <li key={i}>{instr}</li>
+                    ))}
+                  </ul>
+                  <Link
+                    to={`/household/${householdId}/member/${member.id}?returnTo=/household/${householdId}/planner`}
+                    className="text-xs font-medium text-brand hover:underline"
+                  >
+                    Quick edit {member.name}
+                  </Link>
+                </div>
               );
             })}
-          </ul>
-
-          <h3>Per-person assembly</h3>
-          {variants.map((variant) => {
-            const member = household.members.find(
-              (m) => m.id === variant.memberId,
-            );
-            if (!member) return null;
-            return (
-              <div
-                key={variant.id}
-                data-testid={`variant-${member.id}`}
-              >
-                <h4>
-                  {member.name} ({member.role})
-                  {variant.requiresExtraPrep && " — extra prep needed"}
-                </h4>
-                {variant.safeFoodIncluded && (
-                  <p>Safe food included</p>
-                )}
-                <ul>
-                  {variant.instructions.map((instr, i) => (
-                    <li key={i}>{instr}</li>
-                  ))}
-                </ul>
-                <Link
-                  to={`/household/${householdId}/member/${member.id}?returnTo=/household/${householdId}/planner`}
-                >
-                  Quick edit {member.name}
-                </Link>
-              </div>
-            );
-          })}
-        </div>
+          </Section>
+        </Card>
       )}
 
-      <div>
-        <button
-          type="button"
-          onClick={() => navigate(`/household/${householdId}`)}
-        >
-          Back to household
-        </button>
-      </div>
-    </div>
+      <Button onClick={() => navigate(`/household/${householdId}`)}>
+        Back to household
+      </Button>
+    </PageShell>
   );
 }

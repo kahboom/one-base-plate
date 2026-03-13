@@ -89,9 +89,9 @@ describe("F002: Household setup UI", () => {
     await user.click(addButton);
     await user.click(addButton);
 
-    // Get all member fieldsets
-    const fieldsets = screen.getAllByRole("group");
-    expect(fieldsets).toHaveLength(4);
+    // Get all member cards by test ID prefix
+    const memberCards = screen.getAllByText("Member").map((el) => el.closest("[data-testid^='member-']") as HTMLElement);
+    expect(memberCards).toHaveLength(4);
 
     // Fill in member details with different roles
     const memberConfigs: { name: string; role: MemberRole }[] = [
@@ -102,13 +102,13 @@ describe("F002: Household setup UI", () => {
     ];
 
     for (let i = 0; i < memberConfigs.length; i++) {
-      const fieldset = fieldsets[i]!;
+      const card = memberCards[i]!;
       const config = memberConfigs[i]!;
-      const nameField = within(fieldset).getByPlaceholderText("Member name");
+      const nameField = within(card).getByPlaceholderText("Member name");
       await user.type(nameField, config.name);
 
       if (config.role !== "adult") {
-        const roleSelect = within(fieldset).getByDisplayValue("adult");
+        const roleSelect = within(card).getByDisplayValue("adult");
         await user.selectOptions(roleSelect, config.role);
       }
     }

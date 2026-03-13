@@ -2,16 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Ingredient, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
+import { PageShell, Card, Button, Input, Select, ActionGroup, Chip } from "../components/ui";
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
-  "protein",
-  "carb",
-  "veg",
-  "fruit",
-  "dairy",
-  "snack",
-  "freezer",
-  "pantry",
+  "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
 ];
 
 const COMMON_TAGS = ["quick", "mashable", "rescue", "staple", "batch-friendly"];
@@ -54,90 +48,88 @@ function IngredientForm({
   }
 
   return (
-    <fieldset data-testid={`ingredient-${ingredient.id}`}>
-      <legend>Ingredient</legend>
+    <Card data-testid={`ingredient-${ingredient.id}`} className="mb-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-sm font-semibold text-text-secondary">Ingredient</span>
+        <Button variant="danger" small onClick={onRemove}>Remove ingredient</Button>
+      </div>
 
-      <label>
-        Name:{" "}
-        <input
-          type="text"
-          value={ingredient.name}
-          onChange={(e) => onChange({ ...ingredient, name: e.target.value })}
-          placeholder="Ingredient name"
-          required
-        />
-      </label>
+      <div className="space-y-3">
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          Name:
+          <Input
+            type="text"
+            value={ingredient.name}
+            onChange={(e) => onChange({ ...ingredient, name: e.target.value })}
+            placeholder="Ingredient name"
+            required
+          />
+        </label>
 
-      <label>
-        Category:{" "}
-        <select
-          value={ingredient.category}
-          onChange={(e) =>
-            onChange({
-              ...ingredient,
-              category: e.target.value as IngredientCategory,
-            })
-          }
-        >
-          {CATEGORY_OPTIONS.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          Category:
+          <Select
+            value={ingredient.category}
+            onChange={(e) =>
+              onChange({ ...ingredient, category: e.target.value as IngredientCategory })
+            }
+          >
+            {CATEGORY_OPTIONS.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </Select>
+        </label>
+
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          <input
+            type="checkbox"
+            className="h-[18px] w-[18px] accent-brand"
+            checked={ingredient.freezerFriendly}
+            onChange={(e) =>
+              onChange({ ...ingredient, freezerFriendly: e.target.checked })
+            }
+          />
+          Freezer friendly
+        </label>
+
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          <input
+            type="checkbox"
+            className="h-[18px] w-[18px] accent-brand"
+            checked={ingredient.babySafeWithAdaptation}
+            onChange={(e) =>
+              onChange({ ...ingredient, babySafeWithAdaptation: e.target.checked })
+            }
+          />
+          Baby safe with adaptation
+        </label>
+      </div>
+
+      <div className="mt-3">
+        <strong className="text-sm">Tags: </strong>
+        <span className="flex flex-wrap gap-1 mt-1">
+          {ingredient.tags.map((tag) => (
+            <span key={tag} data-testid={`tag-${tag}`} className="inline-flex items-center gap-1">
+              <Chip variant="info">{tag}</Chip>
+              <Button variant="ghost" small onClick={() => removeTag(tag)}>x</Button>
+            </span>
           ))}
-        </select>
-      </label>
-
-      <label>
-        <input
-          type="checkbox"
-          checked={ingredient.freezerFriendly}
-          onChange={(e) =>
-            onChange({ ...ingredient, freezerFriendly: e.target.checked })
-          }
-        />{" "}
-        Freezer friendly
-      </label>
-
-      <label>
-        <input
-          type="checkbox"
-          checked={ingredient.babySafeWithAdaptation}
-          onChange={(e) =>
-            onChange({
-              ...ingredient,
-              babySafeWithAdaptation: e.target.checked,
-            })
-          }
-        />{" "}
-        Baby safe with adaptation
-      </label>
-
-      <div>
-        <strong>Tags:</strong>{" "}
-        {ingredient.tags.map((tag) => (
-          <span key={tag} data-testid={`tag-${tag}`}>
-            {tag}{" "}
-            <button type="button" onClick={() => removeTag(tag)}>
-              x
-            </button>{" "}
-          </span>
-        ))}
+        </span>
       </div>
 
-      <div>
+      <div className="mt-2 flex flex-wrap gap-1">
         {COMMON_TAGS.filter((t) => !ingredient.tags.includes(t)).map((tag) => (
-          <button key={tag} type="button" onClick={() => addTag(tag)}>
-            +{tag}
-          </button>
+          <Button key={tag} small onClick={() => addTag(tag)}>+{tag}</Button>
         ))}
       </div>
 
-      <div>
-        <input
+      <div className="mt-2 flex gap-2">
+        <Input
           type="text"
           value={tagInput}
           onChange={(e) => setTagInput(e.target.value)}
           placeholder="Custom tag"
+          className="max-w-[200px]"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -145,15 +137,9 @@ function IngredientForm({
             }
           }}
         />
-        <button type="button" onClick={() => addTag(tagInput)}>
-          Add tag
-        </button>
+        <Button small onClick={() => addTag(tagInput)}>Add tag</Button>
       </div>
-
-      <button type="button" onClick={onRemove}>
-        Remove ingredient
-      </button>
-    </fieldset>
+    </Card>
   );
 }
 
@@ -203,11 +189,11 @@ export default function IngredientManager() {
   if (!loaded) return null;
 
   return (
-    <div>
-      <h1>Ingredients</h1>
-      <p>Household: {householdName}</p>
+    <PageShell>
+      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">Ingredients</h1>
+      <p className="mb-6 text-sm text-text-muted">Household: {householdName}</p>
 
-      <h2>Items ({ingredients.length})</h2>
+      <h2 className="mb-3 text-xl font-semibold text-text-primary">Items ({ingredients.length})</h2>
 
       {ingredients.map((ingredient, i) => (
         <IngredientForm
@@ -218,21 +204,12 @@ export default function IngredientManager() {
         />
       ))}
 
-      <button type="button" onClick={addIngredient}>
-        Add ingredient
-      </button>
+      <Button onClick={addIngredient} className="mb-4">Add ingredient</Button>
 
-      <div>
-        <button type="button" onClick={handleSave}>
-          Save ingredients
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate(`/household/${householdId}`)}
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
+      <ActionGroup>
+        <Button variant="primary" onClick={handleSave}>Save ingredients</Button>
+        <Button onClick={() => navigate(`/household/${householdId}`)}>Cancel</Button>
+      </ActionGroup>
+    </PageShell>
   );
 }

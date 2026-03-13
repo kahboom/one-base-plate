@@ -159,5 +159,15 @@
 - Created 7 new F024 tests: card grid display, high overlap highlighting, extra prep flagging, overlap indicator chips, trade-off chips, ranking order, indicator clarity
 - Verified: tsc --noEmit passes, vitest passes (130 tests), all F024 steps satisfied
 
+### F032 - Shared styling foundation with Tailwind CSS (2026-03-13)
+- Installed Tailwind CSS v4 with `@tailwindcss/vite` plugin for zero-config Vite integration
+- Configured custom theme in `src/app.css` using `@theme` directive with design tokens matching uiSpec designSystemDirection (colors, radii, shadows)
+- Created shared UI primitives in `src/components/ui.tsx`: PageShell, Card, CardGrid, Button (4 variants), Input, Select, Chip (5 variants), EmptyState, Section, NavBar, FormRow, ActionGroup
+- Refactored all 8 user-facing pages (HouseholdList, HouseholdSetup, MemberProfile, IngredientManager, BaseMealManager, Planner, WeeklyPlanner, Home) to use shared primitives and Tailwind utility classes
+- Refactored MealCard component to use Tailwind classes and Chip/Button primitives instead of inline styles
+- Replaced all inline styles with Tailwind utility classes across the codebase
+- Updated 3 brittle test files (f002, f004, f005) that relied on `getByRole("group")` for fieldset elements — now use `data-testid` queries for card-based layout
+- Verified: tsc --noEmit passes, vitest passes (130 tests), vite build succeeds
+
 ## Next Task
-- **F025** — App UI improves readability with card layout, spacing, larger typography, and stronger contrast
+- **F025** — Core screens apply the styling foundation for readable hierarchy, contrast, and fast scanning

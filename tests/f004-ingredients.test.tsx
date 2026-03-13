@@ -64,35 +64,35 @@ describe("F004: Add ingredients across categories", () => {
 
     expect(screen.getByText("Items (3)")).toBeInTheDocument();
 
-    const fieldsets = screen.getAllByRole("group");
-    expect(fieldsets).toHaveLength(3);
+    const cards = screen.getAllByText("Ingredient").map((el) => el.closest("[data-testid^='ingredient-']") as HTMLElement);
+    expect(cards).toHaveLength(3);
 
     // Fill in first ingredient: pantry item
-    const name0 = within(fieldsets[0]!).getByPlaceholderText("Ingredient name");
+    const name0 = within(cards[0]!).getByPlaceholderText("Ingredient name");
     await user.type(name0, "Rice");
     await user.selectOptions(
-      within(fieldsets[0]!).getByDisplayValue("pantry"),
+      within(cards[0]!).getByDisplayValue("pantry"),
       "pantry",
     );
 
     // Fill in second ingredient: protein (freezer)
-    const name1 = within(fieldsets[1]!).getByPlaceholderText("Ingredient name");
+    const name1 = within(cards[1]!).getByPlaceholderText("Ingredient name");
     await user.type(name1, "Chicken breast");
     await user.selectOptions(
-      within(fieldsets[1]!).getByDisplayValue("pantry"),
+      within(cards[1]!).getByDisplayValue("pantry"),
       "protein",
     );
-    await user.click(within(fieldsets[1]!).getByLabelText("Freezer friendly"));
+    await user.click(within(cards[1]!).getByLabelText("Freezer friendly"));
 
     // Fill in third ingredient: veg
-    const name2 = within(fieldsets[2]!).getByPlaceholderText("Ingredient name");
+    const name2 = within(cards[2]!).getByPlaceholderText("Ingredient name");
     await user.type(name2, "Carrots");
     await user.selectOptions(
-      within(fieldsets[2]!).getByDisplayValue("pantry"),
+      within(cards[2]!).getByDisplayValue("pantry"),
       "veg",
     );
     await user.click(
-      within(fieldsets[2]!).getByLabelText("Baby safe with adaptation"),
+      within(cards[2]!).getByLabelText("Baby safe with adaptation"),
     );
 
     // Save
@@ -120,24 +120,24 @@ describe("F004: Tag ingredients", () => {
 
     await user.click(screen.getByText("Add ingredient"));
 
-    const fieldset = screen.getByRole("group");
-    const nameInput = within(fieldset).getByPlaceholderText("Ingredient name");
+    const card = screen.getByText("Ingredient").closest("[data-testid^='ingredient-']") as HTMLElement;
+    const nameInput = within(card).getByPlaceholderText("Ingredient name");
     await user.type(nameInput, "Pasta");
 
     // Add a common tag
-    await user.click(within(fieldset).getByText("+quick"));
-    await user.click(within(fieldset).getByText("+rescue"));
+    await user.click(within(card).getByText("+quick"));
+    await user.click(within(card).getByText("+rescue"));
 
     // Add a custom tag
-    const tagInput = within(fieldset).getByPlaceholderText("Custom tag");
+    const tagInput = within(card).getByPlaceholderText("Custom tag");
     await user.type(tagInput, "kid-friendly");
-    await user.click(within(fieldset).getByText("Add tag"));
+    await user.click(within(card).getByText("Add tag"));
 
     // Verify tags are displayed
-    expect(within(fieldset).getByTestId("tag-quick")).toBeInTheDocument();
-    expect(within(fieldset).getByTestId("tag-rescue")).toBeInTheDocument();
+    expect(within(card).getByTestId("tag-quick")).toBeInTheDocument();
+    expect(within(card).getByTestId("tag-rescue")).toBeInTheDocument();
     expect(
-      within(fieldset).getByTestId("tag-kid-friendly"),
+      within(card).getByTestId("tag-kid-friendly"),
     ).toBeInTheDocument();
 
     // Save and verify
@@ -157,19 +157,19 @@ describe("F004: Tag ingredients", () => {
     renderIngredientManager("h-ing");
 
     await user.click(screen.getByText("Add ingredient"));
-    const fieldset = screen.getByRole("group");
+    const card = screen.getByText("Ingredient").closest("[data-testid^='ingredient-']") as HTMLElement;
 
-    await user.click(within(fieldset).getByText("+mashable"));
-    expect(within(fieldset).getByTestId("tag-mashable")).toBeInTheDocument();
+    await user.click(within(card).getByText("+mashable"));
+    expect(within(card).getByTestId("tag-mashable")).toBeInTheDocument();
 
     // Remove the tag
     const removeBtn = within(
-      within(fieldset).getByTestId("tag-mashable"),
+      within(card).getByTestId("tag-mashable"),
     ).getByText("x");
     await user.click(removeBtn);
 
     expect(
-      within(fieldset).queryByTestId("tag-mashable"),
+      within(card).queryByTestId("tag-mashable"),
     ).not.toBeInTheDocument();
   });
 });

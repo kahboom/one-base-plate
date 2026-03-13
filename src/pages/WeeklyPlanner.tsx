@@ -4,6 +4,7 @@ import type { Household, WeeklyPlan, DayPlan, BaseMeal } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import { generateWeeklyPlan, computeMealOverlap } from "../planner";
 import MealCard from "../components/MealCard";
+import { PageShell, Button, Select, Section, NavBar } from "../components/ui";
 
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -114,32 +115,33 @@ export default function WeeklyPlanner() {
   const daySlots = DAY_LABELS.slice(0, numDays);
 
   return (
-    <div>
-      <h1>Weekly Planner</h1>
-      <p>Household: {household.name}</p>
+    <PageShell>
+      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">Weekly Planner</h1>
+      <p className="mb-6 text-sm text-text-muted">Household: {household.name}</p>
 
       {household.baseMeals.length === 0 ? (
-        <p>No base meals available. Add meals before generating a plan.</p>
+        <p className="text-text-muted">No base meals available. Add meals before generating a plan.</p>
       ) : (
-        <div>
-          <label>
-            Days to plan:{" "}
-            <select
+        <div className="mb-4 flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+            Days to plan:
+            <Select
               value={numDays}
               onChange={(e) => setNumDays(Number(e.target.value))}
               data-testid="days-select"
+              className="w-auto"
             >
               <option value={5}>5 days</option>
               <option value={7}>7 days</option>
-            </select>
-          </label>{" "}
-          <button type="button" onClick={handleGenerate} data-testid="generate-btn">
+            </Select>
+          </label>
+          <Button variant="primary" onClick={handleGenerate} data-testid="generate-btn">
             Generate plan
-          </button>
+          </Button>
         </div>
       )}
 
-      <div data-testid="day-cards" style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "1rem" }}>
+      <div data-testid="day-cards" className="mt-4 flex flex-wrap gap-4">
         {daySlots.map((dayLabel) => {
           const dayIndex = plan?.days.findIndex((d) => d.day === dayLabel) ?? -1;
           const dayPlan = dayIndex >= 0 ? plan!.days[dayIndex]! : null;
@@ -162,50 +164,45 @@ export default function WeeklyPlanner() {
       </div>
 
       {plan && (
-        <div data-testid="weekly-plan" style={{ marginTop: "1rem" }}>
-          <button type="button" onClick={handleSave} data-testid="save-plan-btn">
+        <div data-testid="weekly-plan" className="mt-4">
+          <Button variant="primary" onClick={handleSave} data-testid="save-plan-btn">
             Save plan
-          </button>
+          </Button>
         </div>
       )}
 
       {household.baseMeals.length > 0 && (
-        <div data-testid="suggested-tray" style={{ marginTop: "1.5rem" }}>
-          <h2>Suggested meals</h2>
-          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-            {[...household.baseMeals]
-              .map((meal) => ({
-                meal,
-                overlap: computeMealOverlap(meal, household.members, household.ingredients),
-              }))
-              .sort((a, b) => b.overlap.score - a.overlap.score)
-              .map(({ meal, overlap }) => (
-                <MealCard
-                  key={meal.id}
-                  meal={meal}
-                  members={household.members}
-                  ingredients={household.ingredients}
-                  overlap={overlap}
-                  compact
-                />
-              ))}
+        <Section>
+          <div data-testid="suggested-tray" className="mt-6">
+            <h2 className="mb-3 text-xl font-semibold text-text-primary">Suggested meals</h2>
+            <div className="flex flex-wrap gap-3">
+              {[...household.baseMeals]
+                .map((meal) => ({
+                  meal,
+                  overlap: computeMealOverlap(meal, household.members, household.ingredients),
+                }))
+                .sort((a, b) => b.overlap.score - a.overlap.score)
+                .map(({ meal, overlap }) => (
+                  <MealCard
+                    key={meal.id}
+                    meal={meal}
+                    members={household.members}
+                    ingredients={household.ingredients}
+                    overlap={overlap}
+                    compact
+                  />
+                ))}
+            </div>
           </div>
-        </div>
+        </Section>
       )}
 
-      <div style={{ marginTop: "1rem" }}>
-        <button
-          type="button"
-          onClick={() => navigate(`/household/${householdId}`)}
-        >
-          Back to household
-        </button>
-        {" | "}
-        <Link to={`/household/${householdId}/planner`}>Single meal planner</Link>
-        {" | "}
-        <Link to={`/household/${householdId}/home`}>Home</Link>
-      </div>
-    </div>
+      <NavBar>
+        <Button onClick={() => navigate(`/household/${householdId}`)}>Back to household</Button>
+        <Link to={`/household/${householdId}/planner`} className="text-sm font-medium text-brand hover:underline">Single meal planner</Link>
+        <Link to={`/household/${householdId}/home`} className="text-sm font-medium text-brand hover:underline">Home</Link>
+      </NavBar>
+    </PageShell>
   );
 }
 
@@ -234,57 +231,53 @@ function DayCard({
   return (
     <div
       data-testid={`day-${dayLabel.toLowerCase()}`}
-      style={{
-        border: isEmpty ? "1px dashed #ccc" : "1px solid #ccc",
-        borderRadius: "8px",
-        padding: "0.75rem",
-        minWidth: "140px",
-        flex: "1 1 140px",
-        background: isEmpty ? "#fafafa" : "#fff",
-      }}
+      className={`min-w-[140px] flex-1 rounded-md p-3 shadow-card ${
+        isEmpty
+          ? "border border-dashed border-border-default bg-bg"
+          : "border border-border-light bg-surface"
+      }`}
     >
-      <strong>{dayLabel}</strong>
+      <strong className="text-base font-semibold text-text-primary">{dayLabel}</strong>
 
       {dayPlan && mealName ? (
         <>
-          <p>{mealName}</p>
-          <small>Overlap: {overlapLabel}</small>
-          <div>
-            <button
-              type="button"
+          <p className="mt-1 text-sm text-text-primary">{mealName}</p>
+          <small className="text-xs text-text-muted">Overlap: {overlapLabel}</small>
+          <div className="mt-1 flex gap-2">
+            <Button
+              small
               onClick={() => setExpanded(!expanded)}
               data-testid={`toggle-${dayLabel.toLowerCase()}`}
-              style={{ fontSize: "0.8rem", marginTop: "0.25rem" }}
             >
               {expanded ? "Hide details" : "Show details"}
-            </button>
+            </Button>
             {onClear && (
-              <button
-                type="button"
+              <Button
+                variant="danger"
+                small
                 onClick={onClear}
                 data-testid={`clear-${dayLabel.toLowerCase()}`}
-                style={{ fontSize: "0.8rem", marginLeft: "0.5rem" }}
               >
                 Clear
-              </button>
+              </Button>
             )}
           </div>
           {expanded && (
-            <div data-testid={`details-${dayLabel.toLowerCase()}`}>
+            <div data-testid={`details-${dayLabel.toLowerCase()}`} className="mt-2">
               {dayPlan.variants.map((variant) => {
                 const member = household.members.find(
                   (m) => m.id === variant.memberId,
                 );
                 if (!member) return null;
                 return (
-                  <div key={variant.id} style={{ marginTop: "0.5rem" }}>
-                    <em>
+                  <div key={variant.id} className="mt-2">
+                    <em className="text-sm text-text-secondary">
                       {member.name} ({member.role})
-                      {variant.requiresExtraPrep && " — extra prep"}
+                      {variant.requiresExtraPrep && " \u2014 extra prep"}
                     </em>
-                    <ul style={{ margin: "0.25rem 0", paddingLeft: "1.25rem" }}>
+                    <ul className="mt-1 space-y-0.5 pl-5">
                       {variant.instructions.map((instr, i) => (
-                        <li key={i} style={{ fontSize: "0.85rem" }}>{instr}</li>
+                        <li key={i} className="text-xs">{instr}</li>
                       ))}
                     </ul>
                   </div>
@@ -297,15 +290,15 @@ function DayCard({
         <div data-testid={`empty-${dayLabel.toLowerCase()}`}>
           {suggestedMeal ? (
             <>
-              <p style={{ color: "#888", fontStyle: "italic" }}>
+              <p className="mt-1 text-sm italic text-text-muted">
                 Suggested: {suggestedMeal.name}
               </p>
-              <small style={{ color: "#999" }}>
+              <small className="text-xs text-text-muted">
                 {suggestedMeal.estimatedTimeMinutes} min | {suggestedMeal.difficulty}
               </small>
             </>
           ) : (
-            <p style={{ color: "#888" }}>No meal planned</p>
+            <p className="mt-1 text-sm text-text-muted">No meal planned</p>
           )}
         </div>
       )}

@@ -2,15 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { BaseMeal, MealComponent, Ingredient } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
+import { PageShell, Card, Button, Input, Select, ActionGroup } from "../components/ui";
 
 type ComponentRole = MealComponent["role"];
-const COMPONENT_ROLES: ComponentRole[] = [
-  "protein",
-  "carb",
-  "veg",
-  "sauce",
-  "topping",
-];
+const COMPONENT_ROLES: ComponentRole[] = ["protein", "carb", "veg", "sauce", "topping"];
 const DIFFICULTY_OPTIONS: BaseMeal["difficulty"][] = ["easy", "medium", "hard"];
 
 function createEmptyMeal(): BaseMeal {
@@ -38,53 +33,47 @@ function ComponentForm({
   onRemove: () => void;
 }) {
   return (
-    <div data-testid={`component-${component.ingredientId || "empty"}`}>
-      <label>
-        Ingredient:{" "}
-        <select
-          value={component.ingredientId}
-          onChange={(e) =>
-            onChange({ ...component, ingredientId: e.target.value })
-          }
-        >
-          <option value="">Select ingredient</option>
-          {ingredients.map((ing) => (
-            <option key={ing.id} value={ing.id}>
-              {ing.name} ({ing.category})
-            </option>
-          ))}
-        </select>
-      </label>
+    <div data-testid={`component-${component.ingredientId || "empty"}`} className="mb-3 rounded-sm border border-border-light p-3">
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          Ingredient:
+          <Select
+            value={component.ingredientId}
+            onChange={(e) => onChange({ ...component, ingredientId: e.target.value })}
+          >
+            <option value="">Select ingredient</option>
+            {ingredients.map((ing) => (
+              <option key={ing.id} value={ing.id}>
+                {ing.name} ({ing.category})
+              </option>
+            ))}
+          </Select>
+        </label>
 
-      <label>
-        Role:{" "}
-        <select
-          value={component.role}
-          onChange={(e) =>
-            onChange({ ...component, role: e.target.value as ComponentRole })
-          }
-        >
-          {COMPONENT_ROLES.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-      </label>
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          Role:
+          <Select
+            value={component.role}
+            onChange={(e) => onChange({ ...component, role: e.target.value as ComponentRole })}
+          >
+            {COMPONENT_ROLES.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </Select>
+        </label>
 
-      <label>
-        Quantity:{" "}
-        <input
-          type="text"
-          value={component.quantity}
-          onChange={(e) => onChange({ ...component, quantity: e.target.value })}
-          placeholder="e.g. 200g"
-        />
-      </label>
-
-      <button type="button" onClick={onRemove}>
-        Remove component
-      </button>
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          Quantity:
+          <Input
+            type="text"
+            value={component.quantity}
+            onChange={(e) => onChange({ ...component, quantity: e.target.value })}
+            placeholder="e.g. 200g"
+            className="max-w-[200px]"
+          />
+        </label>
+      </div>
+      <Button variant="danger" small onClick={onRemove} className="mt-2">Remove component</Button>
     </div>
   );
 }
@@ -123,76 +112,75 @@ function MealForm({
   }
 
   return (
-    <fieldset data-testid={`meal-${meal.id}`}>
-      <legend>Base Meal</legend>
+    <Card data-testid={`meal-${meal.id}`} className="mb-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-sm font-semibold text-text-secondary">Base Meal</span>
+        <Button variant="danger" small onClick={onRemove}>Remove meal</Button>
+      </div>
 
-      <label>
-        Name:{" "}
-        <input
-          type="text"
-          value={meal.name}
-          onChange={(e) => onChange({ ...meal, name: e.target.value })}
-          placeholder="Meal name"
-          required
-        />
-      </label>
+      <div className="space-y-3">
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          Name:
+          <Input
+            type="text"
+            value={meal.name}
+            onChange={(e) => onChange({ ...meal, name: e.target.value })}
+            placeholder="Meal name"
+            required
+          />
+        </label>
 
-      <label>
-        Default prep:{" "}
-        <input
-          type="text"
-          value={meal.defaultPrep}
-          onChange={(e) => onChange({ ...meal, defaultPrep: e.target.value })}
-          placeholder="e.g. stir-fry, roast"
-        />
-      </label>
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          Default prep:
+          <Input
+            type="text"
+            value={meal.defaultPrep}
+            onChange={(e) => onChange({ ...meal, defaultPrep: e.target.value })}
+            placeholder="e.g. stir-fry, roast"
+          />
+        </label>
 
-      <label>
-        Time (minutes):{" "}
-        <input
-          type="number"
-          value={meal.estimatedTimeMinutes}
-          onChange={(e) =>
-            onChange({
-              ...meal,
-              estimatedTimeMinutes: parseInt(e.target.value, 10) || 0,
-            })
-          }
-          min={0}
-        />
-      </label>
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          Time (minutes):
+          <Input
+            type="number"
+            value={meal.estimatedTimeMinutes}
+            onChange={(e) =>
+              onChange({ ...meal, estimatedTimeMinutes: parseInt(e.target.value, 10) || 0 })
+            }
+            min={0}
+            className="max-w-[120px]"
+          />
+        </label>
 
-      <label>
-        Difficulty:{" "}
-        <select
-          value={meal.difficulty}
-          onChange={(e) =>
-            onChange({
-              ...meal,
-              difficulty: e.target.value as BaseMeal["difficulty"],
-            })
-          }
-        >
-          {DIFFICULTY_OPTIONS.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
-      </label>
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          Difficulty:
+          <Select
+            value={meal.difficulty}
+            onChange={(e) =>
+              onChange({ ...meal, difficulty: e.target.value as BaseMeal["difficulty"] })
+            }
+          >
+            {DIFFICULTY_OPTIONS.map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </Select>
+        </label>
 
-      <label>
-        <input
-          type="checkbox"
-          checked={meal.rescueEligible}
-          onChange={(e) =>
-            onChange({ ...meal, rescueEligible: e.target.checked })
-          }
-        />{" "}
-        Rescue eligible
-      </label>
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          <input
+            type="checkbox"
+            className="h-[18px] w-[18px] accent-brand"
+            checked={meal.rescueEligible}
+            onChange={(e) => onChange({ ...meal, rescueEligible: e.target.checked })}
+          />
+          Rescue eligible
+        </label>
+      </div>
 
-      <h3>Components ({meal.components.length})</h3>
+      <h3 className="mt-4 mb-2 text-base font-semibold text-text-primary">
+        Components ({meal.components.length})
+      </h3>
       {meal.components.map((comp, i) => (
         <ComponentForm
           key={i}
@@ -203,15 +191,8 @@ function MealForm({
         />
       ))}
 
-      <button type="button" onClick={addComponent}>
-        Add component
-      </button>
-
-      <br />
-      <button type="button" onClick={onRemove}>
-        Remove meal
-      </button>
-    </fieldset>
+      <Button small onClick={addComponent}>Add component</Button>
+    </Card>
   );
 }
 
@@ -263,11 +244,11 @@ export default function BaseMealManager() {
   if (!loaded) return null;
 
   return (
-    <div>
-      <h1>Base Meals</h1>
-      <p>Household: {householdName}</p>
+    <PageShell>
+      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">Base Meals</h1>
+      <p className="mb-6 text-sm text-text-muted">Household: {householdName}</p>
 
-      <h2>Meals ({meals.length})</h2>
+      <h2 className="mb-3 text-xl font-semibold text-text-primary">Meals ({meals.length})</h2>
 
       {meals.map((meal, i) => (
         <MealForm
@@ -279,21 +260,12 @@ export default function BaseMealManager() {
         />
       ))}
 
-      <button type="button" onClick={addMeal}>
-        Add meal
-      </button>
+      <Button onClick={addMeal} className="mb-4">Add meal</Button>
 
-      <div>
-        <button type="button" onClick={handleSave}>
-          Save meals
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate(`/household/${householdId}`)}
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
+      <ActionGroup>
+        <Button variant="primary" onClick={handleSave}>Save meals</Button>
+        <Button onClick={() => navigate(`/household/${householdId}`)}>Cancel</Button>
+      </ActionGroup>
+    </PageShell>
   );
 }

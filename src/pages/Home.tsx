@@ -4,6 +4,7 @@ import type { Household } from "../types";
 import { loadHousehold } from "../storage";
 import { computeMealOverlap } from "../planner";
 import MealCard from "../components/MealCard";
+import { PageShell, Section, NavBar } from "../components/ui";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -40,74 +41,79 @@ export default function Home() {
   }
 
   return (
-    <div>
-      <h1>What should we eat tonight?</h1>
-      <p>{household.name}</p>
+    <PageShell>
+      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">
+        What should we eat tonight?
+      </h1>
+      <p className="mb-6 text-sm text-text-muted">{household.name}</p>
 
       {latestPlan && (
-        <div data-testid="weekly-strip">
-          <h2>This week</h2>
-          <div style={{ display: "flex", gap: "0.5rem", overflowX: "auto" }}>
-            {DAY_LABELS.map((label, i) => {
-              const dayPlan = latestPlan.days[i];
-              return (
-                <div
-                  key={label}
-                  data-testid={`strip-${label.toLowerCase()}`}
-                  style={{
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    padding: "0.5rem",
-                    minWidth: "80px",
-                    textAlign: "center",
-                    flex: "0 0 auto",
-                  }}
-                >
-                  <strong style={{ fontSize: "0.8rem" }}>{label}</strong>
-                  <p style={{ fontSize: "0.75rem", margin: "0.25rem 0 0" }}>
-                    {dayPlan ? getMealName(dayPlan.baseMealId) || "Planned" : "—"}
-                  </p>
-                </div>
-              );
-            })}
+        <Section>
+          <div data-testid="weekly-strip">
+            <h2 className="mb-3 text-xl font-semibold text-text-primary">This week</h2>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {DAY_LABELS.map((label, i) => {
+                const dayPlan = latestPlan.days[i];
+                return (
+                  <div
+                    key={label}
+                    data-testid={`strip-${label.toLowerCase()}`}
+                    className="min-w-[90px] flex-shrink-0 rounded-sm border border-border-light bg-surface p-2 text-center shadow-card"
+                  >
+                    <strong className="text-sm font-semibold text-text-primary">{label}</strong>
+                    <p className="mt-1 text-xs text-text-secondary">
+                      {dayPlan ? getMealName(dayPlan.baseMealId) || "Planned" : "\u2014"}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+            <Link to={`/household/${householdId}/weekly`} className="mt-2 inline-block text-sm font-medium text-brand hover:underline">
+              View full plan
+            </Link>
           </div>
-          <Link to={`/household/${householdId}/weekly`}>View full plan</Link>
-        </div>
+        </Section>
       )}
 
       {!latestPlan && household.baseMeals.length > 0 && (
-        <div data-testid="no-plan-prompt">
-          <p>No plan for this week yet.</p>
-          <Link to={`/household/${householdId}/weekly`}>Start planning</Link>
-        </div>
+        <Section>
+          <div data-testid="no-plan-prompt" className="rounded-md border border-dashed border-border-default bg-bg p-6 text-center">
+            <p className="mb-2 text-text-muted">No plan for this week yet.</p>
+            <Link to={`/household/${householdId}/weekly`} className="font-medium text-brand hover:underline">
+              Start planning
+            </Link>
+          </div>
+        </Section>
       )}
 
       {topMeals.length > 0 && (
-        <div data-testid="top-suggestions">
-          <h2>Top suggestions</h2>
-          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-            {topMeals.map(({ meal, overlap }) => (
-              <MealCard
-                key={meal.id}
-                meal={meal}
-                members={household.members}
-                ingredients={household.ingredients}
-                overlap={overlap}
-              />
-            ))}
+        <Section>
+          <div data-testid="top-suggestions">
+            <h2 className="mb-3 text-xl font-semibold text-text-primary">Top suggestions</h2>
+            <div className="flex flex-wrap gap-3">
+              {topMeals.map(({ meal, overlap }) => (
+                <MealCard
+                  key={meal.id}
+                  meal={meal}
+                  members={household.members}
+                  ingredients={household.ingredients}
+                  overlap={overlap}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        </Section>
       )}
 
-      <div style={{ marginTop: "1rem" }}>
-        <Link to={`/household/${householdId}/weekly`}>Weekly planner</Link>
-        {" | "}
-        <Link to={`/household/${householdId}/planner`}>Meal planner</Link>
-        {" | "}
-        <Link to={`/household/${householdId}`}>Household setup</Link>
-        {" | "}
-        <Link to="/">All households</Link>
-      </div>
-    </div>
+      <NavBar>
+        <Link to={`/household/${householdId}/weekly`} className="text-sm font-medium text-brand hover:underline">Weekly planner</Link>
+        <span className="text-text-muted">|</span>
+        <Link to={`/household/${householdId}/planner`} className="text-sm font-medium text-brand hover:underline">Meal planner</Link>
+        <span className="text-text-muted">|</span>
+        <Link to={`/household/${householdId}`} className="text-sm font-medium text-brand hover:underline">Household setup</Link>
+        <span className="text-text-muted">|</span>
+        <Link to="/" className="text-sm font-medium text-brand hover:underline">All households</Link>
+      </NavBar>
+    </PageShell>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Household } from "../types";
 import { loadHouseholds, deleteHousehold } from "../storage";
+import { PageShell, Card, Button, EmptyState } from "../components/ui";
 
 export default function HouseholdList() {
   const [households, setHouseholds] = useState<Household[]>([]);
@@ -16,31 +17,43 @@ export default function HouseholdList() {
   }
 
   return (
-    <div>
-      <h1>OneBasePlate</h1>
-      <p>One base meal, multiple household-specific assemblies.</p>
+    <PageShell>
+      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">OneBasePlate</h1>
+      <p className="mb-6 text-text-secondary">One base meal, multiple household-specific assemblies.</p>
 
-      <h2>Households</h2>
-      <Link to="/household/new">
-        <button type="button">Create Household</button>
-      </Link>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-text-primary">Households</h2>
+        <Link to="/household/new">
+          <Button variant="primary">Create Household</Button>
+        </Link>
+      </div>
 
-      {households.length === 0 && <p>No households yet. Create one to get started.</p>}
+      {households.length === 0 && (
+        <EmptyState>No households yet. Create one to get started.</EmptyState>
+      )}
 
-      <ul>
+      <div className="space-y-3">
         {households.map((h) => (
-          <li key={h.id}>
-            <Link to={`/household/${h.id}/home`}>{h.name}</Link>
-            {" "}({h.members.length} member{h.members.length !== 1 ? "s" : ""})
-            {" "}
-            <Link to={`/household/${h.id}`}>Setup</Link>
-            {" "}
-            <button type="button" onClick={() => handleDelete(h.id)}>
-              Delete
-            </button>
-          </li>
+          <Card key={h.id} className="flex items-center justify-between">
+            <div>
+              <Link to={`/household/${h.id}/home`} className="text-lg font-semibold text-brand hover:underline">
+                {h.name}
+              </Link>
+              <span className="ml-2 text-sm text-text-muted">
+                ({h.members.length} member{h.members.length !== 1 ? "s" : ""})
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Link to={`/household/${h.id}`}>
+                <Button small>Setup</Button>
+              </Link>
+              <Button variant="danger" small onClick={() => handleDelete(h.id)}>
+                Delete
+              </Button>
+            </div>
+          </Card>
         ))}
-      </ul>
-    </div>
+      </div>
+    </PageShell>
   );
 }

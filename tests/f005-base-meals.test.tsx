@@ -87,29 +87,29 @@ describe("F005: Create a base meal from components", () => {
     await user.click(screen.getByText("Add meal"));
     expect(screen.getByText("Meals (1)")).toBeInTheDocument();
 
-    const fieldset = screen.getByRole("group");
+    const card = screen.getByText("Base Meal").closest("[data-testid^='meal-']") as HTMLElement;
 
     // Set meal name
-    const nameInput = within(fieldset).getByPlaceholderText("Meal name");
+    const nameInput = within(card).getByPlaceholderText("Meal name");
     await user.type(nameInput, "Chicken Rice Bowl");
 
     // Set default prep
-    const prepInput = within(fieldset).getByPlaceholderText(
+    const prepInput = within(card).getByPlaceholderText(
       "e.g. stir-fry, roast",
     );
     await user.type(prepInput, "stir-fry");
 
     // Add components
-    await user.click(within(fieldset).getByText("Add component"));
-    await user.click(within(fieldset).getByText("Add component"));
-    await user.click(within(fieldset).getByText("Add component"));
+    await user.click(within(card).getByText("Add component"));
+    await user.click(within(card).getByText("Add component"));
+    await user.click(within(card).getByText("Add component"));
 
     expect(
-      within(fieldset).getByText("Components (3)"),
+      within(card).getByText("Components (3)"),
     ).toBeInTheDocument();
 
     // Select ingredients for each component
-    const ingredientSelects = within(fieldset).getAllByDisplayValue(
+    const ingredientSelects = within(card).getAllByDisplayValue(
       "Select ingredient",
     );
 
@@ -118,7 +118,7 @@ describe("F005: Create a base meal from components", () => {
     await user.selectOptions(ingredientSelects[2]!, "ing-broccoli");
 
     // Set roles for components (second → carb, third → veg)
-    const roleSelects = within(fieldset).getAllByDisplayValue("protein");
+    const roleSelects = within(card).getAllByDisplayValue("protein");
     // roleSelects[0] is already protein, change others
     await user.selectOptions(roleSelects[1]!, "carb");
     await user.selectOptions(roleSelects[2]!, "veg");
@@ -148,21 +148,21 @@ describe("F005: Set time and rescue eligibility metadata", () => {
     renderBaseMealManager("h-meals");
 
     await user.click(screen.getByText("Add meal"));
-    const fieldset = screen.getByRole("group");
+    const card = screen.getByText("Base Meal").closest("[data-testid^='meal-']") as HTMLElement;
 
-    const nameInput = within(fieldset).getByPlaceholderText("Meal name");
+    const nameInput = within(card).getByPlaceholderText("Meal name");
     await user.type(nameInput, "Quick Pasta");
 
     // Set time
-    const timeInput = within(fieldset).getByDisplayValue("30");
+    const timeInput = within(card).getByDisplayValue("30");
     await user.clear(timeInput);
     await user.type(timeInput, "15");
 
     // Set difficulty
-    await user.selectOptions(within(fieldset).getByDisplayValue("easy"), "medium");
+    await user.selectOptions(within(card).getByDisplayValue("easy"), "medium");
 
     // Set rescue eligible
-    await user.click(within(fieldset).getByLabelText("Rescue eligible"));
+    await user.click(within(card).getByLabelText("Rescue eligible"));
 
     await user.click(screen.getByText("Save meals"));
 
@@ -197,16 +197,16 @@ describe("F005: Remove meal and components", () => {
     renderBaseMealManager("h-meals");
 
     await user.click(screen.getByText("Add meal"));
-    const fieldset = screen.getByRole("group");
+    const card = screen.getByText("Base Meal").closest("[data-testid^='meal-']") as HTMLElement;
 
-    await user.click(within(fieldset).getByText("Add component"));
-    await user.click(within(fieldset).getByText("Add component"));
-    expect(within(fieldset).getByText("Components (2)")).toBeInTheDocument();
+    await user.click(within(card).getByText("Add component"));
+    await user.click(within(card).getByText("Add component"));
+    expect(within(card).getByText("Components (2)")).toBeInTheDocument();
 
-    const removeButtons = within(fieldset).getAllByText("Remove component");
+    const removeButtons = within(card).getAllByText("Remove component");
     await user.click(removeButtons[0]!);
 
-    expect(within(fieldset).getByText("Components (1)")).toBeInTheDocument();
+    expect(within(card).getByText("Components (1)")).toBeInTheDocument();
   });
 });
 

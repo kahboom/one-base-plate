@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { Household, HouseholdMember, MemberRole, TextureLevel } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
+import { PageShell, Card, Button, Input, Select, ActionGroup, NavBar } from "../components/ui";
 
 function createEmptyMember(): HouseholdMember {
   return {
@@ -43,60 +44,58 @@ function MemberForm({
   householdId: string | undefined;
 }) {
   return (
-    <fieldset data-testid={`member-${member.id}`}>
-      <legend>Member</legend>
+    <Card data-testid={`member-${member.id}`} className="mb-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-sm font-semibold text-text-secondary">Member</span>
+        <Button variant="danger" small onClick={onRemove}>Remove member</Button>
+      </div>
 
-      <label>
-        Name:{" "}
-        <input
-          type="text"
-          value={member.name}
-          onChange={(e) => onChange({ ...member, name: e.target.value })}
-          placeholder="Member name"
-          required
-        />
-      </label>
+      <div className="space-y-3">
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          Name:
+          <Input
+            type="text"
+            value={member.name}
+            onChange={(e) => onChange({ ...member, name: e.target.value })}
+            placeholder="Member name"
+            required
+          />
+        </label>
 
-      <label>
-        Role:{" "}
-        <select
-          value={member.role}
-          onChange={(e) => onChange({ ...member, role: e.target.value as MemberRole })}
-        >
-          {ROLE_OPTIONS.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-      </label>
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          Role:
+          <Select
+            value={member.role}
+            onChange={(e) => onChange({ ...member, role: e.target.value as MemberRole })}
+          >
+            {ROLE_OPTIONS.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </Select>
+        </label>
 
-      <label>
-        Texture level:{" "}
-        <select
-          value={member.textureLevel}
-          onChange={(e) =>
-            onChange({ ...member, textureLevel: e.target.value as TextureLevel })
-          }
-        >
-          {TEXTURE_OPTIONS.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </label>
+        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+          Texture level:
+          <Select
+            value={member.textureLevel}
+            onChange={(e) => onChange({ ...member, textureLevel: e.target.value as TextureLevel })}
+          >
+            {TEXTURE_OPTIONS.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </Select>
+        </label>
+      </div>
 
       {householdId && (
-        <Link to={`/household/${householdId}/member/${member.id}`}>
+        <Link
+          to={`/household/${householdId}/member/${member.id}`}
+          className="mt-3 inline-block text-sm font-medium text-brand hover:underline"
+        >
           Edit profile
         </Link>
       )}
-
-      <button type="button" onClick={onRemove}>
-        Remove member
-      </button>
-    </fieldset>
+    </Card>
   );
 }
 
@@ -148,12 +147,14 @@ export default function HouseholdSetup() {
   if (!loaded) return null;
 
   return (
-    <div>
-      <h1>{isNew ? "Create Household" : "Edit Household"}</h1>
+    <PageShell>
+      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">
+        {isNew ? "Create Household" : "Edit Household"}
+      </h1>
 
-      <label>
-        Household name:{" "}
-        <input
+      <label className="mb-6 flex items-center gap-2 text-sm font-medium text-text-secondary">
+        Household name:
+        <Input
           type="text"
           value={household.name}
           onChange={(e) => setHousehold((h) => ({ ...h, name: e.target.value }))}
@@ -162,7 +163,9 @@ export default function HouseholdSetup() {
         />
       </label>
 
-      <h2>Members ({household.members.length})</h2>
+      <h2 className="mb-3 text-xl font-semibold text-text-primary">
+        Members ({household.members.length})
+      </h2>
 
       {household.members.map((member, i) => (
         <MemberForm
@@ -174,32 +177,26 @@ export default function HouseholdSetup() {
         />
       ))}
 
-      <button type="button" onClick={addMember}>
-        Add member
-      </button>
+      <Button onClick={addMember} className="mb-4">Add member</Button>
 
       {!isNew && (
-        <div>
-          <Link to={`/household/${id}/ingredients`}>Manage ingredients</Link>
-          {" | "}
-          <Link to={`/household/${id}/meals`}>Manage base meals</Link>
-          {" | "}
-          <Link to={`/household/${id}/planner`}>Meal planner</Link>
-          {" | "}
-          <Link to={`/household/${id}/weekly`}>Weekly planner</Link>
-          {" | "}
-          <Link to={`/household/${id}/home`}>Home</Link>
-        </div>
+        <NavBar>
+          <Link to={`/household/${id}/ingredients`} className="text-sm font-medium text-brand hover:underline">Manage ingredients</Link>
+          <span className="text-text-muted">|</span>
+          <Link to={`/household/${id}/meals`} className="text-sm font-medium text-brand hover:underline">Manage base meals</Link>
+          <span className="text-text-muted">|</span>
+          <Link to={`/household/${id}/planner`} className="text-sm font-medium text-brand hover:underline">Meal planner</Link>
+          <span className="text-text-muted">|</span>
+          <Link to={`/household/${id}/weekly`} className="text-sm font-medium text-brand hover:underline">Weekly planner</Link>
+          <span className="text-text-muted">|</span>
+          <Link to={`/household/${id}/home`} className="text-sm font-medium text-brand hover:underline">Home</Link>
+        </NavBar>
       )}
 
-      <div>
-        <button type="button" onClick={handleSave}>
-          Save household
-        </button>
-        <button type="button" onClick={() => navigate("/")}>
-          Cancel
-        </button>
-      </div>
-    </div>
+      <ActionGroup>
+        <Button variant="primary" onClick={handleSave}>Save household</Button>
+        <Button onClick={() => navigate("/")}>Cancel</Button>
+      </ActionGroup>
+    </PageShell>
   );
 }

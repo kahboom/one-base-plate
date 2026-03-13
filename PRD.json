@@ -202,7 +202,7 @@
     "suggestedStack": {
       "frontend": "Next.js or Vite + React",
       "language": "TypeScript",
-      "styling": "Minimal CSS or Tailwind",
+      "styling": "Tailwind CSS + shared UI primitives (mobile-first)",
       "storage": "Local-first JSON or IndexedDB/localStorage for v1",
       "tests": "Vitest + Playwright",
       "deployment": "Local/private first; optional Vercel later"
@@ -215,7 +215,9 @@
       "Model multi-protein meals explicitly so the planner can treat one shared structure as a single dinner with different protein paths.",
       "Keep recipe links and preparation notes on BaseMeal so service shortcuts and household-specific tips can persist.",
       "Implement the weekly planner as a visual mini-calendar with meal cards before adding advanced learning behaviors.",
-      "Treat the companion UI spec as the screen-level source of truth for layout, readability, and interaction polish."
+      "Treat the companion UI spec as the screen-level source of truth for layout, readability, and interaction polish.",
+      "Adopt a shared styling foundation before further UX polish so already-implemented screens can be refactored without reworking planner logic later.",
+      "Treat responsive mobile layouts as a core requirement for every user-facing screen rather than a final cleanup pass."
     ]
   },
   "features": [
@@ -234,24 +236,6 @@
       ],
       "passes": true,
       "dependencies": []
-    },
-    {
-      "id": "F031",
-      "phase": 0,
-      "priority": "P0",
-      "category": "agent-harness",
-      "description": "Agent uses embedded uiSpec as part of feature verification for all user-facing screens",
-      "steps": [
-        "Read the uiSpec section in PRD.json",
-        "Map existing features to referenced screens using screenToFeatureMap and acceptanceRefs",
-        "Verify user-facing features are not marked passing until matching screen acceptance criteria are met",
-        "Record any UI-specific follow-up work in agent-progress.md when a feature passes functionally but not visually",
-        "Verify PRD.json remains the single source of truth for both task order and screen-level requirements"
-      ],
-      "passes": false,
-      "dependencies": [
-        "F001"
-      ]
     },
     {
       "id": "F002",
@@ -458,11 +442,12 @@
         "Open the grocery list",
         "Verify repeated ingredients are consolidated",
         "Verify pantry or already-owned items can be excluded",
-        "Verify the list is readable, grouped by category, and links back to meals using each ingredient where relevant."
+        "Verify the list uses the shared styling system, remains easy to scan on mobile, and links back to meals using each ingredient where relevant."
       ],
       "passes": false,
       "dependencies": [
-        "F010"
+        "F010",
+        "F032"
       ],
       "acceptanceRefs": [
         "S008"
@@ -476,7 +461,7 @@
       "description": "Rescue mode generates the fastest acceptable meal using household staples first",
       "steps": [
         "Open rescue mode",
-        "Verify rescue mode is reachable in one tap from Home and presents a simpler flow than the standard planner.",
+        "Verify rescue mode is reachable in one tap from Home, uses the shared styling system, and presents a simpler flow than the standard planner.",
         "Choose a scenario such as low-energy, low-time, or everyone-melting-down",
         "Generate a rescue meal",
         "Verify the output prioritizes freezer or pantry staples when available",
@@ -486,7 +471,8 @@
       "dependencies": [
         "F003",
         "F004",
-        "F006"
+        "F006",
+        "F032"
       ],
       "acceptanceRefs": [
         "S001",
@@ -688,7 +674,8 @@
       "passes": false,
       "dependencies": [
         "F021",
-        "F023"
+        "F023",
+        "F033"
       ],
       "acceptanceRefs": [
         "S002",
@@ -740,30 +727,98 @@
       ]
     },
     {
-      "id": "F025",
+      "id": "F032",
       "phase": 1,
       "priority": "P0",
       "category": "ux",
-      "description": "App UI improves readability with card layout, spacing, larger typography, and stronger contrast",
+      "description": "Adopt a shared styling foundation using Tailwind CSS and reusable UI primitives",
       "steps": [
-        "Audit primary screens including Home, Weekly Planner, Meal Cards, Rescue Mode, Household Setup, Base Meal Editor, and Grocery List.",
-        "Replace dense lists with card-based layout",
-        "Increase font sizes and spacing",
-        "Ensure color contrast meets accessibility standards",
-        "Verify users can scan meal information quickly without reading long text"
+        "Install and configure Tailwind CSS, or a directly comparable utility-first styling system, for the Vite + React app.",
+        "Create shared design tokens and base primitives for the page shell, cards, buttons, inputs, chips, lists, and empty states.",
+        "Add global typography, spacing, radius, and color rules that match the uiSpec designSystemDirection.",
+        "Refactor existing user-facing screens to use the shared primitives where practical without changing planner logic or storage behavior.",
+        "Adjust brittle UI tests that rely on old unstyled DOM structure so they assert accessible behavior instead."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
-        "F023"
+        "F005",
+        "F021",
+        "F024"
       ],
       "acceptanceRefs": [
         "S001",
         "S002",
         "S003",
-        "S005",
         "S006",
-        "S007",
-        "S008"
+        "S007"
+      ]
+    },
+    {
+      "id": "F025",
+      "phase": 1,
+      "priority": "P0",
+      "category": "ux",
+      "description": "Core screens apply the styling foundation for readable hierarchy, contrast, and fast scanning",
+      "steps": [
+        "Audit currently implemented screens including Home, Planner, Weekly Planner, Household Setup, Member Profile, Ingredient Manager, and Base Meal Editor.",
+        "Replace remaining dense lists and form sections with card-based groupings that match the shared styling primitives.",
+        "Increase font sizes, spacing, and section hierarchy so users can scan meals and setup flows quickly.",
+        "Ensure contrast, focus states, and empty states meet accessibility expectations.",
+        "Verify the existing flows remain intact after the visual refactor and that users can scan meal information without reading long text."
+      ],
+      "passes": false,
+      "dependencies": [
+        "F032"
+      ],
+      "acceptanceRefs": [
+        "S001",
+        "S002",
+        "S003",
+        "S006",
+        "S007"
+      ]
+    },
+    {
+      "id": "F033",
+      "phase": 1,
+      "priority": "P0",
+      "category": "ux",
+      "description": "Core screens are mobile-friendly with touch-first responsive layouts",
+      "steps": [
+        "Review the styled core screens at narrow mobile widths before adding more UI features.",
+        "Convert wide or multi-column layouts into stacked, scrollable, or swipe-friendly mobile patterns where needed.",
+        "Ensure meal cards, weekly planner day cards, trays, and setup forms have large tap targets and readable spacing on small screens.",
+        "Verify the week view works as a horizontal scroll or stacked-card layout on mobile and that planner interactions still support tap-to-assign.",
+        "Adjust any existing layouts or components that became brittle during the styling refactor instead of layering one-off fixes."
+      ],
+      "passes": false,
+      "dependencies": [
+        "F025"
+      ],
+      "acceptanceRefs": [
+        "S001",
+        "S002",
+        "S003",
+        "S006",
+        "S007"
+      ]
+    },
+    {
+      "id": "F031",
+      "phase": 1,
+      "priority": "P0",
+      "category": "agent-harness",
+      "description": "Agent audits uiSpec alignment after the shared styling and mobile foundation are in place",
+      "steps": [
+        "Read the uiSpec section in PRD.json",
+        "Map completed user-facing features to referenced screens using screenToFeatureMap and acceptanceRefs",
+        "Audit previously completed UI features against the referenced screen acceptance criteria now that the shared styling and mobile foundation exist",
+        "Record any remaining UI-specific follow-up work in agent-progress.md instead of silently leaving visual gaps",
+        "Verify PRD.json remains the single source of truth for both task order and screen-level requirements"
+      ],
+      "passes": false,
+      "dependencies": [
+        "F033"
       ]
     },
     {
@@ -891,8 +946,7 @@
         "F002",
         "F003",
         "F004",
-        "F016",
-        "F031"
+        "F016"
       ]
     },
     {
@@ -909,7 +963,10 @@
         "F021",
         "F023",
         "F024",
+        "F032",
         "F025",
+        "F033",
+        "F031",
         "F028",
         "F029"
       ]
@@ -961,7 +1018,6 @@
   ],
   "implementationOrder": [
     "F001",
-    "F031",
     "F002",
     "F003",
     "F004",
@@ -976,7 +1032,10 @@
     "F021",
     "F023",
     "F024",
+    "F032",
     "F025",
+    "F033",
+    "F031",
     "F028",
     "F029",
     "F022",
@@ -1229,7 +1288,10 @@
     "S001": [
       "F010",
       "F012",
-      "F021"
+      "F021",
+      "F032",
+      "F025",
+      "F033"
     ],
     "S002": [
       "F006",
@@ -1237,14 +1299,19 @@
       "F018",
       "F023",
       "F024",
-      "F025"
+      "F025",
+      "F032",
+      "F033"
     ],
     "S003": [
       "F010",
       "F021",
       "F022",
       "F026",
-      "F027"
+      "F027",
+      "F032",
+      "F025",
+      "F033"
     ],
     "S004": [
       "F006",
@@ -1257,12 +1324,18 @@
     "S006": [
       "F002",
       "F003",
-      "F019"
+      "F019",
+      "F032",
+      "F025",
+      "F033"
     ],
     "S007": [
       "F005",
       "F028",
-      "F029"
+      "F029",
+      "F032",
+      "F025",
+      "F033"
     ],
     "S008": [
       "F011",
@@ -1274,6 +1347,7 @@
     "A feature that changes user-facing UI must not be marked passing until both the feature steps and the referenced uiSpec screen acceptance criteria are satisfied.",
     "When multiple features affect the same screen, preserve existing requiredElements and acceptance criteria for that screen.",
     "Prefer implementing the minimum vertical slice that makes the referenced screen usable end-to-end before moving to the next feature.",
-    "If a feature adds a new UI element, update the relevant screen implementation instead of creating an inconsistent parallel view."
+    "If a feature adds a new UI element, update the relevant screen implementation instead of creating an inconsistent parallel view.",
+    "When refactoring UI for styling or responsiveness, preserve existing routes, storage behavior, and planner logic, and replace brittle DOM-structure tests with accessible behavior-focused assertions."
   ]
 }
