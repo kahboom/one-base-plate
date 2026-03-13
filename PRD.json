@@ -791,7 +791,7 @@
         "Verify the tour does not appear again after completion on subsequent visits.",
         "Verify the tour aligns with the shared styling foundation and remains readable on mobile."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": ["F033"],
       "acceptanceRefs": ["S009"]
     },
@@ -811,6 +811,23 @@
       "passes": false,
       "dependencies": ["F002", "F004", "F005", "F033"],
       "acceptanceRefs": ["S006", "S007"]
+    },
+    {
+      "id": "F036",
+      "phase": 1,
+      "priority": "P0",
+      "category": "ux",
+      "description": "Consistent navigation and household hub wayfinding",
+      "steps": [
+        "Define Home as the canonical household hub; all 'Back to household' or equivalent back/up controls on child screens (Weekly Planner, Meal Planner, Grocery List, Rescue Mode, Meal Detail, Ingredient Manager, Base Meal Manager) must navigate to Home (/household/:id/home), not to HouseholdSetup.",
+        "Replace any 'Back to household' buttons that currently route to /household/:id with 'Back to Home' or 'Home' that routes to /household/:id/home.",
+        "Design a consistent, visually integrated navigation pattern (e.g. NavBar or persistent nav section) that feels part of the page—not a tacked-on list of links. Use the shared styling system (cards, spacing, hierarchy) so nav links read as a coherent section.",
+        "Apply the same navigation structure across all household-scoped screens: Home as hub, with consistent link order and placement. Ensure nav appears in a consistent location (e.g. bottom of page) and uses clear labels (Weekly planner, Meal planner, Grocery list, Rescue mode, Household setup, All households).",
+        "Verify that navigating Household → Home → Weekly planner → Back returns the user to Home, not to HouseholdSetup. Verify the same consistency for Meal planner, Grocery list, and Rescue mode."
+      ],
+      "passes": false,
+      "dependencies": ["F033"],
+      "acceptanceRefs": ["S001", "S003", "S005", "S006"]
     }
   ],
   "milestones": [
@@ -849,7 +866,7 @@
     {
       "id": "M4",
       "name": "Learning loop + convenience features",
-      "includes": ["F013", "F014", "F015", "F020", "F030", "F034", "F035"]
+      "includes": ["F013", "F014", "F015", "F020", "F030", "F034", "F035", "F036"]
     }
   ],
   "fixtureHouseholds": [
@@ -906,6 +923,7 @@
     "F030",
     "F034",
     "F035",
+    "F036",
     "F020"
   ],
   "uiSpec": {
@@ -915,7 +933,8 @@
       "Every core screen should help the user feel more capable within 5 seconds of opening it.",
       "Prioritize one obvious action per screen.",
       "Use card-first layouts, large typography, and strong visual hierarchy.",
-      "Make planning feel satisfying without streaks, guilt, or pressure."
+      "Make planning feel satisfying without streaks, guilt, or pressure.",
+      "Home is the household hub; all back/up navigation from child screens returns to Home, not to HouseholdSetup. Navigation links must feel integrated into the page layout, not strange or out of place."
     ],
     "designSystemDirection": {
       "tone": [
@@ -951,7 +970,7 @@
       {
         "id": "S001",
         "name": "Home",
-        "goal": "Help the user decide tonight's meal quickly or jump into this week's plan.",
+        "goal": "Help the user decide tonight's meal quickly or jump into this week's plan. Home is the canonical household hub for navigation.",
         "primaryActions": [
           "Generate idea",
           "Use rescue mode",
@@ -962,12 +981,14 @@
           "Top 3 high-confidence meal cards",
           "Mini weekly strip showing the current week",
           "One-tap rescue mode card",
-          "Recent wins or pinned meals row"
+          "Recent wins or pinned meals row",
+          "Consistent nav section linking to Weekly planner, Grocery list, Rescue mode, Meal planner, Household setup, All households"
         ],
         "acceptance": [
           "User can reach a tonight decision in two taps or fewer from the home screen",
           "Home screen does not require scrolling to find the main action",
-          "At least one suggestion clearly explains why it fits the household"
+          "At least one suggestion clearly explains why it fits the household",
+          "Child screens (Weekly planner, Meal planner, etc.) have a back/Home control that returns to this screen, not to HouseholdSetup"
         ]
       },
       {
@@ -1006,7 +1027,9 @@
           "Suggested meal tray below the week",
           "Drag-and-drop or tap-to-assign interaction",
           "Visible effort balance for the week",
-          "Grocery preview summary"
+          "Grocery preview summary",
+          "Back/Home control that navigates to Home (household hub), not to HouseholdSetup",
+          "Consistent nav section (integrated with page layout) linking to sibling screens and Home"
         ],
         "interactionRules": [
           "Dragging a meal to a day should immediately assign it",
@@ -1017,7 +1040,8 @@
         "acceptance": [
           "User can build a week plan without entering a table or form view",
           "Plan changes update grocery preview immediately",
-          "The planner remains readable even with all seven days filled"
+          "The planner remains readable even with all seven days filled",
+          "'Back to household' or equivalent returns user to Home screen; navigation links feel integrated, not tacked on"
         ]
       },
       {
@@ -1044,13 +1068,18 @@
         "id": "S005",
         "name": "Rescue Mode",
         "goal": "Produce the fastest acceptable meal when time, energy, or patience is low.",
+        "navigationRules": [
+          "Back or 'Home' control must navigate to Home (/household/:id/home), not HouseholdSetup.",
+          "NavBar must be visually integrated and use the same placement/styling as other household screens."
+        ],
         "requiredElements": [
           "Scenario picker such as low energy, low time, or everyone melting down",
           "Optional available ingredient shortcuts",
           "Top 1-3 rescue meals",
           "Very short prep summary",
           "Per-member assembly summary",
-          "One-tap add to tonight or add to week"
+          "One-tap add to tonight or add to week",
+          "Back/Home control and consistent nav section that returns to Home"
         ],
         "copyGuidelines": [
           "Use reassuring language",
@@ -1073,12 +1102,14 @@
           "Hard-no foods input",
           "Preparation rules input",
           "Role selector",
-          "Quick edit entry points"
+          "Quick edit entry points",
+          "Nav section with link to Home (household hub) so user can return to planning flows; nav styled consistently with other screens"
         ],
         "acceptance": [
           "User can edit one member without reopening the full household flow",
           "Inputs feel guided and forgiving",
-          "The screen avoids giant forms where possible"
+          "The screen avoids giant forms where possible",
+          "Navigation links to Home, Weekly planner, Meal planner, etc. feel integrated into the layout, not strange or out of place"
         ]
       },
       {
@@ -1107,6 +1138,10 @@
         "id": "S008",
         "name": "Grocery List",
         "goal": "Show one clean merged shopping list from the weekly plan.",
+        "navigationRules": [
+          "Back or 'Home' control must navigate to Home (/household/:id/home), not HouseholdSetup.",
+          "NavBar must be visually integrated and consistent with other household screens."
+        ],
         "requiredElements": [
           "Grouped categories",
           "Consolidated ingredients",
@@ -1165,14 +1200,14 @@
     ]
   },
   "screenToFeatureMap": {
-    "S001": ["F010", "F012", "F021", "F032", "F025", "F033"],
+    "S001": ["F010", "F012", "F021", "F032", "F025", "F033", "F036"],
     "S002": ["F006", "F009", "F018", "F023", "F024", "F025", "F032", "F033"],
-    "S003": ["F010", "F021", "F022", "F026", "F027", "F032", "F025", "F033"],
+    "S003": ["F010", "F021", "F022", "F026", "F027", "F032", "F025", "F033", "F036"],
     "S004": ["F006", "F028", "F029"],
-    "S005": ["F012"],
+    "S005": ["F012", "F036"],
     "S006": ["F002", "F003", "F019", "F032", "F025", "F033", "F035"],
     "S007": ["F005", "F028", "F029", "F032", "F025", "F033", "F035"],
-    "S008": ["F011", "F020"],
+    "S008": ["F011", "F020", "F036"],
     "S009": ["F034"]
   },
   "agentExecutionRules": [

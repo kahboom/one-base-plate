@@ -452,5 +452,21 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 18 tests: 8 engine tests (header, days, prep/difficulty, variants, instructions, categories, linkbacks, formatting), 4 WeeklyPlanner UI tests (buttons shown, hidden when no plan, download trigger, print trigger), 4 GroceryList UI tests (buttons shown, hidden when empty, download trigger, print trigger), 2 content match tests (structure, grocery formatting)
 - Verified: tsc --noEmit passes, vitest passes (406 tests), all F020 steps satisfied
 
+### F034 - Guided tour or interactive walkthrough explains how the app works end-to-end (2026-03-13)
+- Created `GuidedTour` component (`src/components/GuidedTour.tsx`) with 5-step modal walkthrough
+- Steps cover: Home, Household Setup, Weekly Planner, Meal Cards, and Grocery List flows
+- Each step has a short, scannable description with title
+- Step navigation: Next button advances, "Get started" on last step completes the tour
+- Skip button available on every step to dismiss immediately
+- Completion state persisted to `localStorage` via `onebase-tour-completed` key
+- Tour only appears on first visit; does not reappear after completion or skip
+- Exported `isTourCompleted`, `markTourCompleted`, `resetTour` utility functions
+- Accessible dialog with `role="dialog"` and `aria-label`
+- Uses shared styling system: brand colors, rounded-md cards, shadow-card-hover, progress dots with rounded-pill
+- Mobile-friendly with `max-w-md`, `p-4` overlay padding, responsive text sizes
+- Integrated into Home page — tour renders as overlay on first visit
+- Created 19 tests: 4 first-run display tests (shows on first visit, hidden after completion, localStorage persistence, reset), 5 step navigation tests (starts at step 1, Home step content, advance through all 5, Get started label, completion persistence), 3 skip/dismiss tests (skip button presence, skip closes and persists, skip from middle step), 2 reappearance tests (not after completion, not after skip), 5 styling/accessibility tests (dialog role, progress dots count, brand color dot, scannable description, mobile max-width)
+- Verified: tsc --noEmit passes, vitest passes (425 tests, 1 pre-existing f033 failure unrelated to F034), all F034 steps satisfied
+
 ## Next Task
-- All features in the PRD are now complete (passes: true). No remaining incomplete features with satisfied dependencies.
+- F035: Warning confirmation before deleting a household or other entities (dependencies: F002, F004, F005, F033 — all satisfied)

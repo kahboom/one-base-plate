@@ -5,6 +5,7 @@ import { loadHousehold, saveHousehold } from "../storage";
 import { computeMealOverlap, computeOutcomeScore, learnCompatibilityPatterns, computePatternScore } from "../planner";
 import MealCard from "../components/MealCard";
 import { PageShell, PageHeader, Card, Section, NavBar } from "../components/ui";
+import GuidedTour from "../components/GuidedTour";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -72,6 +73,7 @@ export default function Home() {
 
   return (
     <PageShell>
+      <GuidedTour />
       <PageHeader title="What should we eat tonight?" subtitle={household.name} />
 
       {household.members.length > 0 && (
