@@ -546,7 +546,7 @@
         "Verify interactions feel immediate for local MVP use",
         "Verify no screen hangs or crashes during normal flows"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F001"
       ]

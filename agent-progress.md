@@ -367,6 +367,19 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - All 4 PRD-required flows covered: household setup, base meal planning, rescue mode, grocery list generation
 - Verified: tsc --noEmit passes, vitest passes (284 tests)
 
+### F016 - App loads quickly and supports same-session editing without noticeable lag (2026-03-13)
+- Added `useMemo` to expensive inline computations across three key pages to prevent unnecessary recalculation on re-renders:
+  - **Planner.tsx**: Memoized `mealOverlaps` map, `rankedMeals` sorted list, and `selectedExplanation` computation; moved hooks before early returns to satisfy Rules of Hooks
+  - **Home.tsx**: Memoized `topMeals` overlap computation and ranking; moved hook before early returns
+  - **WeeklyPlanner.tsx**: Memoized `rankedMealsForSuggestion` so `getSuggestedMeal` doesn't recompute overlaps for every day card on every render
+- Created 24 tests in `tests/f016-performance.test.tsx`:
+  - **App load tests** (5): fixture household renders on HouseholdList, Home, HouseholdSetup, Planner, WeeklyPlanner without errors
+  - **Navigation tests** (6): all core screens render with fixture data (setup, ingredients, meals, grocery, rescue, member profile entry points)
+  - **Edit + regenerate tests** (4): meal selection in Planner, weekly plan generation, tap-to-assign, rescue scenario selection — all respond immediately
+  - **Engine performance tests** (5): assembly variants, weekly plan, overlap, grocery list, and rescue meals all complete within strict timing bounds (<50-100ms)
+  - **No-crash tests** (4): empty household, no meals, no plan edge cases handled gracefully across Home, Planner, WeeklyPlanner, RescueMode
+- Verified: tsc --noEmit passes, vitest passes (308 tests), vite build succeeds
+
 ## Next Task
-- **F016** — App loads quickly and supports same-session editing without noticeable lag (depends on F001✅)
-  - Note: F013 (pin meals to rotation) depends on F006✅ but is Phase 2/P1, while F016 is Phase 0/P0
+- **F013** — User can pin household-approved meals into a rotation (Phase 2, P1, depends on F006✅)
+  - Remaining incomplete features with satisfied deps: F013 (Phase 2/P1), F014 (Phase 2/P1), F020 (Phase 2/P2)

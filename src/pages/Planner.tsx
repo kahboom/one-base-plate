@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { BaseMeal, AssemblyVariant, Household } from "../types";
 import { loadHousehold } from "../storage";
@@ -52,42 +52,50 @@ export default function Planner() {
     regenerateVariants(household, mealId);
   }
 
-  if (!loaded) return null;
-
-  if (!household) {
-    return <p>Household not found.</p>;
-  }
-
-  const selectedMeal: BaseMeal | undefined = household.baseMeals.find(
+  const selectedMeal: BaseMeal | undefined = household?.baseMeals.find(
     (m) => m.id === selectedMealId,
   );
 
-  const mealOverlaps: Map<string, OverlapResult> = new Map();
-  for (const meal of household.baseMeals) {
-    mealOverlaps.set(
-      meal.id,
-      computeMealOverlap(meal, household.members, household.ingredients),
-    );
-  }
+  const mealOverlaps = useMemo(() => {
+    if (!household) return new Map<string, OverlapResult>();
+    const map = new Map<string, OverlapResult>();
+    for (const meal of household.baseMeals) {
+      map.set(
+        meal.id,
+        computeMealOverlap(meal, household.members, household.ingredients),
+      );
+    }
+    return map;
+  }, [household]);
 
-  const rankedMeals = [...household.baseMeals].sort((a, b) => {
-    const overlapA = mealOverlaps.get(a.id);
-    const overlapB = mealOverlaps.get(b.id);
-    return (overlapB?.score ?? 0) - (overlapA?.score ?? 0);
-  });
+  const rankedMeals = useMemo(() => {
+    if (!household) return [];
+    return [...household.baseMeals].sort((a, b) => {
+      const overlapA = mealOverlaps.get(a.id);
+      const overlapB = mealOverlaps.get(b.id);
+      return (overlapB?.score ?? 0) - (overlapA?.score ?? 0);
+    });
+  }, [household, mealOverlaps]);
 
   const selectedOverlap = selectedMealId
     ? mealOverlaps.get(selectedMealId)
     : undefined;
 
-  const selectedExplanation: MealExplanation | undefined =
+  const selectedExplanation = useMemo<MealExplanation | undefined>(() =>
     selectedMeal && household
       ? generateMealExplanation(
           selectedMeal,
           household.members,
           household.ingredients,
         )
-      : undefined;
+      : undefined,
+  [selectedMeal, household]);
+
+  if (!loaded) return null;
+
+  if (!household) {
+    return <p>Household not found.</p>;
+  }
 
   return (
     <PageShell>

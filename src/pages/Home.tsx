@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { Household } from "../types";
 import { loadHousehold } from "../storage";
@@ -20,6 +20,17 @@ export default function Home() {
     setLoaded(true);
   }, [householdId]);
 
+  const topMeals = useMemo(() => {
+    if (!household) return [];
+    return [...household.baseMeals]
+      .map((meal) => ({
+        meal,
+        overlap: computeMealOverlap(meal, household.members, household.ingredients),
+      }))
+      .sort((a, b) => b.overlap.score - a.overlap.score)
+      .slice(0, 3);
+  }, [household]);
+
   if (!loaded) return null;
   if (!household) return <p>Household not found.</p>;
 
@@ -27,14 +38,6 @@ export default function Home() {
     household.weeklyPlans.length > 0
       ? household.weeklyPlans[household.weeklyPlans.length - 1]!
       : null;
-
-  const topMeals = [...household.baseMeals]
-    .map((meal) => ({
-      meal,
-      overlap: computeMealOverlap(meal, household.members, household.ingredients),
-    }))
-    .sort((a, b) => b.overlap.score - a.overlap.score)
-    .slice(0, 3);
 
   function getMealName(mealId: string): string {
     return household?.baseMeals.find((m) => m.id === mealId)?.name ?? "";

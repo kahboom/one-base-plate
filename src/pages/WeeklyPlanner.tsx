@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { Household, WeeklyPlan, DayPlan, BaseMeal } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
@@ -123,16 +123,20 @@ export default function WeeklyPlanner() {
     return `${overlap.score}/${overlap.total}`;
   }
 
-  function getSuggestedMeal(dayLabel: string): BaseMeal | null {
-    if (!household || household.baseMeals.length === 0) return null;
-    const ranked = [...household.baseMeals]
+  const rankedMealsForSuggestion = useMemo(() => {
+    if (!household || household.baseMeals.length === 0) return [];
+    return [...household.baseMeals]
       .map((meal) => ({
         meal,
         overlap: computeMealOverlap(meal, household.members, household.ingredients),
       }))
       .sort((a, b) => b.overlap.score - a.overlap.score);
-    const index = DAY_LABELS.indexOf(dayLabel) % ranked.length;
-    return ranked[index]?.meal ?? null;
+  }, [household]);
+
+  function getSuggestedMeal(dayLabel: string): BaseMeal | null {
+    if (rankedMealsForSuggestion.length === 0) return null;
+    const index = DAY_LABELS.indexOf(dayLabel) % rankedMealsForSuggestion.length;
+    return rankedMealsForSuggestion[index]?.meal ?? null;
   }
 
   if (!loaded) return null;
