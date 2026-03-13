@@ -95,6 +95,17 @@ export interface WeeklyPlan {
   notes: string;
 }
 
+export type MealOutcomeResult = "success" | "partial" | "failure";
+
+export interface MealOutcome {
+  id: string;
+  baseMealId: string;
+  day: string;
+  outcome: MealOutcomeResult;
+  notes: string;
+  date: string;
+}
+
 export interface Household {
   id: string;
   name: string;
@@ -103,4 +114,5 @@ export interface Household {
   baseMeals: BaseMeal[];
   weeklyPlans: WeeklyPlan[];
   pinnedMealIds?: string[];
+  mealOutcomes?: MealOutcome[];
 }

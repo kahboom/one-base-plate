@@ -510,7 +510,7 @@
         "Re-open meal history",
         "Verify the outcome is persisted and visible"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F010"
       ]

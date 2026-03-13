@@ -393,6 +393,17 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 18 tests: 3 engine tests (pinned boost, variety, empty default), 4 Planner UI tests (pin button, pin saves, pinned chip, unpin), 3 MealDetail tests (toggle, pin persists, unpin removes), 4 Home rotation tests (section shown, hidden when empty, chips, unpin removes section), 2 WeeklyPlanner tray tests (buttons shown, pin persists), 2 future planning tests (pinned included, lower overlap boosted)
 - Verified: tsc --noEmit passes, vitest passes (326 tests), all F013 steps satisfied
 
+### F014 - User can mark meals as success, partial success, or failure and capture quick notes (2026-03-13)
+- Added `MealOutcome` type with `MealOutcomeResult` union (`success | partial | failure`) and optional `mealOutcomes` array on `Household`
+- Added outcome recording UI to WeeklyPlanner DayCard expanded view: "Record outcome" button opens inline form with three outcome buttons (Worked well, Partly worked, Didn't work), optional notes input, save/cancel
+- Existing outcomes display as a chip with notes inline on the day card, replacing the record button
+- Outcomes persist to localStorage via `saveHousehold` immediately on save
+- Created MealHistory page (`src/pages/MealHistory.tsx`) at `/household/:householdId/history` showing all outcomes in reverse chronological order with meal name, outcome chip, day, date, and notes
+- Empty state when no outcomes recorded
+- Added route to App.tsx and navigation links from WeeklyPlanner and Home
+- Created 14 tests: 7 outcome recording tests (button display, form open, success/failure/partial recording with persistence, existing outcome display, cancel, disabled save), 4 meal history tests (empty state, outcomes display, date/day display, nav links), 2 navigation tests (weekly planner link, home link), 1 save disabled test
+- Verified: tsc --noEmit passes (pre-existing unused import in f013), vitest passes (340 tests), vite build succeeds
+
 ## Next Task
-- **F014** — User can mark meals as success, partial success, or failure and capture quick notes (Phase 2, P1, depends on F010✅)
-  - Remaining incomplete features with satisfied deps: F014 (Phase 2/P1), F020 (Phase 2/P2)
+- **F015** — Planner learns from meal outcomes to rank reliable meals higher (Phase 2, P1, depends on F014✅)
+  - Remaining incomplete features with satisfied deps: F015 (Phase 2/P1), F020 (Phase 2/P2)

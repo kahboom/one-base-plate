@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import type { Household, WeeklyPlan, DayPlan, BaseMeal } from "../types";
+import type { Household, WeeklyPlan, DayPlan, BaseMeal, MealOutcome, MealOutcomeResult } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import { generateWeeklyPlan, computeMealOverlap, generateAssemblyVariants, computeWeekEffortBalance, computeGroceryPreview } from "../planner";
 import MealCard from "../components/MealCard";
-import { PageShell, PageHeader, Button, Select, Section, NavBar, EmptyState, Chip } from "../components/ui";
+import { PageShell, PageHeader, Button, Select, Section, NavBar, EmptyState, Chip, Input } from "../components/ui";
 
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -111,6 +111,22 @@ export default function WeeklyPlanner() {
     }
 
     const updatedHousehold = { ...household, weeklyPlans: updatedPlans };
+    saveHousehold(updatedHousehold);
+    setHousehold(updatedHousehold);
+  }
+
+  function recordOutcome(baseMealId: string, day: string, outcome: MealOutcomeResult, notes: string) {
+    if (!household) return;
+    const newOutcome: MealOutcome = {
+      id: crypto.randomUUID(),
+      baseMealId,
+      day,
+      outcome,
+      notes,
+      date: new Date().toISOString().slice(0, 10),
+    };
+    const existing = household.mealOutcomes ?? [];
+    const updatedHousehold = { ...household, mealOutcomes: [...existing, newOutcome] };
     saveHousehold(updatedHousehold);
     setHousehold(updatedHousehold);
   }
@@ -250,6 +266,12 @@ export default function WeeklyPlanner() {
               overlapLabel={dayPlan ? getMealOverlapLabel(dayPlan.baseMealId) : null}
               meal={dayPlan ? getMeal(dayPlan.baseMealId) : undefined}
               household={household}
+              existingOutcome={(household.mealOutcomes ?? []).find(
+                (o) => o.baseMealId === dayPlan?.baseMealId && o.day === dayLabel
+              )}
+              onRecordOutcome={(outcome, notes) => {
+                if (dayPlan) recordOutcome(dayPlan.baseMealId, dayLabel, outcome, notes);
+              }}
               onClear={dayIndex >= 0 ? () => handleClearDay(dayIndex) : undefined}
               onDrop={(mealId) => assignMealToDay(mealId, dayLabel)}
               isAssignTarget={selectedMealId !== null}
@@ -309,11 +331,24 @@ export default function WeeklyPlanner() {
         <Button onClick={() => navigate(`/household/${householdId}`)}>Back to household</Button>
         <Link to={`/household/${householdId}/planner`} className="text-sm font-medium text-brand hover:underline">Single meal planner</Link>
         <Link to={`/household/${householdId}/grocery`} className="text-sm font-medium text-brand hover:underline">Grocery list</Link>
+        <Link to={`/household/${householdId}/history`} className="text-sm font-medium text-brand hover:underline">Meal history</Link>
         <Link to={`/household/${householdId}/home`} className="text-sm font-medium text-brand hover:underline">Home</Link>
       </NavBar>
     </PageShell>
   );
 }
+
+const outcomeLabels: Record<string, string> = {
+  success: "Worked well",
+  partial: "Partly worked",
+  failure: "Didn't work",
+};
+
+const outcomeChipVariant: Record<string, "success" | "warning" | "danger"> = {
+  success: "success",
+  partial: "warning",
+  failure: "danger",
+};
 
 const effortLabel: Record<string, string> = {
   easy: "Low effort",
@@ -336,6 +371,8 @@ function DayCard({
   overlapLabel,
   meal,
   household,
+  existingOutcome,
+  onRecordOutcome,
   onClear,
   onDrop,
   isAssignTarget,
@@ -349,6 +386,8 @@ function DayCard({
   overlapLabel: string | null;
   meal?: BaseMeal;
   household: Household;
+  existingOutcome?: MealOutcome;
+  onRecordOutcome?: (outcome: MealOutcomeResult, notes: string) => void;
   onClear?: () => void;
   onDrop?: (mealId: string) => void;
   isAssignTarget?: boolean;
@@ -358,6 +397,9 @@ function DayCard({
   const [dragOver, setDragOver] = useState(false);
   const [justAssigned, setJustAssigned] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showOutcomeForm, setShowOutcomeForm] = useState(false);
+  const [outcomeSelection, setOutcomeSelection] = useState<MealOutcomeResult | null>(null);
+  const [outcomeNotes, setOutcomeNotes] = useState("");
   const isEmpty = !dayPlan;
   const isHighEffort = meal?.difficulty === "hard";
 
@@ -485,6 +527,74 @@ function DayCard({
                   </div>
                 );
               })}
+
+              {existingOutcome ? (
+                <div className="mt-3 rounded-md border border-border-light bg-bg p-2" data-testid={`outcome-${dayLabel.toLowerCase()}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-text-secondary">Outcome:</span>
+                    <Chip variant={outcomeChipVariant[existingOutcome.outcome]}>
+                      {outcomeLabels[existingOutcome.outcome]}
+                    </Chip>
+                  </div>
+                  {existingOutcome.notes && (
+                    <p className="mt-1 text-xs text-text-muted">{existingOutcome.notes}</p>
+                  )}
+                </div>
+              ) : onRecordOutcome && !showOutcomeForm ? (
+                <Button
+                  small
+                  className="mt-3"
+                  onClick={() => setShowOutcomeForm(true)}
+                  data-testid={`record-outcome-${dayLabel.toLowerCase()}`}
+                >
+                  Record outcome
+                </Button>
+              ) : null}
+
+              {showOutcomeForm && !existingOutcome && onRecordOutcome && (
+                <div className="mt-3 rounded-md border border-border-light bg-bg p-3" data-testid={`outcome-form-${dayLabel.toLowerCase()}`}>
+                  <p className="mb-2 text-xs font-medium text-text-secondary">How did this meal go?</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(["success", "partial", "failure"] as MealOutcomeResult[]).map((o) => (
+                      <Button
+                        key={o}
+                        small
+                        variant={outcomeSelection === o ? "primary" : "default"}
+                        onClick={() => setOutcomeSelection(o)}
+                        data-testid={`outcome-btn-${o}`}
+                      >
+                        {outcomeLabels[o]}
+                      </Button>
+                    ))}
+                  </div>
+                  <Input
+                    className="mt-2"
+                    placeholder="Quick notes (optional)"
+                    value={outcomeNotes}
+                    onChange={(e) => setOutcomeNotes(e.target.value)}
+                    data-testid={`outcome-notes-${dayLabel.toLowerCase()}`}
+                  />
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      small
+                      variant="primary"
+                      disabled={!outcomeSelection}
+                      onClick={() => {
+                        if (outcomeSelection) {
+                          onRecordOutcome(outcomeSelection, outcomeNotes);
+                          setShowOutcomeForm(false);
+                        }
+                      }}
+                      data-testid={`save-outcome-${dayLabel.toLowerCase()}`}
+                    >
+                      Save
+                    </Button>
+                    <Button small onClick={() => { setShowOutcomeForm(false); setOutcomeSelection(null); setOutcomeNotes(""); }}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>
