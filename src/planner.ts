@@ -656,6 +656,63 @@ export function generateGroceryList(
   return items;
 }
 
+export function formatPlanForExport(
+  days: DayPlan[],
+  meals: BaseMeal[],
+  members: HouseholdMember[],
+  ingredients: Ingredient[],
+  householdName: string,
+): string {
+  const lines: string[] = [];
+  lines.push(`Weekly Meal Plan — ${householdName}`);
+  lines.push("=".repeat(40));
+  lines.push("");
+
+  for (const day of days) {
+    const meal = meals.find((m) => m.id === day.baseMealId);
+    const mealName = meal?.name ?? day.baseMealId;
+    lines.push(`${day.day}`);
+    lines.push(`  Base meal: ${mealName}`);
+    if (meal) {
+      lines.push(`  Prep: ${meal.estimatedTimeMinutes} min · ${meal.difficulty}`);
+    }
+
+    for (const variant of day.variants) {
+      const member = members.find((m) => m.id === variant.memberId);
+      if (!member) continue;
+      lines.push(`  ${member.name} (${member.role}):`);
+      for (const instr of variant.instructions) {
+        lines.push(`    - ${instr}`);
+      }
+    }
+    lines.push("");
+  }
+
+  const groceryItems = generateGroceryList(days, meals, ingredients);
+  if (groceryItems.length > 0) {
+    lines.push("Grocery List");
+    lines.push("-".repeat(40));
+
+    const grouped = new Map<IngredientCategory, GroceryListItem[]>();
+    for (const item of groceryItems) {
+      const list = grouped.get(item.category) ?? [];
+      list.push(item);
+      grouped.set(item.category, list);
+    }
+
+    for (const [category, catItems] of grouped) {
+      lines.push(`  ${category.charAt(0).toUpperCase() + category.slice(1)}:`);
+      for (const item of catItems) {
+        const qty = item.quantity ? ` ${item.quantity}` : "";
+        const meals_used = item.usedInMeals.length > 0 ? ` (${item.usedInMeals.join(", ")})` : "";
+        lines.push(`    - ${item.name}${qty}${meals_used}`);
+      }
+    }
+  }
+
+  return lines.join("\n");
+}
+
 export type RescueScenario = "low-energy" | "low-time" | "everyone-melting-down";
 
 export interface RescueMeal {

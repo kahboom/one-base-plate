@@ -96,6 +96,38 @@ export default function GroceryList() {
             Show all
           </Button>
         )}
+        <Button
+          small
+          onClick={() => {
+            const lines: string[] = [];
+            lines.push(`Grocery List — ${household.name}`);
+            lines.push("=".repeat(40));
+            for (const [category, catItems] of grouped) {
+              lines.push(`\n${CATEGORY_LABELS[category] ?? category}:`);
+              for (const item of catItems) {
+                const qty = item.quantity ? ` ${item.quantity}` : "";
+                lines.push(`  - ${item.name}${qty}`);
+              }
+            }
+            const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `grocery-list-${household.name.toLowerCase().replace(/\s+/g, "-")}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          data-testid="export-grocery-btn"
+        >
+          Export
+        </Button>
+        <Button
+          small
+          onClick={() => window.print()}
+          data-testid="print-grocery-btn"
+        >
+          Print
+        </Button>
       </div>
 
       <div className="space-y-6" data-testid="grocery-categories">

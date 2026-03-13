@@ -435,6 +435,22 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 27 tests: 8 `learnCompatibilityPatterns` engine tests (empty, positive/negative scoring, ingredient insights, prep rule pattern, safe food pattern, protein preference, partial scores), 5 `computePatternScore` tests (empty, sum, prep rule boost, safe food boost, no boost), 3 weekly plan integration tests (boost, deprioritize, backwards compatible), 4 explanation tests (includes insights, filters unrelated, prep rule insight, concise), 3 short reason tests (matches patterns, clashes, outcome priority), 2 Planner UI tests (grid ranking, explanation panel), 1 Home UI test (suggestions ranking), 1 MealCard reason test
 - Verified: tsc --noEmit passes, vitest passes (388 tests), all F030 steps satisfied
 
+### F020 - User can export or print the weekly plan and grocery list (2026-03-13)
+- Added `formatPlanForExport` function to planner engine generating structured plain-text output with:
+  - Household name header with separator
+  - Per-day meal entries with base meal name, prep time, and difficulty
+  - Per-member assembly variant instructions indented under each day
+  - Grocery list section grouped by category with ingredient names, quantities, and meal linkbacks
+- Added print CSS media query in `app.css` hiding nav, buttons, and non-essential UI elements during print; `.print-only` class for print-exclusive content
+- Added Export and Print buttons to **WeeklyPlanner** page (visible when plan has days):
+  - Export generates a `.txt` file download via Blob URL with the full plan + grocery list
+  - Print triggers `window.print()` using the print-friendly CSS
+- Added Export and Print buttons to **GroceryList** page (visible when items exist):
+  - Export generates a `.txt` file download with grocery items grouped by category
+  - Print triggers `window.print()`
+- Export filenames use the household name slugified (e.g., `meal-plan-export-test-family.txt`)
+- Created 18 tests: 8 engine tests (header, days, prep/difficulty, variants, instructions, categories, linkbacks, formatting), 4 WeeklyPlanner UI tests (buttons shown, hidden when no plan, download trigger, print trigger), 4 GroceryList UI tests (buttons shown, hidden when empty, download trigger, print trigger), 2 content match tests (structure, grocery formatting)
+- Verified: tsc --noEmit passes, vitest passes (406 tests), all F020 steps satisfied
+
 ## Next Task
-- **F020** — User can export or print the weekly plan and grocery list (Phase 2, P2, depends on F010✅, F011✅)
-  - Only remaining incomplete feature with satisfied deps: F020 (Phase 2/P2)
+- All features in the PRD are now complete (passes: true). No remaining incomplete features with satisfied dependencies.

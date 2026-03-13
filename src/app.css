@@ -65,3 +65,13 @@ a {
 .animate-meal-assigned {
   animation: meal-assigned 800ms ease-out forwards;
 }
+
+/* Print styles for export */
+@media print {
+  body { background: white; }
+  nav, button, [data-testid="suggested-tray"], [data-testid="assign-prompt"],
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  * { box-shadow: none !important; }
+}
+.print-only { display: none; }

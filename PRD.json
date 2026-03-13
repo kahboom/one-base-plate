@@ -627,7 +627,7 @@
         "Verify formatting is readable",
         "Verify exported output matches the saved plan and grocery list formatting remains clean for printing."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F010",
         "F011"

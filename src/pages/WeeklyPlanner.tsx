@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { Household, WeeklyPlan, DayPlan, BaseMeal, MealOutcome, MealOutcomeResult } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { generateWeeklyPlan, computeMealOverlap, generateAssemblyVariants, computeWeekEffortBalance, computeGroceryPreview } from "../planner";
+import { generateWeeklyPlan, computeMealOverlap, generateAssemblyVariants, computeWeekEffortBalance, computeGroceryPreview, formatPlanForExport } from "../planner";
 import MealCard from "../components/MealCard";
 import { PageShell, PageHeader, Button, Select, Section, NavBar, EmptyState, Chip, Input } from "../components/ui";
 
@@ -285,10 +285,35 @@ export default function WeeklyPlanner() {
       </div>
 
       {plan && (
-        <div data-testid="weekly-plan" className="mt-4">
+        <div data-testid="weekly-plan" className="mt-4 flex flex-wrap gap-3">
           <Button variant="primary" onClick={handleSave} data-testid="save-plan-btn">
             Save plan
           </Button>
+          {plan.days.length > 0 && (
+            <>
+              <Button
+                onClick={() => {
+                  const text = formatPlanForExport(plan.days, household.baseMeals, household.members, household.ingredients, household.name);
+                  const blob = new Blob([text], { type: "text/plain" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `meal-plan-${household.name.toLowerCase().replace(/\s+/g, "-")}.txt`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                data-testid="export-btn"
+              >
+                Export
+              </Button>
+              <Button
+                onClick={() => window.print()}
+                data-testid="print-btn"
+              >
+                Print
+              </Button>
+            </>
+          )}
         </div>
       )}
 
