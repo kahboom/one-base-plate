@@ -111,5 +111,17 @@
 - Created 10 tests: 8 engine tests covering all summary/trade-off scenarios, 2 UI integration tests
 - Verified: tsc --noEmit passes, vitest passes (86 tests), all F018 steps satisfied
 
+### F010 - Weekly plan generation (2026-03-13)
+- Added `generateWeeklyPlan` function to planner engine with overlap-ranked meal selection and ingredient reuse bonus
+- Algorithm avoids consecutive-day meal repeats, favors shared ingredients across the week
+- Created WeeklyPlanner page (src/pages/WeeklyPlanner.tsx) with day card layout (visual mini-calendar, not table)
+- Supports 5-day and 7-day plan generation via dropdown
+- Day cards show meal name, overlap score, and expandable per-person assembly variants
+- Plans can be saved to household storage and re-opened on page load
+- Added route `/household/:householdId/weekly` in App.tsx
+- Added "Weekly planner" navigation link in HouseholdSetup
+- Created 14 tests: 8 engine tests (day count, variants, reuse, deduplication, edge cases), 6 UI tests (generate, 5-day, cards, details, save/reopen, empty state)
+- Verified: tsc --noEmit passes, vitest passes (100 tests), all F010 steps satisfied
+
 ## Next Task
-- **F010** — User can generate a low-decision weekly plan from available meals and ingredients
+- **F021** — Weekly planning screen displays meals in a visual mini-calendar layout

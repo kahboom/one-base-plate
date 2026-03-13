@@ -1,6 +1,7 @@
 import type {
   AssemblyVariant,
   BaseMeal,
+  DayPlan,
   HouseholdMember,
   Ingredient,
   MealComponent,
@@ -271,6 +272,74 @@ export function generateMealExplanation(
   }
 
   return { summary, tradeOffs };
+}
+
+const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+export function generateWeeklyPlan(
+  meals: BaseMeal[],
+  members: HouseholdMember[],
+  ingredients: Ingredient[],
+  numDays: number = 7,
+): DayPlan[] {
+  if (meals.length === 0 || numDays <= 0) return [];
+
+  const rankedMeals = [...meals]
+    .map((meal) => ({
+      meal,
+      overlap: computeMealOverlap(meal, members, ingredients),
+    }))
+    .sort((a, b) => b.overlap.score - a.overlap.score);
+
+  const days: DayPlan[] = [];
+  const usedIngredientCounts = new Map<string, number>();
+
+  for (let d = 0; d < numDays; d++) {
+    let bestMeal: BaseMeal;
+
+    if (d === 0 || meals.length === 1) {
+      bestMeal = rankedMeals[0]!.meal;
+    } else {
+      // Score each meal by overlap + ingredient reuse bonus
+      let bestScore = -Infinity;
+      bestMeal = rankedMeals[0]!.meal;
+
+      for (const { meal, overlap } of rankedMeals) {
+        let reuseBonus = 0;
+        for (const c of meal.components) {
+          if (usedIngredientCounts.has(c.ingredientId)) {
+            reuseBonus += 1;
+          }
+        }
+        // Penalize repeating the same meal on consecutive days
+        const prevMealId = days[d - 1]?.baseMealId;
+        const repeatPenalty = meal.id === prevMealId ? 3 : 0;
+
+        const score = overlap.score + reuseBonus * 0.5 - repeatPenalty;
+        if (score > bestScore) {
+          bestScore = score;
+          bestMeal = meal;
+        }
+      }
+    }
+
+    // Track ingredient usage
+    for (const c of bestMeal.components) {
+      usedIngredientCounts.set(
+        c.ingredientId,
+        (usedIngredientCounts.get(c.ingredientId) ?? 0) + 1,
+      );
+    }
+
+    const variants = generateAssemblyVariants(bestMeal, members, ingredients);
+    days.push({
+      day: DAY_LABELS[d % DAY_LABELS.length]!,
+      baseMealId: bestMeal.id,
+      variants,
+    });
+  }
+
+  return days;
 }
 
 export function generateAssemblyVariants(

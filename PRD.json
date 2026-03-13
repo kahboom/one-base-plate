@@ -437,7 +437,7 @@
         "Verify repeated ingredients are reused intentionally across the week",
         "Verify the plan can be saved and re-opened"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F006",
         "F009"

@@ -5,6 +5,7 @@ import MemberProfile from "./pages/MemberProfile";
 import IngredientManager from "./pages/IngredientManager";
 import BaseMealManager from "./pages/BaseMealManager";
 import Planner from "./pages/Planner";
+import WeeklyPlanner from "./pages/WeeklyPlanner";
 
 function App() {
   return (
@@ -26,6 +27,10 @@ function App() {
       <Route
         path="/household/:householdId/planner"
         element={<Planner />}
+      />
+      <Route
+        path="/household/:householdId/weekly"
+        element={<WeeklyPlanner />}
       />
     </Routes>
   );
