@@ -334,5 +334,25 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 16 tests: 5 engine tests (consolidation, merging, category sort, meal tracking, single-use), 4 page rendering tests (categories, items, quantity, meal links), 4 already-have tests (toggle, summary update, untoggle, show-all), 1 empty state test, 2 styling tests (Card usage, mobile flex-col)
 - Verified: tsc --noEmit passes, vitest passes (233 tests), all F011 steps satisfied
 
+### F012 - Rescue mode generates the fastest acceptable meal using household staples first (2026-03-13)
+- Added `generateRescueMeals` function to planner engine with scenario-aware scoring algorithm
+- Three rescue scenarios: low-energy (easiest first), low-time (fastest first), everyone-melting-down (safe food coverage first)
+- Algorithm filters rescue-eligible meals first, falls back to all meals if none are rescue-eligible
+- Scoring includes: overlap score, freezer/pantry staple bonus, scenario-specific modifiers (difficulty, prep time, safe food coverage)
+- Returns top 1-3 rescue meals with assembly variants, prep summary, and confidence labels ("12-minute save", "good for tired nights", "doable with a little prep")
+- Created RescueMode page (`src/pages/RescueMode.tsx`) at `/household/:householdId/rescue`
+- Scenario picker: three tappable cards (Low energy, Low time, Everyone melting down) with supportive descriptions
+- Rescue results: per-meal cards showing name, prep summary, confidence chip, per-person assembly variants
+- One-tap "Add to tonight" (creates/updates Tonight entry in weekly plan) and "Add to week" (adds to first empty weekday)
+- Change scenario button to go back to the picker
+- Reassuring language: "no guilt, just food" subtitle, calm confidence labels
+- Simpler than standard planner: no meal card grid, no weekly calendar, no grocery preview
+- Added one-tap rescue mode card to Home page with link to rescue mode
+- Added rescue mode to Home navbar
+- Added route to App.tsx
+- Uses shared styling primitives (PageShell, Card, Button, Chip, NavBar, EmptyState, Section)
+- Created 23 tests: 9 engine tests (filter, fallback, scenario ranking, staples, variants, prep summary, max results), 5 scenario picker tests (display, language, empty state), 4 result display tests (meals shown, prep/confidence, assemblies, change scenario), 3 add-to-tonight/week tests (saves to plan, includes variants), 1 Home integration test (rescue card), 1 styling test
+- Verified: tsc --noEmit passes, vitest passes (256 tests), all F012 steps satisfied
+
 ## Next Task
-- **F012** — Rescue mode generates the fastest acceptable meal using household staples first (depends on F003✅, F004✅, F006✅, F032✅)
+- **F017** — All critical planning flows are covered by deterministic fixtures and end-to-end tests (depends on F001✅, F012✅)

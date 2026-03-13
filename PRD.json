@@ -467,7 +467,7 @@
         "Verify the output prioritizes freezer or pantry staples when available",
         "Verify the output still includes per-person assemblies and can be added to tonight or the week."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F003",
         "F004",

@@ -541,6 +541,83 @@ export function generateGroceryList(
   return items;
 }
 
+export type RescueScenario = "low-energy" | "low-time" | "everyone-melting-down";
+
+export interface RescueMeal {
+  meal: BaseMeal;
+  overlap: OverlapResult;
+  variants: AssemblyVariant[];
+  prepSummary: string;
+  confidence: string;
+}
+
+export function generateRescueMeals(
+  meals: BaseMeal[],
+  members: HouseholdMember[],
+  ingredients: Ingredient[],
+  scenario: RescueScenario,
+): RescueMeal[] {
+  const rescueEligible = meals.filter((m) => m.rescueEligible);
+  const pool = rescueEligible.length > 0 ? rescueEligible : meals;
+  if (pool.length === 0) return [];
+
+  const stapleCategories = new Set(["freezer", "pantry"]);
+
+  const scored = pool.map((meal) => {
+    const overlap = computeMealOverlap(meal, members, ingredients);
+
+    // Base score: overlap
+    let score = overlap.score * 10;
+
+    // Bonus for using freezer/pantry staples
+    const stapleCount = meal.components.filter((c) => {
+      const ing = ingredients.find((i) => i.id === c.ingredientId);
+      return ing && (stapleCategories.has(ing.category) || ing.freezerFriendly);
+    }).length;
+    score += stapleCount * 3;
+
+    // Scenario-specific scoring
+    if (scenario === "low-time") {
+      score -= meal.estimatedTimeMinutes * 0.5;
+      if (meal.difficulty === "easy") score += 5;
+    } else if (scenario === "low-energy") {
+      if (meal.difficulty === "easy") score += 8;
+      else if (meal.difficulty === "medium") score += 2;
+      else score -= 5;
+      score -= meal.estimatedTimeMinutes * 0.3;
+    } else {
+      // everyone-melting-down: maximize safe food coverage
+      for (const member of members) {
+        if (member.role !== "toddler" && member.role !== "baby") continue;
+        const hasSafe = meal.components.some((c) => {
+          const bestId = pickBestIngredient(c, member, ingredients);
+          const name = resolveIngredientName(bestId, ingredients);
+          return member.safeFoods.some((s) => matchesFood(s, name));
+        });
+        if (hasSafe) score += 5;
+      }
+      if (meal.difficulty === "easy") score += 5;
+      score -= meal.estimatedTimeMinutes * 0.4;
+    }
+
+    return { meal, overlap, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  return scored.slice(0, 3).map(({ meal, overlap }) => {
+    const variants = generateAssemblyVariants(meal, members, ingredients);
+    const prepSummary = `${meal.estimatedTimeMinutes} min · ${meal.difficulty} effort`;
+    const confidence =
+      meal.estimatedTimeMinutes <= 15
+        ? `${meal.estimatedTimeMinutes}-minute save`
+        : meal.difficulty === "easy"
+          ? "good for tired nights"
+          : "doable with a little prep";
+    return { meal, overlap, variants, prepSummary, confidence };
+  });
+}
+
 export function generateAssemblyVariants(
   meal: BaseMeal,
   members: HouseholdMember[],
