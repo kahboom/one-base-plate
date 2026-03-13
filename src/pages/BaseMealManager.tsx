@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { BaseMeal, MealComponent, Ingredient } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, Card, Button, Input, Select, ActionGroup } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, FieldLabel, EmptyState } from "../components/ui";
 
 type ComponentRole = MealComponent["role"];
 const COMPONENT_ROLES: ComponentRole[] = ["protein", "carb", "veg", "sauce", "topping"];
@@ -34,9 +34,8 @@ function ComponentForm({
 }) {
   return (
     <div data-testid={`component-${component.ingredientId || "empty"}`} className="mb-3 rounded-sm border border-border-light p-3">
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-          Ingredient:
+      <div className="space-y-3">
+        <FieldLabel label="Ingredient">
           <Select
             value={component.ingredientId}
             onChange={(e) => onChange({ ...component, ingredientId: e.target.value })}
@@ -48,10 +47,9 @@ function ComponentForm({
               </option>
             ))}
           </Select>
-        </label>
+        </FieldLabel>
 
-        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-          Role:
+        <FieldLabel label="Role">
           <Select
             value={component.role}
             onChange={(e) => onChange({ ...component, role: e.target.value as ComponentRole })}
@@ -60,10 +58,9 @@ function ComponentForm({
               <option key={r} value={r}>{r}</option>
             ))}
           </Select>
-        </label>
+        </FieldLabel>
 
-        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-          Quantity:
+        <FieldLabel label="Quantity">
           <Input
             type="text"
             value={component.quantity}
@@ -71,7 +68,7 @@ function ComponentForm({
             placeholder="e.g. 200g"
             className="max-w-[200px]"
           />
-        </label>
+        </FieldLabel>
       </div>
       <Button variant="danger" small onClick={onRemove} className="mt-2">Remove component</Button>
     </div>
@@ -118,9 +115,8 @@ function MealForm({
         <Button variant="danger" small onClick={onRemove}>Remove meal</Button>
       </div>
 
-      <div className="space-y-3">
-        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-          Name:
+      <div className="space-y-4">
+        <FieldLabel label="Name">
           <Input
             type="text"
             value={meal.name}
@@ -128,20 +124,18 @@ function MealForm({
             placeholder="Meal name"
             required
           />
-        </label>
+        </FieldLabel>
 
-        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-          Default prep:
+        <FieldLabel label="Default prep">
           <Input
             type="text"
             value={meal.defaultPrep}
             onChange={(e) => onChange({ ...meal, defaultPrep: e.target.value })}
             placeholder="e.g. stir-fry, roast"
           />
-        </label>
+        </FieldLabel>
 
-        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-          Time (minutes):
+        <FieldLabel label="Time (minutes)">
           <Input
             type="number"
             value={meal.estimatedTimeMinutes}
@@ -151,10 +145,9 @@ function MealForm({
             min={0}
             className="max-w-[120px]"
           />
-        </label>
+        </FieldLabel>
 
-        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-          Difficulty:
+        <FieldLabel label="Difficulty">
           <Select
             value={meal.difficulty}
             onChange={(e) =>
@@ -165,7 +158,7 @@ function MealForm({
               <option key={d} value={d}>{d}</option>
             ))}
           </Select>
-        </label>
+        </FieldLabel>
 
         <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
           <input
@@ -245,10 +238,13 @@ export default function BaseMealManager() {
 
   return (
     <PageShell>
-      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">Base Meals</h1>
-      <p className="mb-6 text-sm text-text-muted">Household: {householdName}</p>
+      <PageHeader title="Base Meals" subtitle={`Household: ${householdName}`} />
 
-      <h2 className="mb-3 text-xl font-semibold text-text-primary">Meals ({meals.length})</h2>
+      <h2 className="mb-4 text-xl font-semibold text-text-primary">Meals ({meals.length})</h2>
+
+      {meals.length === 0 && (
+        <EmptyState>No meals yet. Add one to get started.</EmptyState>
+      )}
 
       {meals.map((meal, i) => (
         <MealForm

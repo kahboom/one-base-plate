@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { Household, HouseholdMember, MemberRole, TextureLevel } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, Card, Button, Input, Select, ActionGroup, NavBar } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, NavBar, FieldLabel, EmptyState } from "../components/ui";
 
 function createEmptyMember(): HouseholdMember {
   return {
@@ -50,9 +50,8 @@ function MemberForm({
         <Button variant="danger" small onClick={onRemove}>Remove member</Button>
       </div>
 
-      <div className="space-y-3">
-        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-          Name:
+      <div className="space-y-4">
+        <FieldLabel label="Name">
           <Input
             type="text"
             value={member.name}
@@ -60,10 +59,9 @@ function MemberForm({
             placeholder="Member name"
             required
           />
-        </label>
+        </FieldLabel>
 
-        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-          Role:
+        <FieldLabel label="Role">
           <Select
             value={member.role}
             onChange={(e) => onChange({ ...member, role: e.target.value as MemberRole })}
@@ -72,10 +70,9 @@ function MemberForm({
               <option key={r} value={r}>{r}</option>
             ))}
           </Select>
-        </label>
+        </FieldLabel>
 
-        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-          Texture level:
+        <FieldLabel label="Texture level">
           <Select
             value={member.textureLevel}
             onChange={(e) => onChange({ ...member, textureLevel: e.target.value as TextureLevel })}
@@ -84,7 +81,7 @@ function MemberForm({
               <option key={t} value={t}>{t}</option>
             ))}
           </Select>
-        </label>
+        </FieldLabel>
       </div>
 
       {householdId && (
@@ -148,12 +145,9 @@ export default function HouseholdSetup() {
 
   return (
     <PageShell>
-      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">
-        {isNew ? "Create Household" : "Edit Household"}
-      </h1>
+      <PageHeader title={isNew ? "Create Household" : "Edit Household"} />
 
-      <label className="mb-6 flex items-center gap-2 text-sm font-medium text-text-secondary">
-        Household name:
+      <FieldLabel label="Household name" className="mb-6">
         <Input
           type="text"
           value={household.name}
@@ -161,11 +155,15 @@ export default function HouseholdSetup() {
           placeholder="Household name"
           required
         />
-      </label>
+      </FieldLabel>
 
-      <h2 className="mb-3 text-xl font-semibold text-text-primary">
+      <h2 className="mb-4 text-xl font-semibold text-text-primary">
         Members ({household.members.length})
       </h2>
+
+      {household.members.length === 0 && (
+        <EmptyState>No members yet. Add a member to get started.</EmptyState>
+      )}
 
       {household.members.map((member, i) => (
         <MemberForm

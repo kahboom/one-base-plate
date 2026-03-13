@@ -3,8 +3,18 @@ import type { ReactNode, ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAt
 /* ---------- Page shell ---------- */
 export function PageShell({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-auto max-w-[900px] px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-[900px] px-4 py-8 sm:px-6">
       {children}
+    </div>
+  );
+}
+
+/* ---------- Page header ---------- */
+export function PageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="mb-8">
+      <h1 className="text-3xl font-bold tracking-tight text-text-primary">{title}</h1>
+      {subtitle && <p className="mt-1 text-base text-text-muted">{subtitle}</p>}
     </div>
   );
 }
@@ -40,7 +50,7 @@ export function CardGrid({ children, compact = false }: { children: ReactNode; c
 type ButtonVariant = "default" | "primary" | "danger" | "ghost";
 
 const btnBase =
-  "inline-flex items-center justify-center font-medium rounded-sm transition-colors cursor-pointer min-h-[40px] text-sm";
+  "inline-flex items-center justify-center font-medium rounded-sm transition-colors cursor-pointer min-h-[40px] text-sm focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2";
 
 const btnVariants: Record<ButtonVariant, string> = {
   default:
@@ -95,6 +105,16 @@ export function Select({
   );
 }
 
+/* ---------- Field label (stacked: label above input) ---------- */
+export function FieldLabel({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="mb-1 block text-sm font-medium text-text-secondary">{label}</span>
+      {children}
+    </label>
+  );
+}
+
 /* ---------- Chips ---------- */
 type ChipVariant = "success" | "warning" | "danger" | "info" | "neutral";
 
@@ -129,7 +149,7 @@ export function Chip({
 /* ---------- Empty state ---------- */
 export function EmptyState({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-md border border-dashed border-border-default bg-bg p-8 text-center text-text-muted">
+    <div className="rounded-md border border-dashed border-border-default bg-bg p-8 text-center text-sm text-text-muted">
       {children}
     </div>
   );
@@ -138,8 +158,8 @@ export function EmptyState({ children }: { children: ReactNode }) {
 /* ---------- Section ---------- */
 export function Section({ title, children }: { title?: string; children: ReactNode }) {
   return (
-    <section className="mb-6">
-      {title && <h2 className="mb-3 text-xl font-semibold text-text-primary">{title}</h2>}
+    <section className="mb-8">
+      {title && <h2 className="mb-4 text-xl font-semibold text-text-primary">{title}</h2>}
       {children}
     </section>
   );
@@ -148,7 +168,7 @@ export function Section({ title, children }: { title?: string; children: ReactNo
 /* ---------- Nav bar ---------- */
 export function NavBar({ children }: { children: ReactNode }) {
   return (
-    <nav className="mt-6 flex flex-wrap items-center gap-3 border-t border-border-light pt-4">
+    <nav className="mt-8 flex flex-wrap items-center gap-3 border-t border-border-light pt-4">
       {children}
     </nav>
   );
@@ -165,5 +185,5 @@ export function FormRow({ children }: { children: ReactNode }) {
 
 /* ---------- Action group ---------- */
 export function ActionGroup({ children }: { children: ReactNode }) {
-  return <div className="mt-6 flex gap-2">{children}</div>;
+  return <div className="mt-8 flex gap-3">{children}</div>;
 }

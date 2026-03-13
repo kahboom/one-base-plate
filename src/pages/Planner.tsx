@@ -9,7 +9,7 @@ import {
 } from "../planner";
 import type { OverlapResult, MealExplanation } from "../planner";
 import MealCard from "../components/MealCard";
-import { PageShell, Card, Button, Chip, Section } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Chip, Section, EmptyState } from "../components/ui";
 
 export default function Planner() {
   const { householdId } = useParams<{ householdId: string }>();
@@ -91,11 +91,10 @@ export default function Planner() {
 
   return (
     <PageShell>
-      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">Meal Planner</h1>
-      <p className="mb-6 text-sm text-text-muted">Household: {household.name}</p>
+      <PageHeader title="Meal Planner" subtitle={`Household: ${household.name}`} />
 
       {household.baseMeals.length === 0 ? (
-        <p className="text-text-muted">No base meals available. Add meals first.</p>
+        <EmptyState>No base meals available. Add meals first.</EmptyState>
       ) : (
         <Section title="Choose a meal">
           <div data-testid="meal-card-grid" className="mb-6 flex flex-wrap gap-4">

@@ -766,7 +766,7 @@
         "Ensure contrast, focus states, and empty states meet accessibility expectations.",
         "Verify the existing flows remain intact after the visual refactor and that users can scan meal information without reading long text."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F032"
       ],

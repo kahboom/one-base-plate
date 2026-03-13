@@ -4,7 +4,7 @@ import type { Household, WeeklyPlan, DayPlan, BaseMeal } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import { generateWeeklyPlan, computeMealOverlap } from "../planner";
 import MealCard from "../components/MealCard";
-import { PageShell, Button, Select, Section, NavBar } from "../components/ui";
+import { PageShell, PageHeader, Button, Select, Section, NavBar, EmptyState } from "../components/ui";
 
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -116,11 +116,10 @@ export default function WeeklyPlanner() {
 
   return (
     <PageShell>
-      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">Weekly Planner</h1>
-      <p className="mb-6 text-sm text-text-muted">Household: {household.name}</p>
+      <PageHeader title="Weekly Planner" subtitle={`Household: ${household.name}`} />
 
       {household.baseMeals.length === 0 ? (
-        <p className="text-text-muted">No base meals available. Add meals before generating a plan.</p>
+        <EmptyState>No base meals available. Add meals before generating a plan.</EmptyState>
       ) : (
         <div className="mb-4 flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">

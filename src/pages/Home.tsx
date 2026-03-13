@@ -4,7 +4,7 @@ import type { Household } from "../types";
 import { loadHousehold } from "../storage";
 import { computeMealOverlap } from "../planner";
 import MealCard from "../components/MealCard";
-import { PageShell, Section, NavBar } from "../components/ui";
+import { PageShell, PageHeader, Section, NavBar } from "../components/ui";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -42,10 +42,7 @@ export default function Home() {
 
   return (
     <PageShell>
-      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">
-        What should we eat tonight?
-      </h1>
-      <p className="mb-6 text-sm text-text-muted">{household.name}</p>
+      <PageHeader title="What should we eat tonight?" subtitle={household.name} />
 
       {latestPlan && (
         <Section>

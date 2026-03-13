@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import type { HouseholdMember, PreparationRule } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, Card, Button, Input, Section, FormRow, ActionGroup, Chip } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Section, FormRow, ActionGroup, Chip } from "../components/ui";
 
 export default function MemberProfile() {
   const { householdId, memberId } = useParams<{
@@ -101,21 +101,22 @@ export default function MemberProfile() {
 
   return (
     <PageShell>
-      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">
-        {member.name} — {member.role}
-      </h1>
-      <p className="mb-6 text-sm text-text-muted">Household: {householdName}</p>
+      <PageHeader title={`${member.name} — ${member.role}`} subtitle={`Household: ${householdName}`} />
 
       <Section title="Safe Foods">
         <Card>
-          <ul data-testid="safe-foods-list" className="mb-3 space-y-1">
-            {member.safeFoods.map((food) => (
-              <li key={food} className="flex items-center gap-2">
-                <Chip variant="success">{food}</Chip>
-                <Button variant="danger" small onClick={() => removeSafeFood(food)}>Remove</Button>
-              </li>
-            ))}
-          </ul>
+          {member.safeFoods.length === 0 ? (
+            <p className="mb-3 text-sm text-text-muted">No safe foods added yet.</p>
+          ) : (
+            <ul data-testid="safe-foods-list" className="mb-3 space-y-1">
+              {member.safeFoods.map((food) => (
+                <li key={food} className="flex items-center gap-2">
+                  <Chip variant="success">{food}</Chip>
+                  <Button variant="danger" small onClick={() => removeSafeFood(food)}>Remove</Button>
+                </li>
+              ))}
+            </ul>
+          )}
           <FormRow>
             <Input
               type="text"
@@ -136,14 +137,18 @@ export default function MemberProfile() {
 
       <Section title="Hard-No Foods">
         <Card>
-          <ul data-testid="hard-no-foods-list" className="mb-3 space-y-1">
-            {member.hardNoFoods.map((food) => (
-              <li key={food} className="flex items-center gap-2">
-                <Chip variant="danger">{food}</Chip>
-                <Button variant="danger" small onClick={() => removeHardNo(food)}>Remove</Button>
-              </li>
-            ))}
-          </ul>
+          {member.hardNoFoods.length === 0 ? (
+            <p className="mb-3 text-sm text-text-muted">No hard-no foods added yet.</p>
+          ) : (
+            <ul data-testid="hard-no-foods-list" className="mb-3 space-y-1">
+              {member.hardNoFoods.map((food) => (
+                <li key={food} className="flex items-center gap-2">
+                  <Chip variant="danger">{food}</Chip>
+                  <Button variant="danger" small onClick={() => removeHardNo(food)}>Remove</Button>
+                </li>
+              ))}
+            </ul>
+          )}
           <FormRow>
             <Input
               type="text"
@@ -164,16 +169,20 @@ export default function MemberProfile() {
 
       <Section title="Preparation Rules">
         <Card>
-          <ul data-testid="preparation-rules-list" className="mb-3 space-y-1">
-            {member.preparationRules.map((rule, i) => (
-              <li key={`${rule.ingredient}-${rule.rule}`} className="flex items-center gap-2">
-                <span className="text-sm">
-                  <strong>{rule.ingredient}:</strong> {rule.rule}
-                </span>
-                <Button variant="danger" small onClick={() => removePreparationRule(i)}>Remove</Button>
-              </li>
-            ))}
-          </ul>
+          {member.preparationRules.length === 0 ? (
+            <p className="mb-3 text-sm text-text-muted">No preparation rules added yet.</p>
+          ) : (
+            <ul data-testid="preparation-rules-list" className="mb-3 space-y-1">
+              {member.preparationRules.map((rule, i) => (
+                <li key={`${rule.ingredient}-${rule.rule}`} className="flex items-center gap-2">
+                  <span className="text-sm">
+                    <strong>{rule.ingredient}:</strong> {rule.rule}
+                  </span>
+                  <Button variant="danger" small onClick={() => removePreparationRule(i)}>Remove</Button>
+                </li>
+              ))}
+            </ul>
+          )}
           <FormRow>
             <Input
               type="text"

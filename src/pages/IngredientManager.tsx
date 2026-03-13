@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Ingredient, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, Card, Button, Input, Select, ActionGroup, Chip } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, Chip, FieldLabel, EmptyState } from "../components/ui";
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
   "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
@@ -54,9 +54,8 @@ function IngredientForm({
         <Button variant="danger" small onClick={onRemove}>Remove ingredient</Button>
       </div>
 
-      <div className="space-y-3">
-        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-          Name:
+      <div className="space-y-4">
+        <FieldLabel label="Name">
           <Input
             type="text"
             value={ingredient.name}
@@ -64,10 +63,9 @@ function IngredientForm({
             placeholder="Ingredient name"
             required
           />
-        </label>
+        </FieldLabel>
 
-        <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-          Category:
+        <FieldLabel label="Category">
           <Select
             value={ingredient.category}
             onChange={(e) =>
@@ -78,7 +76,7 @@ function IngredientForm({
               <option key={c} value={c}>{c}</option>
             ))}
           </Select>
-        </label>
+        </FieldLabel>
 
         <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
           <input
@@ -190,10 +188,13 @@ export default function IngredientManager() {
 
   return (
     <PageShell>
-      <h1 className="mb-1 text-2xl font-bold tracking-tight text-text-primary">Ingredients</h1>
-      <p className="mb-6 text-sm text-text-muted">Household: {householdName}</p>
+      <PageHeader title="Ingredients" subtitle={`Household: ${householdName}`} />
 
-      <h2 className="mb-3 text-xl font-semibold text-text-primary">Items ({ingredients.length})</h2>
+      <h2 className="mb-4 text-xl font-semibold text-text-primary">Items ({ingredients.length})</h2>
+
+      {ingredients.length === 0 && (
+        <EmptyState>No ingredients yet. Add one to get started.</EmptyState>
+      )}
 
       {ingredients.map((ingredient, i) => (
         <IngredientForm

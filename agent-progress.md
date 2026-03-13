@@ -169,5 +169,17 @@
 - Updated 3 brittle test files (f002, f004, f005) that relied on `getByRole("group")` for fieldset elements — now use `data-testid` queries for card-based layout
 - Verified: tsc --noEmit passes, vitest passes (130 tests), vite build succeeds
 
+### F025 - Core screens apply styling foundation for hierarchy, contrast, and fast scanning (2026-03-13)
+- Audited all 8 user-facing pages (HouseholdList, HouseholdSetup, MemberProfile, IngredientManager, BaseMealManager, Planner, WeeklyPlanner, Home)
+- Replaced manual h1/p heading combos with `PageHeader` component across all pages for consistent title + subtitle hierarchy (text-3xl bold with tracking-tight)
+- Replaced inline flex `label` patterns with stacked `FieldLabel` components on HouseholdSetup (member forms), IngredientManager (name, category), BaseMealManager (meal fields, component fields) for better scanning
+- Added empty states throughout: HouseholdSetup (no members), IngredientManager (no ingredients), BaseMealManager (no meals), Planner (no meals), WeeklyPlanner (no meals), MemberProfile (empty safe foods, hard-no foods, preparation rules lists)
+- Planner and WeeklyPlanner empty states now use `EmptyState` component instead of plain text
+- Increased spacing: form field gaps from space-y-3 to space-y-4, section heading margins from mb-3 to mb-4
+- Focus-visible outline on all Button components via btnBase class (added in F032 CSS/primitives update)
+- Global focus-visible ring and smooth link transitions in app.css
+- Created 15 new tests: 3 PageHeader consistency, 3 FieldLabel stacked layout, 7 empty state verification, 2 contrast/focus/flow integrity
+- Verified: tsc --noEmit passes, vitest passes (145 tests), vite build succeeds
+
 ## Next Task
-- **F025** — Core screens apply the styling foundation for readable hierarchy, contrast, and fast scanning
+- **F033** — Core screens are mobile-friendly with touch-first responsive layouts
