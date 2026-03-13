@@ -444,7 +444,7 @@
         "Verify pantry or already-owned items can be excluded",
         "Verify the list uses the shared styling system, remains easy to scan on mobile, and links back to meals using each ingredient where relevant."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F010",
         "F032"

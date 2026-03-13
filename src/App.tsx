@@ -8,6 +8,7 @@ import Planner from "./pages/Planner";
 import WeeklyPlanner from "./pages/WeeklyPlanner";
 import Home from "./pages/Home";
 import MealDetail from "./pages/MealDetail";
+import GroceryList from "./pages/GroceryList";
 
 function App() {
   return (
@@ -38,6 +39,10 @@ function App() {
       <Route
         path="/household/:householdId/weekly"
         element={<WeeklyPlanner />}
+      />
+      <Route
+        path="/household/:householdId/grocery"
+        element={<GroceryList />}
       />
     </Routes>
   );

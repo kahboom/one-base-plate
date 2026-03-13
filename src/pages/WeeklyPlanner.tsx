@@ -290,6 +290,7 @@ export default function WeeklyPlanner() {
       <NavBar>
         <Button onClick={() => navigate(`/household/${householdId}`)}>Back to household</Button>
         <Link to={`/household/${householdId}/planner`} className="text-sm font-medium text-brand hover:underline">Single meal planner</Link>
+        <Link to={`/household/${householdId}/grocery`} className="text-sm font-medium text-brand hover:underline">Grocery list</Link>
         <Link to={`/household/${householdId}/home`} className="text-sm font-medium text-brand hover:underline">Home</Link>
       </NavBar>
     </PageShell>

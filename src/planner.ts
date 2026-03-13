@@ -2,8 +2,10 @@ import type {
   AssemblyVariant,
   BaseMeal,
   DayPlan,
+  GroceryItem,
   HouseholdMember,
   Ingredient,
+  IngredientCategory,
   MealComponent,
 } from "./types";
 
@@ -482,6 +484,61 @@ export function generateWeeklyPlan(
   }
 
   return days;
+}
+
+export interface GroceryListItem extends GroceryItem {
+  usedInMeals: string[];
+}
+
+const CATEGORY_ORDER: IngredientCategory[] = [
+  "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
+];
+
+export function generateGroceryList(
+  days: DayPlan[],
+  meals: BaseMeal[],
+  ingredients: Ingredient[],
+): GroceryListItem[] {
+  const itemMap = new Map<string, { quantity: number; mealNames: Set<string> }>();
+
+  for (const day of days) {
+    const meal = meals.find((m) => m.id === day.baseMealId);
+    if (!meal) continue;
+
+    for (const component of meal.components) {
+      const allIds = getAllIngredientIds(component);
+      for (const id of allIds) {
+        const existing = itemMap.get(id);
+        if (existing) {
+          existing.quantity += 1;
+          existing.mealNames.add(meal.name);
+        } else {
+          itemMap.set(id, { quantity: 1, mealNames: new Set([meal.name]) });
+        }
+      }
+    }
+  }
+
+  const items: GroceryListItem[] = [];
+  for (const [id, data] of itemMap) {
+    const ing = ingredients.find((i) => i.id === id);
+    items.push({
+      ingredientId: id,
+      name: ing?.name ?? id,
+      category: ing?.category ?? "pantry",
+      quantity: data.quantity > 1 ? `×${data.quantity}` : "",
+      owned: false,
+      usedInMeals: [...data.mealNames],
+    });
+  }
+
+  items.sort((a, b) => {
+    const catDiff = CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
+    if (catDiff !== 0) return catDiff;
+    return a.name.localeCompare(b.name);
+  });
+
+  return items;
 }
 
 export function generateAssemblyVariants(

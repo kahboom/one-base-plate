@@ -321,5 +321,18 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 13 tests: 3 engine tests (unique ingredient count, deduplication, category breakdown), 4 confirmation animation tests (tap-assign, drag-drop, auto-dismiss, CSS class), 4 grocery preview tests (shown after generate, hidden without plan, updates on assign, category chips), 2 feedback subtlety tests (scale transition presence, revert after timeout)
 - Verified: tsc --noEmit passes, vitest passes (217 tests), all F027 steps satisfied
 
+### F011 - App produces one merged grocery list from the weekly plan (2026-03-13)
+- Added `generateGroceryList` function to planner engine producing `GroceryListItem[]` with consolidated quantities, category grouping, and per-item meal linkback (`usedInMeals`)
+- Ingredients sorted by category order (protein → carb → veg → fruit → dairy → snack → freezer → pantry), then alphabetically within each category
+- Repeated ingredients across multiple days/meals merged into single entries with `×N` quantity labels
+- Created GroceryList page (`src/pages/GroceryList.tsx`) at `/household/:householdId/grocery`
+- Page shows ingredients grouped by category in Card components with category headers and item counts
+- Each item displays: name, quantity chip (if >1), meal linkback text, and already-have toggle checkbox
+- Already-have toggle: checkbox marks items as owned (strikethrough + dimmed), summary bar updates count ("X to buy · Y already have"), "Show all" button clears all owned state
+- Empty state when no weekly plan is saved
+- Added route to App.tsx and navigation links from WeeklyPlanner and Home
+- Created 16 tests: 5 engine tests (consolidation, merging, category sort, meal tracking, single-use), 4 page rendering tests (categories, items, quantity, meal links), 4 already-have tests (toggle, summary update, untoggle, show-all), 1 empty state test, 2 styling tests (Card usage, mobile flex-col)
+- Verified: tsc --noEmit passes, vitest passes (233 tests), all F011 steps satisfied
+
 ## Next Task
-- **F011** — App produces one merged grocery list from the weekly plan (depends on F010✅, F032✅)
+- **F012** — Rescue mode generates the fastest acceptable meal using household staples first (depends on F003✅, F004✅, F006✅, F032✅)

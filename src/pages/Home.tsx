@@ -105,6 +105,7 @@ export default function Home() {
 
       <NavBar>
         <Link to={`/household/${householdId}/weekly`} className="text-sm font-medium text-brand hover:underline">Weekly planner</Link>
+        <Link to={`/household/${householdId}/grocery`} className="text-sm font-medium text-brand hover:underline">Grocery list</Link>
         <Link to={`/household/${householdId}/planner`} className="text-sm font-medium text-brand hover:underline">Meal planner</Link>
         <Link to={`/household/${householdId}`} className="text-sm font-medium text-brand hover:underline">Household setup</Link>
         <Link to="/" className="text-sm font-medium text-brand hover:underline">All households</Link>
