@@ -274,6 +274,41 @@ export function generateMealExplanation(
   return { summary, tradeOffs };
 }
 
+export function generateShortReason(
+  meal: BaseMeal,
+  members: HouseholdMember[],
+  ingredients: Ingredient[],
+): string {
+  const overlap = computeMealOverlap(meal, members, ingredients);
+
+  if (overlap.score === overlap.total) {
+    const adaptMembers = overlap.memberDetails.filter((d) => d.compatibility === "with-adaptation");
+    if (adaptMembers.length === 0) return "Works for everyone";
+
+    // Find the most interesting adaptation reason
+    for (const member of members) {
+      if (member.role === "toddler" || member.role === "baby") {
+        const hasSafe = meal.components.some((c) => {
+          const name = resolveIngredientName(c.ingredientId, ingredients);
+          return member.safeFoods.some((s) => matchesFood(s, name));
+        });
+        if (hasSafe) return `${member.name}'s safe food included`;
+      }
+      if (member.preparationRules.length > 0) {
+        const matched = member.preparationRules.find((r) =>
+          meal.components.some((c) => matchesFood(r.ingredient, resolveIngredientName(c.ingredientId, ingredients))),
+        );
+        if (matched) return `${matched.rule.toLowerCase().includes("separate") ? "sauce separate works" : "prep rules handled"}`;
+      }
+    }
+    return "Works with small adaptations";
+  }
+
+  if (overlap.score === 0) return "Conflicts for all members";
+
+  return `Fits ${overlap.score} of ${overlap.total} members`;
+}
+
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export function generateWeeklyPlan(

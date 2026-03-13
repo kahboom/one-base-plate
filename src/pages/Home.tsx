@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import type { Household } from "../types";
 import { loadHousehold } from "../storage";
 import { computeMealOverlap } from "../planner";
+import MealCard from "../components/MealCard";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -84,22 +85,17 @@ export default function Home() {
       {topMeals.length > 0 && (
         <div data-testid="top-suggestions">
           <h2>Top suggestions</h2>
-          {topMeals.map(({ meal, overlap }) => (
-            <div key={meal.id} data-testid={`suggestion-${meal.id}`} style={{
-              border: "1px solid #ddd",
-              borderRadius: "8px",
-              padding: "0.75rem",
-              marginBottom: "0.5rem",
-            }}>
-              <strong>{meal.name}</strong>
-              <span style={{ marginLeft: "0.5rem", fontSize: "0.85rem" }}>
-                {overlap.score}/{overlap.total} overlap
-              </span>
-              <span style={{ marginLeft: "0.5rem", fontSize: "0.85rem" }}>
-                {meal.estimatedTimeMinutes} min
-              </span>
-            </div>
-          ))}
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            {topMeals.map(({ meal, overlap }) => (
+              <MealCard
+                key={meal.id}
+                meal={meal}
+                members={household.members}
+                ingredients={household.ingredients}
+                overlap={overlap}
+              />
+            ))}
+          </div>
         </div>
       )}
 

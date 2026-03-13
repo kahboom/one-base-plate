@@ -136,5 +136,18 @@
 - Created 11 tests: 5 WeeklyPlanner calendar tests (empty cards, suggestions, fill, clear), 1 tray test, 5 Home tests (headline, strip, no-plan, suggestions, strip content)
 - Verified: tsc --noEmit passes, vitest passes (111 tests), all F021 steps satisfied
 
+### F023 - Meal cards with compatibility indicators (2026-03-13)
+- Created reusable MealCard component (src/components/MealCard.tsx) with card-based layout
+- Displays: meal name, prep time, effort level (difficulty), overlap score (X/Y)
+- Per-member compatibility chips with color-coded backgrounds (green=direct, yellow=adaptation, red=conflict)
+- Chips show member name and role label (Adult/Toddler/Baby) with conflict details on hover
+- Short reason text explaining household fit (e.g. "safe food included", "Works for everyone")
+- State chips: High overlap, Needs extra prep, Rescue eligible
+- Supports compact mode (no action buttons) and full mode with Assign/Details buttons
+- Added `generateShortReason` helper to planner engine for brief fit explanations
+- Integrated MealCard into Home (top suggestions) and WeeklyPlanner (suggested tray)
+- Created 12 tests: 6 card display tests, 1 compact mode test, 1 action buttons test, 4 short reason engine tests
+- Verified: tsc --noEmit passes, vitest passes (123 tests), all F023 steps satisfied
+
 ## Next Task
-- **F023** — Meals are displayed as visually readable cards with compatibility indicators
+- **F024** — Planner shows visual overlap indicators and trade-offs for meals

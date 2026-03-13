@@ -708,7 +708,7 @@
         "Display compatibility icons for ARFID adult, toddler, and baby",
         "Verify cards remain readable, tappable, and draggable on mobile."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F006",
         "F009"

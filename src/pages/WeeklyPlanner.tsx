@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import type { Household, WeeklyPlan, DayPlan, BaseMeal } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import { generateWeeklyPlan, computeMealOverlap } from "../planner";
+import MealCard from "../components/MealCard";
 
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -179,22 +180,14 @@ export default function WeeklyPlanner() {
               }))
               .sort((a, b) => b.overlap.score - a.overlap.score)
               .map(({ meal, overlap }) => (
-                <div
+                <MealCard
                   key={meal.id}
-                  data-testid={`tray-meal-${meal.id}`}
-                  style={{
-                    border: "1px solid #ddd",
-                    borderRadius: "8px",
-                    padding: "0.75rem",
-                    minWidth: "120px",
-                  }}
-                >
-                  <strong>{meal.name}</strong>
-                  <br />
-                  <small>{overlap.score}/{overlap.total} overlap</small>
-                  <br />
-                  <small>{meal.estimatedTimeMinutes} min | {meal.difficulty}</small>
-                </div>
+                  meal={meal}
+                  members={household.members}
+                  ingredients={household.ingredients}
+                  overlap={overlap}
+                  compact
+                />
               ))}
           </div>
         </div>
