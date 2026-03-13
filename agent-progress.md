@@ -83,5 +83,14 @@
 - Created 8 new tests: 7 engine tests for toddler safe food scenarios, 1 UI integration test
 - Verified: tsc --noEmit passes, vitest passes (60 tests), all F008 steps satisfied
 
+### F019 - Quick member edit from planner (2026-03-13)
+- Added "Quick edit {name}" links to each member variant in the Planner page
+- MemberProfile now supports `?returnTo=` query param to navigate back to the planner (or any page) after saving/cancelling
+- Without returnTo, MemberProfile defaults to household setup (preserving existing behavior)
+- Planner reloads household data on mount so updated constraints are reflected after returning from edit
+- Edit path goes directly from Planner → MemberProfile → Planner, bypassing the full household setup flow
+- Created 6 tests: quick edit link presence, navigation to profile, edit+save+return with variant change verification, edit-avoids-household-setup, cancel-returns-without-saving, default-returnTo behavior
+- Verified: tsc --noEmit passes, vitest passes (66 tests), all F019 steps satisfied
+
 ## Next Task
-- **F018** — Planner explains why a meal was recommended and what the trade-offs are
+- **F009** — Planner computes overlap score for ingredients and meals (unblocks F018)

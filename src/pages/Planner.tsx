@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import type { BaseMeal, AssemblyVariant, Household } from "../types";
 import { loadHousehold } from "../storage";
 import { generateAssemblyVariants } from "../planner";
@@ -13,30 +13,36 @@ export default function Planner() {
   const [variants, setVariants] = useState<AssemblyVariant[]>([]);
   const [loaded, setLoaded] = useState(false);
 
+  const regenerateVariants = useCallback(
+    (h: Household, mealId: string) => {
+      if (!mealId) {
+        setVariants([]);
+        return;
+      }
+      const meal = h.baseMeals.find((m) => m.id === mealId);
+      if (!meal) {
+        setVariants([]);
+        return;
+      }
+      setVariants(generateAssemblyVariants(meal, h.members, h.ingredients));
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!householdId) return;
     const h = loadHousehold(householdId);
-    if (h) setHousehold(h);
+    if (h) {
+      setHousehold(h);
+      regenerateVariants(h, selectedMealId);
+    }
     setLoaded(true);
-  }, [householdId]);
+  }, [householdId, regenerateVariants, selectedMealId]);
 
   function handleSelectMeal(mealId: string) {
     setSelectedMealId(mealId);
-    if (!household || !mealId) {
-      setVariants([]);
-      return;
-    }
-    const meal = household.baseMeals.find((m) => m.id === mealId);
-    if (!meal) {
-      setVariants([]);
-      return;
-    }
-    const generated = generateAssemblyVariants(
-      meal,
-      household.members,
-      household.ingredients,
-    );
-    setVariants(generated);
+    if (!household) return;
+    regenerateVariants(household, mealId);
   }
 
   if (!loaded) return null;
@@ -122,6 +128,11 @@ export default function Planner() {
                     <li key={i}>{instr}</li>
                   ))}
                 </ul>
+                <Link
+                  to={`/household/${householdId}/member/${member.id}?returnTo=/household/${householdId}/planner`}
+                >
+                  Quick edit {member.name}
+                </Link>
               </div>
             );
           })}

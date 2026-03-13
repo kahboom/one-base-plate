@@ -619,7 +619,7 @@
         "Regenerate the meal plan",
         "Verify only the relevant compatibility results change and the edit path avoids reopening the full household flow."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F003",
         "F006"

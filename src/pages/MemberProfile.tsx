@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import type { HouseholdMember, PreparationRule } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 
@@ -9,6 +9,8 @@ export default function MemberProfile() {
     memberId: string;
   }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
 
   const [member, setMember] = useState<HouseholdMember | null>(null);
   const [householdName, setHouseholdName] = useState("");
@@ -27,6 +29,9 @@ export default function MemberProfile() {
     if (found) setMember({ ...found });
   }, [householdId, memberId]);
 
+  const defaultReturn = `/household/${householdId}`;
+  const navigateBack = returnTo || defaultReturn;
+
   function handleSave() {
     if (!householdId || !member) return;
     const household = loadHousehold(householdId);
@@ -35,7 +40,7 @@ export default function MemberProfile() {
     if (index < 0) return;
     household.members[index] = member;
     saveHousehold(household);
-    navigate(`/household/${householdId}`);
+    navigate(navigateBack);
   }
 
   function addSafeFood() {
@@ -205,7 +210,7 @@ export default function MemberProfile() {
         </button>
         <button
           type="button"
-          onClick={() => navigate(`/household/${householdId}`)}
+          onClick={() => navigate(navigateBack)}
         >
           Cancel
         </button>
