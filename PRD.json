@@ -564,7 +564,7 @@
         "Verify rescue mode is covered",
         "Verify grocery list generation is covered"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F001",
         "F012"

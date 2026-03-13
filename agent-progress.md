@@ -354,5 +354,19 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 23 tests: 9 engine tests (filter, fallback, scenario ranking, staples, variants, prep summary, max results), 5 scenario picker tests (display, language, empty state), 4 result display tests (meals shown, prep/confidence, assemblies, change scenario), 3 add-to-tonight/week tests (saves to plan, includes variants), 1 Home integration test (rescue card), 1 styling test
 - Verified: tsc --noEmit passes, vitest passes (256 tests), all F012 steps satisfied
 
+### F017 - All critical planning flows covered by deterministic fixtures and e2e tests (2026-03-13)
+- Enriched H001 fixture (`fixtures/households/H001-conflicting-baseline.json`) with 12 ingredients and 3 base meals (pasta-chicken-broccoli, salmon-rice-peas, fish-fingers-beans-bread) to support full planning flows
+- Ingredients span protein, carb, veg, dairy, freezer, and pantry categories with appropriate tags and baby-safe flags
+- Meals include rescue-eligible and non-rescue entries with different difficulty levels
+- Created `tests/e2e/critical-flows.test.tsx` with 28 end-to-end tests using the deterministic H001 fixture
+- **Household setup flow** (4 tests): fixture loads with all 4 members, constraints persist through save/reload, all role types present, conflicting constraints across members
+- **Base meal planning flow** (7 tests): assembly variants for all members, Alex ARFID prep rules, Riley toddler safe food detection, Sam baby texture adaptation, overlap score, planner page renders meal cards, selecting card shows variants
+- **Rescue mode flow** (5 tests): staple prioritization, per-person assemblies, page renders with scenario picker, add-to-tonight saves plan, reachable from Home
+- **Grocery list flow** (5 tests): merged list from weekly plan, consolidated repeated ingredients, meal linkbacks, page renders from saved plan, already-have toggle
+- **Cross-flow consistency** (3 tests): fixture ingredient-meal references match, conflicting member preferences verified, full pipeline (fixture → plan → variants → grocery → rescue) in one test
+- All 4 PRD-required flows covered: household setup, base meal planning, rescue mode, grocery list generation
+- Verified: tsc --noEmit passes, vitest passes (284 tests)
+
 ## Next Task
-- **F017** — All critical planning flows are covered by deterministic fixtures and end-to-end tests (depends on F001✅, F012✅)
+- **F016** — App loads quickly and supports same-session editing without noticeable lag (depends on F001✅)
+  - Note: F013 (pin meals to rotation) depends on F006✅ but is Phase 2/P1, while F016 is Phase 0/P0
