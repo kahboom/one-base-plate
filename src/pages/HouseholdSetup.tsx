@@ -26,6 +26,7 @@ function createEmptyHousehold(): Household {
     ingredients: [],
     baseMeals: [],
     weeklyPlans: [],
+    pinnedMealIds: [],
   };
 }
 

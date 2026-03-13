@@ -42,6 +42,7 @@ export default function WeeklyPlanner() {
       household.members,
       household.ingredients,
       numDays,
+      household.pinnedMealIds ?? [],
     );
 
     const newPlan: WeeklyPlan = {
@@ -83,6 +84,17 @@ export default function WeeklyPlanner() {
     });
 
     setSelectedMealId(null);
+  }
+
+  function handleTogglePin(mealId: string) {
+    if (!household) return;
+    const current = household.pinnedMealIds ?? [];
+    const updated = current.includes(mealId)
+      ? current.filter((id) => id !== mealId)
+      : [...current, mealId];
+    const updatedHousehold = { ...household, pinnedMealIds: updated };
+    saveHousehold(updatedHousehold);
+    setHousehold(updatedHousehold);
   }
 
   function handleSave() {
@@ -283,7 +295,9 @@ export default function WeeklyPlanner() {
                     overlap={overlap}
                     draggable
                     selected={selectedMealId === meal.id}
+                    pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
                     onAssign={() => setSelectedMealId(selectedMealId === meal.id ? null : meal.id)}
+                    onPin={() => handleTogglePin(meal.id)}
                   />
                 ))}
             </div>

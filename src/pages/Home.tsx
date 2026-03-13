@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { Household } from "../types";
-import { loadHousehold } from "../storage";
+import { loadHousehold, saveHousehold } from "../storage";
 import { computeMealOverlap } from "../planner";
 import MealCard from "../components/MealCard";
 import { PageShell, PageHeader, Card, Section, NavBar } from "../components/ui";
@@ -30,6 +30,23 @@ export default function Home() {
       .sort((a, b) => b.overlap.score - a.overlap.score)
       .slice(0, 3);
   }, [household]);
+
+  const pinnedMeals = useMemo(() => {
+    if (!household) return [];
+    const pinnedIds = household.pinnedMealIds ?? [];
+    return household.baseMeals.filter((m) => pinnedIds.includes(m.id));
+  }, [household]);
+
+  function handleTogglePin(mealId: string) {
+    if (!household) return;
+    const current = household.pinnedMealIds ?? [];
+    const updated = current.includes(mealId)
+      ? current.filter((id) => id !== mealId)
+      : [...current, mealId];
+    const updatedHousehold = { ...household, pinnedMealIds: updated };
+    saveHousehold(updatedHousehold);
+    setHousehold(updatedHousehold);
+  }
 
   if (!loaded) return null;
   if (!household) return <p>Household not found.</p>;
@@ -97,6 +114,27 @@ export default function Home() {
         </Section>
       )}
 
+      {pinnedMeals.length > 0 && (
+        <Section>
+          <div data-testid="pinned-meals">
+            <h2 className="mb-3 text-xl font-semibold text-text-primary">Pinned rotation</h2>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {pinnedMeals.map((meal) => (
+                <MealCard
+                  key={meal.id}
+                  meal={meal}
+                  members={household.members}
+                  ingredients={household.ingredients}
+                  pinned
+                  onPin={() => handleTogglePin(meal.id)}
+                  detailUrl={`/household/${householdId}/meal/${meal.id}`}
+                />
+              ))}
+            </div>
+          </div>
+        </Section>
+      )}
+
       {topMeals.length > 0 && (
         <Section>
           <div data-testid="top-suggestions">
@@ -109,6 +147,8 @@ export default function Home() {
                   members={household.members}
                   ingredients={household.ingredients}
                   overlap={overlap}
+                  pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
+                  onPin={() => handleTogglePin(meal.id)}
                   detailUrl={`/household/${householdId}/meal/${meal.id}`}
                 />
               ))}

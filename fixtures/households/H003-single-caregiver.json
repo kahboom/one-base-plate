@@ -38,5 +38,6 @@
   ],
   "ingredients": [],
   "baseMeals": [],
-  "weeklyPlans": []
+  "weeklyPlans": [],
+  "pinnedMealIds": []
 }

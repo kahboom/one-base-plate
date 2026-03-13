@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import type { BaseMeal, AssemblyVariant, Household } from "../types";
-import { loadHousehold } from "../storage";
+import { loadHousehold, saveHousehold } from "../storage";
 import {
   generateAssemblyVariants,
   computeMealOverlap,
@@ -91,6 +91,17 @@ export default function Planner() {
       : undefined,
   [selectedMeal, household]);
 
+  function handleTogglePin(mealId: string) {
+    if (!household) return;
+    const current = household.pinnedMealIds ?? [];
+    const updated = current.includes(mealId)
+      ? current.filter((id) => id !== mealId)
+      : [...current, mealId];
+    const updatedHousehold = { ...household, pinnedMealIds: updated };
+    saveHousehold(updatedHousehold);
+    setHousehold(updatedHousehold);
+  }
+
   if (!loaded) return null;
 
   if (!household) {
@@ -121,6 +132,8 @@ export default function Planner() {
                     members={household.members}
                     ingredients={household.ingredients}
                     overlap={overlap}
+                    pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
+                    onPin={() => handleTogglePin(meal.id)}
                     onOpen={() => handleSelectMeal(meal.id)}
                   />
                 </div>

@@ -380,6 +380,19 @@ All completed features satisfy their referenced screen acceptance criteria for t
   - **No-crash tests** (4): empty household, no meals, no plan edge cases handled gracefully across Home, Planner, WeeklyPlanner, RescueMode
 - Verified: tsc --noEmit passes, vitest passes (308 tests), vite build succeeds
 
+### F013 - User can pin household-approved meals into a rotation (2026-03-13)
+- Added optional `pinnedMealIds` field to `Household` type (backwards-compatible with existing saved data via `?? []`)
+- Updated `generateWeeklyPlan` to accept optional `pinnedMealIds` parameter — pinned meals receive a +2 scoring bonus during plan generation
+- Added pin/unpin button to `MealCard` component with `onPin` and `pinned` props, showing "Pinned" chip in state chips
+- Added pin/unpin toggle to `MealDetail` page with `handleTogglePin` that persists to localStorage immediately
+- Added pin/unpin to `Planner` page meal card grid — each card shows Pin/Unpin button and Pinned chip
+- Added pin/unpin to `WeeklyPlanner` suggested tray — pinning persists and is reflected in future plan generation
+- Added "Pinned rotation" section to `Home` page showing all pinned meals with unpin capability
+- Pinned meals are saved and reusable — pinnedMealIds persists to storage and survives page reloads
+- Updated fixture files (H001, H002, H003) with `pinnedMealIds: []`
+- Created 18 tests: 3 engine tests (pinned boost, variety, empty default), 4 Planner UI tests (pin button, pin saves, pinned chip, unpin), 3 MealDetail tests (toggle, pin persists, unpin removes), 4 Home rotation tests (section shown, hidden when empty, chips, unpin removes section), 2 WeeklyPlanner tray tests (buttons shown, pin persists), 2 future planning tests (pinned included, lower overlap boosted)
+- Verified: tsc --noEmit passes, vitest passes (326 tests), all F013 steps satisfied
+
 ## Next Task
-- **F013** — User can pin household-approved meals into a rotation (Phase 2, P1, depends on F006✅)
-  - Remaining incomplete features with satisfied deps: F013 (Phase 2/P1), F014 (Phase 2/P1), F020 (Phase 2/P2)
+- **F014** — User can mark meals as success, partial success, or failure and capture quick notes (Phase 2, P1, depends on F010✅)
+  - Remaining incomplete features with satisfied deps: F014 (Phase 2/P1), F020 (Phase 2/P2)

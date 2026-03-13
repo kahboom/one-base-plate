@@ -492,7 +492,7 @@
         "Verify pinned meals are saved and reusable",
         "Verify future planning can prioritize pinned meals"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F006"
       ]

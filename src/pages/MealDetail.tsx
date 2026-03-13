@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Household, BaseMeal } from "../types";
-import { loadHousehold } from "../storage";
+import { loadHousehold, saveHousehold } from "../storage";
 import {
   generateAssemblyVariants,
   computeMealOverlap,
@@ -34,6 +34,18 @@ export default function MealDetail() {
 
   const overlap = computeMealOverlap(meal, household.members, household.ingredients);
   const variants = generateAssemblyVariants(meal, household.members, household.ingredients);
+  const isPinned = (household.pinnedMealIds ?? []).includes(meal.id);
+
+  function handleTogglePin() {
+    if (!household || !meal) return;
+    const current = household.pinnedMealIds ?? [];
+    const updated = isPinned
+      ? current.filter((id) => id !== meal.id)
+      : [...current, meal.id];
+    const updatedHousehold = { ...household, pinnedMealIds: updated };
+    saveHousehold(updatedHousehold);
+    setHousehold(updatedHousehold);
+  }
 
   const componentsByRole = new Map<string, typeof meal.components>();
   for (const comp of meal.components) {
@@ -57,9 +69,18 @@ export default function MealDetail() {
           <span>{meal.difficulty}</span>
           <span>Overlap: {overlap.score}/{overlap.total}</span>
         </div>
-        {meal.rescueEligible && (
-          <Chip variant="neutral" className="mt-2">Rescue eligible</Chip>
-        )}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {isPinned && <Chip variant="success">Pinned</Chip>}
+          {meal.rescueEligible && <Chip variant="neutral">Rescue eligible</Chip>}
+          <Button
+            small
+            variant={isPinned ? "danger" : "default"}
+            onClick={handleTogglePin}
+            data-testid="pin-toggle"
+          >
+            {isPinned ? "Unpin from rotation" : "Pin to rotation"}
+          </Button>
+        </div>
       </Card>
 
       <MealStructure

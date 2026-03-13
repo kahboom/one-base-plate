@@ -11,6 +11,8 @@ export interface MealCardProps {
   overlap?: OverlapResult;
   onAssign?: () => void;
   onOpen?: () => void;
+  onPin?: () => void;
+  pinned?: boolean;
   detailUrl?: string;
   compact?: boolean;
   draggable?: boolean;
@@ -36,6 +38,8 @@ export default function MealCard({
   overlap: overlapProp,
   onAssign,
   onOpen,
+  onPin,
+  pinned = false,
   detailUrl,
   compact = false,
   draggable: isDraggable = false,
@@ -107,13 +111,14 @@ export default function MealCard({
       </p>
 
       <div data-testid="state-chips" className="mb-2 flex flex-wrap gap-1">
+        {pinned && <Chip variant="success">Pinned</Chip>}
         {isHighOverlap && <Chip variant="info">High overlap</Chip>}
         {needsExtraPrep && <Chip variant="warning">Needs extra prep</Chip>}
         {meal.rescueEligible && <Chip variant="neutral">Rescue eligible</Chip>}
       </div>
 
       {!compact && (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {onAssign && (
             <Button
               small
@@ -121,6 +126,16 @@ export default function MealCard({
               data-testid={`assign-${meal.id}`}
             >
               Assign
+            </Button>
+          )}
+          {onPin && (
+            <Button
+              small
+              variant={pinned ? "danger" : "default"}
+              onClick={onPin}
+              data-testid={`pin-${meal.id}`}
+            >
+              {pinned ? "Unpin" : "Pin"}
             </Button>
           )}
           {onOpen && (

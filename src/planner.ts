@@ -425,8 +425,11 @@ export function generateWeeklyPlan(
   members: HouseholdMember[],
   ingredients: Ingredient[],
   numDays: number = 7,
+  pinnedMealIds: string[] = [],
 ): DayPlan[] {
   if (meals.length === 0 || numDays <= 0) return [];
+
+  const pinnedSet = new Set(pinnedMealIds);
 
   const rankedMeals = [...meals]
     .map((meal) => ({
@@ -459,7 +462,10 @@ export function generateWeeklyPlan(
         const prevMealId = days[d - 1]?.baseMealId;
         const repeatPenalty = meal.id === prevMealId ? 3 : 0;
 
-        const score = overlap.score + reuseBonus * 0.5 - repeatPenalty;
+        // Bonus for pinned meals
+        const pinnedBonus = pinnedSet.has(meal.id) ? 2 : 0;
+
+        const score = overlap.score + reuseBonus * 0.5 - repeatPenalty + pinnedBonus;
         if (score > bestScore) {
           bestScore = score;
           bestMeal = meal;

@@ -102,4 +102,5 @@ export interface Household {
   ingredients: Ingredient[];
   baseMeals: BaseMeal[];
   weeklyPlans: WeeklyPlan[];
+  pinnedMealIds?: string[];
 }
