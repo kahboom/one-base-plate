@@ -268,7 +268,7 @@ describe("F007: Baby texture transformations", () => {
 
     expect(babyVariant.safeFoodIncluded).toBe(false);
     expect(babyVariant.instructions.some((i) =>
-      i.includes("Add a safe food on the side") && i.includes("sweet potato"),
+      i.includes("No safe food in this meal") && i.includes("sweet potato"),
     )).toBe(true);
   });
 

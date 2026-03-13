@@ -74,5 +74,14 @@
 - Created 8 new tests: 7 engine tests for baby texture scenarios, 1 UI integration test
 - Verified: tsc --noEmit passes, vitest passes (52 tests), all F007 steps satisfied
 
+### F008 - Toddler plate safe food guarantee (2026-03-13)
+- Enhanced assembly engine to explicitly name which safe foods are included for toddlers/babies ("Includes safe food: pasta, cheese")
+- When no safe food matches, provides explicit fallback: "No safe food in this meal — add on the side: pasta, bread, cheese"
+- Toddler compatibility is never silently omitted — every toddler/baby variant has an explicit safe food status instruction
+- Handles edge case of toddler with no safe foods defined ("No safe food matched — consider adding a familiar side")
+- Updated 2 existing test assertions (F006, F007) for new fallback wording
+- Created 8 new tests: 7 engine tests for toddler safe food scenarios, 1 UI integration test
+- Verified: tsc --noEmit passes, vitest passes (60 tests), all F008 steps satisfied
+
 ## Next Task
-- **F008** — Planner ensures toddler plate includes at least one safe food
+- **F018** — Planner explains why a meal was recommended and what the trade-offs are

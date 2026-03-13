@@ -209,7 +209,7 @@ describe("F006: Assembly variant generation engine", () => {
     const variants = generateAssemblyVariants(baseMeal, members, ingredients);
     const sam = variants.find((v) => v.memberId === "m-sam")!;
     expect(sam.safeFoodIncluded).toBe(false);
-    expect(sam.instructions.some((i) => i.includes("Add a safe food on the side"))).toBe(true);
+    expect(sam.instructions.some((i) => i.includes("No safe food in this meal") && i.includes("add on the side"))).toBe(true);
     expect(sam.instructions.some((i) => i.includes("sweet potato"))).toBe(true);
   });
 

@@ -393,7 +393,7 @@
         "If no direct fit exists, verify an explicit fallback safe food is suggested",
         "Verify the output never silently omits toddler compatibility"
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F006"
       ],

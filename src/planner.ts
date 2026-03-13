@@ -141,9 +141,13 @@ export function generateAssemblyVariants(
       requiresExtraPrep = true;
     }
 
+    const matchedSafeFoods: string[] = [];
+
     for (const component of includedComponents) {
       if (isSafeFoodComponent(component, member, ingredients)) {
         safeFoodIncluded = true;
+        const name = resolveIngredientName(component.ingredientId, ingredients);
+        matchedSafeFoods.push(name);
       }
 
       const prepInstruction = getPreparationInstruction(
@@ -175,13 +179,12 @@ export function generateAssemblyVariants(
       instructions.push("Serve as prepared — no modifications needed");
     }
 
-    if (
-      !safeFoodIncluded &&
-      (member.role === "toddler" || member.role === "baby")
-    ) {
-      if (member.safeFoods.length > 0) {
+    if (member.role === "toddler" || member.role === "baby") {
+      if (safeFoodIncluded) {
+        instructions.push(`Includes safe food: ${matchedSafeFoods.join(", ")}`);
+      } else if (member.safeFoods.length > 0) {
         instructions.push(
-          `Add a safe food on the side: ${member.safeFoods.slice(0, 3).join(", ")}`,
+          `No safe food in this meal — add on the side: ${member.safeFoods.slice(0, 3).join(", ")}`,
         );
       } else {
         instructions.push("No safe food matched — consider adding a familiar side");
