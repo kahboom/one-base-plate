@@ -909,7 +909,7 @@
         "Remove or repurpose redundant Setup button on household card if it duplicates the main click target.",
         "Verify clicking a household opens the edit/setup screen and users can reach Home via nav."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": ["F036"],
       "acceptanceRefs": ["S001", "S006"]
     },

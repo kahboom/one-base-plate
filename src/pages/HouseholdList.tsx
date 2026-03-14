@@ -71,7 +71,7 @@ export default function HouseholdList() {
           {households.map((h) => (
             <Card key={h.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0 flex-1">
-                <Link to={`/household/${h.id}/home`} className="text-lg font-semibold text-brand hover:underline">
+                <Link to={`/household/${h.id}`} className="text-lg font-semibold text-brand hover:underline">
                   {h.name}
                 </Link>
                 <span className="ml-2 text-sm text-text-muted">
@@ -85,9 +85,6 @@ export default function HouseholdList() {
                 )}
               </div>
               <div className="flex gap-2">
-                <Link to={`/household/${h.id}`}>
-                  <Button small>Setup</Button>
-                </Link>
                 <Button variant="danger" small onClick={() => handleDelete(h)}>
                   Delete
                 </Button>

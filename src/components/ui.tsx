@@ -217,7 +217,6 @@ export function HouseholdNav({ householdId }: { householdId: string }) {
       <Link to={`/household/${householdId}/history`} className={navLinkClass}>Meal history</Link>
       <Link to={`/household/${householdId}/ingredients`} className={navLinkClass}>Ingredients</Link>
       <Link to={`/household/${householdId}/meals`} className={navLinkClass}>Base meals</Link>
-      <Link to={`/household/${householdId}`} className={navLinkClass}>Household setup</Link>
       <Link to="/" className={navLinkClass}>All households</Link>
     </NavBar>
   );

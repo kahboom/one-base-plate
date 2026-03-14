@@ -70,7 +70,6 @@ const NAV_LINKS = [
   "Meal history",
   "Ingredients",
   "Base meals",
-  "Household setup",
   "All households",
 ];
 
@@ -227,7 +226,6 @@ describe("F036: Consistent navigation across all household screens", () => {
       expect(hrefs).toContain("/household/h-nav/grocery");
       expect(hrefs).toContain("/household/h-nav/rescue");
       expect(hrefs).toContain("/household/h-nav/history");
-      expect(hrefs).toContain("/household/h-nav");
       expect(hrefs).toContain("/");
     });
   });

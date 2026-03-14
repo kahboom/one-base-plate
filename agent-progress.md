@@ -551,5 +551,14 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 18 tests: 2 type/storage tests (pet role valid, pet in household), 2 assembly variant tests (exclusion, parity), 3 overlap scoring tests (meal, ingredient, parity), 2 rescue mode tests (variant exclusion, overlap exclusion), 2 explanation tests (no pet in explanation/reason), 1 UI role selector test (pet option present), 5 seed tests (auto-seed, no-overwrite, no-re-seed, McGeever present, Lex is pet), 1 Planner UI test (no pet variant shown)
 - Verified: tsc --noEmit passes (pre-existing f035/f036 errors only), vitest passes (530 tests, 2 pre-existing f033 failures unrelated to F040), all F040 steps satisfied
 
+### F041 - Clicking a household navigates to Edit setup; remove Household setup from nav (2026-03-14)
+- Changed HouseholdList: clicking household card/name now navigates to `/household/:id` (HouseholdSetup) instead of `/household/:id/home`
+- Removed redundant "Setup" button from household cards in HouseholdList — the card name link is now the sole click target for editing
+- Removed "Household setup" link from `HouseholdNav` in `src/components/ui.tsx`
+- "Home" and "All households" links remain in nav so users can always reach Home from within a household
+- Updated f036 test file: removed "Household setup" from `NAV_LINKS` array and removed its href expectation
+- Created 8 tests: 4 HouseholdList click behavior tests (navigates to setup, href correct, no Setup button, Delete still present), 3 nav removal tests (no Household setup in nav, Home present, All households present), 1 navigation test (Home link from setup goes to Home page)
+- Verified: tsc --noEmit passes (pre-existing f035/f036 errors only), vitest passes (538 tests, 2 pre-existing f033 failures unrelated to F041), all F041 steps satisfied
+
 ## Next Task
-- F041: Clicking a household navigates to Edit setup; remove Household setup from nav
+- F042: User can share a mobile-friendly screenshot of the weekly plan via text
