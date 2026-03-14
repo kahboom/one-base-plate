@@ -240,12 +240,15 @@ describe("F035: Remove ingredient confirmation", () => {
       </MemoryRouter>
     );
 
-    const removeBtns = screen.getAllByText("Remove ingredient");
-    await user.click(removeBtns[0]);
+    // Click row to open modal, then click Remove inside modal
+    const rows = screen.getAllByTestId(/^ingredient-row-/);
+    await user.click(rows[0]!);
+    const modal = screen.getByTestId("ingredient-modal");
+    await user.click(within(modal).getByText("Remove ingredient"));
 
-    const dialog = screen.getByRole("dialog");
+    const dialog = screen.getByRole("dialog", { name: "Remove ingredient" });
     expect(dialog).toBeInTheDocument();
-    expect(screen.getByText(/Chicken/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Chicken/)).toBeInTheDocument();
   });
 
   it("removes ingredient only after confirming", async () => {
@@ -260,16 +263,19 @@ describe("F035: Remove ingredient confirmation", () => {
       </MemoryRouter>
     );
 
-    const removeBtns = screen.getAllByText("Remove ingredient");
-    await user.click(removeBtns[0]);
+    // Open modal and click Remove
+    const rows = screen.getAllByTestId(/^ingredient-row-/);
+    await user.click(rows[0]!);
+    const modal = screen.getByTestId("ingredient-modal");
+    await user.click(within(modal).getByText("Remove ingredient"));
 
-    expect(screen.getByDisplayValue("Chicken")).toBeInTheDocument();
-
-    const dialog = screen.getByRole("dialog");
+    const dialog = screen.getByRole("dialog", { name: "Remove ingredient" });
     await user.click(within(dialog).getByText("Remove"));
 
-    expect(screen.queryByDisplayValue("Chicken")).not.toBeInTheDocument();
-    expect(screen.getByDisplayValue("Rice")).toBeInTheDocument();
+    // After removal, only Rice row should remain
+    const remainingRows = screen.getAllByTestId(/^ingredient-row-/);
+    expect(remainingRows).toHaveLength(1);
+    expect(screen.getByText("Rice")).toBeInTheDocument();
   });
 
   it("cancels ingredient removal", async () => {
@@ -284,14 +290,18 @@ describe("F035: Remove ingredient confirmation", () => {
       </MemoryRouter>
     );
 
-    const removeBtns = screen.getAllByText("Remove ingredient");
-    await user.click(removeBtns[0]);
+    // Open modal and click Remove
+    const rows = screen.getAllByTestId(/^ingredient-row-/);
+    await user.click(rows[0]!);
+    const modal = screen.getByTestId("ingredient-modal");
+    await user.click(within(modal).getByText("Remove ingredient"));
 
-    const dialog = screen.getByRole("dialog");
+    const dialog = screen.getByRole("dialog", { name: "Remove ingredient" });
     await user.click(within(dialog).getByText("Cancel"));
 
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByDisplayValue("Chicken")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Remove ingredient" })).not.toBeInTheDocument();
+    // Both ingredient rows should still exist
+    expect(screen.getAllByTestId(/^ingredient-row-/)).toHaveLength(2);
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { Household } from "../src/types";
@@ -99,9 +99,10 @@ describe("F037 — Image URL field on data model", () => {
 });
 
 describe("F037 — Ingredient Manager image input", () => {
-  it("shows image URL input field for each ingredient", () => {
+  it("shows image URL input field in ingredient modal", async () => {
     const h = makeHousehold();
     saveHousehold(h);
+    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
         <Routes>
@@ -109,13 +110,15 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    const inputs = screen.getAllByTestId("ingredient-image-url");
-    expect(inputs.length).toBe(2);
+    await user.click(screen.getByText("Chicken"));
+    const modal = screen.getByTestId("ingredient-modal");
+    expect(within(modal).getByTestId("ingredient-image-url")).toBeInTheDocument();
   });
 
-  it("shows image preview when imageUrl is set", () => {
+  it("shows image preview when imageUrl is set", async () => {
     const h = makeHousehold();
     saveHousehold(h);
+    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
         <Routes>
@@ -123,9 +126,11 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    const previews = screen.getAllByTestId("ingredient-image-preview");
-    expect(previews.length).toBe(1);
-    expect(previews[0]).toHaveAttribute("src", "https://example.com/rice.jpg");
+    // Open the Rice ingredient (which has imageUrl)
+    await user.click(screen.getByText("Rice"));
+    const modal = screen.getByTestId("ingredient-modal");
+    const preview = within(modal).getByTestId("ingredient-image-preview");
+    expect(preview).toHaveAttribute("src", "https://example.com/rice.jpg");
   });
 
   it("updates imageUrl when user types a URL", async () => {
@@ -140,17 +145,20 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    const inputs = screen.getAllByTestId("ingredient-image-url");
-    await user.type(inputs[0]!, "https://example.com/chicken.jpg");
-    await user.click(screen.getByText("Save ingredients"));
+    await user.click(screen.getByText("Chicken"));
+    const modal = screen.getByTestId("ingredient-modal");
+    await user.type(within(modal).getByTestId("ingredient-image-url"), "https://example.com/chicken.jpg");
+    await user.click(within(modal).getByText("Done"));
+    await user.click(screen.getAllByRole("button", { name: "Save ingredients" })[0]);
 
     const saved = loadHousehold("h1");
     expect(saved!.ingredients[0]!.imageUrl).toBe("https://example.com/chicken.jpg");
   });
 
-  it("shows file upload button for each ingredient", () => {
+  it("shows file upload button in ingredient modal", async () => {
     const h = makeHousehold();
     saveHousehold(h);
+    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
         <Routes>
@@ -158,13 +166,15 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    const uploads = screen.getAllByTestId("ingredient-image-upload");
-    expect(uploads.length).toBe(2);
+    await user.click(screen.getByText("Chicken"));
+    const modal = screen.getByTestId("ingredient-modal");
+    expect(within(modal).getByTestId("ingredient-image-upload")).toBeInTheDocument();
   });
 
-  it("image preview has rounded corners and proper aspect ratio", () => {
+  it("image preview has rounded corners and proper aspect ratio", async () => {
     const h = makeHousehold();
     saveHousehold(h);
+    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
         <Routes>
@@ -172,7 +182,9 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    const preview = screen.getByTestId("ingredient-image-preview");
+    await user.click(screen.getByText("Rice"));
+    const modal = screen.getByTestId("ingredient-modal");
+    const preview = within(modal).getByTestId("ingredient-image-preview");
     expect(preview.className).toContain("rounded-md");
     expect(preview.className).toContain("object-cover");
   });
@@ -222,7 +234,7 @@ describe("F037 — Base Meal Manager image input", () => {
     );
     const inputs = screen.getAllByTestId("meal-image-url");
     await user.type(inputs[0]!, "https://example.com/stir-fry.jpg");
-    await user.click(screen.getByText("Save meals"));
+    await user.click(screen.getAllByRole("button", { name: "Save meals" })[0]);
 
     const saved = loadHousehold("h1");
     expect(saved!.baseMeals[0]!.imageUrl).toBe("https://example.com/stir-fry.jpg");
@@ -369,9 +381,10 @@ describe("F037 — MealCard thumbnail", () => {
 });
 
 describe("F037 — Mobile readability", () => {
-  it("ingredient image preview is appropriately sized", () => {
+  it("ingredient image preview is appropriately sized", async () => {
     const h = makeHousehold();
     saveHousehold(h);
+    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
         <Routes>
@@ -379,7 +392,9 @@ describe("F037 — Mobile readability", () => {
         </Routes>
       </MemoryRouter>,
     );
-    const preview = screen.getByTestId("ingredient-image-preview");
+    await user.click(screen.getByText("Rice"));
+    const modal = screen.getByTestId("ingredient-modal");
+    const preview = within(modal).getByTestId("ingredient-image-preview");
     expect(preview.className).toContain("h-20");
     expect(preview.className).toContain("w-20");
   });

@@ -56,47 +56,33 @@ describe("F004: Add ingredients across categories", () => {
 
     expect(screen.getByText("Items (0)")).toBeInTheDocument();
 
-    // Add three ingredients
-    const addButton = screen.getByText("Add ingredient");
-    await user.click(addButton);
-    await user.click(addButton);
-    await user.click(addButton);
+    // Add three ingredients via Add button (opens modal each time)
+    const addButtons = screen.getAllByText("Add ingredient");
+    await user.click(addButtons[0]!);
+
+    // Modal opens — fill in first ingredient
+    let modal = screen.getByTestId("ingredient-modal");
+    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Rice");
+    await user.click(within(modal).getByText("Done"));
+
+    await user.click(addButtons[0]!);
+    modal = screen.getByTestId("ingredient-modal");
+    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Chicken breast");
+    await user.selectOptions(within(modal).getByTestId("modal-ingredient-category"), "protein");
+    await user.click(within(modal).getByLabelText("Freezer friendly"));
+    await user.click(within(modal).getByText("Done"));
+
+    await user.click(addButtons[0]!);
+    modal = screen.getByTestId("ingredient-modal");
+    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Carrots");
+    await user.selectOptions(within(modal).getByTestId("modal-ingredient-category"), "veg");
+    await user.click(within(modal).getByLabelText("Baby safe with adaptation"));
+    await user.click(within(modal).getByText("Done"));
 
     expect(screen.getByText("Items (3)")).toBeInTheDocument();
 
-    const cards = screen.getAllByText("Ingredient").map((el) => el.closest("[data-testid^='ingredient-']") as HTMLElement);
-    expect(cards).toHaveLength(3);
-
-    // Fill in first ingredient: pantry item
-    const name0 = within(cards[0]!).getByPlaceholderText("Ingredient name");
-    await user.type(name0, "Rice");
-    await user.selectOptions(
-      within(cards[0]!).getByDisplayValue("pantry"),
-      "pantry",
-    );
-
-    // Fill in second ingredient: protein (freezer)
-    const name1 = within(cards[1]!).getByPlaceholderText("Ingredient name");
-    await user.type(name1, "Chicken breast");
-    await user.selectOptions(
-      within(cards[1]!).getByDisplayValue("pantry"),
-      "protein",
-    );
-    await user.click(within(cards[1]!).getByLabelText("Freezer friendly"));
-
-    // Fill in third ingredient: veg
-    const name2 = within(cards[2]!).getByPlaceholderText("Ingredient name");
-    await user.type(name2, "Carrots");
-    await user.selectOptions(
-      within(cards[2]!).getByDisplayValue("pantry"),
-      "veg",
-    );
-    await user.click(
-      within(cards[2]!).getByLabelText("Baby safe with adaptation"),
-    );
-
     // Save
-    await user.click(screen.getByText("Save ingredients"));
+    await user.click(screen.getAllByRole("button", { name: "Save ingredients" })[0]);
 
     // Verify persistence
     const saved = loadHousehold("h-ing")!;
@@ -118,30 +104,29 @@ describe("F004: Tag ingredients", () => {
     const user = userEvent.setup();
     renderIngredientManager("h-ing");
 
-    await user.click(screen.getByText("Add ingredient"));
+    await user.click(screen.getAllByText("Add ingredient")[0]!);
 
-    const card = screen.getByText("Ingredient").closest("[data-testid^='ingredient-']") as HTMLElement;
-    const nameInput = within(card).getByPlaceholderText("Ingredient name");
-    await user.type(nameInput, "Pasta");
+    const modal = screen.getByTestId("ingredient-modal");
+    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Pasta");
 
-    // Add a common tag
-    await user.click(within(card).getByText("+quick"));
-    await user.click(within(card).getByText("+rescue"));
+    // Add common tags
+    await user.click(within(modal).getByText("+quick"));
+    await user.click(within(modal).getByText("+rescue"));
 
     // Add a custom tag
-    const tagInput = within(card).getByPlaceholderText("Custom tag");
+    const tagInput = within(modal).getByPlaceholderText("Custom tag");
     await user.type(tagInput, "kid-friendly");
-    await user.click(within(card).getByText("Add tag"));
+    await user.click(within(modal).getByText("Add tag"));
 
     // Verify tags are displayed
-    expect(within(card).getByTestId("tag-quick")).toBeInTheDocument();
-    expect(within(card).getByTestId("tag-rescue")).toBeInTheDocument();
-    expect(
-      within(card).getByTestId("tag-kid-friendly"),
-    ).toBeInTheDocument();
+    expect(within(modal).getByTestId("tag-quick")).toBeInTheDocument();
+    expect(within(modal).getByTestId("tag-rescue")).toBeInTheDocument();
+    expect(within(modal).getByTestId("tag-kid-friendly")).toBeInTheDocument();
+
+    await user.click(within(modal).getByText("Done"));
 
     // Save and verify
-    await user.click(screen.getByText("Save ingredients"));
+    await user.click(screen.getAllByRole("button", { name: "Save ingredients" })[0]);
 
     const saved = loadHousehold("h-ing")!;
     expect(saved.ingredients[0]!.tags).toEqual([
@@ -156,21 +141,18 @@ describe("F004: Tag ingredients", () => {
     const user = userEvent.setup();
     renderIngredientManager("h-ing");
 
-    await user.click(screen.getByText("Add ingredient"));
-    const card = screen.getByText("Ingredient").closest("[data-testid^='ingredient-']") as HTMLElement;
+    await user.click(screen.getAllByText("Add ingredient")[0]!);
+    const modal = screen.getByTestId("ingredient-modal");
 
-    await user.click(within(card).getByText("+mashable"));
-    expect(within(card).getByTestId("tag-mashable")).toBeInTheDocument();
+    await user.click(within(modal).getByText("+mashable"));
+    expect(within(modal).getByTestId("tag-mashable")).toBeInTheDocument();
 
     // Remove the tag
-    const removeBtn = within(
-      within(card).getByTestId("tag-mashable"),
-    ).getByText("x");
+    const tagEl = within(modal).getByTestId("tag-mashable").closest("span")!.parentElement!;
+    const removeBtn = within(tagEl).getByText("x");
     await user.click(removeBtn);
 
-    expect(
-      within(card).queryByTestId("tag-mashable"),
-    ).not.toBeInTheDocument();
+    expect(within(modal).queryByTestId("tag-mashable")).not.toBeInTheDocument();
   });
 });
 
@@ -180,14 +162,20 @@ describe("F004: Remove ingredient", () => {
     const user = userEvent.setup();
     renderIngredientManager("h-ing");
 
-    await user.click(screen.getByText("Add ingredient"));
-    await user.click(screen.getByText("Add ingredient"));
+    // Add two ingredients
+    await user.click(screen.getAllByText("Add ingredient")[0]!);
+    await user.click(within(screen.getByTestId("ingredient-modal")).getByText("Done"));
+    await user.click(screen.getAllByText("Add ingredient")[0]!);
+    await user.click(within(screen.getByTestId("ingredient-modal")).getByText("Done"));
     expect(screen.getByText("Items (2)")).toBeInTheDocument();
 
-    const removeButtons = screen.getAllByText("Remove ingredient");
-    await user.click(removeButtons[0]!);
+    // Click first row to open modal, then remove
+    const rows = screen.getAllByTestId(/^ingredient-row-/);
+    await user.click(rows[0]!);
+    await user.click(within(screen.getByTestId("ingredient-modal")).getByText("Remove ingredient"));
 
-    const dialog = screen.getByRole("dialog");
+    // Confirm dialog
+    const dialog = screen.getByRole("dialog", { name: "Remove ingredient" });
     await user.click(within(dialog).getByText("Remove"));
 
     expect(screen.getByText("Items (1)")).toBeInTheDocument();
@@ -222,12 +210,9 @@ describe("F004: Ingredients persist across re-open", () => {
     renderIngredientManager("h-ing");
 
     expect(screen.getByText("Items (2)")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Oats")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Salmon")).toBeInTheDocument();
 
-    // Verify tags loaded
-    expect(screen.getByTestId("tag-quick")).toBeInTheDocument();
-    expect(screen.getByTestId("tag-rescue")).toBeInTheDocument();
-    expect(screen.getByTestId("tag-batch-friendly")).toBeInTheDocument();
+    // Browse list shows ingredient names
+    expect(screen.getByText("Oats")).toBeInTheDocument();
+    expect(screen.getByText("Salmon")).toBeInTheDocument();
   });
 });

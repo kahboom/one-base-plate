@@ -590,5 +590,22 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Added 6 new F036 tests: active brand background, aria-current presence/absence, touch-friendly min-height, active state navigation change, All households never active
 - Verified: tsc --noEmit passes (pre-existing test file errors only), vitest passes (555 tests, 2 pre-existing f033 failures unrelated to F036), all F036 steps satisfied
 
+### F043 - Ingredient Manager becomes a compact browse-first list with modal editing (2026-03-14)
+- Replaced permanently expanded ingredient cards with a browse-first compact list layout
+- Added control bar with search input, category filter dropdown, and tag filter dropdown above the list
+- Ingredients render as compact clickable rows (`IngredientRow` component) showing name, category chip, tag chips, freezer-friendly/baby-safe flag icons, and optional thumbnail — all at a glance
+- Category chips color-coded by type (protein=danger, carb=warning, veg/fruit=success, dairy/freezer=info, snack/pantry=neutral)
+- Clicking a row opens `IngredientModal` dialog for full editing (name, category, checkboxes, image URL/upload, tags)
+- "Add ingredient" creates a new ingredient and immediately opens the modal for editing
+- Delete action ("Remove ingredient") placed inside the modal, not on the browse row — keeps destructive actions secondary
+- Search filters by ingredient name (case-insensitive), category filter by exact category, tag filter by exact tag match
+- Filter count shown when filters narrow results ("Items (30) · showing 5")
+- Empty states for no ingredients and for no filter matches
+- Rows use `min-h-[48px]` touch targets with `aria-label` for accessibility
+- `useMemo` on `allTags`, `filteredIngredients` for performance with 25-50+ ingredients
+- Updated 3 existing test files (f004, f035, f037) to use modal-based workflow instead of expanded card queries
+- Created 16 new F043 tests: 3 browse-first list tests (compact rows, flags display, no expanded forms), 5 search/filter tests (control bar, search, category filter, tag filter, filter count), 4 modal editing tests (open modal, edit+close, delete inside modal, add opens modal), 2 many-ingredients tests (30 items, touch targets), 2 empty state tests
+- Verified: vitest passes (571 tests, 2 pre-existing f033 failures unrelated to F043), all F043 steps satisfied
+
 ## Next Task
-- F043: Ingredient Manager becomes a compact browse-first list with modal editing (depends on F004, F032, F033, F036 — all complete)
+- F044: App ships with a seeded ingredient catalog and add-from-catalog flow
