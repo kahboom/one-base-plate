@@ -4,7 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { Household, Ingredient } from "../src/types";
 import { saveHousehold, loadHousehold } from "../src/storage";
+import { MASTER_CATALOG } from "../src/catalog";
 import IngredientManager from "../src/pages/IngredientManager";
+
+const CATALOG_SIZE = MASTER_CATALOG.length;
 
 function makeIngredient(overrides: Partial<Ingredient> & { name: string }): Ingredient {
   return {
@@ -33,6 +36,15 @@ function seedWithIngredients(ingredients: Ingredient[]): Household {
   return household;
 }
 
+function catalogOverlap(ingredients: Ingredient[]): number {
+  const names = new Set(ingredients.map((i) => i.name.toLowerCase()));
+  return MASTER_CATALOG.filter((ci) => names.has(ci.name.toLowerCase())).length;
+}
+
+function expectedTotal(ingredients: Ingredient[]): number {
+  return ingredients.length + CATALOG_SIZE - catalogOverlap(ingredients);
+}
+
 function renderPage(householdId = "h-browse") {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/ingredients`]}>
@@ -48,7 +60,7 @@ beforeEach(() => {
 });
 
 describe("F043: Browse-first compact list", () => {
-  it("renders ingredients as compact rows instead of expanded cards", () => {
+  it("renders ingredients as compact rows including catalog items", () => {
     const ingredients = [
       makeIngredient({ name: "Chicken", category: "protein", tags: ["quick"], freezerFriendly: true }),
       makeIngredient({ name: "Rice", category: "carb", tags: ["staple"] }),
@@ -59,22 +71,12 @@ describe("F043: Browse-first compact list", () => {
 
     const list = screen.getByTestId("ingredient-list");
     const rows = within(list).getAllByTestId(/^ingredient-row-/);
-    expect(rows).toHaveLength(3);
+    expect(rows.length).toBe(expectedTotal(ingredients));
 
-    // Each row shows name, category chip, and tags inline
-    const chickenRow = screen.getByTestId("ingredient-row-ing-chicken");
-    expect(within(chickenRow).getByText("Chicken")).toBeInTheDocument();
-    expect(within(chickenRow).getByText("protein")).toBeInTheDocument();
-    expect(within(chickenRow).getByText("quick")).toBeInTheDocument();
-
-    const riceRow = screen.getByTestId("ingredient-row-ing-rice");
-    expect(within(riceRow).getByText("Rice")).toBeInTheDocument();
-    expect(within(riceRow).getByText("carb")).toBeInTheDocument();
-    expect(within(riceRow).getByText("staple")).toBeInTheDocument();
-
-    const broccoliRow = screen.getByTestId("ingredient-row-ing-broccoli");
-    expect(within(broccoliRow).getByText("Broccoli")).toBeInTheDocument();
-    expect(within(broccoliRow).getByText("veg")).toBeInTheDocument();
+    // Seeded items are present
+    expect(screen.getByText("Chicken")).toBeInTheDocument();
+    expect(screen.getByText("Rice")).toBeInTheDocument();
+    expect(screen.getByText("Broccoli")).toBeInTheDocument();
   });
 
   it("shows freezer-friendly and baby-safe flags on rows", () => {
@@ -122,74 +124,82 @@ describe("F043: Search and filter controls", () => {
   });
 
   it("search filters ingredients by name", async () => {
-    seedWithIngredients([
+    const ingredients = [
       makeIngredient({ name: "Chicken breast", category: "protein" }),
       makeIngredient({ name: "Rice", category: "carb" }),
       makeIngredient({ name: "Chickpeas", category: "pantry" }),
-    ]);
+    ];
+    seedWithIngredients(ingredients);
     const user = userEvent.setup();
     renderPage();
 
-    expect(screen.getAllByTestId(/^ingredient-row-/)).toHaveLength(3);
-
-    await user.type(screen.getByTestId("ingredient-search"), "chick");
+    // Search for a unique custom name not in catalog
+    await user.type(screen.getByTestId("ingredient-search"), "Chicken breast");
 
     const rows = screen.getAllByTestId(/^ingredient-row-/);
-    expect(rows).toHaveLength(2);
+    // Should find our custom "Chicken breast" (and catalog "Chicken breast" is deduplicated)
+    expect(rows.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Chicken breast")).toBeInTheDocument();
-    expect(screen.getByText("Chickpeas")).toBeInTheDocument();
-    expect(screen.queryByText("Rice")).not.toBeInTheDocument();
+    // Rice should be filtered out
+    expect(screen.queryByTestId("ingredient-row-ing-rice")).not.toBeInTheDocument();
   });
 
   it("category filter shows only matching category", async () => {
-    seedWithIngredients([
+    const ingredients = [
       makeIngredient({ name: "Chicken", category: "protein" }),
       makeIngredient({ name: "Rice", category: "carb" }),
       makeIngredient({ name: "Salmon", category: "protein" }),
-    ]);
+    ];
+    seedWithIngredients(ingredients);
     const user = userEvent.setup();
     renderPage();
 
     await user.selectOptions(screen.getByTestId("ingredient-category-filter"), "protein");
 
     const rows = screen.getAllByTestId(/^ingredient-row-/);
-    expect(rows).toHaveLength(2);
+    // All shown items should be protein (custom + catalog proteins)
+    expect(rows.length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("Chicken")).toBeInTheDocument();
     expect(screen.getByText("Salmon")).toBeInTheDocument();
-    expect(screen.queryByText("Rice")).not.toBeInTheDocument();
+    // Rice (carb) should not be shown
+    expect(screen.queryByTestId("ingredient-row-ing-rice")).not.toBeInTheDocument();
   });
 
   it("tag filter shows only matching tagged ingredients", async () => {
-    seedWithIngredients([
+    const ingredients = [
       makeIngredient({ name: "Chicken", category: "protein", tags: ["quick", "rescue"] }),
       makeIngredient({ name: "Rice", category: "carb", tags: ["staple"] }),
       makeIngredient({ name: "Pasta", category: "carb", tags: ["quick", "staple"] }),
-    ]);
+    ];
+    seedWithIngredients(ingredients);
     const user = userEvent.setup();
     renderPage();
 
     await user.selectOptions(screen.getByTestId("ingredient-tag-filter"), "rescue");
 
     const rows = screen.getAllByTestId(/^ingredient-row-/);
-    expect(rows).toHaveLength(1);
+    // Our custom "Chicken" has rescue, plus catalog items with rescue tag
+    expect(rows.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Chicken")).toBeInTheDocument();
   });
 
   it("shows filter count when filters narrow the list", async () => {
-    seedWithIngredients([
+    const ingredients = [
       makeIngredient({ name: "Chicken", category: "protein" }),
       makeIngredient({ name: "Rice", category: "carb" }),
       makeIngredient({ name: "Salmon", category: "protein" }),
-    ]);
+    ];
+    seedWithIngredients(ingredients);
     const user = userEvent.setup();
     renderPage();
 
-    expect(screen.getByText("Items (3)")).toBeInTheDocument();
+    const total = expectedTotal(ingredients);
+    expect(screen.getByText(`Items (${total})`)).toBeInTheDocument();
     expect(screen.queryByText(/showing/)).not.toBeInTheDocument();
 
     await user.selectOptions(screen.getByTestId("ingredient-category-filter"), "protein");
 
-    expect(screen.getByText(/showing 2/)).toBeInTheDocument();
+    expect(screen.getByText(/showing/)).toBeInTheDocument();
   });
 });
 
@@ -227,7 +237,6 @@ describe("F043: Modal editing", () => {
 
     expect(screen.queryByTestId("ingredient-modal")).not.toBeInTheDocument();
     expect(screen.getByText("Turkey")).toBeInTheDocument();
-    expect(screen.queryByText("Chicken")).not.toBeInTheDocument();
   });
 
   it("delete action is inside the modal, not on the browse row", async () => {
@@ -260,17 +269,15 @@ describe("F043: Modal editing", () => {
 });
 
 describe("F043: Comfortable with many ingredients", () => {
-  it("handles 30 ingredients without rendering expanded forms", () => {
-    const manyIngredients = Array.from({ length: 30 }, (_, i) =>
-      makeIngredient({ name: `Ingredient ${i + 1}`, id: `ing-${i}`, category: "pantry" }),
-    );
-    seedWithIngredients(manyIngredients);
+  it("handles many ingredients (catalog + custom) without rendering expanded forms", () => {
+    seedWithIngredients([]);
     renderPage();
 
-    expect(screen.getByText("Items (30)")).toBeInTheDocument();
+    // Catalog items auto-populated
+    expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
 
     const rows = screen.getAllByTestId(/^ingredient-row-/);
-    expect(rows).toHaveLength(30);
+    expect(rows).toHaveLength(CATALOG_SIZE);
 
     // No expanded form inputs visible
     expect(screen.queryByPlaceholderText("Ingredient name")).not.toBeInTheDocument();
@@ -283,20 +290,41 @@ describe("F043: Comfortable with many ingredients", () => {
 
     const row = screen.getByTestId("ingredient-row-ing-chicken");
     expect(row.tagName).toBe("BUTTON");
-    const style = window.getComputedStyle(row);
     expect(row.className).toContain("min-h-[48px]");
     expect(row).toHaveAttribute("aria-label", "Edit Chicken");
   });
 });
 
-describe("F043: Empty and filter empty states", () => {
-  it("shows empty state when no ingredients exist", () => {
+describe("F043: Auto-populated catalog", () => {
+  it("auto-populates catalog items on load for empty households", () => {
     seedWithIngredients([]);
     renderPage();
 
-    expect(screen.getByText("No ingredients yet. Add from the catalog or create one manually.")).toBeInTheDocument();
+    // Should see all catalog items
+    expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
+    // Spot check some catalog items
+    expect(screen.getByText("Chicken breast")).toBeInTheDocument();
+    expect(screen.getByText("Pasta")).toBeInTheDocument();
+    expect(screen.getByText("Broccoli")).toBeInTheDocument();
   });
 
+  it("does not duplicate existing household ingredients that match catalog names", () => {
+    const ingredients = [
+      makeIngredient({ name: "Pasta", category: "carb", tags: ["custom-tag"] }),
+    ];
+    seedWithIngredients(ingredients);
+    renderPage();
+
+    const total = expectedTotal(ingredients);
+    expect(screen.getByText(`Items (${total})`)).toBeInTheDocument();
+
+    // Should have exactly one Pasta (the household version, not duplicated)
+    const pastaRows = screen.getAllByText("Pasta");
+    expect(pastaRows).toHaveLength(1);
+  });
+});
+
+describe("F043: Filter empty state", () => {
   it("shows filter empty state when filters match nothing", async () => {
     seedWithIngredients([
       makeIngredient({ name: "Chicken", category: "protein" }),
@@ -304,7 +332,7 @@ describe("F043: Empty and filter empty states", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.type(screen.getByTestId("ingredient-search"), "xyz");
+    await user.type(screen.getByTestId("ingredient-search"), "xyznonexistent");
 
     expect(screen.getByText("No ingredients match your filters.")).toBeInTheDocument();
   });

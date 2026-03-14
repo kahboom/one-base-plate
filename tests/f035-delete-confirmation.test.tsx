@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { Household } from "../src/types";
 import { saveHousehold, loadHouseholds, saveHouseholds } from "../src/storage";
+import { MASTER_CATALOG } from "../src/catalog";
 import HouseholdList from "../src/pages/HouseholdList";
 import HouseholdSetup from "../src/pages/HouseholdSetup";
 import IngredientManager from "../src/pages/IngredientManager";
@@ -272,9 +273,11 @@ describe("F035: Remove ingredient confirmation", () => {
     const dialog = screen.getByRole("dialog", { name: "Remove ingredient" });
     await user.click(within(dialog).getByText("Remove"));
 
-    // After removal, only Rice row should remain
+    // After removal, one fewer row
     const remainingRows = screen.getAllByTestId(/^ingredient-row-/);
-    expect(remainingRows).toHaveLength(1);
+    const catalogOverlap = MASTER_CATALOG.filter((ci) => ci.name.toLowerCase() === "rice").length;
+    const expectedAfterRemove = 1 + MASTER_CATALOG.length - catalogOverlap;
+    expect(remainingRows).toHaveLength(expectedAfterRemove);
     expect(screen.getByText("Rice")).toBeInTheDocument();
   });
 
@@ -300,8 +303,10 @@ describe("F035: Remove ingredient confirmation", () => {
     await user.click(within(dialog).getByText("Cancel"));
 
     expect(screen.queryByRole("dialog", { name: "Remove ingredient" })).not.toBeInTheDocument();
-    // Both ingredient rows should still exist
-    expect(screen.getAllByTestId(/^ingredient-row-/)).toHaveLength(2);
+    // All ingredient rows should still exist (household + catalog)
+    const catalogOverlap = MASTER_CATALOG.filter((ci) => ["chicken", "rice"].includes(ci.name.toLowerCase())).length;
+    const expectedCount = 2 + MASTER_CATALOG.length - catalogOverlap;
+    expect(screen.getAllByTestId(/^ingredient-row-/)).toHaveLength(expectedCount);
   });
 });
 

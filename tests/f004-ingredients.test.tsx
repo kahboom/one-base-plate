@@ -4,7 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { Household } from "../src/types";
 import { saveHousehold, loadHousehold } from "../src/storage";
+import { MASTER_CATALOG } from "../src/catalog";
 import IngredientManager from "../src/pages/IngredientManager";
+
+const CATALOG_SIZE = MASTER_CATALOG.length;
 
 function seedHousehold(): Household {
   const household: Household = {
@@ -54,47 +57,29 @@ describe("F004: Add ingredients across categories", () => {
     const user = userEvent.setup();
     renderIngredientManager("h-ing");
 
-    expect(screen.getByText("Items (0)")).toBeInTheDocument();
+    // Starts with catalog items auto-populated
+    expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
 
-    // Add three ingredients via Add button (opens modal each time)
+    // Add a custom ingredient via Add button
     const addButtons = screen.getAllByText("Add ingredient");
     await user.click(addButtons[0]!);
 
-    // Modal opens — fill in first ingredient
     let modal = screen.getByTestId("ingredient-modal");
-    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Rice");
+    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Quinoa");
+    await user.selectOptions(within(modal).getByTestId("modal-ingredient-category"), "carb");
     await user.click(within(modal).getByText("Done"));
 
-    await user.click(addButtons[0]!);
-    modal = screen.getByTestId("ingredient-modal");
-    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Chicken breast");
-    await user.selectOptions(within(modal).getByTestId("modal-ingredient-category"), "protein");
-    await user.click(within(modal).getByLabelText("Freezer friendly"));
-    await user.click(within(modal).getByText("Done"));
-
-    await user.click(addButtons[0]!);
-    modal = screen.getByTestId("ingredient-modal");
-    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Carrots");
-    await user.selectOptions(within(modal).getByTestId("modal-ingredient-category"), "veg");
-    await user.click(within(modal).getByLabelText("Baby safe with adaptation"));
-    await user.click(within(modal).getByText("Done"));
-
-    expect(screen.getByText("Items (3)")).toBeInTheDocument();
+    expect(screen.getByText(`Items (${CATALOG_SIZE + 1})`)).toBeInTheDocument();
 
     // Save
     await user.click(screen.getAllByRole("button", { name: "Save ingredients" })[0]);
 
-    // Verify persistence
+    // Verify persistence — all catalog + custom items saved
     const saved = loadHousehold("h-ing")!;
-    expect(saved.ingredients).toHaveLength(3);
-    expect(saved.ingredients[0]!.name).toBe("Rice");
-    expect(saved.ingredients[0]!.category).toBe("pantry");
-    expect(saved.ingredients[1]!.name).toBe("Chicken breast");
-    expect(saved.ingredients[1]!.category).toBe("protein");
-    expect(saved.ingredients[1]!.freezerFriendly).toBe(true);
-    expect(saved.ingredients[2]!.name).toBe("Carrots");
-    expect(saved.ingredients[2]!.category).toBe("veg");
-    expect(saved.ingredients[2]!.babySafeWithAdaptation).toBe(true);
+    expect(saved.ingredients.length).toBe(CATALOG_SIZE + 1);
+    const quinoa = saved.ingredients.find((i) => i.name === "Quinoa");
+    expect(quinoa).toBeDefined();
+    expect(quinoa!.category).toBe("carb");
   });
 });
 
@@ -107,7 +92,7 @@ describe("F004: Tag ingredients", () => {
     await user.click(screen.getAllByText("Add ingredient")[0]!);
 
     const modal = screen.getByTestId("ingredient-modal");
-    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Pasta");
+    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Farro");
 
     // Add common tags
     await user.click(within(modal).getByText("+quick"));
@@ -129,7 +114,8 @@ describe("F004: Tag ingredients", () => {
     await user.click(screen.getAllByRole("button", { name: "Save ingredients" })[0]);
 
     const saved = loadHousehold("h-ing")!;
-    expect(saved.ingredients[0]!.tags).toEqual([
+    const farro = saved.ingredients.find((i) => i.name === "Farro");
+    expect(farro!.tags).toEqual([
       "quick",
       "rescue",
       "kid-friendly",
@@ -162,12 +148,8 @@ describe("F004: Remove ingredient", () => {
     const user = userEvent.setup();
     renderIngredientManager("h-ing");
 
-    // Add two ingredients
-    await user.click(screen.getAllByText("Add ingredient")[0]!);
-    await user.click(within(screen.getByTestId("ingredient-modal")).getByText("Done"));
-    await user.click(screen.getAllByText("Add ingredient")[0]!);
-    await user.click(within(screen.getByTestId("ingredient-modal")).getByText("Done"));
-    expect(screen.getByText("Items (2)")).toBeInTheDocument();
+    const initialCount = CATALOG_SIZE;
+    expect(screen.getByText(`Items (${initialCount})`)).toBeInTheDocument();
 
     // Click first row to open modal, then remove
     const rows = screen.getAllByTestId(/^ingredient-row-/);
@@ -178,7 +160,7 @@ describe("F004: Remove ingredient", () => {
     const dialog = screen.getByRole("dialog", { name: "Remove ingredient" });
     await user.click(within(dialog).getByText("Remove"));
 
-    expect(screen.getByText("Items (1)")).toBeInTheDocument();
+    expect(screen.getByText(`Items (${initialCount - 1})`)).toBeInTheDocument();
   });
 });
 
@@ -209,7 +191,12 @@ describe("F004: Ingredients persist across re-open", () => {
 
     renderIngredientManager("h-ing");
 
-    expect(screen.getByText("Items (2)")).toBeInTheDocument();
+    // 2 household items + catalog items (minus duplicates: Oats and Salmon exist in catalog)
+    const catalogDupes = MASTER_CATALOG.filter((ci) =>
+      ["oats", "salmon"].includes(ci.name.toLowerCase())
+    ).length;
+    const expected = 2 + CATALOG_SIZE - catalogDupes;
+    expect(screen.getByText(`Items (${expected})`)).toBeInTheDocument();
 
     // Browse list shows ingredient names
     expect(screen.getByText("Oats")).toBeInTheDocument();

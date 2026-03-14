@@ -135,7 +135,7 @@ describe("F025: Empty states", () => {
     expect(screen.getByText("No members yet. Add a member to get started.")).toBeInTheDocument();
   });
 
-  it("IngredientManager shows empty state for no ingredients", () => {
+  it("IngredientManager auto-populates catalog items for empty household", () => {
     seedHousehold();
     render(
       <MemoryRouter initialEntries={["/household/h-style/ingredients"]}>
@@ -144,7 +144,8 @@ describe("F025: Empty states", () => {
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByText("No ingredients yet. Add from the catalog or create one manually.")).toBeInTheDocument();
+    // Catalog auto-populates, so the list is never empty
+    expect(screen.getByTestId("ingredient-list")).toBeInTheDocument();
   });
 
   it("BaseMealManager shows empty state for no meals", () => {

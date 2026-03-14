@@ -608,21 +608,18 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: vitest passes (571 tests, 2 pre-existing f033 failures unrelated to F043), all F043 steps satisfied
 
 ### F044 - App ships with a seeded ingredient catalog and add-from-catalog flow (2026-03-14)
-- Created `src/catalog.ts` with `MASTER_CATALOG` containing 70+ common ingredients across all 8 categories (protein, carb, veg, fruit, dairy, snack, freezer, pantry)
+- Created `src/catalog.ts` with `MASTER_CATALOG` containing 70 common ingredients across all 8 categories (protein, carb, veg, fruit, dairy, snack, freezer, pantry)
 - Each catalog entry has: id, name, category, tags, freezerFriendly, babySafeWithAdaptation
 - Added `searchCatalog` function for case-insensitive name search, `getCatalogByCategory` for category filtering
 - Added `catalogIngredientToHousehold` converter that creates a valid `Ingredient` with unique ID from a catalog entry, supporting optional overrides for pre-save edits
 - Catalog is separate from household ingredients — it's a static module, not stored in localStorage
-- Updated IngredientManager with "Add from catalog" primary button in the control bar
-- Created `CatalogBrowser` modal component with search input and category filter dropdown
-- Catalog results show item name, category chip, tag chips, freezer/baby flags, and an "Add" button per item
-- Already-added ingredients (name match) show "Added" chip instead of add button
-- Adding a catalog item: closes catalog modal, adds ingredient to household list, opens edit modal for optional pre-save customization
+- **Auto-population**: `populateFromCatalog` merges catalog items into the ingredient list on page load, deduplicating by name (case-insensitive)
+- Users see all 70 catalog ingredients immediately when opening the Ingredient Manager — no "Add from catalog" button needed
+- Existing household ingredients are preserved; only catalog items not already present are added
 - Preserved "Add ingredient" button for manual creation of uncommon items
-- Updated empty state to mention both catalog and manual options
-- Updated 2 existing test files (f025, f043) for new empty state text
-- Created 20 tests: 7 catalog engine tests (categories covered, separation, search, empty query, category filter, conversion, overrides), 7 UI tests (button display, modal open, search results, add flow, browse list, already-added, close), 1 manual creation test, 3 flow compatibility tests (persistence, pre-save edit, valid structure), 2 empty state/discoverability tests
-- Verified: tsc --noEmit passes, vitest passes (591 tests, 2 pre-existing f033 failures unrelated to F044), all F044 steps satisfied
+- Updated 4 existing test files (f004, f025, f035, f043) to account for auto-populated catalog items in count assertions
+- Created 16 tests: 7 catalog engine tests (categories covered, separation, search, empty query, category filter, conversion, overrides), 4 auto-population tests (empty household, deduplication, custom+catalog mix, no button), 1 manual creation test, 4 flow compatibility tests (persistence, edit via modal, valid structure, search/filter)
+- Verified: tsc --noEmit passes, vitest passes (588 tests, 2 pre-existing f033 failures unrelated to F044), all F044 steps satisfied
 
 ## Next Task
 - F045: Household ingredients support catalog linkage, lightweight customization, and duplicate handling
