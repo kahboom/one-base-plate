@@ -125,10 +125,17 @@ export default function Planner() {
 
   return (
     <PageShell>
+      <HouseholdNav householdId={householdId ?? ""} />
       <PageHeader title="Meal Planner" subtitle={`Household: ${household.name}`} />
 
       {household.baseMeals.length === 0 ? (
-        <EmptyState>No base meals available. Add meals first.</EmptyState>
+        <EmptyState>
+          No base meals available.{" "}
+          <Link to={`/household/${householdId}/ingredients`} className="font-medium text-brand hover:underline">Add ingredients</Link>{" "}
+          and{" "}
+          <Link to={`/household/${householdId}/meals`} className="font-medium text-brand hover:underline">add base meals</Link>{" "}
+          to get started.
+        </EmptyState>
       ) : (
         <Section title="Choose a meal">
           <div data-testid="meal-card-grid" className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -284,8 +291,6 @@ export default function Planner() {
           </Section>
         </Card>
       )}
-
-      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

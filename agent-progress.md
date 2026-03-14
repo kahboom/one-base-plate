@@ -509,5 +509,18 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 21 tests: 2 data model tests (optional imageUrl on Ingredient and BaseMeal), 5 Ingredient Manager tests (URL input, preview, URL persistence, upload button, styling), 4 Base Meal Manager tests (URL input, preview, persistence, upload button), 3 MealDetail tests (hero image shown, hidden when no URL, full-width styling), 5 MealCard tests (thumbnail shown, hidden, compact height, normal height, shared styling), 2 mobile readability tests (preview sizes)
 - Verified: tsc --noEmit passes, vitest passes (483 tests, 3 pre-existing f033 failures unrelated to F037), all F037 steps satisfied
 
+### F038 - Add ingredient or component inline or via modal with discoverable navigation (2026-03-14)
+- Created `InlineIngredientForm` component in BaseMealManager with name and category fields for quick ingredient creation without leaving the meal editor
+- Added "+ Add new ingredient" ghost button in each `ComponentForm` that toggles the inline form open/closed
+- Inline form creates ingredient with unique ID, adds it to the local ingredients state, and auto-selects it in the component's ingredient dropdown
+- Cancel button dismisses the form without adding an ingredient
+- On save, inline-created ingredients persist to household storage alongside meals (updated `handleSave` to save `household.ingredients`)
+- Added "Ingredients" and "Base meals" links to `HouseholdNav` in `src/components/ui.tsx`, positioned between "Meal history" and "Household setup"
+- Updated Planner empty state to include "Add ingredients" and "add base meals" links pointing to `/household/:id/ingredients` and `/household/:id/meals`
+- Updated WeeklyPlanner empty state with the same discoverable links
+- Updated 4 existing test files: f036 (NAV_LINKS array), f006 (empty state text matcher), f010 (empty state text matcher), f025 (heading role selectors to avoid ambiguity with new nav links)
+- Created 13 tests: 5 inline ingredient form tests (button display, form open, create+select, cancel, persistence on save), 2 nav link tests (Ingredients href, Base meals href), 4 empty state link tests (Planner links, WeeklyPlanner links, Planner navigation, WeeklyPlanner navigation), 2 workflow tests (stays on page, ingredient available in all selects)
+- Verified: tsc --noEmit passes (pre-existing errors in f035/f036 tests only), vitest passes (497 tests, 2 pre-existing f033 failures unrelated to F038), all F038 steps satisfied
+
 ## Next Task
-- F038: Add ingredient or component inline or via modal with discoverable navigation
+- F039: User can import and export data as JSON for backup and seeding

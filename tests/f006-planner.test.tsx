@@ -276,6 +276,8 @@ describe("F006: Planner page selects meal and shows variants", () => {
     saveHousehold(household);
     renderPlanner("h-empty");
 
-    expect(screen.getByText("No base meals available. Add meals first.")).toBeInTheDocument();
+    expect(screen.getByText(/No base meals available/)).toBeInTheDocument();
+    expect(screen.getByText("Add ingredients")).toBeInTheDocument();
+    expect(screen.getByText("add base meals")).toBeInTheDocument();
   });
 });

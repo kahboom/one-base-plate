@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { BaseMeal, MealComponent, Ingredient, RecipeLink } from "../types";
+import type { BaseMeal, MealComponent, Ingredient, RecipeLink, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, FieldLabel, EmptyState, Chip, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
 
 type ComponentRole = MealComponent["role"];
 const COMPONENT_ROLES: ComponentRole[] = ["protein", "carb", "veg", "sauce", "topping"];
 const DIFFICULTY_OPTIONS: BaseMeal["difficulty"][] = ["easy", "medium", "hard"];
+const CATEGORY_OPTIONS: IngredientCategory[] = [
+  "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
+];
 
 function createEmptyMeal(): BaseMeal {
   return {
@@ -23,16 +26,74 @@ function createEmptyMeal(): BaseMeal {
   };
 }
 
+function InlineIngredientForm({
+  onAdd,
+  onCancel,
+}: {
+  onAdd: (ingredient: Ingredient) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState<IngredientCategory>("pantry");
+
+  function handleAdd() {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const ingredient: Ingredient = {
+      id: crypto.randomUUID(),
+      name: trimmed,
+      category,
+      tags: [],
+      shelfLifeHint: "",
+      freezerFriendly: false,
+      babySafeWithAdaptation: false,
+    };
+    onAdd(ingredient);
+  }
+
+  return (
+    <div data-testid="inline-ingredient-form" className="mt-2 rounded-sm border border-brand bg-bg p-3 space-y-3">
+      <span className="block text-xs font-semibold text-brand">New ingredient</span>
+      <FieldLabel label="Name">
+        <Input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Ingredient name"
+          data-testid="inline-ingredient-name"
+        />
+      </FieldLabel>
+      <FieldLabel label="Category">
+        <Select
+          value={category}
+          onChange={(e) => setCategory(e.target.value as IngredientCategory)}
+          data-testid="inline-ingredient-category"
+        >
+          {CATEGORY_OPTIONS.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </Select>
+      </FieldLabel>
+      <div className="flex gap-2">
+        <Button small variant="primary" onClick={handleAdd} data-testid="inline-ingredient-save">Add ingredient</Button>
+        <Button small onClick={onCancel}>Cancel</Button>
+      </div>
+    </div>
+  );
+}
+
 function ComponentForm({
   component,
   ingredients,
   onChange,
   onRemove,
+  onAddIngredient,
 }: {
   component: MealComponent;
   ingredients: Ingredient[];
   onChange: (updated: MealComponent) => void;
   onRemove: () => void;
+  onAddIngredient: (ingredient: Ingredient) => void;
 }) {
   const alternatives = component.alternativeIngredientIds ?? [];
   const usedIds = new Set([component.ingredientId, ...alternatives]);
@@ -48,6 +109,8 @@ function ComponentForm({
       alternativeIngredientIds: alternatives.filter((id) => id !== ingredientId),
     });
   }
+
+  const [showInlineForm, setShowInlineForm] = useState(false);
 
   return (
     <div data-testid={`component-${component.ingredientId || "empty"}`} className="mb-3 rounded-sm border border-border-light p-3">
@@ -65,6 +128,21 @@ function ComponentForm({
             ))}
           </Select>
         </FieldLabel>
+
+        {showInlineForm ? (
+          <InlineIngredientForm
+            onAdd={(ing) => {
+              onAddIngredient(ing);
+              onChange({ ...component, ingredientId: ing.id });
+              setShowInlineForm(false);
+            }}
+            onCancel={() => setShowInlineForm(false)}
+          />
+        ) : (
+          <Button variant="ghost" small onClick={() => setShowInlineForm(true)} data-testid="add-ingredient-inline">
+            + Add new ingredient
+          </Button>
+        )}
 
         {alternatives.length > 0 && (
           <div data-testid="alternatives-list">
@@ -192,11 +270,13 @@ function MealForm({
   ingredients,
   onChange,
   onRemove,
+  onAddIngredient,
 }: {
   meal: BaseMeal;
   ingredients: Ingredient[];
   onChange: (updated: BaseMeal) => void;
   onRemove: () => void;
+  onAddIngredient: (ingredient: Ingredient) => void;
 }) {
   function addComponent() {
     const newComponent: MealComponent = {
@@ -351,6 +431,7 @@ function MealForm({
           ingredients={ingredients}
           onChange={(updated) => updateComponent(i, updated)}
           onRemove={() => removeComponent(i)}
+          onAddIngredient={onAddIngredient}
         />
       ))}
 
@@ -399,11 +480,16 @@ export default function BaseMealManager() {
     });
   }
 
+  function addIngredient(ingredient: Ingredient) {
+    setIngredients((prev) => [...prev, ingredient]);
+  }
+
   function handleSave() {
     if (!householdId) return;
     const household = loadHousehold(householdId);
     if (!household) return;
     household.baseMeals = meals;
+    household.ingredients = ingredients;
     saveHousehold(household);
     navigate(`/household/${householdId}/home`);
   }
@@ -428,6 +514,7 @@ export default function BaseMealManager() {
           ingredients={ingredients}
           onChange={(updated) => updateMeal(i, updated)}
           onRemove={() => removeMeal(i)}
+          onAddIngredient={addIngredient}
         />
       ))}
 

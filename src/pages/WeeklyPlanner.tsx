@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import type { Household, WeeklyPlan, DayPlan, BaseMeal, MealOutcome, MealOutcomeResult } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import { generateWeeklyPlan, computeMealOverlap, generateAssemblyVariants, computeWeekEffortBalance, computeGroceryPreview, formatPlanForExport } from "../planner";
@@ -176,10 +176,17 @@ export default function WeeklyPlanner() {
 
   return (
     <PageShell>
+      <HouseholdNav householdId={householdId ?? ""} />
       <PageHeader title="Weekly Planner" subtitle={`Household: ${household.name}`} />
 
       {household.baseMeals.length === 0 ? (
-        <EmptyState>No base meals available. Add meals before generating a plan.</EmptyState>
+        <EmptyState>
+          No base meals available.{" "}
+          <Link to={`/household/${householdId}/ingredients`} className="font-medium text-brand hover:underline">Add ingredients</Link>{" "}
+          and{" "}
+          <Link to={`/household/${householdId}/meals`} className="font-medium text-brand hover:underline">add base meals</Link>{" "}
+          before generating a plan.
+        </EmptyState>
       ) : (
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
@@ -351,8 +358,6 @@ export default function WeeklyPlanner() {
           </div>
         </Section>
       )}
-
-      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

@@ -355,8 +355,8 @@ describe("F010: Weekly Planner page", () => {
     saveHousehold(household);
     renderWeeklyPlanner("h-empty-weekly");
 
-    expect(
-      screen.getByText("No base meals available. Add meals before generating a plan."),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/No base meals available/)).toBeInTheDocument();
+    expect(screen.getByText("Add ingredients")).toBeInTheDocument();
+    expect(screen.getByText("add base meals")).toBeInTheDocument();
   });
 });

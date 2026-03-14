@@ -49,7 +49,7 @@ describe("F025: PageHeader consistency", () => {
         <HouseholdList />
       </MemoryRouter>,
     );
-    expect(screen.getByText("OneBasePlate")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "OneBasePlate" })).toBeInTheDocument();
     expect(screen.getByText("One base meal, multiple household-specific assemblies.")).toBeInTheDocument();
   });
 
@@ -101,7 +101,7 @@ describe("F025: FieldLabel stacked layout", () => {
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByText("Ingredients")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Ingredients" })).toBeInTheDocument();
     expect(screen.getByText(/Household: Style Test Family/)).toBeInTheDocument();
   });
 
@@ -168,7 +168,7 @@ describe("F025: Empty states", () => {
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByText("No base meals available. Add meals first.")).toBeInTheDocument();
+    expect(screen.getByText(/No base meals available/)).toBeInTheDocument();
   });
 
   it("WeeklyPlanner shows empty state when no meals exist", () => {
@@ -180,7 +180,7 @@ describe("F025: Empty states", () => {
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByText("No base meals available. Add meals before generating a plan.")).toBeInTheDocument();
+    expect(screen.getByText(/No base meals available/)).toBeInTheDocument();
   });
 
   it("MemberProfile shows empty state text for empty safe foods list", () => {

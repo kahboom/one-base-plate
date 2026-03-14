@@ -859,7 +859,7 @@
         "Add links from Planner and Weekly Planner empty states to 'Add ingredients' and 'Add base meals' similar to Rescue mode's 'Add some base meals' link.",
         "Verify users can create an ingredient without leaving the meal editor and that create flows are discoverable from the nav and empty states."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": ["F033", "F036"],
       "acceptanceRefs": ["S001", "S003", "S006", "S007"]
     },

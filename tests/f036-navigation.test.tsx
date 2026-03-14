@@ -68,6 +68,8 @@ const NAV_LINKS = [
   "Grocery list",
   "Rescue mode",
   "Meal history",
+  "Ingredients",
+  "Base meals",
   "Household setup",
   "All households",
 ];
@@ -296,11 +298,11 @@ describe("F036: Consistent navigation across all household screens", () => {
   });
 
   describe("Nav uses shared styling system", () => {
-    it("nav is rendered as a nav element with border-t styling", () => {
+    it("nav is rendered as a nav element with top-nav border-b styling", () => {
       seedHousehold();
       renderRoute("/household/h-nav/home");
       const nav = screen.getByRole("navigation");
-      expect(nav.className).toContain("border-t");
+      expect(nav.className).toContain("border-b");
       expect(nav.className).toContain("flex-wrap");
     });
 

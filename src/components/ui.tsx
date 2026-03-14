@@ -1,11 +1,26 @@
 import { useState, useCallback } from "react";
 import type { ReactNode, ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+
+/* ---------- App header (OneBasePlate brand) ---------- */
+export function AppHeader() {
+  const { householdId, id } = useParams<{ householdId?: string; id?: string }>();
+  const hId = householdId ?? id;
+  const homeHref = hId ? `/household/${hId}/home` : "/";
+  return (
+    <header className="mb-6 pb-4 border-b border-border-light">
+      <Link to={homeHref} className="text-2xl font-bold tracking-tight text-text-primary hover:text-brand transition-colors">
+        OneBasePlate
+      </Link>
+    </header>
+  );
+}
 
 /* ---------- Page shell ---------- */
 export function PageShell({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto max-w-[900px] px-4 py-8 sm:px-6">
+      <AppHeader />
       {children}
     </div>
   );
@@ -168,9 +183,22 @@ export function Section({ title, children }: { title?: string; children: ReactNo
 }
 
 /* ---------- Nav bar ---------- */
-export function NavBar({ children }: { children: ReactNode }) {
+export function NavBar({
+  children,
+  placement = "bottom",
+}: {
+  children: ReactNode;
+  placement?: "top" | "bottom";
+}) {
+  const isTop = placement === "top";
   return (
-    <nav className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border-light pt-4">
+    <nav
+      className={`flex flex-wrap items-center gap-x-4 gap-y-2 ${
+        isTop
+          ? "mb-6 border-b border-border-light pb-4"
+          : "mt-8 border-t border-border-light pt-4"
+      }`}
+    >
       {children}
     </nav>
   );
@@ -180,13 +208,15 @@ const navLinkClass = "text-sm font-medium text-brand hover:underline";
 
 export function HouseholdNav({ householdId }: { householdId: string }) {
   return (
-    <NavBar>
+    <NavBar placement="top">
       <Link to={`/household/${householdId}/home`} className={navLinkClass}>Home</Link>
       <Link to={`/household/${householdId}/weekly`} className={navLinkClass}>Weekly planner</Link>
       <Link to={`/household/${householdId}/planner`} className={navLinkClass}>Meal planner</Link>
       <Link to={`/household/${householdId}/grocery`} className={navLinkClass}>Grocery list</Link>
       <Link to={`/household/${householdId}/rescue`} className={navLinkClass}>Rescue mode</Link>
       <Link to={`/household/${householdId}/history`} className={navLinkClass}>Meal history</Link>
+      <Link to={`/household/${householdId}/ingredients`} className={navLinkClass}>Ingredients</Link>
+      <Link to={`/household/${householdId}/meals`} className={navLinkClass}>Base meals</Link>
       <Link to={`/household/${householdId}`} className={navLinkClass}>Household setup</Link>
       <Link to="/" className={navLinkClass}>All households</Link>
     </NavBar>
