@@ -128,8 +128,23 @@ export function catalogIngredientToHousehold(
     shelfLifeHint: "",
     freezerFriendly: catalogItem.freezerFriendly,
     babySafeWithAdaptation: catalogItem.babySafeWithAdaptation,
+    catalogId: catalogItem.id,
+    source: "catalog",
     ...overrides,
   };
+}
+
+export function findNearDuplicates(
+  name: string,
+  existingIngredients: Ingredient[],
+  excludeId?: string,
+): Ingredient[] {
+  const normalized = name.toLowerCase().trim();
+  if (!normalized) return [];
+  return existingIngredients.filter((ing) => {
+    if (excludeId && ing.id === excludeId) return false;
+    return ing.name.toLowerCase().trim() === normalized;
+  });
 }
 
 export function getCatalogByCategory(category: IngredientCategory): CatalogIngredient[] {

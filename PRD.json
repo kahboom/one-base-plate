@@ -1214,7 +1214,7 @@
         "Allow household-specific edits to tags, notes, image, freezer-friendly, and baby-safe flags without mutating the master catalog entry.",
         "Verify previously saved manual ingredients continue to work without migration failures."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F044"
       ],

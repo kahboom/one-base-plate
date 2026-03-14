@@ -38,6 +38,8 @@ export interface Ingredient {
   freezerFriendly: boolean;
   babySafeWithAdaptation: boolean;
   imageUrl?: string;
+  catalogId?: string;
+  source?: "manual" | "catalog";
 }
 
 export interface MealComponent {

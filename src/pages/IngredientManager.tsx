@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Ingredient, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { MASTER_CATALOG, catalogIngredientToHousehold } from "../catalog";
+import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from "../catalog";
 import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, Chip, FieldLabel, EmptyState, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
@@ -20,6 +20,7 @@ function createEmptyIngredient(): Ingredient {
     shelfLifeHint: "",
     freezerFriendly: false,
     babySafeWithAdaptation: false,
+    source: "manual",
   };
 }
 
@@ -42,19 +43,58 @@ function populateFromCatalog(existing: Ingredient[]): Ingredient[] {
   return [...existing, ...newFromCatalog];
 }
 
+/* ---------- Duplicate warning dialog ---------- */
+function DuplicateWarningDialog({
+  open,
+  duplicateName,
+  existingIngredient,
+  onMerge,
+  onCancel,
+}: {
+  open: boolean;
+  duplicateName: string;
+  existingIngredient: Ingredient | null;
+  onMerge: () => void;
+  onCancel: () => void;
+}) {
+  if (!open || !existingIngredient) return null;
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" role="dialog" aria-label="Duplicate ingredient warning">
+      <div className="w-full max-w-sm rounded-md border border-border-light bg-surface p-6 shadow-card-hover" data-testid="duplicate-warning-dialog">
+        <h2 className="mb-2 text-lg font-bold text-text-primary">Duplicate ingredient</h2>
+        <p className="mb-4 text-sm text-text-secondary">
+          An ingredient named &ldquo;{duplicateName}&rdquo; already exists in your list. Would you like to keep the existing one or add a duplicate?
+        </p>
+        <div className="flex gap-3">
+          <Button variant="primary" onClick={onMerge} data-testid="duplicate-merge-btn">Keep existing</Button>
+          <Button onClick={onCancel} data-testid="duplicate-cancel-btn">Cancel</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------- Ingredient edit modal ---------- */
 function IngredientModal({
   ingredient,
+  allIngredients,
   onChange,
   onClose,
   onDelete,
+  onDuplicateFound,
 }: {
   ingredient: Ingredient;
+  allIngredients: Ingredient[];
   onChange: (updated: Ingredient) => void;
   onClose: () => void;
   onDelete: () => void;
+  onDuplicateFound: (newIng: Ingredient, existing: Ingredient) => void;
 }) {
   const [tagInput, setTagInput] = useState("");
+  const duplicates = useMemo(
+    () => findNearDuplicates(ingredient.name, allIngredients, ingredient.id),
+    [ingredient.name, allIngredients, ingredient.id],
+  );
 
   function addTag(tag: string) {
     const trimmed = tag.trim();
@@ -71,11 +111,22 @@ function IngredientModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-label="Edit ingredient">
       <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-md border border-border-light bg-surface p-6 shadow-card-hover" data-testid="ingredient-modal">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-text-primary">
-            {ingredient.name || "New ingredient"}
-          </h2>
+          <div>
+            <h2 className="text-lg font-bold text-text-primary">
+              {ingredient.name || "New ingredient"}
+            </h2>
+            <span className="text-xs text-text-muted" data-testid="ingredient-source-label">
+              {ingredient.source === "catalog" ? "From catalog" : "Manual"}
+            </span>
+          </div>
           <Button variant="ghost" onClick={onClose} aria-label="Close modal">✕</Button>
         </div>
+
+        {duplicates.length > 0 && (
+          <div className="mb-4 rounded-md border border-warning bg-warning/10 px-3 py-2 text-sm text-text-primary" data-testid="duplicate-inline-warning">
+            A similar ingredient &ldquo;{duplicates[0]!.name}&rdquo; already exists in your list.
+          </div>
+        )}
 
         <div className="space-y-4">
           <FieldLabel label="Name">
@@ -207,7 +258,13 @@ function IngredientModal({
 
         <div className="mt-6 flex items-center justify-between border-t border-border-light pt-4">
           <Button variant="danger" small onClick={onDelete}>Remove ingredient</Button>
-          <Button variant="primary" onClick={onClose}>Done</Button>
+          <Button variant="primary" onClick={() => {
+            if (duplicates.length > 0) {
+              onDuplicateFound(ingredient, duplicates[0]!);
+            } else {
+              onClose();
+            }
+          }}>Done</Button>
         </div>
       </div>
     </div>
@@ -251,6 +308,9 @@ function IngredientRow({
         </span>
       </span>
       <span className="flex flex-shrink-0 items-center gap-1.5">
+        {ingredient.source === "catalog" && (
+          <Chip variant="neutral" className="text-[10px]" title="From catalog">catalog</Chip>
+        )}
         {ingredient.freezerFriendly && (
           <Chip variant="info" className="text-[10px]" title="Freezer friendly">❄️</Chip>
         )}
@@ -275,6 +335,10 @@ export default function IngredientManager() {
   const [categoryFilter, setCategoryFilter] = useState<IngredientCategory | "">("");
   const [tagFilter, setTagFilter] = useState("");
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
+  const [duplicateWarning, setDuplicateWarning] = useState<{
+    newIngredient: Ingredient;
+    existingIngredient: Ingredient;
+  } | null>(null);
 
   useEffect(() => {
     if (!householdId) return;
@@ -425,11 +489,34 @@ export default function IngredientManager() {
       {editingIngredient && (
         <IngredientModal
           ingredient={editingIngredient}
+          allIngredients={ingredients}
           onChange={updateIngredient}
           onClose={() => setEditingId(null)}
           onDelete={() => removeIngredient(editingIngredient.id)}
+          onDuplicateFound={(newIng, existing) => {
+            setDuplicateWarning({ newIngredient: newIng, existingIngredient: existing });
+          }}
         />
       )}
+
+      <DuplicateWarningDialog
+        open={!!duplicateWarning}
+        duplicateName={duplicateWarning?.newIngredient.name ?? ""}
+        existingIngredient={duplicateWarning?.existingIngredient ?? null}
+        onMerge={() => {
+          if (duplicateWarning) {
+            // Keep existing, remove the new duplicate
+            setIngredients((prev) =>
+              prev.filter((i) => i.id !== duplicateWarning.newIngredient.id),
+            );
+            setEditingId(null);
+          }
+          setDuplicateWarning(null);
+        }}
+        onCancel={() => {
+          setDuplicateWarning(null);
+        }}
+      />
 
       <ConfirmDialog
         open={!!pending}

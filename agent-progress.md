@@ -621,5 +621,18 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 16 tests: 7 catalog engine tests (categories covered, separation, search, empty query, category filter, conversion, overrides), 4 auto-population tests (empty household, deduplication, custom+catalog mix, no button), 1 manual creation test, 4 flow compatibility tests (persistence, edit via modal, valid structure, search/filter)
 - Verified: tsc --noEmit passes, vitest passes (588 tests, 2 pre-existing f033 failures unrelated to F044), all F044 steps satisfied
 
+### F045 - Household ingredients support catalog linkage, lightweight customization, and duplicate handling (2026-03-14)
+- Added optional `catalogId?: string` and `source?: "manual" | "catalog"` fields to `Ingredient` type (backward-compatible, existing data works without migration)
+- Updated `catalogIngredientToHousehold` to store `catalogId` (referencing catalog entry ID) and `source: "catalog"` on created ingredients
+- Added `findNearDuplicates` function to catalog module for case-insensitive exact name matching with self-exclusion support
+- Manual ingredient creation sets `source: "manual"` with no `catalogId`
+- **Duplicate warning**: IngredientModal shows inline warning banner when editing an ingredient whose name matches an existing ingredient
+- **Merge or cancel**: When closing modal with a duplicate name, a `DuplicateWarningDialog` appears offering "Keep existing" (removes duplicate, closes modal) or "Cancel" (dismisses dialog, keeps editing)
+- **Source labeling**: Modal header shows "From catalog" or "Manual" label; browse rows show "catalog" chip for catalog-sourced items
+- **Catalog immutability**: Household-specific edits (tags, freezerFriendly, babySafe, image) modify only the local `Ingredient` copy — `MASTER_CATALOG` entries are never mutated
+- **Backward compatibility**: Ingredients without `source`/`catalogId` fields (old format) render as "Manual" and work without migration failures
+- Created 19 tests: 6 catalog linkage tests (catalogId/source on catalog items, persistence, manual source, source labels, catalog chip), 5 duplicate detection tests (exact match, self-exclusion, no match, blank name, inline warning), 3 merge/cancel tests (dialog shown, keep existing removes duplicate, cancel keeps both), 2 catalog immutability tests (tags, flags), 3 backward compatibility tests (old format renders, modal shows Manual, save/reload works)
+- Verified: tsc --noEmit passes, vitest passes (607 tests, 2 pre-existing f033 failures unrelated to F045), all F045 steps satisfied
+
 ## Next Task
-- F045: Household ingredients support catalog linkage, lightweight customization, and duplicate handling
+- F046: Recipe import parses ingredients and builds a reviewable base-meal draft
