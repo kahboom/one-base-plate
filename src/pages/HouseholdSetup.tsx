@@ -30,7 +30,7 @@ function createEmptyHousehold(): Household {
   };
 }
 
-const ROLE_OPTIONS: MemberRole[] = ["adult", "toddler", "baby"];
+const ROLE_OPTIONS: MemberRole[] = ["adult", "toddler", "baby", "pet"];
 const TEXTURE_OPTIONS: TextureLevel[] = ["regular", "soft", "mashable", "pureed"];
 
 function MemberForm({
@@ -150,6 +150,7 @@ export default function HouseholdSetup() {
 
   return (
     <PageShell>
+      {!isNew && <HouseholdNav householdId={id ?? ""} />}
       <PageHeader title={isNew ? "Create Household" : "Edit Household"} />
 
       <FieldLabel label="Household name" className="mb-6">
@@ -181,10 +182,6 @@ export default function HouseholdSetup() {
       ))}
 
       <Button onClick={addMember} className="mb-4">Add member</Button>
-
-      {!isNew && (
-        <HouseholdNav householdId={id ?? ""} />
-      )}
 
       <ActionGroup>
         <Button variant="primary" onClick={handleSave}>Save household</Button>

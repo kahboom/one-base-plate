@@ -892,7 +892,7 @@
         "Wire seeding into build: npm run build clears storage and loads seed data (or app seeds on first load after build).",
         "Optionally: init.sh or npm run dev can reset and seed on startup for local development."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": ["F001", "F039"],
       "acceptanceRefs": []
     },

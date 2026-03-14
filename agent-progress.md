@@ -536,5 +536,20 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 15 tests: 8 storage function tests (export all, export filtered, replace import, merge import, merge update, invalid JSON, non-array, round-trip), 5 UI tests (buttons shown, export download, import file picker, import updates list, filename), 2 seed compatibility tests (fixture structure validation, fixture import via importHouseholdsJSON)
 - Verified: tsc --noEmit passes (pre-existing errors in f035/f036 only), vitest passes (512 tests, 2 pre-existing f033 failures unrelated to F039), all F039 steps satisfied
 
+### F040 - Database cleared and repopulated each build with McGeever family seed (2026-03-14)
+- Extended `MemberRole` type to include `"pet"` alongside `"adult"`, `"toddler"`, and `"baby"`
+- Added `isHumanMember` helper to planner engine that filters out pet members (role !== "pet")
+- Applied pet filtering to all 9 exported planner functions: `generateAssemblyVariants`, `computeMealOverlap`, `computeIngredientOverlap`, `generateMealExplanation`, `generateShortReason`, `generateWeeklyPlan` (via sub-functions), `generateRescueMeals`, `learnCompatibilityPatterns`, `computePatternScore`
+- Pet members are completely excluded from: assembly variants, overlap scoring/totals, rescue mode, meal explanations, trade-off analysis, pattern learning
+- Added `"pet"` to `ROLE_OPTIONS` in HouseholdSetup so users can assign pet role via the role selector
+- H004-mcgeever.json fixture already present with Aaron (adult), Rachel (adult), Indy (toddler), Órla (baby), Lex (pet/dog)
+- Created `scripts/db-seed.ts` that reads all fixture JSON files from `fixtures/households/` and writes `src/seed-data.json`
+- Added `seedIfNeeded` function to storage layer: seeds localStorage from `seed-data.json` on first load (no existing data, no seeded flag)
+- Called `seedIfNeeded()` from `main.tsx` before React render — app auto-seeds on first visit after build
+- Wired `db:seed` into `npm run build` script: `npx tsx scripts/db-seed.ts && tsc -b && vite build`
+- Added `npm run db:seed` script to package.json for manual seed regeneration
+- Created 18 tests: 2 type/storage tests (pet role valid, pet in household), 2 assembly variant tests (exclusion, parity), 3 overlap scoring tests (meal, ingredient, parity), 2 rescue mode tests (variant exclusion, overlap exclusion), 2 explanation tests (no pet in explanation/reason), 1 UI role selector test (pet option present), 5 seed tests (auto-seed, no-overwrite, no-re-seed, McGeever present, Lex is pet), 1 Planner UI test (no pet variant shown)
+- Verified: tsc --noEmit passes (pre-existing f035/f036 errors only), vitest passes (530 tests, 2 pre-existing f033 failures unrelated to F040), all F040 steps satisfied
+
 ## Next Task
-- F040: Database cleared and repopulated each build with McGeever family seed
+- F041: Clicking a household navigates to Edit setup; remove Household setup from nav

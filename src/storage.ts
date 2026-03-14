@@ -1,6 +1,15 @@
 import type { Household } from "./types";
+import seedData from "./seed-data.json";
 
 const STORAGE_KEY = "onebaseplate_households";
+const SEEDED_KEY = "onebaseplate_seeded";
+
+export function seedIfNeeded(): void {
+  if (localStorage.getItem(SEEDED_KEY)) return;
+  if (localStorage.getItem(STORAGE_KEY)) return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(seedData));
+  localStorage.setItem(SEEDED_KEY, "1");
+}
 
 export function loadHouseholds(): Household[] {
   const raw = localStorage.getItem(STORAGE_KEY);

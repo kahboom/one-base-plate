@@ -1,0 +1,708 @@
+[
+  {
+    "id": "H001",
+    "name": "Conflicting household baseline",
+    "members": [
+      {
+        "id": "M001",
+        "name": "Alex",
+        "role": "adult",
+        "safeFoods": [
+          "rice",
+          "chicken breast",
+          "broccoli",
+          "pasta"
+        ],
+        "hardNoFoods": [
+          "mushrooms",
+          "blue cheese"
+        ],
+        "preparationRules": [
+          {
+            "ingredient": "chicken breast",
+            "rule": "Must be sliced thin and fully cooked through, no pink"
+          },
+          {
+            "ingredient": "broccoli",
+            "rule": "Must be steamed, not raw or roasted"
+          }
+        ],
+        "textureLevel": "regular",
+        "allergens": [],
+        "notes": "ARFID-like constraints. Prefers components separated on the plate."
+      },
+      {
+        "id": "M002",
+        "name": "Jordan",
+        "role": "adult",
+        "safeFoods": [
+          "pasta",
+          "rice",
+          "salmon",
+          "avocado",
+          "mushrooms"
+        ],
+        "hardNoFoods": [],
+        "preparationRules": [],
+        "textureLevel": "regular",
+        "allergens": [
+          "tree nuts"
+        ],
+        "notes": "Flexible eater, avoids tree nuts due to allergy."
+      },
+      {
+        "id": "M003",
+        "name": "Riley",
+        "role": "toddler",
+        "safeFoods": [
+          "pasta",
+          "bread",
+          "banana",
+          "cheese",
+          "peas"
+        ],
+        "hardNoFoods": [
+          "spicy sauce",
+          "raw onion"
+        ],
+        "preparationRules": [
+          {
+            "ingredient": "pasta",
+            "rule": "Must be small shapes like penne or fusilli"
+          }
+        ],
+        "textureLevel": "soft",
+        "allergens": [],
+        "notes": "Picky eater. Will reject unfamiliar foods but sometimes accepts them on second exposure."
+      },
+      {
+        "id": "M004",
+        "name": "Sam",
+        "role": "baby",
+        "safeFoods": [
+          "sweet potato",
+          "banana",
+          "avocado",
+          "rice"
+        ],
+        "hardNoFoods": [
+          "honey",
+          "whole nuts",
+          "raw egg"
+        ],
+        "preparationRules": [
+          {
+            "ingredient": "sweet potato",
+            "rule": "Mash or cut into finger-safe strips"
+          }
+        ],
+        "textureLevel": "mashable",
+        "allergens": [],
+        "notes": "6 months, no teeth yet. BLW-style finger foods plus purees."
+      }
+    ],
+    "ingredients": [
+      {
+        "id": "ing-pasta",
+        "name": "pasta",
+        "category": "carb",
+        "tags": [
+          "staple"
+        ],
+        "shelfLifeHint": "long",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-rice",
+        "name": "rice",
+        "category": "carb",
+        "tags": [
+          "staple"
+        ],
+        "shelfLifeHint": "long",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-chicken",
+        "name": "chicken breast",
+        "category": "protein",
+        "tags": [],
+        "shelfLifeHint": "3 days",
+        "freezerFriendly": true,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-salmon",
+        "name": "salmon",
+        "category": "protein",
+        "tags": [],
+        "shelfLifeHint": "2 days",
+        "freezerFriendly": true,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-broccoli",
+        "name": "broccoli",
+        "category": "veg",
+        "tags": [],
+        "shelfLifeHint": "5 days",
+        "freezerFriendly": true,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-peas",
+        "name": "peas",
+        "category": "freezer",
+        "tags": [
+          "rescue"
+        ],
+        "shelfLifeHint": "months",
+        "freezerFriendly": true,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-sweet-potato",
+        "name": "sweet potato",
+        "category": "veg",
+        "tags": [
+          "mashable"
+        ],
+        "shelfLifeHint": "1 week",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-cheese",
+        "name": "cheese",
+        "category": "dairy",
+        "tags": [],
+        "shelfLifeHint": "1 week",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-tomato-sauce",
+        "name": "tomato sauce",
+        "category": "pantry",
+        "tags": [
+          "staple"
+        ],
+        "shelfLifeHint": "long",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-bread",
+        "name": "bread",
+        "category": "carb",
+        "tags": [
+          "rescue"
+        ],
+        "shelfLifeHint": "3 days",
+        "freezerFriendly": true,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-fishfingers",
+        "name": "fish fingers",
+        "category": "freezer",
+        "tags": [
+          "rescue"
+        ],
+        "shelfLifeHint": "months",
+        "freezerFriendly": true,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-beans",
+        "name": "baked beans",
+        "category": "pantry",
+        "tags": [
+          "rescue"
+        ],
+        "shelfLifeHint": "long",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": true
+      }
+    ],
+    "baseMeals": [
+      {
+        "id": "bm-pasta-chicken",
+        "name": "Pasta with chicken and broccoli",
+        "components": [
+          {
+            "ingredientId": "ing-pasta",
+            "role": "carb",
+            "quantity": "400g"
+          },
+          {
+            "ingredientId": "ing-chicken",
+            "role": "protein",
+            "quantity": "500g"
+          },
+          {
+            "ingredientId": "ing-broccoli",
+            "role": "veg",
+            "quantity": "1 head"
+          },
+          {
+            "ingredientId": "ing-tomato-sauce",
+            "role": "sauce",
+            "quantity": "1 jar"
+          }
+        ],
+        "defaultPrep": "Cook pasta. Grill or pan-fry protein. Steam veg.",
+        "estimatedTimeMinutes": 30,
+        "difficulty": "easy",
+        "rescueEligible": true,
+        "wasteReuseHints": [
+          "Leftover pasta works for next-day lunch"
+        ]
+      },
+      {
+        "id": "bm-salmon-rice",
+        "name": "Salmon with rice and peas",
+        "components": [
+          {
+            "ingredientId": "ing-rice",
+            "role": "carb",
+            "quantity": "300g"
+          },
+          {
+            "ingredientId": "ing-salmon",
+            "role": "protein",
+            "quantity": "400g"
+          },
+          {
+            "ingredientId": "ing-peas",
+            "role": "veg",
+            "quantity": "200g"
+          }
+        ],
+        "defaultPrep": "Cook rice. Pan-fry salmon. Heat peas.",
+        "estimatedTimeMinutes": 25,
+        "difficulty": "medium",
+        "rescueEligible": false,
+        "wasteReuseHints": []
+      },
+      {
+        "id": "bm-fishfingers",
+        "name": "Fish fingers with beans and bread",
+        "components": [
+          {
+            "ingredientId": "ing-fishfingers",
+            "role": "protein",
+            "quantity": "8 pieces"
+          },
+          {
+            "ingredientId": "ing-beans",
+            "role": "veg",
+            "quantity": "1 tin"
+          },
+          {
+            "ingredientId": "ing-bread",
+            "role": "carb",
+            "quantity": "4 slices"
+          }
+        ],
+        "defaultPrep": "Oven fish fingers. Heat beans. Toast bread.",
+        "estimatedTimeMinutes": 15,
+        "difficulty": "easy",
+        "rescueEligible": true,
+        "wasteReuseHints": []
+      }
+    ],
+    "weeklyPlans": [],
+    "pinnedMealIds": []
+  },
+  {
+    "id": "H002",
+    "name": "Two adults plus toddler",
+    "members": [
+      {
+        "id": "M005",
+        "name": "Casey",
+        "role": "adult",
+        "safeFoods": [
+          "rice",
+          "chicken",
+          "pasta",
+          "tomatoes"
+        ],
+        "hardNoFoods": [
+          "shellfish"
+        ],
+        "preparationRules": [],
+        "textureLevel": "regular",
+        "allergens": [
+          "shellfish"
+        ],
+        "notes": ""
+      },
+      {
+        "id": "M006",
+        "name": "Morgan",
+        "role": "adult",
+        "safeFoods": [
+          "pasta",
+          "beef",
+          "peppers",
+          "rice"
+        ],
+        "hardNoFoods": [],
+        "preparationRules": [],
+        "textureLevel": "regular",
+        "allergens": [],
+        "notes": ""
+      },
+      {
+        "id": "M007",
+        "name": "Finley",
+        "role": "toddler",
+        "safeFoods": [
+          "pasta",
+          "bread",
+          "cheese",
+          "corn"
+        ],
+        "hardNoFoods": [
+          "spicy sauce"
+        ],
+        "preparationRules": [],
+        "textureLevel": "soft",
+        "allergens": [],
+        "notes": "Prefers plain flavors."
+      }
+    ],
+    "ingredients": [],
+    "baseMeals": [],
+    "weeklyPlans": [],
+    "pinnedMealIds": []
+  },
+  {
+    "id": "H003",
+    "name": "Single caregiver plus two children",
+    "members": [
+      {
+        "id": "M008",
+        "name": "Taylor",
+        "role": "adult",
+        "safeFoods": [
+          "rice",
+          "chicken",
+          "eggs",
+          "bread",
+          "pasta"
+        ],
+        "hardNoFoods": [],
+        "preparationRules": [],
+        "textureLevel": "regular",
+        "allergens": [],
+        "notes": "Single caregiver with very limited time."
+      },
+      {
+        "id": "M009",
+        "name": "Quinn",
+        "role": "toddler",
+        "safeFoods": [
+          "bread",
+          "cheese",
+          "banana",
+          "yogurt"
+        ],
+        "hardNoFoods": [
+          "spicy sauce",
+          "raw tomato"
+        ],
+        "preparationRules": [],
+        "textureLevel": "soft",
+        "allergens": [
+          "dairy"
+        ],
+        "notes": "Mild dairy sensitivity. Small portions of cheese OK."
+      },
+      {
+        "id": "M010",
+        "name": "Rowan",
+        "role": "baby",
+        "safeFoods": [
+          "banana",
+          "sweet potato",
+          "avocado"
+        ],
+        "hardNoFoods": [
+          "honey",
+          "whole nuts"
+        ],
+        "preparationRules": [],
+        "textureLevel": "pureed",
+        "allergens": [],
+        "notes": "5 months, puree stage only."
+      }
+    ],
+    "ingredients": [],
+    "baseMeals": [],
+    "weeklyPlans": [],
+    "pinnedMealIds": []
+  },
+  {
+    "id": "H004",
+    "name": "McGeever family",
+    "members": [
+      {
+        "id": "M- Aaron",
+        "name": "Aaron",
+        "role": "adult",
+        "safeFoods": [
+          "pasta",
+          "rice",
+          "chicken",
+          "broccoli"
+        ],
+        "hardNoFoods": [],
+        "preparationRules": [],
+        "textureLevel": "regular",
+        "allergens": [],
+        "notes": ""
+      },
+      {
+        "id": "M-Rachel",
+        "name": "Rachel",
+        "role": "adult",
+        "safeFoods": [
+          "pasta",
+          "salmon",
+          "rice",
+          "peas"
+        ],
+        "hardNoFoods": [],
+        "preparationRules": [],
+        "textureLevel": "regular",
+        "allergens": [],
+        "notes": ""
+      },
+      {
+        "id": "M-Indy",
+        "name": "Indy",
+        "role": "toddler",
+        "safeFoods": [
+          "pasta",
+          "bread",
+          "cheese",
+          "peas",
+          "banana"
+        ],
+        "hardNoFoods": [
+          "spicy sauce"
+        ],
+        "preparationRules": [],
+        "textureLevel": "soft",
+        "allergens": [],
+        "notes": "Picky toddler."
+      },
+      {
+        "id": "M-Orla",
+        "name": "Órla",
+        "role": "baby",
+        "safeFoods": [
+          "sweet potato",
+          "banana",
+          "avocado"
+        ],
+        "hardNoFoods": [
+          "honey",
+          "whole nuts"
+        ],
+        "preparationRules": [
+          {
+            "ingredient": "sweet potato",
+            "rule": "Mash or finger-safe strips"
+          }
+        ],
+        "textureLevel": "mashable",
+        "allergens": [],
+        "notes": "Weaning baby."
+      },
+      {
+        "id": "M-Lex",
+        "name": "Lex",
+        "role": "pet",
+        "safeFoods": [],
+        "hardNoFoods": [],
+        "preparationRules": [],
+        "textureLevel": "regular",
+        "allergens": [],
+        "notes": "Dog. Excluded from meal assembly."
+      }
+    ],
+    "ingredients": [
+      {
+        "id": "ing-pasta",
+        "name": "pasta",
+        "category": "carb",
+        "tags": [
+          "staple"
+        ],
+        "shelfLifeHint": "long",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-rice",
+        "name": "rice",
+        "category": "carb",
+        "tags": [
+          "staple"
+        ],
+        "shelfLifeHint": "long",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-chicken",
+        "name": "chicken breast",
+        "category": "protein",
+        "tags": [],
+        "shelfLifeHint": "3 days",
+        "freezerFriendly": true,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-salmon",
+        "name": "salmon",
+        "category": "protein",
+        "tags": [],
+        "shelfLifeHint": "2 days",
+        "freezerFriendly": true,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-broccoli",
+        "name": "broccoli",
+        "category": "veg",
+        "tags": [],
+        "shelfLifeHint": "5 days",
+        "freezerFriendly": true,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-peas",
+        "name": "peas",
+        "category": "freezer",
+        "tags": [
+          "rescue"
+        ],
+        "shelfLifeHint": "months",
+        "freezerFriendly": true,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-sweet-potato",
+        "name": "sweet potato",
+        "category": "veg",
+        "tags": [
+          "mashable"
+        ],
+        "shelfLifeHint": "1 week",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-cheese",
+        "name": "cheese",
+        "category": "dairy",
+        "tags": [],
+        "shelfLifeHint": "1 week",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-tomato-sauce",
+        "name": "tomato sauce",
+        "category": "pantry",
+        "tags": [
+          "staple"
+        ],
+        "shelfLifeHint": "long",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": true
+      },
+      {
+        "id": "ing-bread",
+        "name": "bread",
+        "category": "carb",
+        "tags": [
+          "rescue"
+        ],
+        "shelfLifeHint": "3 days",
+        "freezerFriendly": true,
+        "babySafeWithAdaptation": true
+      }
+    ],
+    "baseMeals": [
+      {
+        "id": "bm-pasta-chicken",
+        "name": "Pasta with chicken and broccoli",
+        "components": [
+          {
+            "ingredientId": "ing-pasta",
+            "role": "carb",
+            "quantity": "400g"
+          },
+          {
+            "ingredientId": "ing-chicken",
+            "role": "protein",
+            "quantity": "500g"
+          },
+          {
+            "ingredientId": "ing-broccoli",
+            "role": "veg",
+            "quantity": "1 head"
+          },
+          {
+            "ingredientId": "ing-tomato-sauce",
+            "role": "sauce",
+            "quantity": "1 jar"
+          }
+        ],
+        "defaultPrep": "Cook pasta. Grill or pan-fry protein. Steam veg.",
+        "estimatedTimeMinutes": 30,
+        "difficulty": "easy",
+        "rescueEligible": true,
+        "wasteReuseHints": [
+          "Leftover pasta works for next-day lunch"
+        ]
+      },
+      {
+        "id": "bm-salmon-rice",
+        "name": "Salmon with rice and peas",
+        "components": [
+          {
+            "ingredientId": "ing-rice",
+            "role": "carb",
+            "quantity": "300g"
+          },
+          {
+            "ingredientId": "ing-salmon",
+            "role": "protein",
+            "quantity": "400g"
+          },
+          {
+            "ingredientId": "ing-peas",
+            "role": "veg",
+            "quantity": "200g"
+          }
+        ],
+        "defaultPrep": "Cook rice. Pan-fry salmon. Heat peas.",
+        "estimatedTimeMinutes": 25,
+        "difficulty": "medium",
+        "rescueEligible": false,
+        "wasteReuseHints": []
+      }
+    ],
+    "weeklyPlans": [],
+    "pinnedMealIds": []
+  }
+]

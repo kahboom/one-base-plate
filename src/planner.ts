@@ -10,6 +10,10 @@ import type {
   MealOutcome,
 } from "./types";
 
+function isHumanMember(member: HouseholdMember): boolean {
+  return member.role !== "pet";
+}
+
 function resolveIngredientName(
   ingredientId: string,
   ingredients: Ingredient[],
@@ -190,10 +194,11 @@ export function computeIngredientOverlap(
   members: HouseholdMember[],
   ingredients: Ingredient[],
 ): OverlapResult {
+  const humanMembers = members.filter(isHumanMember);
   const name = resolveIngredientName(ingredientId, ingredients);
   const ing = ingredients.find((i) => i.id === ingredientId);
 
-  const memberDetails: MemberOverlap[] = members.map((member) => {
+  const memberDetails: MemberOverlap[] = humanMembers.map((member) => {
     const { compatibility, conflict } = getMemberIngredientCompatibility(name, ing, member);
     return {
       memberId: member.id,
@@ -207,7 +212,7 @@ export function computeIngredientOverlap(
 
   return {
     score: compatible,
-    total: members.length,
+    total: humanMembers.length,
     memberDetails,
   };
 }
@@ -217,7 +222,8 @@ export function computeMealOverlap(
   members: HouseholdMember[],
   ingredients: Ingredient[],
 ): OverlapResult {
-  const memberDetails: MemberOverlap[] = members.map((member) => {
+  const humanMembers = members.filter(isHumanMember);
+  const memberDetails: MemberOverlap[] = humanMembers.map((member) => {
     const conflicts: string[] = [];
     let hasConflict = false;
     let needsAdaptation = false;
@@ -257,7 +263,7 @@ export function computeMealOverlap(
 
   return {
     score: compatible,
-    total: members.length,
+    total: humanMembers.length,
     memberDetails,
   };
 }
@@ -274,7 +280,8 @@ export function generateMealExplanation(
   outcomes: MealOutcome[] = [],
   patterns?: LearnedPatterns,
 ): MealExplanation {
-  const overlap = computeMealOverlap(meal, members, ingredients);
+  const humanMembers = members.filter(isHumanMember);
+  const overlap = computeMealOverlap(meal, humanMembers, ingredients);
   const tradeOffs: string[] = [];
 
   const adaptMembers = overlap.memberDetails.filter((d) => d.compatibility === "with-adaptation");
@@ -307,7 +314,7 @@ export function generateMealExplanation(
   }
 
   // Trade-offs: toddler/baby safe food coverage
-  for (const member of members) {
+  for (const member of humanMembers) {
     if (member.role !== "toddler" && member.role !== "baby") continue;
     const hasSafeFood = meal.components.some((c) => {
       const bestId = pickBestIngredient(c, member, ingredients);
@@ -359,6 +366,7 @@ export function generateShortReason(
   outcomes: MealOutcome[] = [],
   patterns?: LearnedPatterns,
 ): string {
+  const humanMembers = members.filter(isHumanMember);
   // Outcome-based reasons take priority when strong signal
   const outcomeScore = computeOutcomeScore(meal.id, outcomes);
   if (outcomeScore.successCount >= 3) return "Household favorite";
@@ -366,19 +374,19 @@ export function generateShortReason(
 
   // Pattern-based reasons when patterns are learned
   if (patterns && patterns.insights.length > 0) {
-    const patternScore = computePatternScore(meal, patterns, members, ingredients);
+    const patternScore = computePatternScore(meal, patterns, humanMembers, ingredients);
     if (patternScore >= 3) return "Matches household patterns";
     if (patternScore <= -3) return "Clashes with learned preferences";
   }
 
-  const overlap = computeMealOverlap(meal, members, ingredients);
+  const overlap = computeMealOverlap(meal, humanMembers, ingredients);
 
   if (overlap.score === overlap.total) {
     const adaptMembers = overlap.memberDetails.filter((d) => d.compatibility === "with-adaptation");
     if (adaptMembers.length === 0) return "Works for everyone";
 
     // Find the most interesting adaptation reason
-    for (const member of members) {
+    for (const member of humanMembers) {
       if (member.role === "toddler" || member.role === "baby") {
         const hasSafe = meal.components.some((c) => {
           const bestId = pickBestIngredient(c, member, ingredients);
@@ -729,6 +737,7 @@ export function generateRescueMeals(
   ingredients: Ingredient[],
   scenario: RescueScenario,
 ): RescueMeal[] {
+  const humanMembers = members.filter(isHumanMember);
   const rescueEligible = meals.filter((m) => m.rescueEligible);
   const pool = rescueEligible.length > 0 ? rescueEligible : meals;
   if (pool.length === 0) return [];
@@ -736,7 +745,7 @@ export function generateRescueMeals(
   const stapleCategories = new Set(["freezer", "pantry"]);
 
   const scored = pool.map((meal) => {
-    const overlap = computeMealOverlap(meal, members, ingredients);
+    const overlap = computeMealOverlap(meal, humanMembers, ingredients);
 
     // Base score: overlap
     let score = overlap.score * 10;
@@ -759,7 +768,7 @@ export function generateRescueMeals(
       score -= meal.estimatedTimeMinutes * 0.3;
     } else {
       // everyone-melting-down: maximize safe food coverage
-      for (const member of members) {
+      for (const member of humanMembers) {
         if (member.role !== "toddler" && member.role !== "baby") continue;
         const hasSafe = meal.components.some((c) => {
           const bestId = pickBestIngredient(c, member, ingredients);
@@ -778,7 +787,7 @@ export function generateRescueMeals(
   scored.sort((a, b) => b.score - a.score);
 
   return scored.slice(0, 3).map(({ meal, overlap }) => {
-    const variants = generateAssemblyVariants(meal, members, ingredients);
+    const variants = generateAssemblyVariants(meal, humanMembers, ingredients);
     const prepSummary = `${meal.estimatedTimeMinutes} min · ${meal.difficulty} effort`;
     const confidence =
       meal.estimatedTimeMinutes <= 15
@@ -803,6 +812,7 @@ export function learnCompatibilityPatterns(
   members: HouseholdMember[],
   ingredients: Ingredient[],
 ): LearnedPatterns {
+  const humanMembers = members.filter(isHumanMember);
   const ingredientScores = new Map<string, number>();
   const insights: string[] = [];
 
@@ -850,7 +860,7 @@ export function learnCompatibilityPatterns(
       // Track protein preferences
       if (component.role === "protein") {
         const bestIds = new Set<string>();
-        for (const member of members) {
+        for (const member of humanMembers) {
           bestIds.add(pickBestIngredient(component, member, ingredients));
         }
         for (const pid of bestIds) {
@@ -864,7 +874,7 @@ export function learnCompatibilityPatterns(
     }
 
     // Check if prep rules were relevant to this meal
-    const hasPrepRuleRelevance = members.some((member) =>
+    const hasPrepRuleRelevance = humanMembers.some((member) =>
       member.preparationRules.some((rule) =>
         meal.components.some((c) => {
           const name = resolveIngredientName(c.ingredientId, ingredients);
@@ -878,7 +888,7 @@ export function learnCompatibilityPatterns(
     }
 
     // Check safe food coverage for toddlers/babies
-    const childMembers = members.filter((m) => m.role === "toddler" || m.role === "baby");
+    const childMembers = humanMembers.filter((m) => m.role === "toddler" || m.role === "baby");
     if (childMembers.length > 0) {
       const hasSafeFoodCoverage = childMembers.some((member) =>
         meal.components.some((c) => {
@@ -901,7 +911,7 @@ export function learnCompatibilityPatterns(
     if (rate >= 0.7) {
       prepRuleBoost = 1.5;
       const ruleNames = [...new Set(
-        members.flatMap((m) => m.preparationRules.map((r) => r.rule.toLowerCase())),
+        humanMembers.flatMap((m) => m.preparationRules.map((r) => r.rule.toLowerCase())),
       )];
       if (ruleNames.length > 0) {
         insights.push(`Meals with "${ruleNames[0]}" prep tend to work well`);
@@ -955,6 +965,7 @@ export function computePatternScore(
   members: HouseholdMember[],
   ingredients: Ingredient[],
 ): number {
+  const humanMembers = members.filter(isHumanMember);
   let score = 0;
 
   // Sum ingredient-level scores
@@ -967,7 +978,7 @@ export function computePatternScore(
 
   // Apply prep rule boost if meal uses prep rules
   if (patterns.prepRuleBoost > 0) {
-    const hasPrepRuleRelevance = members.some((member) =>
+    const hasPrepRuleRelevance = humanMembers.some((member) =>
       member.preparationRules.some((rule) =>
         meal.components.some((c) => {
           const name = resolveIngredientName(c.ingredientId, ingredients);
@@ -982,7 +993,7 @@ export function computePatternScore(
 
   // Apply safe food boost if meal covers child safe foods
   if (patterns.safeFoodBoost > 0) {
-    const childMembers = members.filter((m) => m.role === "toddler" || m.role === "baby");
+    const childMembers = humanMembers.filter((m) => m.role === "toddler" || m.role === "baby");
     const hasSafeFoodCoverage = childMembers.some((member) =>
       meal.components.some((c) => {
         const bestId = pickBestIngredient(c, member, ingredients);
@@ -1003,7 +1014,7 @@ export function generateAssemblyVariants(
   members: HouseholdMember[],
   ingredients: Ingredient[],
 ): AssemblyVariant[] {
-  return members.map((member) => {
+  return members.filter(isHumanMember).map((member) => {
     const instructions: string[] = [];
     let requiresExtraPrep = false;
     let safeFoodIncluded = false;

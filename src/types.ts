@@ -1,4 +1,4 @@
-export type MemberRole = "adult" | "toddler" | "baby";
+export type MemberRole = "adult" | "toddler" | "baby" | "pet";
 
 export type TextureLevel = "regular" | "soft" | "mashable" | "pureed";
 
