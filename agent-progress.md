@@ -634,5 +634,20 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 19 tests: 6 catalog linkage tests (catalogId/source on catalog items, persistence, manual source, source labels, catalog chip), 5 duplicate detection tests (exact match, self-exclusion, no match, blank name, inline warning), 3 merge/cancel tests (dialog shown, keep existing removes duplicate, cancel keeps both), 2 catalog immutability tests (tags, flags), 3 backward compatibility tests (old format renders, modal shows Manual, save/reload works)
 - Verified: tsc --noEmit passes, vitest passes (607 tests, 2 pre-existing f033 failures unrelated to F045), all F045 steps satisfied
 
+### F046 - Recipe import parses ingredients and builds a reviewable base-meal draft (2026-03-14)
+- Created `src/recipe-parser.ts` with ingredient line parser (`parseIngredientLine`), fuzzy matcher (`matchIngredient`), full recipe text parser (`parseRecipeText`), and component role guesser (`guessComponentRole`)
+- Parser handles: quantity extraction (units like g, kg, cups, tbsp, etc.), bullet/dash/number prefix stripping, case-insensitive fuzzy matching against household ingredients and master catalog
+- Matching priority: household ingredients first (score ≥ 0.5), then catalog, then unmatched
+- Created `RecipeImport` page (`src/pages/RecipeImport.tsx`) at `/household/:householdId/import-recipe` with 3-step flow:
+  - **Input step**: Paste recipe text (textarea) + optional source URL; Parse button disabled until text is provided
+  - **Review step**: Each parsed line shows raw text, parsed quantity/name, match status (matched/catalog/unmatched) with color-coded chips; Per-line action dropdown (Use match/Create new/Ignore) with category selector for new manual ingredients; Summary chips showing matched/to-create/ignored counts
+  - **Draft step**: Reviewable meal draft with name, time, difficulty, notes fields; Auto-populated components from review selections; Recipe URL auto-attached as RecipeLink; Save button disabled until meal name is provided — no auto-save
+- Catalog-matched ingredients converted via `catalogIngredientToHousehold` with proper `catalogId` and `source: "catalog"` fields
+- New ingredients added to household storage alongside the draft meal on save — compatible with local-first storage model
+- Added "Import recipe" button to both IngredientManager (in control bar) and BaseMealManager (next to Add meal)
+- Added route `/household/:householdId/import-recipe` to App.tsx
+- Created 31 tests: 5 parser line tests (quantity extraction, no-quantity, bullet stripping, numbered lists, blank lines), 5 matcher tests (exact match, case-insensitive, catalog fallback, unmatched, household priority), 3 parseRecipeText tests (multi-line, blank skipping, status), 4 guessComponentRole tests (protein, carb, veg/fruit, other), 12 UI tests (input step rendering, URL field, disabled parse, review step, match chips, action change, draft building, recipe URL attachment, save persistence, catalog creation, no-auto-save, disabled save), 2 navigation tests (IngredientManager button, BaseMealManager button), 1 storage compatibility test (ingredient-meal reference integrity)
+- Verified: tsc --noEmit passes (pre-existing test file errors only), vitest passes (638 tests, 2 pre-existing f033 failures unrelated to F046), all F046 steps satisfied
+
 ## Next Task
-- F046: Recipe import parses ingredients and builds a reviewable base-meal draft
+- All features complete! No remaining tasks with passes=false.

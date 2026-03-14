@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import type { BaseMeal, MealComponent, Ingredient, RecipeLink, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, FieldLabel, EmptyState, Chip, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
@@ -501,6 +501,11 @@ export default function BaseMealManager() {
       <HouseholdNav householdId={householdId ?? ""} />
       <PageHeader title="Base Meals" subtitle={`Household: ${householdName}`} />
 
+      <ActionGroup placement="top">
+        <Button variant="primary" onClick={handleSave}>Save meals</Button>
+        <Button onClick={() => navigate(`/household/${householdId}/home`)}>Cancel</Button>
+      </ActionGroup>
+
       <h2 className="mb-4 text-xl font-semibold text-text-primary">Meals ({meals.length})</h2>
 
       {meals.length === 0 && (
@@ -518,7 +523,12 @@ export default function BaseMealManager() {
         />
       ))}
 
-      <Button onClick={addMeal} className="mb-4">Add meal</Button>
+      <div className="mb-4 flex gap-2">
+        <Button onClick={addMeal}>Add meal</Button>
+        <Link to={`/household/${householdId}/import-recipe`}>
+          <Button data-testid="import-recipe-btn">Import recipe</Button>
+        </Link>
+      </div>
 
       <ActionGroup>
         <Button variant="primary" onClick={handleSave}>Save meals</Button>

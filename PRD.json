@@ -1235,7 +1235,7 @@
         "Create a draft base meal with mapped components, attached recipe link, and optional notes instead of blindly auto-saving a finished meal.",
         "Verify imported ingredients can be added to the household pantry during review and the result stays compatible with the local-first storage model."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F029",
         "F044",

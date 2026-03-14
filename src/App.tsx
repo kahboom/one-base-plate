@@ -11,6 +11,7 @@ import MealDetail from "./pages/MealDetail";
 import GroceryList from "./pages/GroceryList";
 import RescueMode from "./pages/RescueMode";
 import MealHistory from "./pages/MealHistory";
+import RecipeImport from "./pages/RecipeImport";
 
 function App() {
   return (
@@ -53,6 +54,10 @@ function App() {
       <Route
         path="/household/:householdId/history"
         element={<MealHistory />}
+      />
+      <Route
+        path="/household/:householdId/import-recipe"
+        element={<RecipeImport />}
       />
     </Routes>
   );
