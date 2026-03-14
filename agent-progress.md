@@ -607,5 +607,22 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 16 new F043 tests: 3 browse-first list tests (compact rows, flags display, no expanded forms), 5 search/filter tests (control bar, search, category filter, tag filter, filter count), 4 modal editing tests (open modal, edit+close, delete inside modal, add opens modal), 2 many-ingredients tests (30 items, touch targets), 2 empty state tests
 - Verified: vitest passes (571 tests, 2 pre-existing f033 failures unrelated to F043), all F043 steps satisfied
 
+### F044 - App ships with a seeded ingredient catalog and add-from-catalog flow (2026-03-14)
+- Created `src/catalog.ts` with `MASTER_CATALOG` containing 70+ common ingredients across all 8 categories (protein, carb, veg, fruit, dairy, snack, freezer, pantry)
+- Each catalog entry has: id, name, category, tags, freezerFriendly, babySafeWithAdaptation
+- Added `searchCatalog` function for case-insensitive name search, `getCatalogByCategory` for category filtering
+- Added `catalogIngredientToHousehold` converter that creates a valid `Ingredient` with unique ID from a catalog entry, supporting optional overrides for pre-save edits
+- Catalog is separate from household ingredients — it's a static module, not stored in localStorage
+- Updated IngredientManager with "Add from catalog" primary button in the control bar
+- Created `CatalogBrowser` modal component with search input and category filter dropdown
+- Catalog results show item name, category chip, tag chips, freezer/baby flags, and an "Add" button per item
+- Already-added ingredients (name match) show "Added" chip instead of add button
+- Adding a catalog item: closes catalog modal, adds ingredient to household list, opens edit modal for optional pre-save customization
+- Preserved "Add ingredient" button for manual creation of uncommon items
+- Updated empty state to mention both catalog and manual options
+- Updated 2 existing test files (f025, f043) for new empty state text
+- Created 20 tests: 7 catalog engine tests (categories covered, separation, search, empty query, category filter, conversion, overrides), 7 UI tests (button display, modal open, search results, add flow, browse list, already-added, close), 1 manual creation test, 3 flow compatibility tests (persistence, pre-save edit, valid structure), 2 empty state/discoverability tests
+- Verified: tsc --noEmit passes, vitest passes (591 tests, 2 pre-existing f033 failures unrelated to F044), all F044 steps satisfied
+
 ## Next Task
-- F044: App ships with a seeded ingredient catalog and add-from-catalog flow
+- F045: Household ingredients support catalog linkage, lightweight customization, and duplicate handling

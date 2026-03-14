@@ -294,7 +294,7 @@ describe("F043: Empty and filter empty states", () => {
     seedWithIngredients([]);
     renderPage();
 
-    expect(screen.getByText("No ingredients yet. Add one to get started.")).toBeInTheDocument();
+    expect(screen.getByText("No ingredients yet. Add from the catalog or create one manually.")).toBeInTheDocument();
   });
 
   it("shows filter empty state when filters match nothing", async () => {

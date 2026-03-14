@@ -144,7 +144,7 @@ describe("F025: Empty states", () => {
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByText("No ingredients yet. Add one to get started.")).toBeInTheDocument();
+    expect(screen.getByText("No ingredients yet. Add from the catalog or create one manually.")).toBeInTheDocument();
   });
 
   it("BaseMealManager shows empty state for no meals", () => {

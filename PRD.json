@@ -1193,7 +1193,7 @@
         "Preserve manual ingredient creation for uncommon household items.",
         "Verify catalog-backed ingredients work with the existing planner, grocery list, rescue mode, and base meal flows."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F043"
       ],

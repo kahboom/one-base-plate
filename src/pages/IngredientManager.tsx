@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Ingredient, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
+import { searchCatalog, getCatalogByCategory, catalogIngredientToHousehold, type CatalogIngredient } from "../catalog";
 import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, Chip, FieldLabel, EmptyState, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
@@ -253,6 +254,107 @@ function IngredientRow({
   );
 }
 
+/* ---------- Catalog browser modal ---------- */
+function CatalogBrowser({
+  existingNames,
+  onAdd,
+  onClose,
+}: {
+  existingNames: Set<string>;
+  onAdd: (item: CatalogIngredient) => void;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [catFilter, setCatFilter] = useState<IngredientCategory | "">("");
+
+  const results = useMemo(() => {
+    if (!query && !catFilter) return [];
+    let items = query ? searchCatalog(query) : [];
+    if (!query && catFilter) {
+      items = getCatalogByCategory(catFilter);
+    } else if (catFilter) {
+      items = items.filter((i: CatalogIngredient) => i.category === catFilter);
+    }
+    return items;
+  }, [query, catFilter]);
+
+  const showAll = !query && !catFilter;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-label="Add from catalog">
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-md border border-border-light bg-surface p-6 shadow-card-hover" data-testid="catalog-modal">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-text-primary">Add from catalog</h2>
+          <Button variant="ghost" onClick={onClose} aria-label="Close catalog">✕</Button>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row mb-4">
+          <Input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search catalog..."
+            data-testid="catalog-search"
+            className="flex-1"
+            autoFocus
+          />
+          <Select
+            value={catFilter}
+            onChange={(e) => setCatFilter(e.target.value as IngredientCategory | "")}
+            className="sm:w-36"
+            data-testid="catalog-category-filter"
+          >
+            <option value="">All categories</option>
+            {CATEGORY_OPTIONS.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </Select>
+        </div>
+
+        {showAll ? (
+          <p className="text-sm text-text-muted py-4 text-center">Type to search the ingredient catalog.</p>
+        ) : results.length === 0 ? (
+          <EmptyState>No catalog items match your search.</EmptyState>
+        ) : (
+          <div className="space-y-1.5" data-testid="catalog-results">
+            {results.map((item) => {
+              const alreadyAdded = existingNames.has(item.name.toLowerCase());
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 rounded-md border border-border-light bg-surface px-3 py-2.5 min-h-[48px]"
+                  data-testid={`catalog-item-${item.id}`}
+                >
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-medium text-text-primary truncate">{item.name}</span>
+                    <span className="flex flex-wrap items-center gap-1 mt-0.5">
+                      <Chip variant={CATEGORY_CHIP_VARIANT[item.category]} className="text-[10px]">{item.category}</Chip>
+                      {item.tags.map((tag) => (
+                        <Chip key={tag} variant="info" className="text-[10px]">{tag}</Chip>
+                      ))}
+                    </span>
+                  </span>
+                  <span className="flex flex-shrink-0 items-center gap-1.5">
+                    {item.freezerFriendly && <Chip variant="info" className="text-[10px]" title="Freezer friendly">❄️</Chip>}
+                    {item.babySafeWithAdaptation && <Chip variant="success" className="text-[10px]" title="Baby safe">🍼</Chip>}
+                  </span>
+                  {alreadyAdded ? (
+                    <Chip variant="neutral" className="text-xs">Added</Chip>
+                  ) : (
+                    <Button small variant="primary" onClick={() => onAdd(item)} data-testid={`catalog-add-${item.id}`}>
+                      Add
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ---------- Main component ---------- */
 export default function IngredientManager() {
   const { householdId } = useParams<{ householdId: string }>();
@@ -265,6 +367,7 @@ export default function IngredientManager() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<IngredientCategory | "">("");
   const [tagFilter, setTagFilter] = useState("");
+  const [showCatalog, setShowCatalog] = useState(false);
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
 
   useEffect(() => {
@@ -295,9 +398,20 @@ export default function IngredientManager() {
     });
   }, [ingredients, searchQuery, categoryFilter, tagFilter]);
 
+  const existingNames = useMemo(() => {
+    return new Set(ingredients.map((ing) => ing.name.toLowerCase()));
+  }, [ingredients]);
+
   const editingIngredient = editingId
     ? ingredients.find((ing) => ing.id === editingId) ?? null
     : null;
+
+  function addFromCatalog(catalogItem: CatalogIngredient) {
+    const newIng = catalogIngredientToHousehold(catalogItem);
+    setIngredients((prev) => [...prev, newIng]);
+    setShowCatalog(false);
+    setEditingId(newIng.id);
+  }
 
   function addIngredient() {
     const newIng = createEmptyIngredient();
@@ -377,7 +491,8 @@ export default function IngredientManager() {
               ))}
             </Select>
           )}
-          <Button variant="primary" onClick={addIngredient}>Add ingredient</Button>
+          <Button variant="primary" onClick={() => setShowCatalog(true)}>Add from catalog</Button>
+          <Button onClick={addIngredient}>Add ingredient</Button>
         </div>
       </Card>
 
@@ -388,7 +503,7 @@ export default function IngredientManager() {
 
       {/* Browse list */}
       {ingredients.length === 0 ? (
-        <EmptyState>No ingredients yet. Add one to get started.</EmptyState>
+        <EmptyState>No ingredients yet. Add from the catalog or create one manually.</EmptyState>
       ) : filteredIngredients.length === 0 ? (
         <EmptyState>No ingredients match your filters.</EmptyState>
       ) : (
@@ -419,6 +534,14 @@ export default function IngredientManager() {
           onChange={updateIngredient}
           onClose={() => setEditingId(null)}
           onDelete={() => removeIngredient(editingIngredient.id)}
+        />
+      )}
+
+      {showCatalog && (
+        <CatalogBrowser
+          existingNames={existingNames}
+          onAdd={addFromCatalog}
+          onClose={() => setShowCatalog(false)}
         />
       )}
 
