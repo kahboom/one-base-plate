@@ -925,7 +925,7 @@
         "Ensure the captured view uses shared styling and is readable at mobile sizes when shared.",
         "Verify the share flow works on mobile and desktop."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": ["F010", "F033"],
       "acceptanceRefs": ["S003"]
     }

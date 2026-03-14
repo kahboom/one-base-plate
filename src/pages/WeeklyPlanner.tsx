@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { Household, WeeklyPlan, DayPlan, BaseMeal, MealOutcome, MealOutcomeResult } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
@@ -15,6 +15,44 @@ export default function WeeklyPlanner() {
   const [numDays, setNumDays] = useState(7);
   const [loaded, setLoaded] = useState(false);
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const shareRef = useRef<HTMLDivElement>(null);
+
+  async function handleShare() {
+    if (!shareRef.current || !plan || plan.days.length === 0) return;
+    setSharing(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(shareRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        useCORS: true,
+      });
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/png")
+      );
+      if (!blob) return;
+
+      const file = new File([blob], `meal-plan-${household?.name.toLowerCase().replace(/\s+/g, "-") ?? "plan"}.png`, {
+        type: "image/png",
+      });
+
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Weekly Meal Plan" });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      // user cancelled share or html2canvas failed
+    } finally {
+      setSharing(false);
+    }
+  }
 
   const loadData = useCallback(() => {
     if (!householdId) return;
@@ -207,6 +245,7 @@ export default function WeeklyPlanner() {
         </div>
       )}
 
+      <div ref={shareRef}>
       {plan && plan.days.length > 0 && household && (() => {
         const balance = computeWeekEffortBalance(plan.days, household.baseMeals);
         const groceryPreview = computeGroceryPreview(plan.days, household.baseMeals, household.ingredients);
@@ -288,6 +327,7 @@ export default function WeeklyPlanner() {
           );
         })}
       </div>
+      </div>
 
       {plan && (
         <div data-testid="weekly-plan" className="mt-4 flex flex-wrap gap-3">
@@ -316,6 +356,13 @@ export default function WeeklyPlanner() {
                 data-testid="print-btn"
               >
                 Print
+              </Button>
+              <Button
+                onClick={handleShare}
+                disabled={sharing}
+                data-testid="share-btn"
+              >
+                {sharing ? "Sharing\u2026" : "Share"}
               </Button>
             </>
           )}

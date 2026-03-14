@@ -560,5 +560,17 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 8 tests: 4 HouseholdList click behavior tests (navigates to setup, href correct, no Setup button, Delete still present), 3 nav removal tests (no Household setup in nav, Home present, All households present), 1 navigation test (Home link from setup goes to Home page)
 - Verified: tsc --noEmit passes (pre-existing f035/f036 errors only), vitest passes (538 tests, 2 pre-existing f033 failures unrelated to F041), all F041 steps satisfied
 
+### F042 - User can share a mobile-friendly screenshot of the weekly plan via text (2026-03-14)
+- Installed `html2canvas` dependency for DOM-to-image capture
+- Added `handleShare` async function to WeeklyPlanner that captures the day cards + effort balance area as a PNG image at 2x scale for retina quality
+- When `navigator.share` is available and supports file sharing (`canShare`), uses the Web Share API to share the image as a PNG file with title "Weekly Meal Plan"
+- When native share is unavailable or `canShare` returns false, falls back to downloading the PNG image via Blob URL
+- Download filename uses household name slugified (e.g., `meal-plan-share-test-family.png`)
+- Added `ref` to the shareable content wrapper (effort balance + day cards grid) so html2canvas captures exactly the plan view
+- Share button appears alongside Export and Print buttons, only when plan has days
+- Button shows "Sharing..." with disabled state during capture to prevent double-clicks
+- Created 13 tests: 3 button display tests (shown with plan, hidden without, alongside export/print), 2 download fallback tests (triggers download, filename includes household name), 1 navigator.share test (calls share with PNG file), 2 shareable content tests (day cards and effort balance in capture area), 2 button state tests (text, appears after generate), 1 html2canvas integration test (scale 2, white background), 2 mobile/desktop tests (button element, canShare false fallback)
+- Verified: tsc --noEmit passes (pre-existing f035/f036 errors only), vitest passes (549 tests, 2 pre-existing f033 failures unrelated to F042), all F042 steps satisfied
+
 ## Next Task
-- F042: User can share a mobile-friendly screenshot of the weekly plan via text
+- All features in PRD.json are now complete (passes: true)
