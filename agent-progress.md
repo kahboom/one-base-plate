@@ -522,5 +522,19 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 13 tests: 5 inline ingredient form tests (button display, form open, create+select, cancel, persistence on save), 2 nav link tests (Ingredients href, Base meals href), 4 empty state link tests (Planner links, WeeklyPlanner links, Planner navigation, WeeklyPlanner navigation), 2 workflow tests (stays on page, ingredient available in all selects)
 - Verified: tsc --noEmit passes (pre-existing errors in f035/f036 tests only), vitest passes (497 tests, 2 pre-existing f033 failures unrelated to F038), all F038 steps satisfied
 
+### F039 - User can import and export data as JSON for backup and seeding (2026-03-14)
+- Added `exportHouseholdsJSON` function to storage layer — exports all households (or filtered by IDs) as formatted JSON string
+- Added `importHouseholdsJSON` function with `replace` (clears existing) and `merge` (keeps existing, updates matching IDs, adds new) modes
+- Validates input is a JSON array; throws on invalid or non-array input
+- Added Export and Import buttons to HouseholdList page:
+  - Export triggers a `.json` file download (`onebaseplate-export.json`) via Blob URL
+  - Import opens a file picker (`<input type="file" accept=".json">`) and merges imported data with existing households
+  - Invalid files show an alert message
+- Created `scripts/seed.ts` — reads all fixture JSON files from `fixtures/households/` and outputs localStorage seed command
+- Added `npm run seed` script to package.json using `tsx`
+- Round-trip verified: exported JSON matches storage structure and can be re-imported to fully restore data including members, ingredients, meals, and all nested fields
+- Created 15 tests: 8 storage function tests (export all, export filtered, replace import, merge import, merge update, invalid JSON, non-array, round-trip), 5 UI tests (buttons shown, export download, import file picker, import updates list, filename), 2 seed compatibility tests (fixture structure validation, fixture import via importHouseholdsJSON)
+- Verified: tsc --noEmit passes (pre-existing errors in f035/f036 only), vitest passes (512 tests, 2 pre-existing f033 failures unrelated to F039), all F039 steps satisfied
+
 ## Next Task
-- F039: User can import and export data as JSON for backup and seeding
+- F040: Database cleared and repopulated each build with McGeever family seed

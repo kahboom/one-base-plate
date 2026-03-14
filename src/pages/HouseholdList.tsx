@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import type { Household } from "../types";
-import { loadHouseholds, deleteHousehold } from "../storage";
+import { loadHouseholds, deleteHousehold, exportHouseholdsJSON, importHouseholdsJSON } from "../storage";
 import { PageShell, PageHeader, Card, Button, EmptyState, Section, ConfirmDialog, useConfirm } from "../components/ui";
 
 export default function HouseholdList() {
   const [households, setHouseholds] = useState<Household[]>([]);
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setHouseholds(loadHouseholds());
@@ -17,6 +18,37 @@ export default function HouseholdList() {
       deleteHousehold(household.id);
       setHouseholds(loadHouseholds());
     });
+  }
+
+  function handleExport() {
+    const json = exportHouseholdsJSON();
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "onebaseplate-export.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleImportClick() {
+    fileInputRef.current?.click();
+  }
+
+  function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const result = importHouseholdsJSON(reader.result as string, "merge");
+        setHouseholds(result);
+      } catch {
+        alert("Invalid JSON file. Please check the file format.");
+      }
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   return (
@@ -62,6 +94,19 @@ export default function HouseholdList() {
               </div>
             </Card>
           ))}
+        </div>
+
+        <div className="mt-6 flex gap-3">
+          <Button small onClick={handleExport}>Export data</Button>
+          <Button small onClick={handleImportClick}>Import data</Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={handleImportFile}
+            data-testid="import-file-input"
+          />
         </div>
       </Section>
       <ConfirmDialog

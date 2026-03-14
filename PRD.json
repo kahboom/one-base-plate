@@ -875,7 +875,7 @@
         "Add npm script (e.g. npm run seed or npm run db:import) that reads a JSON file, clears storage, and writes the data to the app's storage key.",
         "Verify exported JSON matches the structure used by loadHouseholds/saveHouseholds and can be re-imported to restore or seed the app."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": ["F001"],
       "acceptanceRefs": []
     },
