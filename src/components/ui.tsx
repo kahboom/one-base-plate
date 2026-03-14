@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import type { ReactNode, ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
 
 /* ---------- App header (OneBasePlate brand) ---------- */
 export function AppHeader() {
@@ -173,9 +173,9 @@ export function EmptyState({ children }: { children: ReactNode }) {
 }
 
 /* ---------- Section ---------- */
-export function Section({ title, children }: { title?: string; children: ReactNode }) {
+export function Section({ title, children, className = "" }: { title?: string; children: ReactNode; className?: string }) {
   return (
-    <section className="mb-8">
+    <section className={`mb-8 ${className}`}>
       {title && <h2 className="mb-4 text-xl font-semibold text-text-primary">{title}</h2>}
       {children}
     </section>
@@ -204,21 +204,60 @@ export function NavBar({
   );
 }
 
-const navLinkClass = "text-sm font-medium text-brand hover:underline";
+const NAV_ITEMS: { label: string; path: string }[] = [
+  { label: "Home", path: "/home" },
+  { label: "Weekly planner", path: "/weekly" },
+  { label: "Meal planner", path: "/planner" },
+  { label: "Grocery list", path: "/grocery" },
+  { label: "Rescue mode", path: "/rescue" },
+  { label: "Meal history", path: "/history" },
+  { label: "Ingredients", path: "/ingredients" },
+  { label: "Base meals", path: "/meals" },
+];
+
+function navLinkClass(isActive: boolean) {
+  const base =
+    "inline-flex items-center rounded-pill px-3 py-1.5 text-sm font-medium transition-colors min-h-[36px] whitespace-nowrap";
+  return isActive
+    ? `${base} bg-brand text-white`
+    : `${base} text-text-secondary hover:bg-brand-light hover:text-brand`;
+}
 
 export function HouseholdNav({ householdId }: { householdId: string }) {
+  const location = useLocation();
+  const currentPath = location.pathname;
+  const prefix = `/household/${householdId}`;
+
+  function isActive(itemPath: string) {
+    const full = `${prefix}${itemPath}`;
+    if (itemPath === "/home") {
+      return currentPath === full || currentPath === prefix || currentPath === `${prefix}/`;
+    }
+    return currentPath.startsWith(full);
+  }
+
   return (
-    <NavBar placement="top">
-      <Link to={`/household/${householdId}/home`} className={navLinkClass}>Home</Link>
-      <Link to={`/household/${householdId}/weekly`} className={navLinkClass}>Weekly planner</Link>
-      <Link to={`/household/${householdId}/planner`} className={navLinkClass}>Meal planner</Link>
-      <Link to={`/household/${householdId}/grocery`} className={navLinkClass}>Grocery list</Link>
-      <Link to={`/household/${householdId}/rescue`} className={navLinkClass}>Rescue mode</Link>
-      <Link to={`/household/${householdId}/history`} className={navLinkClass}>Meal history</Link>
-      <Link to={`/household/${householdId}/ingredients`} className={navLinkClass}>Ingredients</Link>
-      <Link to={`/household/${householdId}/meals`} className={navLinkClass}>Base meals</Link>
-      <Link to="/" className={navLinkClass}>All households</Link>
-    </NavBar>
+    <nav
+      className="mb-6 flex flex-wrap items-center gap-1.5 rounded-md border border-border-light bg-surface px-2 py-2 shadow-card sm:gap-2 sm:px-3"
+      data-testid="app-nav"
+    >
+      {NAV_ITEMS.map((item) => (
+        <Link
+          key={item.path}
+          to={`${prefix}${item.path}`}
+          className={navLinkClass(isActive(item.path))}
+          aria-current={isActive(item.path) ? "page" : undefined}
+        >
+          {item.label}
+        </Link>
+      ))}
+      <Link
+        to="/"
+        className={navLinkClass(false)}
+      >
+        All households
+      </Link>
+    </nav>
   );
 }
 
@@ -232,8 +271,20 @@ export function FormRow({ children }: { children: ReactNode }) {
 }
 
 /* ---------- Action group ---------- */
-export function ActionGroup({ children }: { children: ReactNode }) {
-  return <div className="mt-8 flex flex-col gap-3 sm:flex-row">{children}</div>;
+export function ActionGroup({
+  children,
+  placement = "bottom",
+}: {
+  children: ReactNode;
+  placement?: "top" | "bottom";
+}) {
+  return (
+    <div
+      className={`flex flex-col gap-3 sm:flex-row ${placement === "top" ? "mb-6" : "mt-8"}`}
+    >
+      {children}
+    </div>
+  );
 }
 
 /* ---------- Confirm dialog ---------- */

@@ -572,5 +572,23 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 13 tests: 3 button display tests (shown with plan, hidden without, alongside export/print), 2 download fallback tests (triggers download, filename includes household name), 1 navigator.share test (calls share with PNG file), 2 shareable content tests (day cards and effort balance in capture area), 2 button state tests (text, appears after generate), 1 html2canvas integration test (scale 2, white background), 2 mobile/desktop tests (button element, canShare false fallback)
 - Verified: tsc --noEmit passes (pre-existing f035/f036 errors only), vitest passes (549 tests, 2 pre-existing f033 failures unrelated to F042), all F042 steps satisfied
 
+### F036 - Revamp household navigation into a polished integrated app shell (2026-03-14)
+- Replaced plain-text link row `HouseholdNav` with a polished pill-based navigation bar component
+- Navigation renders as a rounded card container (`rounded-md border bg-surface shadow-card`) with pill-shaped links inside
+- Added `useLocation` from react-router-dom for active page detection
+- Active link styled with `bg-brand text-white` and `aria-current="page"` for accessibility
+- Inactive links styled with `text-text-secondary` and `hover:bg-brand-light hover:text-brand` pill hover state
+- All links have touch-friendly `min-h-[36px]` and `rounded-pill` for mobile-first design
+- `whitespace-nowrap` prevents label wrapping inside individual pills
+- `flex-wrap` on the container allows pills to wrap to multiple rows on narrow screens
+- Responsive gap spacing: `gap-1.5` on mobile, `sm:gap-2` on larger screens
+- Active state correctly identifies current page using `location.pathname` prefix matching
+- Home page is active for both `/home` and bare household paths
+- "All households" link (`/`) is never marked active within a household context
+- Extracted `NAV_ITEMS` array for consistent link ordering
+- Updated 8 existing F036 tests: replaced `border-b` / `hover:underline` checks with new pill-bar styling assertions
+- Added 6 new F036 tests: active brand background, aria-current presence/absence, touch-friendly min-height, active state navigation change, All households never active
+- Verified: tsc --noEmit passes (pre-existing test file errors only), vitest passes (555 tests, 2 pre-existing f033 failures unrelated to F036), all F036 steps satisfied
+
 ## Next Task
-- All features in PRD.json are now complete (passes: true)
+- F043: Ingredient Manager becomes a compact browse-first list with modal editing (depends on F004, F032, F033, F036 — all complete)

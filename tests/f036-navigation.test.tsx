@@ -296,21 +296,77 @@ describe("F036: Consistent navigation across all household screens", () => {
   });
 
   describe("Nav uses shared styling system", () => {
-    it("nav is rendered as a nav element with top-nav border-b styling", () => {
+    it("nav is rendered as a nav element with pill-bar styling", () => {
       seedHousehold();
       renderRoute("/household/h-nav/home");
       const nav = screen.getByRole("navigation");
-      expect(nav.className).toContain("border-b");
+      expect(nav.className).toContain("border");
       expect(nav.className).toContain("flex-wrap");
+      expect(nav.className).toContain("rounded-md");
     });
 
-    it("nav links use brand color and hover underline", () => {
+    it("inactive nav links use pill styling with hover state", () => {
       seedHousehold();
       renderRoute("/household/h-nav/home");
       const nav = screen.getByRole("navigation");
       const link = within(nav).getByText("Weekly planner");
-      expect(link.className).toContain("text-brand");
-      expect(link.className).toContain("hover:underline");
+      expect(link.className).toContain("rounded-pill");
+      expect(link.className).toContain("hover:bg-brand-light");
+    });
+
+    it("active nav link has brand background and white text", () => {
+      seedHousehold();
+      renderRoute("/household/h-nav/home");
+      const nav = screen.getByRole("navigation");
+      const homeLink = within(nav).getByText("Home");
+      expect(homeLink.className).toContain("bg-brand");
+      expect(homeLink.className).toContain("text-white");
+    });
+
+    it("active nav link has aria-current=page", () => {
+      seedHousehold();
+      renderRoute("/household/h-nav/home");
+      const nav = screen.getByRole("navigation");
+      const homeLink = within(nav).getByText("Home");
+      expect(homeLink).toHaveAttribute("aria-current", "page");
+    });
+
+    it("inactive nav link does not have aria-current", () => {
+      seedHousehold();
+      renderRoute("/household/h-nav/home");
+      const nav = screen.getByRole("navigation");
+      const weeklyLink = within(nav).getByText("Weekly planner");
+      expect(weeklyLink).not.toHaveAttribute("aria-current");
+    });
+
+    it("nav links have touch-friendly min-height for mobile", () => {
+      seedHousehold();
+      renderRoute("/household/h-nav/home");
+      const nav = screen.getByRole("navigation");
+      const link = within(nav).getByText("Meal planner");
+      expect(link.className).toContain("min-h-[36px]");
+    });
+
+    it("active state changes when navigating to a different page", async () => {
+      seedHousehold();
+      const user = userEvent.setup();
+      renderRoute("/household/h-nav/home");
+      let nav = screen.getByRole("navigation");
+      expect(within(nav).getByText("Home")).toHaveAttribute("aria-current", "page");
+      expect(within(nav).getByText("Weekly planner")).not.toHaveAttribute("aria-current");
+
+      await user.click(within(nav).getByText("Weekly planner"));
+      nav = screen.getByRole("navigation");
+      expect(within(nav).getByText("Weekly planner")).toHaveAttribute("aria-current", "page");
+      expect(within(nav).getByText("Home")).not.toHaveAttribute("aria-current");
+    });
+
+    it("All households link is never marked active", () => {
+      seedHousehold();
+      renderRoute("/household/h-nav/home");
+      const nav = screen.getByRole("navigation");
+      const allHouseholds = within(nav).getByText("All households");
+      expect(allHouseholds).not.toHaveAttribute("aria-current");
     });
   });
 });

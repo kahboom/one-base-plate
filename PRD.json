@@ -138,6 +138,24 @@
           "proteinRole",
           "sauceRole",
           "linkableRecipes[]",
+          "notes",
+          "source (manual|catalog|recipe-imported)",
+          "catalogItemId (optional)"
+        ]
+      },
+      {
+        "name": "IngredientCatalogItem",
+        "fields": [
+          "id",
+          "name",
+          "aliases[]",
+          "category (protein|carb|veg|fruit|dairy|snack|freezer|pantry)",
+          "defaultTags[]",
+          "freezerFriendly",
+          "babySafeWithAdaptation",
+          "imageUrl (optional)",
+          "proteinRole",
+          "sauceRole",
           "notes"
         ]
       },
@@ -816,16 +834,18 @@
     },
     {
       "id": "F036",
-      "phase": 1,
+      "phase": 2,
       "priority": "P0",
       "category": "ux",
-      "description": "Consistent navigation and household hub wayfinding",
+      "description": "Revamp household navigation into a polished integrated app shell",
       "steps": [
-        "Define Home as the canonical household hub; all 'Back to household' or equivalent back/up controls on child screens (Weekly Planner, Meal Planner, Grocery List, Rescue Mode, Meal Detail, Ingredient Manager, Base Meal Manager) must navigate to Home (/household/:id/home), not to HouseholdSetup.",
-        "Replace any 'Back to household' buttons that currently route to /household/:id with 'Back to Home' or 'Home' that routes to /household/:id/home.",
-        "Design a consistent, visually integrated navigation pattern (e.g. NavBar or persistent nav section) that feels part of the page—not a tacked-on list of links. Use the shared styling system (cards, spacing, hierarchy) so nav links read as a coherent section.",
-        "Apply the same navigation structure across all household-scoped screens: Home as hub, with consistent link order and placement. Ensure nav appears in a consistent location (e.g. bottom of page) and uses clear labels (Weekly planner, Meal planner, Grocery list, Rescue mode, Household setup, All households).",
-        "Verify that navigating Household → Home → Weekly planner → Back returns the user to Home, not to HouseholdSetup. Verify the same consistency for Meal planner, Grocery list, and Rescue mode."
+        "Replace the current plain text household link row on all household-scoped screens with a visually integrated navigation component that feels like part of the product, not a tacked-on list of links.",
+        "Use clear active state, spacing, grouping, and responsive behavior for Home, Weekly planner, Meal planner, Grocery list, Rescue mode, Ingredients, Base meals, and All households.",
+        "On desktop, render navigation as a cohesive header/tab bar or segmented nav block with active-page highlighting and consistent placement.",
+        "On mobile, render navigation as a wrapped pill row, bottom bar, or other touch-first pattern with active state and large tap targets; avoid cramped inline links.",
+        "Ensure the nav appears consistently across Home, Weekly Planner, Meal Planner, Grocery List, Rescue Mode, Ingredient Manager, Base Meal Manager, Meal Detail, and Household Setup.",
+        "Verify the active page is obvious at a glance and the screen no longer looks like a list of default links.",
+        "Verify Home remains the household hub and all back/up navigation still returns to /household/:id/home."
       ],
       "passes": true,
       "dependencies": ["F033"],
@@ -888,9 +908,7 @@
       "steps": [
         "Add fixtures/households/H004-mcgeever.json with McGeever household: Aaron (adult), Rachel (adult), Indy (toddler), Órla (baby), Lex (dog/pet).",
         "Extend MemberRole to include pet; exclude pet members from assembly variants, overlap scoring, and rescue logic.",
-        "Add seed script (e.g. npm run db:seed) that loads fixtures and writes to storage.",
-        "Wire seeding into build: npm run build clears storage and loads seed data (or app seeds on first load after build).",
-        "Optionally: init.sh or npm run dev can reset and seed on startup for local development."
+        "Add seed script (e.g. npm run db:seed) that loads fixtures and writes to storage."
       ],
       "passes": true,
       "dependencies": ["F001", "F039"],
@@ -928,6 +946,76 @@
       "passes": true,
       "dependencies": ["F010", "F033"],
       "acceptanceRefs": ["S003"]
+    },
+    {
+      "id": "F043",
+      "phase": 2,
+      "priority": "P0",
+      "category": "ux",
+      "description": "Ingredient Manager becomes a compact browse-first list with modal editing",
+      "steps": [
+        "Replace the current permanently expanded ingredient cards with a browse-first Ingredient Manager built for fast scanning.",
+        "Show search, category filter, tag filter, and primary actions in a compact control bar above the list.",
+        "Render ingredients as compact rows or compact stacked list items that surface name, category, tags, freezer-friendly, baby-safe, and optional thumbnail at a glance.",
+        "Open ingredient details in a modal or drawer for edit instead of keeping every ingredient expanded inline.",
+        "Keep destructive delete actions secondary and place them inside the modal/drawer or an overflow menu.",
+        "Ensure the page remains comfortable to use with 25 to 50+ ingredients on mobile and desktop.",
+        "Verify the Ingredient Manager no longer feels like a giant form or a stack of bulky cards."
+      ],
+      "passes": false,
+      "dependencies": ["F004", "F032", "F033", "F036"],
+      "acceptanceRefs": ["S010"]
+    },
+    {
+      "id": "F044",
+      "phase": 2,
+      "priority": "P0",
+      "category": "functional",
+      "description": "App ships with a seeded ingredient catalog and add-from-catalog flow",
+      "steps": [
+        "Add a master ingredient catalog separate from household ingredients and seed it with common proteins, carbs, veg, fruit, dairy, snacks, freezer items, and pantry staples.",
+        "Make the default 'Add ingredient' flow search the catalog first instead of forcing manual entry.",
+        "Allow the user to add a catalog ingredient to the household with one action and optional pre-save edits.",
+        "Preserve manual ingredient creation for uncommon household items.",
+        "Verify catalog-backed ingredients work with the existing planner, grocery list, rescue mode, and base meal flows."
+      ],
+      "passes": false,
+      "dependencies": ["F043"],
+      "acceptanceRefs": ["S010"]
+    },
+    {
+      "id": "F045",
+      "phase": 2,
+      "priority": "P0",
+      "category": "functional",
+      "description": "Household ingredients support catalog linkage, lightweight customization, and duplicate handling",
+      "steps": [
+        "Store whether a household ingredient was created manually or linked from the master catalog.",
+        "Warn when a near-duplicate ingredient already exists in the household list.",
+        "Allow the user to merge or cancel duplicate additions.",
+        "Allow household-specific edits to tags, notes, image, freezer-friendly, and baby-safe flags without mutating the master catalog entry.",
+        "Verify previously saved manual ingredients continue to work without migration failures."
+      ],
+      "passes": false,
+      "dependencies": ["F044"],
+      "acceptanceRefs": ["S010"]
+    },
+    {
+      "id": "F046",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "Recipe import parses ingredients and builds a reviewable base-meal draft",
+      "steps": [
+        "Allow the user to paste recipe text or a recipe URL into a new import flow.",
+        "Parse ingredient lines into a review screen and attempt to match them against household ingredients and the master catalog.",
+        "Let the user confirm matches, create missing ingredients, or ignore unmatched lines before saving.",
+        "Create a draft base meal with mapped components, attached recipe link, and optional notes instead of blindly auto-saving a finished meal.",
+        "Verify imported ingredients can be added to the household pantry during review and the result stays compatible with the local-first storage model."
+      ],
+      "passes": false,
+      "dependencies": ["F029", "F044", "F045"],
+      "acceptanceRefs": ["S007", "S010"]
     }
   ],
   "milestones": [
@@ -966,7 +1054,27 @@
     {
       "id": "M4",
       "name": "Learning loop + convenience features",
-      "includes": ["F013", "F014", "F015", "F020", "F030", "F034", "F035", "F036", "F037", "F038", "F039", "F040", "F041", "F042"]
+      "includes": [
+        "F013",
+        "F014",
+        "F015",
+        "F020",
+        "F030",
+        "F034",
+        "F035",
+        "F036",
+        "F037",
+        "F038",
+        "F039",
+        "F040",
+        "F041",
+        "F042"
+      ]
+    },
+    {
+      "id": "M5",
+      "name": "Ingredient workflow and recipe intake",
+      "includes": ["F043", "F044", "F045", "F046"]
     }
   ],
   "fixtureHouseholds": [
@@ -1030,6 +1138,10 @@
     "F034",
     "F035",
     "F036",
+    "F043",
+    "F044",
+    "F045",
+    "F046",
     "F020",
     "F037",
     "F038",
@@ -1286,6 +1398,28 @@
           "User can exit the tour at any step without losing app state",
           "Tour aligns with shared styling and remains readable on mobile"
         ]
+      },
+      {
+        "id": "S010",
+        "name": "Ingredient Manager",
+        "goal": "Let the user browse, add, and edit household ingredients quickly without giant forms.",
+        "requiredElements": [
+          "Integrated household navigation using the shared navigation pattern",
+          "Search input",
+          "Category filter and tag filter",
+          "Primary actions: Add ingredient, Add from catalog, Import recipe",
+          "Compact ingredient rows or compact list items with name, category, tags, key flags, and optional thumbnail",
+          "Tap or click to open ingredient detail modal or drawer",
+          "Modal or drawer form for full editing",
+          "Clear empty state that offers catalog add and manual add"
+        ],
+        "acceptance": [
+          "User can scan 25 to 50+ ingredients without the page feeling bulky",
+          "Desktop view may align fields like a table, but the default UI must still feel lightweight and readable rather than like a dense data grid",
+          "Mobile view uses compact stacked list items with large tap targets",
+          "Editing an ingredient takes one tap from the browse list",
+          "The primary screen stays browse-first instead of showing every ingredient as an expanded form"
+        ]
       }
     ],
     "microInteractions": [
@@ -1316,15 +1450,68 @@
     ]
   },
   "screenToFeatureMap": {
-    "S001": ["F010", "F012", "F021", "F032", "F025", "F033", "F036", "F037", "F038"],
-    "S002": ["F006", "F009", "F018", "F023", "F024", "F025", "F032", "F033", "F037"],
-    "S003": ["F010", "F021", "F022", "F026", "F027", "F032", "F025", "F033", "F036", "F038", "F042"],
+    "S001": [
+      "F010",
+      "F012",
+      "F021",
+      "F032",
+      "F025",
+      "F033",
+      "F036",
+      "F037",
+      "F038"
+    ],
+    "S002": [
+      "F006",
+      "F009",
+      "F018",
+      "F023",
+      "F024",
+      "F025",
+      "F032",
+      "F033",
+      "F037"
+    ],
+    "S003": [
+      "F010",
+      "F021",
+      "F022",
+      "F026",
+      "F027",
+      "F032",
+      "F025",
+      "F033",
+      "F036",
+      "F038",
+      "F042"
+    ],
     "S004": ["F006", "F028", "F029", "F037"],
     "S005": ["F012", "F036"],
-    "S006": ["F002", "F003", "F019", "F032", "F025", "F033", "F035", "F038", "F041"],
-    "S007": ["F005", "F028", "F029", "F032", "F025", "F033", "F035", "F037", "F038"],
+    "S006": [
+      "F002",
+      "F003",
+      "F019",
+      "F032",
+      "F025",
+      "F033",
+      "F035",
+      "F038",
+      "F041"
+    ],
+    "S007": [
+      "F005",
+      "F028",
+      "F029",
+      "F032",
+      "F025",
+      "F033",
+      "F035",
+      "F037",
+      "F038"
+    ],
     "S008": ["F011", "F020", "F036", "F037"],
-    "S009": ["F034"]
+    "S009": ["F034"],
+    "S010": ["F004", "F036", "F037", "F043", "F044", "F045", "F046"]
   },
   "agentExecutionRules": [
     "Before implementing a feature, read the feature object and any screen definitions listed in acceptanceRefs or screenToFeatureMap.",
