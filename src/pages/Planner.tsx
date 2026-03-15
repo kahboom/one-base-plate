@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { BaseMeal, AssemblyVariant, Household } from "../types";
-import { loadHousehold, saveHousehold } from "../storage";
+import { loadHousehold, saveHousehold, toSentenceCase } from "../storage";
 import {
   generateAssemblyVariants,
   computeMealOverlap,
@@ -245,7 +245,7 @@ export default function Planner() {
                 );
                 return (
                   <li key={i}>
-                    {ing ? ing.name : c.ingredientId} ({c.role}
+                    {ing ? toSentenceCase(ing.name) : c.ingredientId} ({c.role}
                     {c.quantity ? `, ${c.quantity}` : ""})
                   </li>
                 );

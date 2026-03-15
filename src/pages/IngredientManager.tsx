@@ -1,9 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import type { Ingredient, IngredientCategory } from "../types";
-import { loadHousehold, saveHousehold } from "../storage";
+import { loadHousehold, saveHousehold, toSentenceCase, normalizeIngredientName } from "../storage";
 import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from "../catalog";
-import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, Chip, FieldLabel, EmptyState, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, Chip, FieldLabel, EmptyState, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
   "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
@@ -113,7 +113,7 @@ function IngredientModal({
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-text-primary">
-              {ingredient.name || "New ingredient"}
+              {toSentenceCase(ingredient.name) || "New ingredient"}
             </h2>
             <span className="text-xs text-text-muted" data-testid="ingredient-source-label">
               {ingredient.source === "catalog" ? "From catalog" : "Manual"}
@@ -296,7 +296,7 @@ function IngredientRow({
       )}
       <span className="flex-1 min-w-0">
         <span className="block text-sm font-medium text-text-primary truncate">
-          {ingredient.name || <span className="italic text-text-muted">Unnamed</span>}
+          {ingredient.name ? toSentenceCase(ingredient.name) : <span className="italic text-text-muted">Unnamed</span>}
         </span>
         <span className="flex flex-wrap items-center gap-1 mt-0.5">
           <Chip variant={CATEGORY_CHIP_VARIANT[ingredient.category]} className="text-[10px]">
@@ -325,7 +325,6 @@ function IngredientRow({
 /* ---------- Main component ---------- */
 export default function IngredientManager() {
   const { householdId } = useParams<{ householdId: string }>();
-  const navigate = useNavigate();
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [householdName, setHouseholdName] = useState("");
@@ -349,6 +348,14 @@ export default function IngredientManager() {
     }
     setLoaded(true);
   }, [householdId]);
+
+  useEffect(() => {
+    if (!loaded || !householdId) return;
+    const household = loadHousehold(householdId);
+    if (!household) return;
+    household.ingredients = ingredients;
+    saveHousehold(household);
+  }, [loaded, householdId, ingredients]);
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -393,26 +400,12 @@ export default function IngredientManager() {
     });
   }
 
-  function handleSave() {
-    if (!householdId) return;
-    const household = loadHousehold(householdId);
-    if (!household) return;
-    household.ingredients = ingredients;
-    saveHousehold(household);
-    navigate(`/household/${householdId}/ingredients`);
-  }
-
   if (!loaded) return null;
 
   return (
     <PageShell>
       <HouseholdNav householdId={householdId ?? ""} />
       <PageHeader title="Ingredients" subtitle={`Household: ${householdName}`} />
-
-      <ActionGroup placement="top">
-        <Button variant="primary" onClick={handleSave}>Save ingredients</Button>
-        <Button onClick={() => navigate(`/household/${householdId}/home`)}>Cancel</Button>
-      </ActionGroup>
 
       {/* Control bar */}
       <Card className="mb-4" data-testid="ingredient-control-bar">
@@ -483,18 +476,18 @@ export default function IngredientManager() {
         <Button onClick={addIngredient}>Add ingredient</Button>
       </div>
 
-      <ActionGroup>
-        <Button variant="primary" onClick={handleSave}>Save ingredients</Button>
-        <Button onClick={() => navigate(`/household/${householdId}/home`)}>Cancel</Button>
-      </ActionGroup>
-
       {/* Edit modal */}
       {editingIngredient && (
         <IngredientModal
           ingredient={editingIngredient}
           allIngredients={ingredients}
           onChange={updateIngredient}
-          onClose={() => setEditingId(null)}
+          onClose={() => {
+            if (editingIngredient.name) {
+              updateIngredient({ ...editingIngredient, name: normalizeIngredientName(editingIngredient.name) });
+            }
+            setEditingId(null);
+          }}
           onDelete={() => removeIngredient(editingIngredient.id)}
           onDuplicateFound={(newIng, existing) => {
             setDuplicateWarning({ newIngredient: newIng, existingIngredient: existing });
@@ -508,7 +501,6 @@ export default function IngredientManager() {
         existingIngredient={duplicateWarning?.existingIngredient ?? null}
         onMerge={() => {
           if (duplicateWarning) {
-            // Keep existing, remove the new duplicate
             setIngredients((prev) =>
               prev.filter((i) => i.id !== duplicateWarning.newIngredient.id),
             );

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import type { Household, WeeklyPlan, IngredientCategory } from "../types";
-import { loadHousehold } from "../storage";
+import { loadHousehold, toSentenceCase } from "../storage";
 import { generateGroceryList, type GroceryListItem } from "../planner";
 import { PageShell, PageHeader, Card, Button, Chip, EmptyState, HouseholdNav } from "../components/ui";
 
@@ -64,9 +64,9 @@ export default function GroceryList() {
   if (!plan || items.length === 0) {
     return (
       <PageShell>
+        <HouseholdNav householdId={householdId ?? ""} />
         <PageHeader title="Grocery List" subtitle={`Household: ${household.name}`} />
         <EmptyState>No weekly plan saved yet. Generate and save a plan first.</EmptyState>
-        <HouseholdNav householdId={householdId ?? ""} />
       </PageShell>
     );
   }
@@ -82,6 +82,7 @@ export default function GroceryList() {
 
   return (
     <PageShell>
+      <HouseholdNav householdId={householdId ?? ""} />
       <PageHeader title="Grocery List" subtitle={`${items.length} ingredients from ${plan.days.length}-day plan`} />
 
       <div className="mb-4 flex flex-wrap items-center gap-4">
@@ -163,7 +164,7 @@ export default function GroceryList() {
                         )}
                       </button>
                       <span className={`text-sm font-medium ${isOwned ? "line-through text-text-muted" : "text-text-primary"}`}>
-                        {item.name}
+                        {toSentenceCase(item.name)}
                       </span>
                       {item.quantity && (
                         <Chip variant="neutral">{item.quantity}</Chip>
@@ -187,8 +188,6 @@ export default function GroceryList() {
           </Card>
         ))}
       </div>
-
-      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

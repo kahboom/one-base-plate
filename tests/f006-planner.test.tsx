@@ -259,9 +259,9 @@ describe("F006: Planner page selects meal and shows variants", () => {
     await user.click(screen.getByTestId("selectable-meal-pasta"));
 
     expect(screen.getByText("Shared base")).toBeInTheDocument();
-    expect(screen.getByText(/pasta \(carb/)).toBeInTheDocument();
-    expect(screen.getByText(/chicken breast \(protein/)).toBeInTheDocument();
-    expect(screen.getByText(/broccoli \(veg/)).toBeInTheDocument();
+    expect(screen.getByText(/Pasta \(carb/i)).toBeInTheDocument();
+    expect(screen.getByText(/Chicken breast \(protein/i)).toBeInTheDocument();
+    expect(screen.getByText(/Broccoli \(veg/i)).toBeInTheDocument();
   });
 
   it("shows empty state when no meals exist", () => {

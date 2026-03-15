@@ -186,9 +186,9 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       await user.type(screen.getByTestId("inline-ingredient-name"), "Rice");
       await user.selectOptions(screen.getByTestId("inline-ingredient-category"), "carb");
       await user.click(screen.getByTestId("inline-ingredient-save"));
-      await user.click(screen.getByText("Save meals"));
+      // Auto-save persists
       const household = loadHousehold("h-inline");
-      expect(household!.ingredients.some((i) => i.name === "Rice")).toBe(true);
+      expect(household!.ingredients.some((i) => i.name === "rice")).toBe(true);
     });
   });
 

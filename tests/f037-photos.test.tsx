@@ -99,10 +99,10 @@ describe("F037 — Image URL field on data model", () => {
 });
 
 describe("F037 — Ingredient Manager image input", () => {
-  it("shows image URL input field in ingredient modal", async () => {
+  it("shows image URL input field in ingredient form", async () => {
+    const user = userEvent.setup();
     const h = makeHousehold();
     saveHousehold(h);
-    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
         <Routes>
@@ -110,15 +110,15 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    await user.click(screen.getByText("Chicken"));
+    await user.click(screen.getByTestId("ingredient-row-i1"));
     const modal = screen.getByTestId("ingredient-modal");
     expect(within(modal).getByTestId("ingredient-image-url")).toBeInTheDocument();
   });
 
   it("shows image preview when imageUrl is set", async () => {
+    const user = userEvent.setup();
     const h = makeHousehold();
     saveHousehold(h);
-    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
         <Routes>
@@ -126,8 +126,7 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    // Open the Rice ingredient (which has imageUrl)
-    await user.click(screen.getByText("Rice"));
+    await user.click(screen.getByTestId("ingredient-row-i2"));
     const modal = screen.getByTestId("ingredient-modal");
     const preview = within(modal).getByTestId("ingredient-image-preview");
     expect(preview).toHaveAttribute("src", "https://example.com/rice.jpg");
@@ -145,20 +144,18 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    await user.click(screen.getByText("Chicken"));
+    await user.click(screen.getByTestId("ingredient-row-i1"));
     const modal = screen.getByTestId("ingredient-modal");
     await user.type(within(modal).getByTestId("ingredient-image-url"), "https://example.com/chicken.jpg");
-    await user.click(within(modal).getByText("Done"));
-    await user.click(screen.getAllByRole("button", { name: "Save ingredients" })[0]);
 
     const saved = loadHousehold("h1");
     expect(saved!.ingredients[0]!.imageUrl).toBe("https://example.com/chicken.jpg");
   });
 
-  it("shows file upload button in ingredient modal", async () => {
+  it("shows file upload button in ingredient form", async () => {
+    const user = userEvent.setup();
     const h = makeHousehold();
     saveHousehold(h);
-    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
         <Routes>
@@ -166,15 +163,15 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    await user.click(screen.getByText("Chicken"));
+    await user.click(screen.getByTestId("ingredient-row-i1"));
     const modal = screen.getByTestId("ingredient-modal");
     expect(within(modal).getByTestId("ingredient-image-upload")).toBeInTheDocument();
   });
 
   it("image preview has rounded corners and proper aspect ratio", async () => {
+    const user = userEvent.setup();
     const h = makeHousehold();
     saveHousehold(h);
-    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
         <Routes>
@@ -182,7 +179,7 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    await user.click(screen.getByText("Rice"));
+    await user.click(screen.getByTestId("ingredient-row-i2"));
     const modal = screen.getByTestId("ingredient-modal");
     const preview = within(modal).getByTestId("ingredient-image-preview");
     expect(preview.className).toContain("rounded-md");
@@ -234,8 +231,7 @@ describe("F037 — Base Meal Manager image input", () => {
     );
     const inputs = screen.getAllByTestId("meal-image-url");
     await user.type(inputs[0]!, "https://example.com/stir-fry.jpg");
-    await user.click(screen.getAllByRole("button", { name: "Save meals" })[0]);
-
+    // Auto-save persists
     const saved = loadHousehold("h1");
     expect(saved!.baseMeals[0]!.imageUrl).toBe("https://example.com/stir-fry.jpg");
   });
@@ -382,9 +378,9 @@ describe("F037 — MealCard thumbnail", () => {
 
 describe("F037 — Mobile readability", () => {
   it("ingredient image preview is appropriately sized", async () => {
+    const user = userEvent.setup();
     const h = makeHousehold();
     saveHousehold(h);
-    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
         <Routes>
@@ -392,7 +388,7 @@ describe("F037 — Mobile readability", () => {
         </Routes>
       </MemoryRouter>,
     );
-    await user.click(screen.getByText("Rice"));
+    await user.click(screen.getByTestId("ingredient-row-i2"));
     const modal = screen.getByTestId("ingredient-modal");
     const preview = within(modal).getByTestId("ingredient-image-preview");
     expect(preview.className).toContain("h-20");

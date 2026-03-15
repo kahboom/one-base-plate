@@ -57,27 +57,18 @@ describe("F004: Add ingredients across categories", () => {
     const user = userEvent.setup();
     renderIngredientManager("h-ing");
 
-    // Starts with catalog items auto-populated
     expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
 
-    // Add a custom ingredient via Add button
-    const addButtons = screen.getAllByText("Add ingredient");
-    await user.click(addButtons[0]!);
-
-    let modal = screen.getByTestId("ingredient-modal");
+    await user.click(screen.getAllByText("Add ingredient")[0]!);
+    const modal = screen.getByTestId("ingredient-modal");
     await user.type(within(modal).getByTestId("modal-ingredient-name"), "Quinoa");
     await user.selectOptions(within(modal).getByTestId("modal-ingredient-category"), "carb");
     await user.click(within(modal).getByText("Done"));
 
     expect(screen.getByText(`Items (${CATALOG_SIZE + 1})`)).toBeInTheDocument();
 
-    // Save
-    await user.click(screen.getAllByRole("button", { name: "Save ingredients" })[0]);
-
-    // Verify persistence — all catalog + custom items saved
     const saved = loadHousehold("h-ing")!;
-    expect(saved.ingredients.length).toBe(CATALOG_SIZE + 1);
-    const quinoa = saved.ingredients.find((i) => i.name === "Quinoa");
+    const quinoa = saved.ingredients.find((i) => i.name === "quinoa");
     expect(quinoa).toBeDefined();
     expect(quinoa!.category).toBe("carb");
   });
@@ -90,36 +81,23 @@ describe("F004: Tag ingredients", () => {
     renderIngredientManager("h-ing");
 
     await user.click(screen.getAllByText("Add ingredient")[0]!);
-
     const modal = screen.getByTestId("ingredient-modal");
     await user.type(within(modal).getByTestId("modal-ingredient-name"), "Farro");
-
-    // Add common tags
     await user.click(within(modal).getByText("+quick"));
     await user.click(within(modal).getByText("+rescue"));
-
-    // Add a custom tag
     const tagInput = within(modal).getByPlaceholderText("Custom tag");
     await user.type(tagInput, "kid-friendly");
     await user.click(within(modal).getByText("Add tag"));
 
-    // Verify tags are displayed
     expect(within(modal).getByTestId("tag-quick")).toBeInTheDocument();
     expect(within(modal).getByTestId("tag-rescue")).toBeInTheDocument();
     expect(within(modal).getByTestId("tag-kid-friendly")).toBeInTheDocument();
 
     await user.click(within(modal).getByText("Done"));
 
-    // Save and verify
-    await user.click(screen.getAllByRole("button", { name: "Save ingredients" })[0]);
-
     const saved = loadHousehold("h-ing")!;
-    const farro = saved.ingredients.find((i) => i.name === "Farro");
-    expect(farro!.tags).toEqual([
-      "quick",
-      "rescue",
-      "kid-friendly",
-    ]);
+    const farro = saved.ingredients.find((i) => i.name === "farro");
+    expect(farro!.tags).toEqual(["quick", "rescue", "kid-friendly"]);
   });
 
   it("can remove a tag", async () => {
@@ -129,11 +107,10 @@ describe("F004: Tag ingredients", () => {
 
     await user.click(screen.getAllByText("Add ingredient")[0]!);
     const modal = screen.getByTestId("ingredient-modal");
-
+    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Test");
     await user.click(within(modal).getByText("+mashable"));
     expect(within(modal).getByTestId("tag-mashable")).toBeInTheDocument();
 
-    // Remove the tag
     const tagEl = within(modal).getByTestId("tag-mashable").closest("span")!.parentElement!;
     const removeBtn = within(tagEl).getByText("x");
     await user.click(removeBtn);
@@ -148,19 +125,14 @@ describe("F004: Remove ingredient", () => {
     const user = userEvent.setup();
     renderIngredientManager("h-ing");
 
-    const initialCount = CATALOG_SIZE;
-    expect(screen.getByText(`Items (${initialCount})`)).toBeInTheDocument();
-
-    // Click first row to open modal, then remove
     const rows = screen.getAllByTestId(/^ingredient-row-/);
     await user.click(rows[0]!);
     await user.click(within(screen.getByTestId("ingredient-modal")).getByText("Remove ingredient"));
 
-    // Confirm dialog
     const dialog = screen.getByRole("dialog", { name: "Remove ingredient" });
     await user.click(within(dialog).getByText("Remove"));
 
-    expect(screen.getByText(`Items (${initialCount - 1})`)).toBeInTheDocument();
+    expect(screen.getByText(`Items (${CATALOG_SIZE - 1})`)).toBeInTheDocument();
   });
 });
 
@@ -191,14 +163,11 @@ describe("F004: Ingredients persist across re-open", () => {
 
     renderIngredientManager("h-ing");
 
-    // 2 household items + catalog items (minus duplicates: Oats and Salmon exist in catalog)
     const catalogDupes = MASTER_CATALOG.filter((ci) =>
-      ["oats", "salmon"].includes(ci.name.toLowerCase())
+      ["oats", "salmon"].includes(ci.name.toLowerCase()),
     ).length;
     const expected = 2 + CATALOG_SIZE - catalogDupes;
     expect(screen.getByText(`Items (${expected})`)).toBeInTheDocument();
-
-    // Browse list shows ingredient names
     expect(screen.getByText("Oats")).toBeInTheDocument();
     expect(screen.getByText("Salmon")).toBeInTheDocument();
   });

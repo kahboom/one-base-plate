@@ -649,5 +649,20 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 31 tests: 5 parser line tests (quantity extraction, no-quantity, bullet stripping, numbered lists, blank lines), 5 matcher tests (exact match, case-insensitive, catalog fallback, unmatched, household priority), 3 parseRecipeText tests (multi-line, blank skipping, status), 4 guessComponentRole tests (protein, carb, veg/fruit, other), 12 UI tests (input step rendering, URL field, disabled parse, review step, match chips, action change, draft building, recipe URL attachment, save persistence, catalog creation, no-auto-save, disabled save), 2 navigation tests (IngredientManager button, BaseMealManager button), 1 storage compatibility test (ingredient-meal reference integrity)
 - Verified: tsc --noEmit passes (pre-existing test file errors only), vitest passes (638 tests, 2 pre-existing f033 failures unrelated to F046), all F046 steps satisfied
 
+### F047 - Run legacy ingredient migration to normalize existing records and safely merge duplicates (2026-03-15)
+- Added `normalizeIngredientName` function to storage layer: lowercases, trims, collapses internal spaces, strips trailing punctuation
+- Added `toSentenceCase` function for UI display: capitalizes first letter while keeping stored name lowercase
+- Added `migrateHouseholdIngredients` function that normalizes all ingredient names, detects duplicates by normalized name, picks the most complete record as survivor (scoring by tags, imageUrl, catalogId, flags), merges metadata from duplicates into survivor, and reassigns all references
+- Reference reassignment covers: `MealComponent.ingredientId`, `MealComponent.alternativeIngredientIds` (with deduplication), and `WeeklyPlan.generatedGroceryList` ingredient IDs
+- Alternative ingredient IDs deduplicated after remapping and filtered to exclude primary ingredient ID
+- Added `runMigrationIfNeeded` function with `onebaseplate_migrated_v1` localStorage flag for one-time execution
+- Migration is idempotent: running twice produces identical results with zero changes reported
+- Wired `runMigrationIfNeeded()` into `main.tsx` before React render
+- Applied `normalizeIngredientName` at all ingredient creation points: IngredientManager modal close, BaseMealManager inline form, RecipeImport new ingredient creation
+- Applied `toSentenceCase` at all ingredient display points: IngredientManager (browse rows, modal header), BaseMealManager (select dropdowns), MealDetail (ingredient names), Planner (shared base list), GroceryList (item names)
+- Updated 5 existing test files: f004 (normalized name assertions), f006 (case-insensitive regex for display), f037 (modal-based workflow for image tests), f038 (normalized name assertion), f045 (normalized name assertion)
+- Created 26 tests: 5 normalizeIngredientName tests (lowercase, trim, collapse spaces, strip punctuation, combined), 3 toSentenceCase tests (capitalize, empty, preserve), 10 migrateHouseholdIngredients tests (normalize, trim+collapse, duplicates, survivor pick, meal references, alternative IDs, grocery references, idempotent, preserve non-duplicates, merge metadata), 3 runMigrationIfNeeded tests (migrate+flag, no re-migrate, empty storage), 5 end-to-end tests (sentence-case display, meal associations, catalog links, no orphans, lowercase storage + sentence-case display)
+- Verified: tsc --noEmit passes, vitest passes (652 tests, 3 pre-existing f033 failures unrelated to F047), all F047 steps satisfied
+
 ## Next Task
 - All features complete! No remaining tasks with passes=false.

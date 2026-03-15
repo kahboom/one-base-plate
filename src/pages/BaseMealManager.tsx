@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import type { BaseMeal, MealComponent, Ingredient, RecipeLink, IngredientCategory } from "../types";
-import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, FieldLabel, EmptyState, Chip, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
+import { loadHousehold, saveHousehold, toSentenceCase, normalizeIngredientName } from "../storage";
+import { PageShell, PageHeader, Card, Button, Input, Select, FieldLabel, EmptyState, Chip, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
 
 type ComponentRole = MealComponent["role"];
 const COMPONENT_ROLES: ComponentRole[] = ["protein", "carb", "veg", "sauce", "topping"];
@@ -41,7 +41,7 @@ function InlineIngredientForm({
     if (!trimmed) return;
     const ingredient: Ingredient = {
       id: crypto.randomUUID(),
-      name: trimmed,
+      name: normalizeIngredientName(trimmed),
       category,
       tags: [],
       shelfLifeHint: "",
@@ -123,7 +123,7 @@ function ComponentForm({
             <option value="">Select ingredient</option>
             {ingredients.map((ing) => (
               <option key={ing.id} value={ing.id}>
-                {ing.name} ({ing.category})
+                {toSentenceCase(ing.name)} ({ing.category})
               </option>
             ))}
           </Select>
@@ -172,7 +172,7 @@ function ComponentForm({
               .filter((ing) => !usedIds.has(ing.id))
               .map((ing) => (
                 <option key={ing.id} value={ing.id}>
-                  {ing.name} ({ing.category})
+                  {toSentenceCase(ing.name)} ({ing.category})
                 </option>
               ))}
           </Select>
@@ -442,7 +442,6 @@ function MealForm({
 
 export default function BaseMealManager() {
   const { householdId } = useParams<{ householdId: string }>();
-  const navigate = useNavigate();
 
   const [meals, setMeals] = useState<BaseMeal[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -460,6 +459,15 @@ export default function BaseMealManager() {
     }
     setLoaded(true);
   }, [householdId]);
+
+  useEffect(() => {
+    if (!loaded || !householdId) return;
+    const household = loadHousehold(householdId);
+    if (!household) return;
+    household.baseMeals = meals;
+    household.ingredients = ingredients;
+    saveHousehold(household);
+  }, [householdId, loaded, meals, ingredients]);
 
   function addMeal() {
     setMeals((prev) => [...prev, createEmptyMeal()]);
@@ -484,27 +492,12 @@ export default function BaseMealManager() {
     setIngredients((prev) => [...prev, ingredient]);
   }
 
-  function handleSave() {
-    if (!householdId) return;
-    const household = loadHousehold(householdId);
-    if (!household) return;
-    household.baseMeals = meals;
-    household.ingredients = ingredients;
-    saveHousehold(household);
-    navigate(`/household/${householdId}/home`);
-  }
-
   if (!loaded) return null;
 
   return (
     <PageShell>
       <HouseholdNav householdId={householdId ?? ""} />
       <PageHeader title="Base Meals" subtitle={`Household: ${householdName}`} />
-
-      <ActionGroup placement="top">
-        <Button variant="primary" onClick={handleSave}>Save meals</Button>
-        <Button onClick={() => navigate(`/household/${householdId}/home`)}>Cancel</Button>
-      </ActionGroup>
 
       <h2 className="mb-4 text-xl font-semibold text-text-primary">Meals ({meals.length})</h2>
 
@@ -529,11 +522,6 @@ export default function BaseMealManager() {
           <Button data-testid="import-recipe-btn">Import recipe</Button>
         </Link>
       </div>
-
-      <ActionGroup>
-        <Button variant="primary" onClick={handleSave}>Save meals</Button>
-        <Button onClick={() => navigate(`/household/${householdId}/home`)}>Cancel</Button>
-      </ActionGroup>
 
       <ConfirmDialog
         open={!!pending}

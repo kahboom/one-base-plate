@@ -216,7 +216,74 @@
           "draftSuggestions[]"
         ]
       }
-    ]
+    ],
+    "normalizationRules": {
+      "ingredientNamingStandard": {
+        "canonicalStorageFormat": {
+          "rule": "Ingredient names must be stored in lowercase.",
+          "examples": ["red onion", "soy sauce", "chicken breast"]
+        },
+        "normalizationRules": [
+          "Convert to lowercase",
+          "Trim whitespace",
+          "Collapse duplicate spaces",
+          "Remove trailing punctuation",
+          "Compare normalized names to detect duplicates"
+        ],
+        "uiDisplayFormatting": {
+          "rule": "UI displays ingredient names in sentence case while preserving lowercase canonical storage.",
+          "example": {
+            "stored": "red onion",
+            "displayed": "Red onion"
+          }
+        },
+        "importHandling": [
+          "Normalize imported ingredient name before lookup",
+          "Attempt to match an existing ingredient using the normalized value",
+          "If no match exists, create a new ingredient using the normalized lowercase name"
+        ],
+        "existingIngredientMigration": {
+          "goal": "Apply the ingredient naming standard to legacy ingredient records so old and newly imported data follow one canonical format.",
+          "normalizationRules": [
+            "Convert ingredient names to lowercase",
+            "Trim leading and trailing whitespace",
+            "Collapse repeated internal spaces",
+            "Remove trailing punctuation where appropriate"
+          ],
+          "duplicateDetectionExamples": [
+            "Red Onion and red onion should resolve to one ingredient",
+            "Soy Sauce and soy sauce should resolve to one ingredient",
+            "Garlic. and garlic should resolve to one ingredient"
+          ],
+          "mergeBehavior": [
+            "Keep one surviving ingredient record per normalized name",
+            "Reassign all related references from duplicate ingredient ids to the surviving ingredient id",
+            "Remove or archive duplicate ingredient records only after successful reassignment",
+            "Preserve useful metadata from duplicates when one record is more complete"
+          ],
+          "dataIntegrityRequirements": [
+            "No meal, recipe, tag, catalog link, or ingredient reference may remain pointed at a removed duplicate id",
+            "Migration updates must be idempotent where possible",
+            "Prefer merge and reassignment over destructive deletion"
+          ],
+          "uiRequirement": "After migration, ingredient names remain stored in lowercase and are displayed in sentence case in the UI."
+        },
+        "futureCatalogCompatibility": "Normalized lowercase ingredient name is the matching key across catalog ingredients, imported ingredients, and user-created ingredients.",
+        "acceptanceCriteria": [
+          "Existing mixed-case ingredients are normalized to lowercase storage",
+          "Duplicate ingredients created only by casing, spacing, or trailing punctuation differences are merged",
+          "All related records continue to work after migration with no orphaned references",
+          "UI continues to show sentence-case ingredient names while storage remains lowercase"
+        ],
+        "doNot": [
+          "Store Title Case names",
+          "Store multiple casing variations of the same ingredient",
+          "Create separate ingredients that differ only by capitalization",
+          "Leave orphaned references after duplicate merges",
+          "Change user-facing ingredient behavior except cleaner display consistency"
+        ]
+      }
+    }
   },
   "technicalApproach": {
     "suggestedStack": {
@@ -271,12 +338,8 @@
         "Verify all members persist correctly and the Household Setup screen still feels guided rather than form-heavy."
       ],
       "passes": true,
-      "dependencies": [
-        "F001"
-      ],
-      "acceptanceRefs": [
-        "S006"
-      ]
+      "dependencies": ["F001"],
+      "acceptanceRefs": ["S006"]
     },
     {
       "id": "F003",
@@ -292,12 +355,8 @@
         "Verify all constraints are preserved exactly and quick edit entry points remain available on Household Setup."
       ],
       "passes": true,
-      "dependencies": [
-        "F002"
-      ],
-      "acceptanceRefs": [
-        "S006"
-      ]
+      "dependencies": ["F002"],
+      "acceptanceRefs": ["S006"]
     },
     {
       "id": "F004",
@@ -309,13 +368,12 @@
         "Navigate to household ingredients",
         "Add ingredients across pantry, fridge, and freezer categories",
         "Tag ingredients with properties such as quick, mashable, or rescue",
+        "Normalize ingredient names on create and edit by lowercasing, trimming whitespace, collapsing duplicate spaces, and removing trailing punctuation before saving.",
         "Save the ingredient set",
         "Verify ingredients are available to the planner"
       ],
       "passes": true,
-      "dependencies": [
-        "F002"
-      ]
+      "dependencies": ["F002"]
     },
     {
       "id": "F005",
@@ -332,12 +390,8 @@
         "Verify it appears in meal selection and can be reopened from the Base Meal Editor."
       ],
       "passes": true,
-      "dependencies": [
-        "F004"
-      ],
-      "acceptanceRefs": [
-        "S007"
-      ]
+      "dependencies": ["F004"],
+      "acceptanceRefs": ["S007"]
     },
     {
       "id": "F006",
@@ -354,14 +408,8 @@
         "Verify the plan clearly identifies shared versus extra preparation and reads as one base meal with multiple assemblies."
       ],
       "passes": true,
-      "dependencies": [
-        "F003",
-        "F005"
-      ],
-      "acceptanceRefs": [
-        "S002",
-        "S004"
-      ]
+      "dependencies": ["F003", "F005"],
+      "acceptanceRefs": ["S002", "S004"]
     },
     {
       "id": "F007",
@@ -377,12 +425,8 @@
         "Verify the baby variant stays tied to the same base meal where possible"
       ],
       "passes": true,
-      "dependencies": [
-        "F006"
-      ],
-      "acceptanceRefs": [
-        "S004"
-      ]
+      "dependencies": ["F006"],
+      "acceptanceRefs": ["S004"]
     },
     {
       "id": "F008",
@@ -398,12 +442,8 @@
         "Verify the output never silently omits toddler compatibility"
       ],
       "passes": true,
-      "dependencies": [
-        "F006"
-      ],
-      "acceptanceRefs": [
-        "S004"
-      ]
+      "dependencies": ["F006"],
+      "acceptanceRefs": ["S004"]
     },
     {
       "id": "F009",
@@ -419,13 +459,8 @@
         "Verify overlap score is used in meal ranking"
       ],
       "passes": true,
-      "dependencies": [
-        "F003",
-        "F005"
-      ],
-      "acceptanceRefs": [
-        "S002"
-      ]
+      "dependencies": ["F003", "F005"],
+      "acceptanceRefs": ["S002"]
     },
     {
       "id": "F010",
@@ -442,14 +477,8 @@
         "Verify the plan can be saved and re-opened"
       ],
       "passes": true,
-      "dependencies": [
-        "F006",
-        "F009"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S003"
-      ]
+      "dependencies": ["F006", "F009"],
+      "acceptanceRefs": ["S001", "S003"]
     },
     {
       "id": "F011",
@@ -465,13 +494,8 @@
         "Verify the list uses the shared styling system, remains easy to scan on mobile, and links back to meals using each ingredient where relevant."
       ],
       "passes": true,
-      "dependencies": [
-        "F010",
-        "F032"
-      ],
-      "acceptanceRefs": [
-        "S008"
-      ]
+      "dependencies": ["F010", "F032"],
+      "acceptanceRefs": ["S008"]
     },
     {
       "id": "F012",
@@ -488,16 +512,8 @@
         "Verify the output still includes per-person assemblies and can be added to tonight or the week."
       ],
       "passes": true,
-      "dependencies": [
-        "F003",
-        "F004",
-        "F006",
-        "F032"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S005"
-      ]
+      "dependencies": ["F003", "F004", "F006", "F032"],
+      "acceptanceRefs": ["S001", "S005"]
     },
     {
       "id": "F013",
@@ -513,9 +529,7 @@
         "Verify future planning can prioritize pinned meals"
       ],
       "passes": true,
-      "dependencies": [
-        "F006"
-      ]
+      "dependencies": ["F006"]
     },
     {
       "id": "F014",
@@ -531,9 +545,7 @@
         "Verify the outcome is persisted and visible"
       ],
       "passes": true,
-      "dependencies": [
-        "F010"
-      ]
+      "dependencies": ["F010"]
     },
     {
       "id": "F015",
@@ -549,9 +561,7 @@
         "Verify ranking remains explainable to the user"
       ],
       "passes": true,
-      "dependencies": [
-        "F014"
-      ]
+      "dependencies": ["F014"]
     },
     {
       "id": "F016",
@@ -567,9 +577,7 @@
         "Verify no screen hangs or crashes during normal flows"
       ],
       "passes": true,
-      "dependencies": [
-        "F001"
-      ]
+      "dependencies": ["F001"]
     },
     {
       "id": "F017",
@@ -585,10 +593,7 @@
         "Verify grocery list generation is covered"
       ],
       "passes": true,
-      "dependencies": [
-        "F001",
-        "F012"
-      ]
+      "dependencies": ["F001", "F012"]
     },
     {
       "id": "F018",
@@ -604,13 +609,8 @@
         "Verify the explanation is brief, understandable, and visible directly on meal cards or in one tap."
       ],
       "passes": true,
-      "dependencies": [
-        "F006",
-        "F009"
-      ],
-      "acceptanceRefs": [
-        "S002"
-      ]
+      "dependencies": ["F006", "F009"],
+      "acceptanceRefs": ["S002"]
     },
     {
       "id": "F019",
@@ -626,13 +626,8 @@
         "Verify only the relevant compatibility results change and the edit path avoids reopening the full household flow."
       ],
       "passes": true,
-      "dependencies": [
-        "F003",
-        "F006"
-      ],
-      "acceptanceRefs": [
-        "S006"
-      ]
+      "dependencies": ["F003", "F006"],
+      "acceptanceRefs": ["S006"]
     },
     {
       "id": "F020",
@@ -648,13 +643,8 @@
         "Verify exported output matches the saved plan and grocery list formatting remains clean for printing."
       ],
       "passes": true,
-      "dependencies": [
-        "F010",
-        "F011"
-      ],
-      "acceptanceRefs": [
-        "S008"
-      ]
+      "dependencies": ["F010", "F011"],
+      "acceptanceRefs": ["S008"]
     },
     {
       "id": "F021",
@@ -670,13 +660,8 @@
         "Verify the layout is readable on both desktop and mobile screens"
       ],
       "passes": true,
-      "dependencies": [
-        "F010"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S003"
-      ]
+      "dependencies": ["F010"],
+      "acceptanceRefs": ["S001", "S003"]
     },
     {
       "id": "F022",
@@ -692,15 +677,8 @@
         "Verify the weekly plan updates immediately and the interaction also supports tap-to-assign."
       ],
       "passes": true,
-      "dependencies": [
-        "F021",
-        "F023",
-        "F033"
-      ],
-      "acceptanceRefs": [
-        "S002",
-        "S003"
-      ]
+      "dependencies": ["F021", "F023", "F033"],
+      "acceptanceRefs": ["S002", "S003"]
     },
     {
       "id": "F023",
@@ -716,13 +694,8 @@
         "Verify cards remain readable, tappable, and draggable on mobile."
       ],
       "passes": true,
-      "dependencies": [
-        "F006",
-        "F009"
-      ],
-      "acceptanceRefs": [
-        "S002"
-      ]
+      "dependencies": ["F006", "F009"],
+      "acceptanceRefs": ["S002"]
     },
     {
       "id": "F024",
@@ -738,13 +711,8 @@
         "Verify indicators are clear and quickly understandable"
       ],
       "passes": true,
-      "dependencies": [
-        "F009",
-        "F023"
-      ],
-      "acceptanceRefs": [
-        "S002"
-      ]
+      "dependencies": ["F009", "F023"],
+      "acceptanceRefs": ["S002"]
     },
     {
       "id": "F032",
@@ -760,18 +728,8 @@
         "Adjust brittle UI tests that rely on old unstyled DOM structure so they assert accessible behavior instead."
       ],
       "passes": true,
-      "dependencies": [
-        "F005",
-        "F021",
-        "F024"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S002",
-        "S003",
-        "S006",
-        "S007"
-      ]
+      "dependencies": ["F005", "F021", "F024"],
+      "acceptanceRefs": ["S001", "S002", "S003", "S006", "S007"]
     },
     {
       "id": "F025",
@@ -787,16 +745,8 @@
         "Verify the existing flows remain intact after the visual refactor and that users can scan meal information without reading long text."
       ],
       "passes": true,
-      "dependencies": [
-        "F032"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S002",
-        "S003",
-        "S006",
-        "S007"
-      ]
+      "dependencies": ["F032"],
+      "acceptanceRefs": ["S001", "S002", "S003", "S006", "S007"]
     },
     {
       "id": "F033",
@@ -812,16 +762,8 @@
         "Adjust any existing layouts or components that became brittle during the styling refactor instead of layering one-off fixes."
       ],
       "passes": true,
-      "dependencies": [
-        "F025"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S002",
-        "S003",
-        "S006",
-        "S007"
-      ]
+      "dependencies": ["F025"],
+      "acceptanceRefs": ["S001", "S002", "S003", "S006", "S007"]
     },
     {
       "id": "F031",
@@ -837,9 +779,7 @@
         "Verify PRD.json remains the single source of truth for both task order and screen-level requirements"
       ],
       "passes": true,
-      "dependencies": [
-        "F033"
-      ]
+      "dependencies": ["F033"]
     },
     {
       "id": "F026",
@@ -855,13 +795,8 @@
         "Verify users can rebalance meals easily from the Weekly Planner."
       ],
       "passes": true,
-      "dependencies": [
-        "F021",
-        "F023"
-      ],
-      "acceptanceRefs": [
-        "S003"
-      ]
+      "dependencies": ["F021", "F023"],
+      "acceptanceRefs": ["S003"]
     },
     {
       "id": "F027",
@@ -877,12 +812,8 @@
         "Verify interactions feel responsive, satisfying, and subtle rather than distracting."
       ],
       "passes": true,
-      "dependencies": [
-        "F022"
-      ],
-      "acceptanceRefs": [
-        "S003"
-      ]
+      "dependencies": ["F022"],
+      "acceptanceRefs": ["S003"]
     },
     {
       "id": "F028",
@@ -898,14 +829,8 @@
         "Generate a plan and verify per-member variants can choose different protein options under the same base meal"
       ],
       "passes": true,
-      "dependencies": [
-        "F005",
-        "F006"
-      ],
-      "acceptanceRefs": [
-        "S004",
-        "S007"
-      ]
+      "dependencies": ["F005", "F006"],
+      "acceptanceRefs": ["S004", "S007"]
     },
     {
       "id": "F029",
@@ -921,13 +846,8 @@
         "Verify recipe links support multiple sources and notes support reminders such as Gousto versions or toddler adaptations"
       ],
       "passes": true,
-      "dependencies": [
-        "F005"
-      ],
-      "acceptanceRefs": [
-        "S004",
-        "S007"
-      ]
+      "dependencies": ["F005"],
+      "acceptanceRefs": ["S004", "S007"]
     },
     {
       "id": "F030",
@@ -943,18 +863,8 @@
         "Verify ranking changes remain explainable to the user in concise language"
       ],
       "passes": true,
-      "dependencies": [
-        "F014",
-        "F015",
-        "F018",
-        "F019"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S002",
-        "S003",
-        "S006"
-      ]
+      "dependencies": ["F014", "F015", "F018", "F019"],
+      "acceptanceRefs": ["S001", "S002", "S003", "S006"]
     },
     {
       "id": "F034",
@@ -970,12 +880,8 @@
         "Verify the tour aligns with the shared styling foundation and remains readable on mobile."
       ],
       "passes": true,
-      "dependencies": [
-        "F033"
-      ],
-      "acceptanceRefs": [
-        "S009"
-      ]
+      "dependencies": ["F033"],
+      "acceptanceRefs": ["S009"]
     },
     {
       "id": "F035",
@@ -991,16 +897,8 @@
         "Verify the warning uses the shared styling system and is accessible."
       ],
       "passes": true,
-      "dependencies": [
-        "F002",
-        "F004",
-        "F005",
-        "F033"
-      ],
-      "acceptanceRefs": [
-        "S006",
-        "S007"
-      ]
+      "dependencies": ["F002", "F004", "F005", "F033"],
+      "acceptanceRefs": ["S006", "S007"]
     },
     {
       "id": "F036",
@@ -1018,15 +916,8 @@
         "Verify Home remains the household hub and all back/up navigation still returns to /household/:id/home."
       ],
       "passes": true,
-      "dependencies": [
-        "F033"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S003",
-        "S005",
-        "S006"
-      ]
+      "dependencies": ["F033"],
+      "acceptanceRefs": ["S001", "S003", "S005", "S006"]
     },
     {
       "id": "F037",
@@ -1041,15 +932,8 @@
         "Verify images fit within the shared styling system (aspect ratio, borders, rounded corners) and remain readable on mobile."
       ],
       "passes": true,
-      "dependencies": [
-        "F032",
-        "F033"
-      ],
-      "acceptanceRefs": [
-        "S002",
-        "S004",
-        "S007"
-      ]
+      "dependencies": ["F032", "F033"],
+      "acceptanceRefs": ["S002", "S004", "S007"]
     },
     {
       "id": "F038",
@@ -1064,16 +948,8 @@
         "Verify users can create an ingredient without leaving the meal editor and that create flows are discoverable from the nav and empty states."
       ],
       "passes": true,
-      "dependencies": [
-        "F033",
-        "F036"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S003",
-        "S006",
-        "S007"
-      ]
+      "dependencies": ["F033", "F036"],
+      "acceptanceRefs": ["S001", "S003", "S006", "S007"]
     },
     {
       "id": "F039",
@@ -1088,9 +964,7 @@
         "Verify exported JSON matches the structure used by loadHouseholds/saveHouseholds and can be re-imported to restore or seed the app."
       ],
       "passes": true,
-      "dependencies": [
-        "F001"
-      ],
+      "dependencies": ["F001"],
       "acceptanceRefs": []
     },
     {
@@ -1105,10 +979,7 @@
         "Add seed script (e.g. npm run db:seed) that loads fixtures and writes to storage."
       ],
       "passes": true,
-      "dependencies": [
-        "F001",
-        "F039"
-      ],
+      "dependencies": ["F001", "F039"],
       "acceptanceRefs": []
     },
     {
@@ -1125,13 +996,8 @@
         "Verify clicking a household opens the edit/setup screen and users can reach Home via nav."
       ],
       "passes": true,
-      "dependencies": [
-        "F036"
-      ],
-      "acceptanceRefs": [
-        "S001",
-        "S006"
-      ]
+      "dependencies": ["F036"],
+      "acceptanceRefs": ["S001", "S006"]
     },
     {
       "id": "F042",
@@ -1146,13 +1012,8 @@
         "Verify the share flow works on mobile and desktop."
       ],
       "passes": true,
-      "dependencies": [
-        "F010",
-        "F033"
-      ],
-      "acceptanceRefs": [
-        "S003"
-      ]
+      "dependencies": ["F010", "F033"],
+      "acceptanceRefs": ["S003"]
     },
     {
       "id": "F043",
@@ -1170,15 +1031,8 @@
         "Verify the Ingredient Manager no longer feels like a giant form or a stack of bulky cards."
       ],
       "passes": true,
-      "dependencies": [
-        "F004",
-        "F032",
-        "F033",
-        "F036"
-      ],
-      "acceptanceRefs": [
-        "S010"
-      ]
+      "dependencies": ["F004", "F032", "F033", "F036"],
+      "acceptanceRefs": ["S010"]
     },
     {
       "id": "F044",
@@ -1194,12 +1048,8 @@
         "Verify catalog-backed ingredients work with the existing planner, grocery list, rescue mode, and base meal flows."
       ],
       "passes": true,
-      "dependencies": [
-        "F043"
-      ],
-      "acceptanceRefs": [
-        "S010"
-      ]
+      "dependencies": ["F043"],
+      "acceptanceRefs": ["S010"]
     },
     {
       "id": "F045",
@@ -1209,18 +1059,23 @@
       "description": "Household ingredients support catalog linkage, lightweight customization, and duplicate handling",
       "steps": [
         "Store whether a household ingredient was created manually or linked from the master catalog.",
+        "Audit existing ingredient records for legacy casing, spacing, and trailing punctuation inconsistencies before merge operations.",
+        "Run a legacy normalization migration that lowercases names, trims whitespace, collapses duplicate internal spaces, and removes trailing punctuation where appropriate.",
         "Warn when a near-duplicate ingredient already exists in the household list.",
         "Allow the user to merge or cancel duplicate additions.",
+        "Detect duplicates using normalized lowercase names across legacy ingredients, manual entries, imported ingredients, and catalog-linked ingredients.",
+        "Merge legacy duplicates safely by keeping one surviving ingredient record, reassigning related references, and only then removing or archiving duplicates.",
+        "Update all related references (meal components, recipe-imported links, tags, catalog links, grocery/planner associations, and other ingredient relationships) so no orphaned ids remain.",
+        "Make the legacy migration idempotent where possible and avoid destructive data loss by preferring merge and reassignment over direct deletion.",
+        "Use normalized lowercase ingredient names as the duplicate-matching key across manual entries, imported ingredients, and catalog-linked ingredients.",
         "Allow household-specific edits to tags, notes, image, freezer-friendly, and baby-safe flags without mutating the master catalog entry.",
+        "Display ingredient names in sentence case in the UI while keeping canonical storage lowercase.",
+        "Validate end-to-end that ingredient lists, meal associations, imports, and catalog links still work after migration and duplicate merges.",
         "Verify previously saved manual ingredients continue to work without migration failures."
       ],
       "passes": true,
-      "dependencies": [
-        "F044"
-      ],
-      "acceptanceRefs": [
-        "S010"
-      ]
+      "dependencies": ["F044"],
+      "acceptanceRefs": ["S010"]
     },
     {
       "id": "F046",
@@ -1231,33 +1086,42 @@
       "steps": [
         "Allow the user to paste recipe text or a recipe URL into a new import flow.",
         "Parse ingredient lines into a review screen and attempt to match them against household ingredients and the master catalog.",
+        "Normalize parsed ingredient names before lookup using lowercase, trimmed whitespace, collapsed duplicate spaces, and trailing punctuation removal.",
         "Let the user confirm matches, create missing ingredients, or ignore unmatched lines before saving.",
+        "When no match exists, create the ingredient with the normalized lowercase name.",
         "Create a draft base meal with mapped components, attached recipe link, and optional notes instead of blindly auto-saving a finished meal.",
         "Verify imported ingredients can be added to the household pantry during review and the result stays compatible with the local-first storage model."
       ],
       "passes": true,
-      "dependencies": [
-        "F029",
-        "F044",
-        "F045"
+      "dependencies": ["F029", "F044", "F045"],
+      "acceptanceRefs": ["S007", "S010"]
+    },
+    {
+      "id": "F047",
+      "phase": 2,
+      "priority": "P0",
+      "category": "functional",
+      "description": "Run legacy ingredient migration to normalize existing records and safely merge duplicates",
+      "steps": [
+        "Audit existing stored household ingredients for casing, spacing, and trailing punctuation inconsistencies using the canonical normalization rules.",
+        "Implement and execute a migration over existing stored data that lowercases names, trims surrounding whitespace, collapses repeated internal spaces, and removes trailing punctuation where appropriate.",
+        "Detect duplicates after normalization and select one surviving ingredient record per normalized name.",
+        "Reassign all related references from duplicate ingredient ids to the surviving id across meal components, recipe-import mappings, tags, catalog links, grocery references, and planner associations.",
+        "Remove or archive duplicate ingredient records only after reassignment succeeds and preserve useful metadata from the most complete duplicate.",
+        "Ensure migration behavior is idempotent where possible and avoids destructive data loss.",
+        "Validate end-to-end that ingredient lists, meal associations, imports, and catalog links continue to work after migration and no orphaned references remain.",
+        "Verify ingredient names remain stored in lowercase while UI display remains sentence case."
       ],
-      "acceptanceRefs": [
-        "S007",
-        "S010"
-      ]
+      "passes": true,
+      "dependencies": ["F045", "F046"],
+      "acceptanceRefs": ["S010"]
     }
   ],
   "milestones": [
     {
       "id": "M1",
       "name": "Scaffold + household constraints",
-      "includes": [
-        "F001",
-        "F002",
-        "F003",
-        "F004",
-        "F016"
-      ]
+      "includes": ["F001", "F002", "F003", "F004", "F016"]
     },
     {
       "id": "M2",
@@ -1284,15 +1148,7 @@
     {
       "id": "M3",
       "name": "Weekly planning + grocery list",
-      "includes": [
-        "F010",
-        "F011",
-        "F012",
-        "F017",
-        "F022",
-        "F026",
-        "F027"
-      ]
+      "includes": ["F010", "F011", "F012", "F017", "F022", "F026", "F027"]
     },
     {
       "id": "M4",
@@ -1317,12 +1173,7 @@
     {
       "id": "M5",
       "name": "Ingredient workflow and recipe intake",
-      "includes": [
-        "F043",
-        "F044",
-        "F045",
-        "F046"
-      ]
+      "includes": ["F043", "F044", "F045", "F046", "F047"]
     }
   ],
   "fixtureHouseholds": [
@@ -1390,6 +1241,7 @@
     "F044",
     "F045",
     "F046",
+    "F047",
     "F020",
     "F037",
     "F038",
@@ -1733,16 +1585,8 @@
       "F038",
       "F042"
     ],
-    "S004": [
-      "F006",
-      "F028",
-      "F029",
-      "F037"
-    ],
-    "S005": [
-      "F012",
-      "F036"
-    ],
+    "S004": ["F006", "F028", "F029", "F037"],
+    "S005": ["F012", "F036"],
     "S006": [
       "F002",
       "F003",
@@ -1765,24 +1609,9 @@
       "F037",
       "F038"
     ],
-    "S008": [
-      "F011",
-      "F020",
-      "F036",
-      "F037"
-    ],
-    "S009": [
-      "F034"
-    ],
-    "S010": [
-      "F004",
-      "F036",
-      "F037",
-      "F043",
-      "F044",
-      "F045",
-      "F046"
-    ]
+    "S008": ["F011", "F020", "F036", "F037"],
+    "S009": ["F034"],
+    "S010": ["F004", "F036", "F037", "F043", "F044", "F045", "F046"]
   },
   "agentExecutionRules": [
     "Before implementing a feature, read the feature object and any screen definitions listed in acceptanceRefs or screenToFeatureMap.",

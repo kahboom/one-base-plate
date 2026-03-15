@@ -1,8 +1,9 @@
-import type { Household } from "./types";
+import type { Household, Ingredient } from "./types";
 import seedData from "./seed-data.json";
 
 const STORAGE_KEY = "onebaseplate_households";
 const SEEDED_KEY = "onebaseplate_seeded";
+const MIGRATION_KEY = "onebaseplate_migrated_v1";
 
 export function seedIfNeeded(): void {
   if (localStorage.getItem(SEEDED_KEY)) return;
@@ -70,4 +71,180 @@ export function importHouseholdsJSON(
   }
   saveHouseholds(merged);
   return merged;
+}
+
+/** Sentence-case display: capitalize first letter, rest as-is */
+export function toSentenceCase(name: string): string {
+  if (!name) return name;
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+/** Canonical normalization: lowercase, trim, collapse internal spaces, strip trailing punctuation */
+export function normalizeIngredientName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[.,;:!?]+$/, "");
+}
+
+/** Pick the most complete ingredient record as the survivor */
+function pickSurvivor(duplicates: Ingredient[]): Ingredient {
+  let best = duplicates[0]!;
+  let bestScore = 0;
+  for (const ing of duplicates) {
+    let score = 0;
+    if (ing.tags.length > 0) score += ing.tags.length;
+    if (ing.imageUrl) score += 2;
+    if (ing.catalogId) score += 2;
+    if (ing.source === "catalog") score += 1;
+    if (ing.shelfLifeHint) score += 1;
+    if (ing.freezerFriendly) score += 1;
+    if (ing.babySafeWithAdaptation) score += 1;
+    if (score > bestScore) {
+      bestScore = score;
+      best = ing;
+    }
+  }
+  return best;
+}
+
+/** Merge metadata from duplicates into the survivor */
+function mergeDuplicateMetadata(survivor: Ingredient, duplicates: Ingredient[]): Ingredient {
+  const merged = { ...survivor };
+  const allTags = new Set(merged.tags);
+  for (const dup of duplicates) {
+    if (dup.id === merged.id) continue;
+    for (const tag of dup.tags) allTags.add(tag);
+    if (!merged.imageUrl && dup.imageUrl) merged.imageUrl = dup.imageUrl;
+    if (!merged.catalogId && dup.catalogId) {
+      merged.catalogId = dup.catalogId;
+      merged.source = "catalog";
+    }
+    if (!merged.shelfLifeHint && dup.shelfLifeHint) merged.shelfLifeHint = dup.shelfLifeHint;
+    if (dup.freezerFriendly) merged.freezerFriendly = true;
+    if (dup.babySafeWithAdaptation) merged.babySafeWithAdaptation = true;
+  }
+  merged.tags = [...allTags];
+  return merged;
+}
+
+export interface MigrationResult {
+  normalized: number;
+  duplicatesMerged: number;
+  referencesUpdated: number;
+}
+
+/** Migrate a single household's ingredients: normalize names, merge duplicates, reassign references */
+export function migrateHouseholdIngredients(household: Household): MigrationResult {
+  const result: MigrationResult = { normalized: 0, duplicatesMerged: 0, referencesUpdated: 0 };
+
+  // Step 1: Normalize all ingredient names
+  for (const ing of household.ingredients) {
+    const normalized = normalizeIngredientName(ing.name);
+    if (normalized !== ing.name) {
+      ing.name = normalized;
+      result.normalized++;
+    }
+  }
+
+  // Step 2: Group by normalized name to find duplicates
+  const groups = new Map<string, Ingredient[]>();
+  for (const ing of household.ingredients) {
+    const key = ing.name;
+    const group = groups.get(key) ?? [];
+    group.push(ing);
+    groups.set(key, group);
+  }
+
+  // Step 3: For each duplicate group, pick survivor, build ID remap
+  const idRemap = new Map<string, string>();
+  const survivorIds = new Set<string>();
+
+  for (const [, group] of groups) {
+    if (group.length <= 1) {
+      survivorIds.add(group[0]!.id);
+      continue;
+    }
+    const survivor = pickSurvivor(group);
+    const merged = mergeDuplicateMetadata(survivor, group);
+    // Update the survivor in-place
+    Object.assign(survivor, merged);
+    survivorIds.add(survivor.id);
+    for (const dup of group) {
+      if (dup.id !== survivor.id) {
+        idRemap.set(dup.id, survivor.id);
+        result.duplicatesMerged++;
+      }
+    }
+  }
+
+  // Step 4: Remove duplicate ingredients (keep only survivors)
+  household.ingredients = household.ingredients.filter((ing) => survivorIds.has(ing.id));
+
+  // Step 5: Reassign references in meal components
+  if (idRemap.size > 0) {
+    for (const meal of household.baseMeals) {
+      for (const comp of meal.components) {
+        const newId = idRemap.get(comp.ingredientId);
+        if (newId) {
+          comp.ingredientId = newId;
+          result.referencesUpdated++;
+        }
+        if (comp.alternativeIngredientIds) {
+          comp.alternativeIngredientIds = comp.alternativeIngredientIds.map((altId) => {
+            const mapped = idRemap.get(altId);
+            if (mapped) {
+              result.referencesUpdated++;
+              return mapped;
+            }
+            return altId;
+          });
+          // Deduplicate alternatives after remapping
+          comp.alternativeIngredientIds = [...new Set(comp.alternativeIngredientIds)];
+          // Remove alternative if it matches primary
+          comp.alternativeIngredientIds = comp.alternativeIngredientIds.filter(
+            (altId) => altId !== comp.ingredientId,
+          );
+        }
+      }
+    }
+
+    // Reassign grocery list references in weekly plans
+    for (const plan of household.weeklyPlans) {
+      for (const item of plan.generatedGroceryList) {
+        const newId = idRemap.get(item.ingredientId);
+        if (newId) {
+          item.ingredientId = newId;
+          result.referencesUpdated++;
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+/** Run migration on all households if not already done */
+export function runMigrationIfNeeded(): MigrationResult {
+  if (localStorage.getItem(MIGRATION_KEY)) {
+    return { normalized: 0, duplicatesMerged: 0, referencesUpdated: 0 };
+  }
+  const households = loadHouseholds();
+  if (households.length === 0) {
+    localStorage.setItem(MIGRATION_KEY, "1");
+    return { normalized: 0, duplicatesMerged: 0, referencesUpdated: 0 };
+  }
+
+  const totals: MigrationResult = { normalized: 0, duplicatesMerged: 0, referencesUpdated: 0 };
+  for (const household of households) {
+    const r = migrateHouseholdIngredients(household);
+    totals.normalized += r.normalized;
+    totals.duplicatesMerged += r.duplicatesMerged;
+    totals.referencesUpdated += r.referencesUpdated;
+  }
+
+  saveHouseholds(households);
+  localStorage.setItem(MIGRATION_KEY, "1");
+  return totals;
 }

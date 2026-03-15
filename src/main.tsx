@@ -2,10 +2,10 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
-import { seedIfNeeded } from "./storage";
+import { runMigrationIfNeeded } from "./storage";
 import "./app.css";
 
-seedIfNeeded();
+runMigrationIfNeeded();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { Household, BaseMeal } from "../types";
-import { loadHousehold, saveHousehold } from "../storage";
+import { loadHousehold, saveHousehold, toSentenceCase } from "../storage";
 import {
   generateAssemblyVariants,
   computeMealOverlap,
@@ -53,7 +53,8 @@ export default function MealDetail() {
   }
 
   function ingredientName(id: string): string {
-    return household!.ingredients.find((i) => i.id === id)?.name ?? id;
+    const name = household!.ingredients.find((i) => i.id === id)?.name ?? id;
+    return toSentenceCase(name);
   }
 
   return (

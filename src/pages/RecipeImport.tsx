@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Ingredient, BaseMeal, MealComponent, IngredientCategory } from "../types";
-import { loadHousehold, saveHousehold } from "../storage";
+import { loadHousehold, saveHousehold, normalizeIngredientName } from "../storage";
 import { catalogIngredientToHousehold } from "../catalog";
 import type { CatalogIngredient } from "../catalog";
 import { parseRecipeText, guessComponentRole } from "../recipe-parser";
@@ -86,7 +86,7 @@ export default function RecipeImport() {
         } else {
           ing = {
             id: crypto.randomUUID(),
-            name: line.name,
+            name: normalizeIngredientName(line.name),
             category: line.newCategory,
             tags: [],
             shelfLifeHint: "",
