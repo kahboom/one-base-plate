@@ -127,34 +127,37 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       seedHousehold();
       renderBaseMealManager("h-inline");
       const user = userEvent.setup();
-      await user.click(screen.getByText("Add meal"));
-      expect(screen.getByTestId("add-ingredient-inline")).toBeInTheDocument();
+      await user.click(screen.getByTestId("meal-row-meal1"));
+      const modal = screen.getByTestId("meal-modal");
+      expect(within(modal).getByTestId("add-ingredient-inline")).toBeInTheDocument();
     });
 
     it("opens inline form when clicking 'Add new ingredient'", async () => {
       seedHousehold();
       renderBaseMealManager("h-inline");
       const user = userEvent.setup();
-      await user.click(screen.getByText("Add meal"));
-      await user.click(screen.getByTestId("add-ingredient-inline"));
-      expect(screen.getByTestId("inline-ingredient-form")).toBeInTheDocument();
-      expect(screen.getByTestId("inline-ingredient-name")).toBeInTheDocument();
-      expect(screen.getByTestId("inline-ingredient-category")).toBeInTheDocument();
+      await user.click(screen.getByTestId("meal-row-meal1"));
+      const modal = screen.getByTestId("meal-modal");
+      await user.click(within(modal).getByTestId("add-ingredient-inline"));
+      expect(within(modal).getByTestId("inline-ingredient-form")).toBeInTheDocument();
+      expect(within(modal).getByTestId("inline-ingredient-name")).toBeInTheDocument();
+      expect(within(modal).getByTestId("inline-ingredient-category")).toBeInTheDocument();
     });
 
     it("creates ingredient inline and selects it in the component", async () => {
       seedHousehold();
       renderBaseMealManager("h-inline");
       const user = userEvent.setup();
-      await user.click(screen.getByText("Add meal"));
-      await user.click(screen.getByTestId("add-ingredient-inline"));
-      await user.type(screen.getByTestId("inline-ingredient-name"), "Broccoli");
-      await user.selectOptions(screen.getByTestId("inline-ingredient-category"), "veg");
-      await user.click(screen.getByTestId("inline-ingredient-save"));
+      await user.click(screen.getByTestId("meal-row-meal1"));
+      const modal = screen.getByTestId("meal-modal");
+      await user.click(within(modal).getByTestId("add-ingredient-inline"));
+      await user.type(within(modal).getByTestId("inline-ingredient-name"), "Broccoli");
+      await user.selectOptions(within(modal).getByTestId("inline-ingredient-category"), "veg");
+      await user.click(within(modal).getByTestId("inline-ingredient-save"));
       // Form should close
-      expect(screen.queryByTestId("inline-ingredient-form")).not.toBeInTheDocument();
+      expect(within(modal).queryByTestId("inline-ingredient-form")).not.toBeInTheDocument();
       // The new ingredient should appear in the select dropdown options
-      const selects = screen.getAllByRole("combobox");
+      const selects = within(modal).getAllByRole("combobox");
       const ingredientSelect = selects.find((s) => {
         const options = within(s).queryAllByRole("option");
         return options.some((o) => o.textContent?.includes("Broccoli"));
@@ -166,14 +169,15 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       seedHousehold();
       renderBaseMealManager("h-inline");
       const user = userEvent.setup();
-      await user.click(screen.getByText("Add meal"));
-      await user.click(screen.getByTestId("add-ingredient-inline"));
-      await user.type(screen.getByTestId("inline-ingredient-name"), "Tofu");
-      const inlineForm = screen.getByTestId("inline-ingredient-form");
+      await user.click(screen.getByTestId("meal-row-meal1"));
+      const modal = screen.getByTestId("meal-modal");
+      await user.click(within(modal).getByTestId("add-ingredient-inline"));
+      await user.type(within(modal).getByTestId("inline-ingredient-name"), "Tofu");
+      const inlineForm = within(modal).getByTestId("inline-ingredient-form");
       await user.click(within(inlineForm).getByText("Cancel"));
-      expect(screen.queryByTestId("inline-ingredient-form")).not.toBeInTheDocument();
+      expect(within(modal).queryByTestId("inline-ingredient-form")).not.toBeInTheDocument();
       // Tofu should not be in any select
-      const allOptions = screen.getAllByRole("option");
+      const allOptions = within(modal).getAllByRole("option");
       expect(allOptions.some((o) => o.textContent?.includes("Tofu"))).toBe(false);
     });
 
@@ -181,11 +185,12 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       seedHousehold();
       renderBaseMealManager("h-inline");
       const user = userEvent.setup();
-      await user.click(screen.getByText("Add meal"));
-      await user.click(screen.getByTestId("add-ingredient-inline"));
-      await user.type(screen.getByTestId("inline-ingredient-name"), "Rice");
-      await user.selectOptions(screen.getByTestId("inline-ingredient-category"), "carb");
-      await user.click(screen.getByTestId("inline-ingredient-save"));
+      await user.click(screen.getByTestId("meal-row-meal1"));
+      const modal = screen.getByTestId("meal-modal");
+      await user.click(within(modal).getByTestId("add-ingredient-inline"));
+      await user.type(within(modal).getByTestId("inline-ingredient-name"), "Rice");
+      await user.selectOptions(within(modal).getByTestId("inline-ingredient-category"), "carb");
+      await user.click(within(modal).getByTestId("inline-ingredient-save"));
       // Auto-save persists
       const household = loadHousehold("h-inline");
       expect(household!.ingredients.some((i) => i.name === "rice")).toBe(true);
@@ -265,10 +270,11 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       seedHousehold();
       renderBaseMealManager("h-inline");
       const user = userEvent.setup();
-      await user.click(screen.getByText("Add meal"));
-      await user.click(screen.getByTestId("add-ingredient-inline"));
-      await user.type(screen.getByTestId("inline-ingredient-name"), "Pasta");
-      await user.click(screen.getByTestId("inline-ingredient-save"));
+      await user.click(screen.getByTestId("meal-row-meal1"));
+      const modal = screen.getByTestId("meal-modal");
+      await user.click(within(modal).getByTestId("add-ingredient-inline"));
+      await user.type(within(modal).getByTestId("inline-ingredient-name"), "Pasta");
+      await user.click(within(modal).getByTestId("inline-ingredient-save"));
       // Still on the Base Meal Manager page
       expect(screen.getByText("Base Meals")).toBeInTheDocument();
       expect(screen.queryByText("Home Page")).not.toBeInTheDocument();
@@ -278,16 +284,15 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       seedHousehold();
       renderBaseMealManager("h-inline");
       const user = userEvent.setup();
-      // Add a meal with a component
-      await user.click(screen.getByText("Add meal"));
+      await user.click(screen.getByTestId("meal-row-meal1"));
+      const modal = screen.getByTestId("meal-modal");
       // Create ingredient inline
-      await user.click(screen.getByTestId("add-ingredient-inline"));
-      await user.type(screen.getByTestId("inline-ingredient-name"), "Tofu");
-      await user.selectOptions(screen.getByTestId("inline-ingredient-category"), "protein");
-      await user.click(screen.getByTestId("inline-ingredient-save"));
-      // The existing meal's component select should also have "Tofu"
-      const firstMeal = screen.getAllByTestId(/^meal-/)[0]!;
-      const selects = within(firstMeal).getAllByRole("combobox");
+      await user.click(within(modal).getByTestId("add-ingredient-inline"));
+      await user.type(within(modal).getByTestId("inline-ingredient-name"), "Tofu");
+      await user.selectOptions(within(modal).getByTestId("inline-ingredient-category"), "protein");
+      await user.click(within(modal).getByTestId("inline-ingredient-save"));
+      // The meal's component select should include Tofu
+      const selects = within(modal).getAllByRole("combobox");
       const hasTofu = selects.some((s) => {
         const options = within(s).queryAllByRole("option");
         return options.some((o) => o.textContent?.includes("Tofu"));

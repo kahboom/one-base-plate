@@ -113,10 +113,7 @@ describe("F002: Household setup UI", () => {
       }
     }
 
-    // Save
-    await user.click(screen.getByText("Save household"));
-
-    // Verify persistence
+    // Auto-save persists on change; verify persistence
     const households = loadHouseholds();
     expect(households).toHaveLength(1);
 
@@ -242,7 +239,7 @@ describe("F002: Household setup UI", () => {
 });
 
 describe("F002: Household list", () => {
-  it("shows saved households on the home page", () => {
+  it("redirects / to first household Home when households exist", () => {
     saveHouseholds([
       {
         id: "h1",
@@ -272,7 +269,84 @@ describe("F002: Household list", () => {
       </MemoryRouter>,
     );
 
+    expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
     expect(screen.getByText("Family A")).toBeInTheDocument();
-    expect(screen.getByText("(1 member)")).toBeInTheDocument();
+    expect(screen.getByTestId("app-nav")).toBeInTheDocument();
+  });
+
+  it("shows browse-first controls for household list", () => {
+    saveHouseholds([]);
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId("household-control-bar")).toBeInTheDocument();
+    expect(screen.getByTestId("household-search")).toBeInTheDocument();
+  });
+
+  it("shows filter empty state when search has no matches", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("onebase-tour-completed", "true");
+    saveHouseholds([
+      {
+        id: "h1",
+        name: "Family A",
+        members: [],
+        ingredients: [],
+        baseMeals: [],
+        weeklyPlans: [],
+      },
+    ]);
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByText("Households"));
+    await user.type(screen.getByTestId("household-search"), "zzzz");
+    expect(screen.getByText("No households match your search.")).toBeInTheDocument();
+  });
+
+  it("shows per-member profile links inside household modal", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("onebase-tour-completed", "true");
+    saveHouseholds([
+      {
+        id: "h1",
+        name: "Family A",
+        members: [
+          {
+            id: "m1",
+            name: "A",
+            role: "adult",
+            safeFoods: [],
+            hardNoFoods: [],
+            preparationRules: [],
+            textureLevel: "regular",
+            allergens: [],
+            notes: "",
+          },
+        ],
+        ingredients: [],
+        baseMeals: [],
+        weeklyPlans: [],
+      },
+    ]);
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByText("Households"));
+    await user.click(screen.getByTestId("household-row-h1"));
+    const link = screen.getByTestId("modal-member-profile-m1");
+    expect(link).toHaveAttribute("href", "/household/h1/member/m1");
   });
 });

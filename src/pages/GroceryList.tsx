@@ -65,7 +65,11 @@ export default function GroceryList() {
     return (
       <PageShell>
         <HouseholdNav householdId={householdId ?? ""} />
-        <PageHeader title="Grocery List" subtitle={`Household: ${household.name}`} />
+        <PageHeader
+          title="Grocery List"
+          subtitle={`Household: ${household.name}`}
+          subtitleTo={`/household/${householdId}/home`}
+        />
         <EmptyState>No weekly plan saved yet. Generate and save a plan first.</EmptyState>
       </PageShell>
     );

@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import HouseholdList from "./pages/HouseholdList";
 import HouseholdSetup from "./pages/HouseholdSetup";
 import MemberProfile from "./pages/MemberProfile";
@@ -12,11 +12,22 @@ import GroceryList from "./pages/GroceryList";
 import RescueMode from "./pages/RescueMode";
 import MealHistory from "./pages/MealHistory";
 import RecipeImport from "./pages/RecipeImport";
+import { loadHouseholds } from "./storage";
+
+function DefaultRoute() {
+  const households = loadHouseholds();
+  const firstHouseholdId = households[0]?.id;
+  if (!firstHouseholdId) {
+    return <HouseholdList />;
+  }
+  return <Navigate to={`/household/${firstHouseholdId}/home`} replace />;
+}
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<HouseholdList />} />
+      <Route path="/" element={<DefaultRoute />} />
+      <Route path="/households" element={<HouseholdList />} />
       <Route path="/household/:householdId/home" element={<Home />} />
       <Route path="/household/:id" element={<HouseholdSetup />} />
       <Route

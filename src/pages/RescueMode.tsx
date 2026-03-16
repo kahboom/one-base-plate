@@ -118,6 +118,7 @@ export default function RescueMode() {
 
   return (
     <PageShell>
+      <HouseholdNav householdId={householdId ?? ""} />
       <PageHeader title="Rescue mode" subtitle="Fastest acceptable dinner — no guilt, just food" />
 
       {!hasMeals && (
@@ -222,8 +223,6 @@ export default function RescueMode() {
           No rescue-eligible meals found. Try adding meals with rescue eligibility enabled.
         </EmptyState>
       )}
-
-      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

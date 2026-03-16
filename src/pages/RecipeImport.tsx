@@ -150,7 +150,11 @@ export default function RecipeImport() {
   return (
     <PageShell>
       <HouseholdNav householdId={householdId ?? ""} />
-      <PageHeader title="Import Recipe" subtitle={`Household: ${householdName}`} />
+      <PageHeader
+        title="Import Recipe"
+        subtitle={`Household: ${householdName}`}
+        subtitleTo={`/household/${householdId}/home`}
+      />
 
       {step === "input" && (
         <div data-testid="import-input-step">

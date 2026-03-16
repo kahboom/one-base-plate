@@ -6,7 +6,7 @@ import { Link, useParams, useLocation } from "react-router-dom";
 export function AppHeader() {
   const { householdId, id } = useParams<{ householdId?: string; id?: string }>();
   const hId = householdId ?? id;
-  const homeHref = hId ? `/household/${hId}/home` : "/";
+  const homeHref = hId ? `/household/${hId}/home` : "/households";
   return (
     <header className="mb-6 pb-4 border-b border-border-light">
       <Link to={homeHref} className="text-2xl font-bold tracking-tight text-text-primary hover:text-brand transition-colors">
@@ -27,11 +27,29 @@ export function PageShell({ children }: { children: ReactNode }) {
 }
 
 /* ---------- Page header ---------- */
-export function PageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+export function PageHeader({
+  title,
+  subtitle,
+  subtitleTo,
+}: {
+  title: string;
+  subtitle?: string;
+  subtitleTo?: string;
+}) {
   return (
     <div className="mb-8">
       <h1 className="text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">{title}</h1>
-      {subtitle && <p className="mt-1 text-base text-text-muted">{subtitle}</p>}
+      {subtitle && (
+        <p className="mt-1 text-base text-text-muted">
+          {subtitleTo ? (
+            <Link to={subtitleTo} className="font-medium text-brand hover:underline">
+              {subtitle}
+            </Link>
+          ) : (
+            subtitle
+          )}
+        </p>
+      )}
     </div>
   );
 }
@@ -223,10 +241,11 @@ function navLinkClass(isActive: boolean) {
     : `${base} text-text-secondary hover:bg-brand-light hover:text-brand`;
 }
 
-export function HouseholdNav({ householdId }: { householdId: string }) {
+export function HouseholdNav({ householdId }: { householdId?: string }) {
   const location = useLocation();
   const currentPath = location.pathname;
-  const prefix = `/household/${householdId}`;
+  const hasHouseholdScope = Boolean(householdId);
+  const prefix = hasHouseholdScope ? `/household/${householdId}` : "";
 
   function isActive(itemPath: string) {
     const full = `${prefix}${itemPath}`;
@@ -241,21 +260,23 @@ export function HouseholdNav({ householdId }: { householdId: string }) {
       className="mb-6 flex flex-wrap items-center gap-1.5 rounded-md border border-border-light bg-surface px-2 py-2 shadow-card sm:gap-2 sm:px-3"
       data-testid="app-nav"
     >
-      {NAV_ITEMS.map((item) => (
-        <Link
-          key={item.path}
-          to={`${prefix}${item.path}`}
-          className={navLinkClass(isActive(item.path))}
-          aria-current={isActive(item.path) ? "page" : undefined}
-        >
-          {item.label}
-        </Link>
-      ))}
+      {hasHouseholdScope &&
+        NAV_ITEMS.map((item) => (
+          <Link
+            key={item.path}
+            to={`${prefix}${item.path}`}
+            className={navLinkClass(isActive(item.path))}
+            aria-current={isActive(item.path) ? "page" : undefined}
+          >
+            {item.label}
+          </Link>
+        ))}
       <Link
-        to="/"
-        className={navLinkClass(false)}
+        to="/households"
+        className={navLinkClass(!hasHouseholdScope && (currentPath === "/" || currentPath === "/households"))}
+        aria-current={!hasHouseholdScope && (currentPath === "/" || currentPath === "/households") ? "page" : undefined}
       >
-        All households
+        Households
       </Link>
     </nav>
   );

@@ -126,7 +126,11 @@ export default function Planner() {
   return (
     <PageShell>
       <HouseholdNav householdId={householdId ?? ""} />
-      <PageHeader title="Meal Planner" subtitle={`Household: ${household.name}`} />
+      <PageHeader
+        title="Meal Planner"
+        subtitle={`Household: ${household.name}`}
+        subtitleTo={`/household/${householdId}/home`}
+      />
 
       {household.baseMeals.length === 0 ? (
         <EmptyState>
@@ -280,7 +284,7 @@ export default function Planner() {
                     ))}
                   </ul>
                   <Link
-                    to={`/household/${householdId}/member/${member.id}?returnTo=/household/${householdId}/planner`}
+                    to={`/household/${householdId}/member/${member.id}`}
                     className="text-xs font-medium text-brand hover:underline"
                   >
                     Quick edit {member.name}

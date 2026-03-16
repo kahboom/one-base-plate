@@ -154,7 +154,7 @@ describe("F044: Catalog auto-populates on the ingredient page", () => {
 });
 
 describe("F044: Manual creation preserved", () => {
-  it("'Add ingredient' button still creates a blank ingredient manually", async () => {
+  it("'Add ingredient' button creates a blank ingredient and opens modal", async () => {
     seedHousehold();
     const user = userEvent.setup();
     renderPage();
@@ -170,12 +170,9 @@ describe("F044: Manual creation preserved", () => {
 describe("F044: Catalog ingredients work with existing flows", () => {
   it("catalog-populated ingredients persist to storage on save", async () => {
     seedHousehold();
-    const user = userEvent.setup();
     renderPage();
 
-    // Save without changes — catalog items should persist
-    await user.click(screen.getAllByText("Save ingredients")[0]!);
-
+    // Auto-save persists catalog items on load; verify
     const household = loadHousehold("h-catalog")!;
     expect(household.ingredients.length).toBe(CATALOG_SIZE);
     const eggs = household.ingredients.find((i) => i.name === "Eggs");

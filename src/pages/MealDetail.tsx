@@ -31,7 +31,6 @@ export default function MealDetail() {
   if (!meal) return <p>Meal not found.</p>;
 
   const overlap = computeMealOverlap(meal, household.members, household.ingredients);
-  const variants = generateAssemblyVariants(meal, household.members, household.ingredients);
   const isPinned = (household.pinnedMealIds ?? []).includes(meal.id);
 
   function handleTogglePin() {
@@ -45,6 +44,43 @@ export default function MealDetail() {
     setHousehold(updatedHousehold);
   }
 
+  return (
+    <PageShell>
+      <HouseholdNav householdId={householdId ?? ""} />
+      <PageHeader
+        title={meal.name}
+        subtitle={`Household: ${household.name}`}
+        subtitleTo={`/household/${householdId}/home`}
+      />
+      <MealDetailContent
+        meal={meal}
+        household={household}
+        overlapLabel={`${overlap.score}/${overlap.total}`}
+        isPinned={isPinned}
+        onTogglePin={handleTogglePin}
+      />
+    </PageShell>
+  );
+}
+
+interface MealDetailContentProps {
+  meal: BaseMeal;
+  household: Household;
+  overlapLabel: string;
+  isPinned: boolean;
+  onTogglePin: () => void;
+}
+
+export function MealDetailContent({
+  meal,
+  household,
+  overlapLabel,
+  isPinned,
+  onTogglePin,
+}: MealDetailContentProps) {
+  const overlap = computeMealOverlap(meal, household.members, household.ingredients);
+  const variants = generateAssemblyVariants(meal, household.members, household.ingredients);
+
   const componentsByRole = new Map<string, typeof meal.components>();
   for (const comp of meal.components) {
     const existing = componentsByRole.get(comp.role) ?? [];
@@ -53,15 +89,12 @@ export default function MealDetail() {
   }
 
   function ingredientName(id: string): string {
-    const name = household!.ingredients.find((i) => i.id === id)?.name ?? id;
+    const name = household.ingredients.find((i) => i.id === id)?.name ?? id;
     return toSentenceCase(name);
   }
 
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId ?? ""} />
-      <PageHeader title={meal.name} subtitle={`Household: ${household.name}`} />
-
+    <>
       <Card data-testid="meal-hero" className="mb-6">
         {meal.imageUrl && (
           <img
@@ -75,7 +108,7 @@ export default function MealDetail() {
           <span>Prep: {meal.defaultPrep || "—"}</span>
           <span>{meal.estimatedTimeMinutes} min</span>
           <span>{meal.difficulty}</span>
-          <span>Overlap: {overlap.score}/{overlap.total}</span>
+          <span>Overlap: {overlapLabel}</span>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {isPinned && <Chip variant="success">Pinned</Chip>}
@@ -83,7 +116,7 @@ export default function MealDetail() {
           <Button
             small
             variant={isPinned ? "danger" : "default"}
-            onClick={handleTogglePin}
+            onClick={onTogglePin}
             data-testid="pin-toggle"
           >
             {isPinned ? "Unpin from rotation" : "Pin to rotation"}
@@ -170,7 +203,7 @@ export default function MealDetail() {
           })}
         </div>
       </Section>
-    </PageShell>
+    </>
   );
 }
 

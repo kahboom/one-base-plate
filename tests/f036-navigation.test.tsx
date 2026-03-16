@@ -70,7 +70,7 @@ const NAV_LINKS = [
   "Meal history",
   "Ingredients",
   "Base meals",
-  "All households",
+  "Households",
 ];
 
 function renderRoute(path: string) {
@@ -88,7 +88,7 @@ function renderRoute(path: string) {
         <Route path="/household/:householdId/history" element={<MealHistory />} />
         <Route path="/household/:householdId/member/:memberId" element={<MemberProfile />} />
         <Route path="/household/:id" element={<HouseholdSetup />} />
-        <Route path="/" element={<div>All Households Page</div>} />
+        <Route path="/households" element={<div>All Households Page</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -226,7 +226,7 @@ describe("F036: Consistent navigation across all household screens", () => {
       expect(hrefs).toContain("/household/h-nav/grocery");
       expect(hrefs).toContain("/household/h-nav/rescue");
       expect(hrefs).toContain("/household/h-nav/history");
-      expect(hrefs).toContain("/");
+      expect(hrefs).toContain("/households");
     });
   });
 
@@ -269,11 +269,11 @@ describe("F036: Consistent navigation across all household screens", () => {
   });
 
   describe("MemberProfile default return goes to Home", () => {
-    it("save without returnTo navigates to Home", async () => {
+    it("header brand link navigates to Home", async () => {
       seedHousehold();
       const user = userEvent.setup();
       renderRoute("/household/h-nav/member/m1");
-      await user.click(screen.getByText("Save profile"));
+      await user.click(screen.getByText("OneBasePlate"));
       expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
     });
   });
@@ -361,12 +361,12 @@ describe("F036: Consistent navigation across all household screens", () => {
       expect(within(nav).getByText("Home")).not.toHaveAttribute("aria-current");
     });
 
-    it("All households link is never marked active", () => {
+    it("Households link is never marked active", () => {
       seedHousehold();
       renderRoute("/household/h-nav/home");
       const nav = screen.getByRole("navigation");
-      const allHouseholds = within(nav).getByText("All households");
-      expect(allHouseholds).not.toHaveAttribute("aria-current");
+      const households = within(nav).getByText("Households");
+      expect(households).not.toHaveAttribute("aria-current");
     });
   });
 });

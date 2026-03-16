@@ -158,10 +158,11 @@ describe("F019: Edit member and return to planner", () => {
     await user.type(hardNoInput, "mushrooms");
     await user.click(screen.getByText("Add hard-no food"));
 
-    // Save — should navigate back to planner
-    await user.click(screen.getByText("Save profile"));
+    // Navigate via header home link, then back to planner
+    await user.click(screen.getByText("OneBasePlate"));
+    await user.click(screen.getByText("Meal planner"));
 
-    // Should be back on planner
+    // Should now be back on planner
     expect(screen.getByText("Meal Planner")).toBeInTheDocument();
 
     // Re-select meal to regenerate variants
@@ -194,7 +195,7 @@ describe("F019: Edit avoids full household flow", () => {
 });
 
 describe("F019: Cancel from quick edit returns to planner", () => {
-  it("cancel navigates back to planner without saving", async () => {
+  it("navigating back to planner keeps auto-saved edits", async () => {
     seedHousehold();
     const user = userEvent.setup();
     renderApp("/household/h-quick/planner");
@@ -202,32 +203,32 @@ describe("F019: Cancel from quick edit returns to planner", () => {
     await user.click(screen.getByTestId("selectable-meal-1"));
     await user.click(screen.getByText("Quick edit Kid"));
 
-    // Add a hard-no but cancel instead of saving
+    // Add a hard-no and navigate away
     const hardNoInput = screen.getByPlaceholderText("Add hard-no food");
     await user.type(hardNoInput, "mushrooms");
     await user.click(screen.getByText("Add hard-no food"));
-    await user.click(screen.getByText("Cancel"));
+    await user.click(screen.getByText("OneBasePlate"));
+    await user.click(screen.getByText("Meal planner"));
 
     // Should be back on planner
     expect(screen.getByText("Meal Planner")).toBeInTheDocument();
 
-    // Data should not have changed
+    // Data should already be auto-saved
     const household = loadHousehold("h-quick")!;
     const kid = household.members.find((m) => m.id === "m-kid")!;
-    expect(kid.hardNoFoods).toHaveLength(0);
+    expect(kid.hardNoFoods).toEqual(["mushrooms"]);
   });
 });
 
 describe("F019: Member profile preserves returnTo for household setup", () => {
-  it("without returnTo param, save navigates to home", async () => {
+  it("member profile can navigate to home from shared nav", async () => {
     seedHousehold();
     const user = userEvent.setup();
     renderApp("/household/h-quick/member/m-parent");
 
     expect(screen.getByText(/Parent — adult/)).toBeInTheDocument();
-    await user.click(screen.getByText("Save profile"));
+    await user.click(screen.getByText("OneBasePlate"));
 
-    // Should go to home by default
     expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
   });
 });

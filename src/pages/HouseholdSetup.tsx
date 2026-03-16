@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import type { Household, HouseholdMember, MemberRole, TextureLevel } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, HouseholdNav, FieldLabel, EmptyState, ConfirmDialog, useConfirm } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, HouseholdNav, FieldLabel, EmptyState, ConfirmDialog, useConfirm } from "../components/ui";
 
 function createEmptyMember(): HouseholdMember {
   return {
@@ -99,7 +99,6 @@ function MemberForm({
 
 export default function HouseholdSetup() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const isNew = id === "new";
 
   const [household, setHousehold] = useState<Household>(createEmptyHousehold);
@@ -141,17 +140,26 @@ export default function HouseholdSetup() {
     });
   }
 
-  function handleSave() {
+  useEffect(() => {
+    if (!loaded) return;
+    if (isNew && !household.name.trim() && household.members.length === 0) return;
     saveHousehold(household);
-    navigate("/");
-  }
+  }, [loaded, household, isNew]);
 
   if (!loaded) return null;
 
   return (
     <PageShell>
-      {!isNew && <HouseholdNav householdId={id ?? ""} />}
+      <HouseholdNav householdId={isNew ? undefined : id} />
       <PageHeader title={isNew ? "Create Household" : "Edit Household"} />
+
+      {isNew && (
+        <p className="mb-4">
+          <Link to="/households" className="text-brand hover:underline">
+            Back to households
+          </Link>
+        </p>
+      )}
 
       <FieldLabel label="Household name" className="mb-6">
         <Input
@@ -182,11 +190,6 @@ export default function HouseholdSetup() {
       ))}
 
       <Button onClick={addMember} className="mb-4">Add member</Button>
-
-      <ActionGroup>
-        <Button variant="primary" onClick={handleSave}>Save household</Button>
-        <Button onClick={() => navigate("/")}>Cancel</Button>
-      </ActionGroup>
 
       <ConfirmDialog
         open={!!pending}

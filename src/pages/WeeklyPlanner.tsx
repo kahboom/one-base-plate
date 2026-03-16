@@ -215,7 +215,11 @@ export default function WeeklyPlanner() {
   return (
     <PageShell>
       <HouseholdNav householdId={householdId ?? ""} />
-      <PageHeader title="Weekly Planner" subtitle={`Household: ${household.name}`} />
+      <PageHeader
+        title="Weekly Planner"
+        subtitle={`Household: ${household.name}`}
+        subtitleTo={`/household/${householdId}/home`}
+      />
 
       {household.baseMeals.length === 0 ? (
         <EmptyState>

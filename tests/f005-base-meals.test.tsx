@@ -72,6 +72,15 @@ function renderBaseMealManager(householdId: string) {
   );
 }
 
+function getMealModal() {
+  return screen.getByTestId("meal-modal");
+}
+
+async function addMeal(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByText("Add meal"));
+  return getMealModal();
+}
+
 beforeEach(() => {
   localStorage.clear();
 });
@@ -84,32 +93,30 @@ describe("F005: Create a base meal from components", () => {
 
     expect(screen.getByText("Meals (0)")).toBeInTheDocument();
 
-    await user.click(screen.getByText("Add meal"));
+    const modal = await addMeal(user);
     expect(screen.getByText("Meals (1)")).toBeInTheDocument();
 
-    const card = screen.getByText("Base Meal").closest("[data-testid^='meal-']") as HTMLElement;
-
     // Set meal name
-    const nameInput = within(card).getByPlaceholderText("Meal name");
+    const nameInput = within(modal).getByPlaceholderText("Meal name");
     await user.type(nameInput, "Chicken Rice Bowl");
 
     // Set default prep
-    const prepInput = within(card).getByPlaceholderText(
+    const prepInput = within(modal).getByPlaceholderText(
       "e.g. stir-fry, roast",
     );
     await user.type(prepInput, "stir-fry");
 
     // Add components
-    await user.click(within(card).getByText("Add component"));
-    await user.click(within(card).getByText("Add component"));
-    await user.click(within(card).getByText("Add component"));
+    await user.click(within(modal).getByText("Add component"));
+    await user.click(within(modal).getByText("Add component"));
+    await user.click(within(modal).getByText("Add component"));
 
     expect(
-      within(card).getByText("Components (3)"),
+      within(modal).getByText("Components (3)"),
     ).toBeInTheDocument();
 
     // Select ingredients for each component
-    const ingredientSelects = within(card).getAllByDisplayValue(
+    const ingredientSelects = within(modal).getAllByDisplayValue(
       "Select ingredient",
     );
 
@@ -118,14 +125,12 @@ describe("F005: Create a base meal from components", () => {
     await user.selectOptions(ingredientSelects[2]!, "ing-broccoli");
 
     // Set roles for components (second → carb, third → veg)
-    const roleSelects = within(card).getAllByDisplayValue("protein");
+    const roleSelects = within(modal).getAllByDisplayValue("protein");
     // roleSelects[0] is already protein, change others
     await user.selectOptions(roleSelects[1]!, "carb");
     await user.selectOptions(roleSelects[2]!, "veg");
 
-    // Save
-    await user.click(screen.getByText("Save meals"));
-
+    // Auto-save persists; verify
     const saved = loadHousehold("h-meals")!;
     expect(saved.baseMeals).toHaveLength(1);
     const meal = saved.baseMeals[0]!;
@@ -147,25 +152,23 @@ describe("F005: Set time and rescue eligibility metadata", () => {
     const user = userEvent.setup();
     renderBaseMealManager("h-meals");
 
-    await user.click(screen.getByText("Add meal"));
-    const card = screen.getByText("Base Meal").closest("[data-testid^='meal-']") as HTMLElement;
+    const modal = await addMeal(user);
 
-    const nameInput = within(card).getByPlaceholderText("Meal name");
+    const nameInput = within(modal).getByPlaceholderText("Meal name");
     await user.type(nameInput, "Quick Pasta");
 
     // Set time
-    const timeInput = within(card).getByDisplayValue("30");
+    const timeInput = within(modal).getByDisplayValue("30");
     await user.clear(timeInput);
     await user.type(timeInput, "15");
 
     // Set difficulty
-    await user.selectOptions(within(card).getByDisplayValue("easy"), "medium");
+    await user.selectOptions(within(modal).getByDisplayValue("easy"), "medium");
 
     // Set rescue eligible
-    await user.click(within(card).getByLabelText("Rescue eligible"));
+    await user.click(within(modal).getByLabelText("Rescue eligible"));
 
-    await user.click(screen.getByText("Save meals"));
-
+    // Auto-save persists; verify
     const saved = loadHousehold("h-meals")!;
     const meal = saved.baseMeals[0]!;
     expect(meal.name).toBe("Quick Pasta");
@@ -181,14 +184,16 @@ describe("F005: Remove meal and components", () => {
     const user = userEvent.setup();
     renderBaseMealManager("h-meals");
 
-    await user.click(screen.getByText("Add meal"));
-    await user.click(screen.getByText("Add meal"));
+    await addMeal(user);
+    await user.click(within(getMealModal()).getByText("Done"));
+    await addMeal(user);
+    await user.click(within(getMealModal()).getByText("Done"));
     expect(screen.getByText("Meals (2)")).toBeInTheDocument();
 
-    const removeButtons = screen.getAllByText("Remove meal");
-    await user.click(removeButtons[0]!);
+    await user.click(screen.getAllByTestId(/^meal-row-/)[0]!);
+    await user.click(within(getMealModal()).getByText("Remove meal"));
 
-    const dialog = screen.getByRole("dialog");
+    const dialog = screen.getByRole("dialog", { name: "Remove meal" });
     await user.click(within(dialog).getByText("Remove"));
 
     expect(screen.getByText("Meals (1)")).toBeInTheDocument();
@@ -199,22 +204,21 @@ describe("F005: Remove meal and components", () => {
     const user = userEvent.setup();
     renderBaseMealManager("h-meals");
 
-    await user.click(screen.getByText("Add meal"));
-    const card = screen.getByText("Base Meal").closest("[data-testid^='meal-']") as HTMLElement;
+    const modal = await addMeal(user);
 
-    await user.click(within(card).getByText("Add component"));
-    await user.click(within(card).getByText("Add component"));
-    expect(within(card).getByText("Components (2)")).toBeInTheDocument();
+    await user.click(within(modal).getByText("Add component"));
+    await user.click(within(modal).getByText("Add component"));
+    expect(within(modal).getByText("Components (2)")).toBeInTheDocument();
 
-    const removeButtons = within(card).getAllByText("Remove component");
+    const removeButtons = within(modal).getAllByText("Remove component");
     await user.click(removeButtons[0]!);
 
-    expect(within(card).getByText("Components (1)")).toBeInTheDocument();
+    expect(within(modal).getByText("Components (1)")).toBeInTheDocument();
   });
 });
 
 describe("F005: Meals persist across re-open", () => {
-  it("re-opening shows previously saved meals", () => {
+  it("re-opening shows previously saved meals", async () => {
     const household = seedHousehold();
     household.baseMeals = [
       {
@@ -236,8 +240,13 @@ describe("F005: Meals persist across re-open", () => {
     renderBaseMealManager("h-meals");
 
     expect(screen.getByText("Meals (1)")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Roast Chicken Dinner")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("roast")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("45")).toBeInTheDocument();
+    expect(screen.getByText("Roast Chicken Dinner")).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("meal-row-meal-1"));
+    const modal = getMealModal();
+    expect(within(modal).getByDisplayValue("Roast Chicken Dinner")).toBeInTheDocument();
+    expect(within(modal).getByDisplayValue("roast")).toBeInTheDocument();
+    expect(within(modal).getByDisplayValue("45")).toBeInTheDocument();
   });
 });

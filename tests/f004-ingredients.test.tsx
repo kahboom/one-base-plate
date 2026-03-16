@@ -119,23 +119,6 @@ describe("F004: Tag ingredients", () => {
   });
 });
 
-describe("F004: Remove ingredient", () => {
-  it("can remove an ingredient from the list", async () => {
-    seedHousehold();
-    const user = userEvent.setup();
-    renderIngredientManager("h-ing");
-
-    const rows = screen.getAllByTestId(/^ingredient-row-/);
-    await user.click(rows[0]!);
-    await user.click(within(screen.getByTestId("ingredient-modal")).getByText("Remove ingredient"));
-
-    const dialog = screen.getByRole("dialog", { name: "Remove ingredient" });
-    await user.click(within(dialog).getByText("Remove"));
-
-    expect(screen.getByText(`Items (${CATALOG_SIZE - 1})`)).toBeInTheDocument();
-  });
-});
-
 describe("F004: Ingredients persist across re-open", () => {
   it("re-opening the ingredient manager shows previously saved ingredients", () => {
     const household = seedHousehold();

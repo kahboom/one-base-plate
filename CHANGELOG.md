@@ -1,0 +1,14 @@
+### 2026-03-14 — Revamped navigation and ingredient workflow
+- Requestor: product owner
+- Reason: current ingredient management is too manual and too bulky; household navigation still looks visually weak and out of place
+- Scope: navigation UX, ingredient manager UX, ingredient catalog, recipe import, data model
+- Files changed: PRD.json, PRD-changelog.md
+- Sections changed: features, implementationOrder, milestones, dataModel, uiSpec, screenToFeatureMap
+- New feature IDs: F043, F044, F045, F046
+- Reopened feature IDs: F036
+- Removed/deprecated feature IDs: none
+- Dependency changes: F043 depends on F036; F044 depends on F043; F045 depends on F044; F046 depends on F029, F044, F045
+- Milestone changes: added M5 Ingredient workflow and recipe intake
+- UI spec changes: added S010 Ingredient Manager
+- Data model changes: Ingredient gains source and catalogItemId; added IngredientCatalogItem
+- Notes: ingredient screen should be browse-first and compact; desktop may be table-like but must not become a dense spreadsheet UI

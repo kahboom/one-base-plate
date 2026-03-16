@@ -43,14 +43,15 @@ beforeEach(() => {
 });
 
 describe("F025: PageHeader consistency", () => {
-  it("HouseholdList uses PageHeader with title and subtitle", () => {
+  it("HouseholdList shows households count and Create button", () => {
     render(
       <MemoryRouter>
         <HouseholdList />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("heading", { name: "OneBasePlate" })).toBeInTheDocument();
-    expect(screen.getByText("One base meal, multiple household-specific assemblies.")).toBeInTheDocument();
+    expect(screen.getByText("OneBasePlate")).toBeInTheDocument();
+    expect(screen.getByText("Households (0)")).toBeInTheDocument();
+    expect(screen.getByText("Create Household")).toBeInTheDocument();
   });
 
   it("HouseholdSetup uses PageHeader for create mode", () => {

@@ -32,6 +32,8 @@ This script will:
 | `npm run test:watch` | Run Vitest in watch mode |
 | `npm run typecheck` | TypeScript type check only |
 | `npm run lint` | Run ESLint |
+| `npm run db:seed` | Regenerate `src/seed-data.json` from fixture households |
+| `npm run db:migrate-ingredients -- --in <file>` | Normalize + dedupe ingredient data in exported household JSON |
 
 ---
 
@@ -71,3 +73,31 @@ This script will:
 
 - Node.js (recommended: v18+)
 - npm
+
+---
+
+## Ingredient Migration (Legacy Data)
+
+To apply the lowercase naming standard and duplicate cleanup to existing ingredient records, run the migration against an exported household JSON file.
+
+### Recommended flow
+
+1. Export household data from the app as JSON.
+2. Run migration:
+
+```bash
+npm run db:migrate-ingredients -- --in ./households-export.json
+```
+
+3. Import the generated file (`./households-export.migrated.json`) back into the app.
+
+### Optional flags
+
+- `--out <file>`: write to a custom output path.
+- `--write`: overwrite the input file in place.
+
+Example:
+
+```bash
+npm run db:migrate-ingredients -- --in ./households-export.json --write
+```

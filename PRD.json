@@ -167,6 +167,9 @@
           "components[]",
           "defaultPrep",
           "estimatedTimeMinutes",
+          "estimatedPrepMinutes (optional)",
+          "estimatedCookMinutes (optional)",
+          "servingsText (optional)",
           "difficulty",
           "rescueEligible",
           "wasteReuseHints[]",
@@ -177,6 +180,7 @@
           "optionalSauces[]",
           "flavorUpgrades[]",
           "recipeLinks[]",
+          "importedRecipeSource (optional)",
           "imageUrl (optional)",
           "notes",
           "visualTags[]",
@@ -215,7 +219,62 @@
           "calendarViewState",
           "draftSuggestions[]"
         ]
-      }
+      },
+      [
+        {
+          "name": "MealComponent",
+          "fields": [
+            "id",
+            "ingredientId",
+            "role (protein|carb|veg|fruit|sauce|topping|other)",
+            "quantityValue (optional)",
+            "quantityUnit (optional)",
+            "optional",
+            "defaultIncluded",
+            "prepNote (optional)",
+            "sourceLine (optional)",
+            "importMatchType (exact|alias|fuzzy|manual|unmatched|ignored)",
+            "importConfidence (optional)",
+            "alternativeIngredientIds[] (optional)"
+          ]
+        },
+        {
+          "name": "ImportedRecipeSource",
+          "fields": [
+            "id",
+            "sourceSystem (paprika|manual-url|pasted-text|other)",
+            "externalRecipeId (optional)",
+            "title",
+            "sourceUrl (optional)",
+            "importedAt",
+            "lastSyncedAt (optional)",
+            "prepTimeMinutes (optional)",
+            "cookTimeMinutes (optional)",
+            "totalTimeMinutes (optional)",
+            "servingsText (optional)",
+            "difficulty (optional)",
+            "categories[] (optional)",
+            "imageUrl (optional)",
+            "notes (optional)"
+          ]
+        },
+        {
+          "name": "ImportedIngredientMatch",
+          "fields": [
+            "id",
+            "sourceSystem (paprika|manual-url|pasted-text|other)",
+            "rawLine",
+            "parsedName",
+            "parsedQuantityValue (optional)",
+            "parsedQuantityUnit (optional)",
+            "matchedIngredientId (optional)",
+            "matchedCatalogId (optional)",
+            "action (use-match|create-new|ignore)",
+            "matchType (exact|alias|fuzzy|manual|unmatched)",
+            "confidence (optional)"
+          ]
+        }
+      ]
     ],
     "normalizationRules": {
       "ingredientNamingStandard": {
@@ -1115,6 +1174,33 @@
       "passes": true,
       "dependencies": ["F045", "F046"],
       "acceptanceRefs": ["S010"]
+    },
+    {
+      "id": "F048",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "App can import Paprika .paprikarecipes exports, preserve recipe provenance, and convert recipes into reviewable base-meal drafts",
+      "steps": [
+        "Add a Paprika import flow that accepts a .paprikarecipes file upload from the Ingredient Manager or Base Meal Manager.",
+        "Parse the .paprikarecipes archive format and extract recipe records plus structured metadata without requiring manual paste or per-recipe URL entry.",
+        "Retain imported recipe provenance on drafts and saved meals, including source system, external recipe id when available, source URL, import timestamp, and optional sync timestamp.",
+        "Retain structured Paprika recipe metadata where available, including prep time, cook time, total time, difficulty, servings, categories, notes, and optional image/photo URL.",
+        "Map Paprika total time to BaseMeal estimatedTimeMinutes for planner compatibility while also preserving separate prep and cook time fields when available.",
+        "Define MealComponent explicitly in the PRD and implementation as a first-class meal-scoped object rather than an implicit array shape on BaseMeal.",
+        "Store component-level metadata for imported meals, including role, optional quantity and unit, original source line, match type, and optional confidence.",
+        "During import review, preserve each parsed ingredient line as an explicit mapping record instead of discarding the import decision after save.",
+        "Support imported ingredient match outcomes of use existing ingredient, create new ingredient, or ignore, and persist that result with the imported meal draft.",
+        "Allow the user to review imported recipes in bulk, including import-all, import-selected, or import-by-category flows before saving draft meals.",
+        "Create reviewable draft base meals with mapped components, recipe links, retained Paprika metadata, and optional notes instead of blindly auto-saving finished meals.",
+        "Detect duplicate imported meals and duplicate ingredient matches using normalized lowercase rules and offer skip, merge, or keep-both review actions where appropriate.",
+        "Show imported recipe provenance and retained timing metadata on the saved base meal detail screen in a lightweight way that does not dominate the page.",
+        "Allow the user to reopen an imported meal later and understand which components came from which original recipe lines without re-parsing the archive.",
+        "Verify imported meals remain compatible with planner, grocery list, duplicate handling, images, and local-first storage after Paprika metadata and mappings are added."
+      ],
+      "passes": false,
+      "dependencies": ["F046", "F047"],
+      "acceptanceRefs": ["S004", "S007", "S010"]
     }
   ],
   "milestones": [
@@ -1173,7 +1259,7 @@
     {
       "id": "M5",
       "name": "Ingredient workflow and recipe intake",
-      "includes": ["F043", "F044", "F045", "F046", "F047"]
+      "includes": ["F043", "F044", "F045", "F046", "F047", "F048"]
     }
   ],
   "fixtureHouseholds": [
@@ -1242,6 +1328,7 @@
     "F045",
     "F046",
     "F047",
+    "F048",
     "F020",
     "F037",
     "F038",

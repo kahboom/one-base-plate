@@ -1,20 +1,17 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import type { HouseholdMember, PreparationRule } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Section, FormRow, ActionGroup, Chip } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Section, FormRow, Chip, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
 
 export default function MemberProfile() {
   const { householdId, memberId } = useParams<{
     householdId: string;
     memberId: string;
   }>();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
-
   const [member, setMember] = useState<HouseholdMember | null>(null);
   const [householdName, setHouseholdName] = useState("");
+  const [loaded, setLoaded] = useState(false);
 
   const [safeFoodInput, setSafeFoodInput] = useState("");
   const [hardNoInput, setHardNoInput] = useState("");
@@ -27,22 +24,22 @@ export default function MemberProfile() {
     if (!household) return;
     setHouseholdName(household.name);
     const found = household.members.find((m) => m.id === memberId);
-    if (found) setMember({ ...found });
+    if (found) {
+      setMember({ ...found });
+      setLoaded(true);
+    }
   }, [householdId, memberId]);
 
-  const defaultReturn = `/household/${householdId}/home`;
-  const navigateBack = returnTo || defaultReturn;
-
-  function handleSave() {
-    if (!householdId || !member) return;
+  const { pending, requestConfirm, confirm, cancel } = useConfirm();
+  useEffect(() => {
+    if (!householdId || !member || !loaded) return;
     const household = loadHousehold(householdId);
     if (!household) return;
     const index = household.members.findIndex((m) => m.id === member.id);
     if (index < 0) return;
     household.members[index] = member;
     saveHousehold(household);
-    navigate(navigateBack);
-  }
+  }, [householdId, loaded, member]);
 
   function addSafeFood() {
     const trimmed = safeFoodInput.trim();
@@ -101,7 +98,12 @@ export default function MemberProfile() {
 
   return (
     <PageShell>
-      <PageHeader title={`${member.name} — ${member.role}`} subtitle={`Household: ${householdName}`} />
+      <HouseholdNav householdId={householdId} />
+      <PageHeader
+        title={`${member.name} — ${member.role}`}
+        subtitle={`Household: ${householdName}`}
+        subtitleTo={`/household/${householdId}/home`}
+      />
 
       <Section title="Safe Foods">
         <Card>
@@ -112,7 +114,19 @@ export default function MemberProfile() {
               {member.safeFoods.map((food) => (
                 <li key={food} className="flex items-center gap-2">
                   <Chip variant="success">{food}</Chip>
-                  <Button variant="danger" small onClick={() => removeSafeFood(food)}>Remove</Button>
+                  <Button
+                    variant="danger"
+                    small
+                    className="!h-6 !w-6 !min-h-[24px] !px-0 !py-0 !text-[12px] leading-none"
+                    aria-label={`Remove safe food ${food}`}
+                    onClick={() =>
+                      requestConfirm(food, () => {
+                        removeSafeFood(food);
+                      })
+                    }
+                  >
+                    x
+                  </Button>
                 </li>
               ))}
             </ul>
@@ -144,7 +158,19 @@ export default function MemberProfile() {
               {member.hardNoFoods.map((food) => (
                 <li key={food} className="flex items-center gap-2">
                   <Chip variant="danger">{food}</Chip>
-                  <Button variant="danger" small onClick={() => removeHardNo(food)}>Remove</Button>
+                  <Button
+                    variant="danger"
+                    small
+                    className="!h-6 !w-6 !min-h-[24px] !px-0 !py-0 !text-[12px] leading-none"
+                    aria-label={`Remove hard-no food ${food}`}
+                    onClick={() =>
+                      requestConfirm(food, () => {
+                        removeHardNo(food);
+                      })
+                    }
+                  >
+                    x
+                  </Button>
                 </li>
               ))}
             </ul>
@@ -178,7 +204,14 @@ export default function MemberProfile() {
                   <span className="text-sm">
                     <strong>{rule.ingredient}:</strong> {rule.rule}
                   </span>
-                  <Button variant="danger" small onClick={() => removePreparationRule(i)}>Remove</Button>
+                  <Button
+                    variant="danger"
+                    small
+                    className="!min-h-[24px] !px-1.5 !py-0.5 !text-[10px] leading-none"
+                    onClick={() => removePreparationRule(i)}
+                  >
+                    Remove
+                  </Button>
                 </li>
               ))}
             </ul>
@@ -206,11 +239,14 @@ export default function MemberProfile() {
           </FormRow>
         </Card>
       </Section>
-
-      <ActionGroup>
-        <Button variant="primary" onClick={handleSave}>Save profile</Button>
-        <Button onClick={() => navigate(navigateBack)}>Cancel</Button>
-      </ActionGroup>
+      <ConfirmDialog
+        open={!!pending}
+        title="Remove food"
+        message={`Are you sure you want to remove "${pending?.entityName ?? ""}" from this profile?`}
+        confirmLabel="Remove"
+        onConfirm={confirm}
+        onCancel={cancel}
+      />
     </PageShell>
   );
 }

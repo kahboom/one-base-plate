@@ -93,6 +93,7 @@ describe("F033: Touch-friendly tap targets", () => {
 
   it("small buttons have touch-friendly 36px minimum height", async () => {
     seedHousehold();
+    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h-mobile/meals"]}>
         <Routes>
@@ -100,7 +101,9 @@ describe("F033: Touch-friendly tap targets", () => {
         </Routes>
       </MemoryRouter>,
     );
-    const removeBtn = screen.getAllByText("Remove meal")[0]!;
+    await user.click(screen.getByTestId("meal-row-meal-pasta"));
+    const modal = screen.getByTestId("meal-modal");
+    const removeBtn = within(modal).getByText("Remove meal");
     expect(removeBtn.className).toContain("min-h-[36px]");
   });
 });
@@ -108,18 +111,20 @@ describe("F033: Touch-friendly tap targets", () => {
 describe("F033: Responsive page header", () => {
   it("page header uses responsive text sizing", () => {
     render(
-      <MemoryRouter>
-        <HouseholdList />
+      <MemoryRouter initialEntries={["/household/new"]}>
+        <Routes>
+          <Route path="/household/:id" element={<HouseholdSetup />} />
+        </Routes>
       </MemoryRouter>,
     );
-    const heading = screen.getByText("OneBasePlate");
+    const heading = screen.getByText("Create Household");
     expect(heading.className).toContain("text-2xl");
     expect(heading.className).toContain("sm:text-3xl");
   });
 });
 
 describe("F033: Mobile-friendly card layouts", () => {
-  it("household cards stack on narrow screens with responsive classes", () => {
+  it("household rows use compact touch-friendly browse list", () => {
     const household: Household = {
       id: "h1",
       name: "Test Family",
@@ -134,9 +139,9 @@ describe("F033: Mobile-friendly card layouts", () => {
         <HouseholdList />
       </MemoryRouter>,
     );
-    const card = screen.getByText("Test Family").closest("[class*='flex']") as HTMLElement;
-    expect(card.className).toContain("flex-col");
-    expect(card.className).toContain("sm:flex-row");
+    const row = screen.getByTestId("household-row-h1");
+    expect(row.tagName).toBe("BUTTON");
+    expect(row.className).toContain("min-h-[48px]");
   });
 
   it("meal planner uses responsive grid for meal cards", () => {
@@ -199,18 +204,24 @@ describe("F033: NavBar mobile-friendly wrapping", () => {
 });
 
 describe("F033: ActionGroup and FormRow stack on mobile", () => {
-  it("action group uses responsive flex direction", () => {
+  it("household control bar uses responsive flex direction", () => {
+    saveHousehold({
+      id: "h-control",
+      name: "Control Family",
+      members: [{ id: "m1", name: "A", role: "adult", safeFoods: [], hardNoFoods: [], preparationRules: [], textureLevel: "regular", allergens: [], notes: "" }],
+      ingredients: [],
+      baseMeals: [],
+      weeklyPlans: [],
+    });
     render(
-      <MemoryRouter initialEntries={["/household/new"]}>
-        <Routes>
-          <Route path="/household/:id" element={<HouseholdSetup />} />
-        </Routes>
+      <MemoryRouter>
+        <HouseholdList />
       </MemoryRouter>,
     );
-    const saveBtn = screen.getByText("Save household");
-    const actionGroup = saveBtn.parentElement as HTMLElement;
-    expect(actionGroup.className).toContain("flex-col");
-    expect(actionGroup.className).toContain("sm:flex-row");
+    const controlBar = screen.getByTestId("household-control-bar");
+    const row = controlBar.querySelector("div.flex") as HTMLElement;
+    expect(row.className).toContain("flex-col");
+    expect(row.className).toContain("sm:flex-row");
   });
 });
 

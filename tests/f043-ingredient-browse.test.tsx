@@ -239,7 +239,7 @@ describe("F043: Modal editing", () => {
     expect(screen.getByText("Turkey")).toBeInTheDocument();
   });
 
-  it("delete action is inside the modal, not on the browse row", async () => {
+  it("does not show a remove ingredient action in browse or modal", async () => {
     seedWithIngredients([
       makeIngredient({ name: "Chicken", category: "protein" }),
     ]);
@@ -251,7 +251,7 @@ describe("F043: Modal editing", () => {
 
     await user.click(screen.getByTestId("ingredient-row-ing-chicken"));
     const modal = screen.getByTestId("ingredient-modal");
-    expect(within(modal).getByText("Remove ingredient")).toBeInTheDocument();
+    expect(within(modal).queryByText("Remove ingredient")).not.toBeInTheDocument();
   });
 
   it("add ingredient opens modal immediately for the new ingredient", async () => {

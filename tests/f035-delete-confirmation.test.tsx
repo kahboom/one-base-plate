@@ -4,10 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { Household } from "../src/types";
 import { saveHousehold, loadHouseholds, saveHouseholds } from "../src/storage";
-import { MASTER_CATALOG } from "../src/catalog";
 import HouseholdList from "../src/pages/HouseholdList";
 import HouseholdSetup from "../src/pages/HouseholdSetup";
-import IngredientManager from "../src/pages/IngredientManager";
 import BaseMealManager from "../src/pages/BaseMealManager";
 
 function makeHousehold(overrides: Partial<Household> = {}): Household {
@@ -225,88 +223,6 @@ describe("F035: Remove member confirmation", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByDisplayValue("Alice")).toBeInTheDocument();
-  });
-});
-
-describe("F035: Remove ingredient confirmation", () => {
-  it("shows confirmation dialog with ingredient name", async () => {
-    const user = userEvent.setup();
-    saveHousehold(makeHousehold());
-
-    render(
-      <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
-        <Routes>
-          <Route path="/household/:householdId/ingredients" element={<IngredientManager />} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    // Click row to open modal, then click Remove inside modal
-    const rows = screen.getAllByTestId(/^ingredient-row-/);
-    await user.click(rows[0]!);
-    const modal = screen.getByTestId("ingredient-modal");
-    await user.click(within(modal).getByText("Remove ingredient"));
-
-    const dialog = screen.getByRole("dialog", { name: "Remove ingredient" });
-    expect(dialog).toBeInTheDocument();
-    expect(within(dialog).getByText(/Chicken/)).toBeInTheDocument();
-  });
-
-  it("removes ingredient only after confirming", async () => {
-    const user = userEvent.setup();
-    saveHousehold(makeHousehold());
-
-    render(
-      <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
-        <Routes>
-          <Route path="/household/:householdId/ingredients" element={<IngredientManager />} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    // Open modal and click Remove
-    const rows = screen.getAllByTestId(/^ingredient-row-/);
-    await user.click(rows[0]!);
-    const modal = screen.getByTestId("ingredient-modal");
-    await user.click(within(modal).getByText("Remove ingredient"));
-
-    const dialog = screen.getByRole("dialog", { name: "Remove ingredient" });
-    await user.click(within(dialog).getByText("Remove"));
-
-    // After removal, one fewer row
-    const remainingRows = screen.getAllByTestId(/^ingredient-row-/);
-    const catalogOverlap = MASTER_CATALOG.filter((ci) => ci.name.toLowerCase() === "rice").length;
-    const expectedAfterRemove = 1 + MASTER_CATALOG.length - catalogOverlap;
-    expect(remainingRows).toHaveLength(expectedAfterRemove);
-    expect(screen.getByText("Rice")).toBeInTheDocument();
-  });
-
-  it("cancels ingredient removal", async () => {
-    const user = userEvent.setup();
-    saveHousehold(makeHousehold());
-
-    render(
-      <MemoryRouter initialEntries={["/household/h1/ingredients"]}>
-        <Routes>
-          <Route path="/household/:householdId/ingredients" element={<IngredientManager />} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    // Open modal and click Remove
-    const rows = screen.getAllByTestId(/^ingredient-row-/);
-    await user.click(rows[0]!);
-    const modal = screen.getByTestId("ingredient-modal");
-    await user.click(within(modal).getByText("Remove ingredient"));
-
-    const dialog = screen.getByRole("dialog", { name: "Remove ingredient" });
-    await user.click(within(dialog).getByText("Cancel"));
-
-    expect(screen.queryByRole("dialog", { name: "Remove ingredient" })).not.toBeInTheDocument();
-    // All ingredient rows should still exist (household + catalog)
-    const catalogOverlap = MASTER_CATALOG.filter((ci) => ["chicken", "rice"].includes(ci.name.toLowerCase())).length;
-    const expectedCount = 2 + MASTER_CATALOG.length - catalogOverlap;
-    expect(screen.getAllByTestId(/^ingredient-row-/)).toHaveLength(expectedCount);
   });
 });
 

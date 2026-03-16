@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import type { Ingredient, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold, toSentenceCase, normalizeIngredientName } from "../storage";
 import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from "../catalog";
-import { PageShell, PageHeader, Card, Button, Input, Select, Chip, FieldLabel, EmptyState, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, Chip, FieldLabel, EmptyState, HouseholdNav } from "../components/ui";
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
   "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
@@ -80,14 +80,12 @@ function IngredientModal({
   allIngredients,
   onChange,
   onClose,
-  onDelete,
   onDuplicateFound,
 }: {
   ingredient: Ingredient;
   allIngredients: Ingredient[];
   onChange: (updated: Ingredient) => void;
   onClose: () => void;
-  onDelete: () => void;
   onDuplicateFound: (newIng: Ingredient, existing: Ingredient) => void;
 }) {
   const [tagInput, setTagInput] = useState("");
@@ -256,8 +254,7 @@ function IngredientModal({
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-between border-t border-border-light pt-4">
-          <Button variant="danger" small onClick={onDelete}>Remove ingredient</Button>
+        <div className="mt-6 flex items-center justify-end border-t border-border-light pt-4">
           <Button variant="primary" onClick={() => {
             if (duplicates.length > 0) {
               onDuplicateFound(ingredient, duplicates[0]!);
@@ -333,7 +330,6 @@ export default function IngredientManager() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<IngredientCategory | "">("");
   const [tagFilter, setTagFilter] = useState("");
-  const { pending, requestConfirm, confirm, cancel } = useConfirm();
   const [duplicateWarning, setDuplicateWarning] = useState<{
     newIngredient: Ingredient;
     existingIngredient: Ingredient;
@@ -391,21 +387,16 @@ export default function IngredientManager() {
     );
   }
 
-  function removeIngredient(id: string) {
-    const ing = ingredients.find((i) => i.id === id);
-    const ingredientName = ing?.name || "Unnamed ingredient";
-    requestConfirm(ingredientName, () => {
-      setIngredients((prev) => prev.filter((i) => i.id !== id));
-      setEditingId(null);
-    });
-  }
-
   if (!loaded) return null;
 
   return (
     <PageShell>
       <HouseholdNav householdId={householdId ?? ""} />
-      <PageHeader title="Ingredients" subtitle={`Household: ${householdName}`} />
+      <PageHeader
+        title="Ingredients"
+        subtitle={`Household: ${householdName}`}
+        subtitleTo={`/household/${householdId}/home`}
+      />
 
       {/* Control bar */}
       <Card className="mb-4" data-testid="ingredient-control-bar">
@@ -488,7 +479,6 @@ export default function IngredientManager() {
             }
             setEditingId(null);
           }}
-          onDelete={() => removeIngredient(editingIngredient.id)}
           onDuplicateFound={(newIng, existing) => {
             setDuplicateWarning({ newIngredient: newIng, existingIngredient: existing });
           }}
@@ -513,14 +503,6 @@ export default function IngredientManager() {
         }}
       />
 
-      <ConfirmDialog
-        open={!!pending}
-        title="Remove ingredient"
-        message={`Are you sure you want to remove "${pending?.entityName}"? This cannot be undone.`}
-        confirmLabel="Remove"
-        onConfirm={confirm}
-        onCancel={cancel}
-      />
     </PageShell>
   );
 }

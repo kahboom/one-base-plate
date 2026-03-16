@@ -53,35 +53,54 @@ beforeEach(() => {
 
 describe("F041: Clicking a household navigates to Edit setup; remove Household setup from nav", () => {
   describe("HouseholdList click behavior", () => {
-    it("clicking household name navigates to HouseholdSetup", async () => {
+    it("shows app nav on household list page", () => {
+      seedHousehold();
+      renderApp("/");
+      expect(screen.getByTestId("app-nav")).toBeInTheDocument();
+    });
+
+    it("clicking household row opens household modal", async () => {
       seedHousehold();
       const user = userEvent.setup();
       renderApp("/");
-      const link = screen.getByText("Click Test Family");
-      expect(link.closest("a")).toHaveAttribute("href", "/household/h-041");
-      await user.click(link);
-      expect(screen.getByText("Edit Household")).toBeInTheDocument();
+      await user.click(screen.getByTestId("household-row-h-041"));
+      expect(screen.getByTestId("household-modal")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Click Test Family")).toBeInTheDocument();
     });
 
-    it("household name link points to /household/:id not /household/:id/home", () => {
+    it("clicking outside household modal closes it", async () => {
       seedHousehold();
+      const user = userEvent.setup();
       renderApp("/");
-      const link = screen.getByText("Click Test Family");
-      const href = link.closest("a")?.getAttribute("href");
-      expect(href).toBe("/household/h-041");
+      await user.click(screen.getByTestId("household-row-h-041"));
+      const dialog = screen.getByRole("dialog", { name: "Edit household" });
+      await user.click(dialog);
+      expect(screen.queryByTestId("household-modal")).not.toBeInTheDocument();
+    });
+
+    it("modal includes member profile link to /household/:id/member/:memberId", async () => {
+      seedHousehold();
+      const user = userEvent.setup();
+      renderApp("/");
+      await user.click(screen.getByTestId("household-row-h-041"));
+      const profileLink = screen.getByTestId("modal-member-profile-m1");
+      const href = profileLink.getAttribute("href");
+      expect(href).toBe("/household/h-041/member/m1");
       expect(href).not.toContain("/home");
     });
 
-    it("no redundant Setup button on household card", () => {
+    it("no redundant Setup button in household list rows", () => {
       seedHousehold();
       renderApp("/");
       expect(screen.queryByRole("button", { name: /setup/i })).not.toBeInTheDocument();
     });
 
-    it("Delete button still present on household card", () => {
+    it("Delete household action is available in modal", async () => {
       seedHousehold();
+      const user = userEvent.setup();
       renderApp("/");
-      expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
+      await user.click(screen.getByTestId("household-row-h-041"));
+      expect(within(screen.getByTestId("household-modal")).getByText("Delete household")).toBeInTheDocument();
     });
   });
 
@@ -100,11 +119,11 @@ describe("F041: Clicking a household navigates to Edit setup; remove Household s
       expect(within(nav).getByText("Home")).toBeInTheDocument();
     });
 
-    it("All households link is still present in nav", () => {
+    it("Households link is still present in nav", () => {
       seedHousehold();
       renderApp("/household/h-041");
       const nav = screen.getByRole("navigation");
-      expect(within(nav).getByText("All households")).toBeInTheDocument();
+      expect(within(nav).getByText("Households")).toBeInTheDocument();
     });
   });
 

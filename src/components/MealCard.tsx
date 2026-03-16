@@ -13,6 +13,7 @@ export interface MealCardProps {
   patterns?: LearnedPatterns;
   onAssign?: () => void;
   onOpen?: () => void;
+  onDetailClick?: () => void;
   onPin?: () => void;
   pinned?: boolean;
   detailUrl?: string;
@@ -42,6 +43,7 @@ export default function MealCard({
   patterns,
   onAssign,
   onOpen,
+  onDetailClick,
   onPin,
   pinned = false,
   detailUrl,
@@ -159,7 +161,16 @@ export default function MealCard({
               Details
             </Button>
           )}
-          {detailUrl && !onOpen && (
+          {onDetailClick && !onOpen && (
+            <Button
+              small
+              onClick={onDetailClick}
+              data-testid={`detail-link-${meal.id}`}
+            >
+              Details
+            </Button>
+          )}
+          {detailUrl && !onOpen && !onDetailClick && (
             <Link to={detailUrl}>
               <Button
                 small

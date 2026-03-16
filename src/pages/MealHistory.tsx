@@ -39,7 +39,12 @@ export default function MealHistory() {
 
   return (
     <PageShell>
-      <PageHeader title="Meal History" subtitle={`Household: ${household.name}`} />
+      <HouseholdNav householdId={householdId ?? ""} />
+      <PageHeader
+        title="Meal History"
+        subtitle={`Household: ${household.name}`}
+        subtitleTo={`/household/${householdId}/home`}
+      />
 
       {outcomes.length === 0 ? (
         <EmptyState>No meal outcomes recorded yet. Record how meals went from the weekly planner.</EmptyState>
@@ -68,8 +73,6 @@ export default function MealHistory() {
           </div>
         </Section>
       )}
-
-      <HouseholdNav householdId={householdId ?? ""} />
     </PageShell>
   );
 }

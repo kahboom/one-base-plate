@@ -1,18 +1,33 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
-import type { Household } from "../types";
+import type { Household, DayPlan, MealOutcome } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import { computeMealOverlap, computeOutcomeScore, learnCompatibilityPatterns, computePatternScore } from "../planner";
 import MealCard from "../components/MealCard";
-import { PageShell, PageHeader, Card, Section, HouseholdNav } from "../components/ui";
+import { PageShell, PageHeader, Card, Section, HouseholdNav, Button, Chip } from "../components/ui";
 import GuidedTour from "../components/GuidedTour";
+import AppModal from "../components/AppModal";
+import { MealDetailContent } from "./MealDetail";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const FULL_DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const outcomeLabels: Record<string, string> = {
+  success: "Worked well",
+  partial: "Partly worked",
+  failure: "Didn't work",
+};
+const outcomeChipVariant: Record<string, "success" | "warning" | "danger"> = {
+  success: "success",
+  partial: "warning",
+  failure: "danger",
+};
 
 export default function Home() {
   const { householdId } = useParams<{ householdId: string }>();
   const [household, setHousehold] = useState<Household | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
+  const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!householdId) return;
@@ -67,12 +82,40 @@ export default function Home() {
       ? household.weeklyPlans[household.weeklyPlans.length - 1]!
       : null;
 
+  const selectedMeal = selectedMealId
+    ? household.baseMeals.find((meal) => meal.id === selectedMealId)
+    : null;
+  const selectedMealOverlap = selectedMeal
+    ? computeMealOverlap(selectedMeal, household.members, household.ingredients)
+    : null;
+
+  const selectedDayName = selectedDayIndex !== null
+    ? FULL_DAY_LABELS[selectedDayIndex]
+    : null;
+  const selectedDayPlan: DayPlan | null = selectedDayName && latestPlan
+    ? latestPlan.days.find((day) => day.day === selectedDayName) ?? null
+    : null;
+  const selectedDayOutcome: MealOutcome | undefined =
+    selectedDayName && selectedDayPlan
+      ? (household.mealOutcomes ?? []).find(
+          (outcome) =>
+            outcome.day === selectedDayName &&
+            outcome.baseMealId === selectedDayPlan.baseMealId,
+        )
+      : undefined;
+
   function getMealName(mealId: string): string {
     return household?.baseMeals.find((m) => m.id === mealId)?.name ?? "";
   }
 
+  function handleTogglePinFromModal() {
+    if (!selectedMeal) return;
+    handleTogglePin(selectedMeal.id);
+  }
+
   return (
     <PageShell>
+      <HouseholdNav householdId={householdId ?? ""} />
       <GuidedTour />
       <PageHeader title="What should we eat tonight?" subtitle={household.name} />
 
@@ -102,18 +145,21 @@ export default function Home() {
             <h2 className="mb-3 text-xl font-semibold text-text-primary">This week</h2>
             <div className="flex gap-2 overflow-x-auto pb-1">
               {DAY_LABELS.map((label, i) => {
-                const dayPlan = latestPlan.days[i];
+                const dayName = FULL_DAY_LABELS[i]!;
+                const dayPlan = latestPlan.days.find((day) => day.day === dayName);
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={label}
                     data-testid={`strip-${label.toLowerCase()}`}
-                    className="min-w-[80px] flex-shrink-0 rounded-md border border-border-light bg-surface px-2 py-3 text-center shadow-card"
+                    className="min-w-[80px] flex-shrink-0 rounded-md border border-border-light bg-surface px-2 py-3 text-center shadow-card cursor-pointer hover:border-brand"
+                    onClick={() => setSelectedDayIndex(i)}
                   >
                     <strong className="text-sm font-semibold text-text-primary">{label}</strong>
                     <p className="mt-1 text-xs text-text-secondary">
                       {dayPlan ? getMealName(dayPlan.baseMealId) || "Planned" : "\u2014"}
                     </p>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -160,7 +206,7 @@ export default function Home() {
                   outcomes={household.mealOutcomes ?? []}
                   pinned
                   onPin={() => handleTogglePin(meal.id)}
-                  detailUrl={`/household/${householdId}/meal/${meal.id}`}
+                  onDetailClick={() => setSelectedMealId(meal.id)}
                 />
               ))}
             </div>
@@ -184,7 +230,7 @@ export default function Home() {
                   patterns={patterns}
                   pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
                   onPin={() => handleTogglePin(meal.id)}
-                  detailUrl={`/household/${householdId}/meal/${meal.id}`}
+                  onDetailClick={() => setSelectedMealId(meal.id)}
                 />
               ))}
             </div>
@@ -192,7 +238,91 @@ export default function Home() {
         </Section>
       )}
 
-      <HouseholdNav householdId={householdId ?? ""} />
+      <AppModal
+        open={selectedDayIndex !== null}
+        onClose={() => setSelectedDayIndex(null)}
+        ariaLabel="Day details"
+        className="max-w-3xl max-h-[90vh] overflow-y-auto p-6"
+      >
+        <div data-testid="day-details-modal">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-text-primary">
+              {selectedDayIndex !== null ? `${DAY_LABELS[selectedDayIndex]} plan` : "Day plan"}
+            </h2>
+            <Button variant="ghost" onClick={() => setSelectedDayIndex(null)} aria-label="Close modal">✕</Button>
+          </div>
+          {!selectedDayPlan ? (
+            <p className="text-sm text-text-muted">No meal is planned for this day.</p>
+          ) : (
+            <>
+              <p className="text-base font-semibold text-text-primary">
+                {getMealName(selectedDayPlan.baseMealId) || "Planned meal"}
+              </p>
+              {selectedDayOutcome && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xs font-medium text-text-secondary">Outcome:</span>
+                  <Chip variant={outcomeChipVariant[selectedDayOutcome.outcome]}>
+                    {outcomeLabels[selectedDayOutcome.outcome]}
+                  </Chip>
+                </div>
+              )}
+              <Section title="Per-member assembly" className="mt-4 mb-0">
+                <div className="space-y-3" data-testid="day-modal-variants">
+                  {selectedDayPlan.variants.map((variant) => {
+                    const member = household.members.find((m) => m.id === variant.memberId);
+                    if (!member) return null;
+                    return (
+                      <Card key={variant.id}>
+                        <p className="text-sm font-semibold text-text-primary">
+                          {member.name} ({member.role})
+                          {variant.requiresExtraPrep && " — extra prep"}
+                        </p>
+                        <ul className="mt-2 space-y-1 pl-5 text-sm text-text-secondary">
+                          {variant.instructions.map((instruction, idx) => (
+                            <li key={idx}>{instruction}</li>
+                          ))}
+                        </ul>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </Section>
+              <Section title="Notes" className="mb-0">
+                <p className="text-sm text-text-secondary whitespace-pre-wrap" data-testid="day-modal-notes">
+                  {selectedDayOutcome?.notes?.trim()
+                    ? selectedDayOutcome.notes
+                    : "No notes recorded for this day yet."}
+                </p>
+              </Section>
+            </>
+          )}
+        </div>
+      </AppModal>
+
+      <AppModal
+        open={Boolean(selectedMeal)}
+        onClose={() => setSelectedMealId(null)}
+        ariaLabel="Meal details"
+        className="max-w-4xl max-h-[90vh] overflow-y-auto p-6"
+      >
+        <div data-testid="meal-details-modal">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-text-primary">
+              {selectedMeal?.name ?? "Meal details"}
+            </h2>
+            <Button variant="ghost" onClick={() => setSelectedMealId(null)} aria-label="Close modal">✕</Button>
+          </div>
+          {selectedMeal && (
+            <MealDetailContent
+              meal={selectedMeal}
+              household={household}
+              overlapLabel={`${selectedMealOverlap?.score ?? 0}/${selectedMealOverlap?.total ?? 0}`}
+              isPinned={(household.pinnedMealIds ?? []).includes(selectedMeal.id)}
+              onTogglePin={handleTogglePinFromModal}
+            />
+          )}
+        </div>
+      </AppModal>
     </PageShell>
   );
 }

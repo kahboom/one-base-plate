@@ -188,7 +188,8 @@ describe("F037 — Ingredient Manager image input", () => {
 });
 
 describe("F037 — Base Meal Manager image input", () => {
-  it("shows image URL input field for each meal", () => {
+  it("shows image URL input field in meal modal", async () => {
+    const user = userEvent.setup();
     const h = makeHousehold();
     saveHousehold(h);
     render(
@@ -198,11 +199,13 @@ describe("F037 — Base Meal Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    const inputs = screen.getAllByTestId("meal-image-url");
-    expect(inputs.length).toBe(2);
+    await user.click(screen.getByTestId("meal-row-meal1"));
+    const modal = screen.getByTestId("meal-modal");
+    expect(within(modal).getByTestId("meal-image-url")).toBeInTheDocument();
   });
 
-  it("shows image preview when meal has imageUrl", () => {
+  it("shows image preview when meal has imageUrl", async () => {
+    const user = userEvent.setup();
     const h = makeHousehold();
     saveHousehold(h);
     render(
@@ -212,9 +215,10 @@ describe("F037 — Base Meal Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    const previews = screen.getAllByTestId("meal-image-preview");
-    expect(previews.length).toBe(1);
-    expect(previews[0]).toHaveAttribute("src", "https://example.com/bowl.jpg");
+    await user.click(screen.getByTestId("meal-row-meal2"));
+    const modal = screen.getByTestId("meal-modal");
+    const preview = within(modal).getByTestId("meal-image-preview");
+    expect(preview).toHaveAttribute("src", "https://example.com/bowl.jpg");
   });
 
   it("persists meal imageUrl on save", async () => {
@@ -229,14 +233,16 @@ describe("F037 — Base Meal Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    const inputs = screen.getAllByTestId("meal-image-url");
-    await user.type(inputs[0]!, "https://example.com/stir-fry.jpg");
+    await user.click(screen.getByTestId("meal-row-meal1"));
+    const modal = screen.getByTestId("meal-modal");
+    await user.type(within(modal).getByTestId("meal-image-url"), "https://example.com/stir-fry.jpg");
     // Auto-save persists
     const saved = loadHousehold("h1");
     expect(saved!.baseMeals[0]!.imageUrl).toBe("https://example.com/stir-fry.jpg");
   });
 
-  it("shows file upload button for meals", () => {
+  it("shows file upload button for meals", async () => {
+    const user = userEvent.setup();
     const h = makeHousehold();
     saveHousehold(h);
     render(
@@ -246,8 +252,9 @@ describe("F037 — Base Meal Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    const uploads = screen.getAllByTestId("meal-image-upload");
-    expect(uploads.length).toBe(2);
+    await user.click(screen.getByTestId("meal-row-meal1"));
+    const modal = screen.getByTestId("meal-modal");
+    expect(within(modal).getByTestId("meal-image-upload")).toBeInTheDocument();
   });
 });
 
@@ -395,7 +402,8 @@ describe("F037 — Mobile readability", () => {
     expect(preview.className).toContain("w-20");
   });
 
-  it("meal image preview is appropriately sized", () => {
+  it("meal image preview is appropriately sized", async () => {
+    const user = userEvent.setup();
     const h = makeHousehold();
     saveHousehold(h);
     render(
@@ -405,7 +413,9 @@ describe("F037 — Mobile readability", () => {
         </Routes>
       </MemoryRouter>,
     );
-    const preview = screen.getByTestId("meal-image-preview");
+    await user.click(screen.getByTestId("meal-row-meal2"));
+    const modal = screen.getByTestId("meal-modal");
+    const preview = within(modal).getByTestId("meal-image-preview");
     expect(preview.className).toContain("h-24");
     expect(preview.className).toContain("w-36");
   });

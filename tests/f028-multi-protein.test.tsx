@@ -143,10 +143,13 @@ describe("F028: Base Meal Editor alternatives UI", () => {
     );
 
     // The meal has chicken with tofu as alternative
-    const altsList = screen.getByTestId("alternatives-list");
+    await user.click(screen.getByTestId("meal-row-meal-stir-fry"));
+    const modal = screen.getByTestId("meal-modal");
+    const altsList = within(modal).getByTestId("alternatives-list");
     expect(within(altsList).getByText("Tofu")).toBeInTheDocument();
 
     // Can add a new meal and add alternatives
+    await user.click(within(modal).getByText("Done"));
     await user.click(screen.getByText("Add meal"));
     // Should have at least 2 meals now
     expect(screen.getByText("Meals (2)")).toBeInTheDocument();
@@ -163,15 +166,16 @@ describe("F028: Base Meal Editor alternatives UI", () => {
       </MemoryRouter>,
     );
 
-    const altsList = screen.getByTestId("alternatives-list");
+    await user.click(screen.getByTestId("meal-row-meal-stir-fry"));
+    const modal = screen.getByTestId("meal-modal");
+    const altsList = within(modal).getByTestId("alternatives-list");
     expect(within(altsList).getByText("Tofu")).toBeInTheDocument();
 
     // Remove tofu alternative
     const removeBtn = within(altsList).getByText("x");
     await user.click(removeBtn);
 
-    // Save and verify
-    await user.click(screen.getByText("Save meals"));
+    // Auto-save persists; verify
     const saved = loadHousehold("h-mp")!;
     const comp = saved.baseMeals[0]!.components[0]!;
     expect(comp.alternativeIngredientIds ?? []).toEqual([]);

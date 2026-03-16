@@ -80,8 +80,6 @@ describe("F003: Member profile — safe foods", () => {
     expect(within(list).getByText("rice")).toBeInTheDocument();
     expect(within(list).getByText("chicken")).toBeInTheDocument();
 
-    await user.click(screen.getByText("Save profile"));
-
     const saved = loadHousehold("h-profile");
     const alex = saved!.members.find((m) => m.id === "m-alex")!;
     expect(alex.safeFoods).toEqual(["rice", "chicken"]);
@@ -95,10 +93,31 @@ describe("F003: Member profile — safe foods", () => {
     const list = screen.getByTestId("safe-foods-list");
     expect(within(list).getByText("pasta")).toBeInTheDocument();
 
-    const removeButton = within(list).getByText("Remove");
+    const removeButton = within(list).getByRole("button", { name: "Remove safe food pasta" });
     await user.click(removeButton);
 
+    const dialog = screen.getByRole("dialog", { name: "Remove food" });
+    await user.click(within(dialog).getByText("Remove"));
+
     expect(within(list).queryByText("pasta")).not.toBeInTheDocument();
+  });
+
+  it("can cancel safe food removal", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderMemberProfile("h-profile", "m-riley");
+
+    const list = screen.getByTestId("safe-foods-list");
+    expect(within(list).getByText("pasta")).toBeInTheDocument();
+
+    const removeButton = within(list).getByRole("button", { name: "Remove safe food pasta" });
+    await user.click(removeButton);
+
+    const dialog = screen.getByRole("dialog", { name: "Remove food" });
+    await user.click(within(dialog).getByText("Cancel"));
+
+    expect(screen.queryByRole("dialog", { name: "Remove food" })).not.toBeInTheDocument();
+    expect(within(list).getByText("pasta")).toBeInTheDocument();
   });
 });
 
@@ -119,8 +138,6 @@ describe("F003: Member profile — hard-no foods", () => {
     expect(within(list).getByText("olives")).toBeInTheDocument();
     expect(within(list).getByText("blue cheese")).toBeInTheDocument();
 
-    await user.click(screen.getByText("Save profile"));
-
     const saved = loadHousehold("h-profile");
     const alex = saved!.members.find((m) => m.id === "m-alex")!;
     expect(alex.hardNoFoods).toEqual(["olives", "blue cheese"]);
@@ -134,10 +151,31 @@ describe("F003: Member profile — hard-no foods", () => {
     const list = screen.getByTestId("hard-no-foods-list");
     expect(within(list).getByText("mushrooms")).toBeInTheDocument();
 
-    const removeButton = within(list).getByText("Remove");
+    const removeButton = within(list).getByRole("button", { name: "Remove hard-no food mushrooms" });
     await user.click(removeButton);
 
+    const dialog = screen.getByRole("dialog", { name: "Remove food" });
+    await user.click(within(dialog).getByText("Remove"));
+
     expect(within(list).queryByText("mushrooms")).not.toBeInTheDocument();
+  });
+
+  it("can cancel hard-no food removal", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderMemberProfile("h-profile", "m-riley");
+
+    const list = screen.getByTestId("hard-no-foods-list");
+    expect(within(list).getByText("mushrooms")).toBeInTheDocument();
+
+    const removeButton = within(list).getByRole("button", { name: "Remove hard-no food mushrooms" });
+    await user.click(removeButton);
+
+    const dialog = screen.getByRole("dialog", { name: "Remove food" });
+    await user.click(within(dialog).getByText("Cancel"));
+
+    expect(screen.queryByRole("dialog", { name: "Remove food" })).not.toBeInTheDocument();
+    expect(within(list).getByText("mushrooms")).toBeInTheDocument();
   });
 });
 
@@ -163,8 +201,6 @@ describe("F003: Member profile — preparation rules", () => {
     expect(within(list).getByText(/must not touch other food/)).toBeInTheDocument();
     expect(within(list).getByText(/pasta/)).toBeInTheDocument();
     expect(within(list).getByText(/plain with no sauce/)).toBeInTheDocument();
-
-    await user.click(screen.getByText("Save profile"));
 
     const saved = loadHousehold("h-profile");
     const alex = saved!.members.find((m) => m.id === "m-alex")!;

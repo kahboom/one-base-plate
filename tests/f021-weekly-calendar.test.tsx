@@ -142,6 +142,13 @@ function renderHome(householdId: string) {
   );
 }
 
+async function dismissTourIfPresent(user: ReturnType<typeof userEvent.setup>) {
+  const skipTour = screen.queryByTestId("tour-skip");
+  if (skipTour) {
+    await user.click(skipTour);
+  }
+}
+
 beforeEach(() => {
   localStorage.clear();
 });
@@ -292,5 +299,43 @@ describe("F021: Home screen with compact weekly strip", () => {
       within(monStrip).queryByText(/Pasta with chicken/) ||
       within(monStrip).queryByText(/Rice with salmon/);
     expect(hasMeal).toBeTruthy();
+  });
+
+  it("opens and closes day details modal from strip card", async () => {
+    const user = userEvent.setup();
+    const days = generateWeeklyPlan([mealPasta, mealRice], members, ingredients, 7);
+    const plan: WeeklyPlan = {
+      id: "wp-3",
+      days,
+      selectedBaseMeals: [...new Set(days.map((d) => d.baseMealId))],
+      generatedGroceryList: [],
+      notes: "",
+    };
+    seedHousehold({ weeklyPlans: [plan] });
+    renderHome("h-cal");
+    await dismissTourIfPresent(user);
+
+    await user.click(screen.getByTestId("strip-mon"));
+    const modal = screen.getByRole("dialog", { name: "Day details" });
+    expect(modal).toBeInTheDocument();
+    expect(screen.getByTestId("day-details-modal")).toBeInTheDocument();
+
+    await user.click(modal);
+    expect(screen.queryByTestId("day-details-modal")).not.toBeInTheDocument();
+  });
+
+  it("opens and closes meal details modal from Details button", async () => {
+    const user = userEvent.setup();
+    seedHousehold();
+    renderHome("h-cal");
+    await dismissTourIfPresent(user);
+
+    await user.click(screen.getByTestId("detail-link-meal-pasta"));
+    const modal = screen.getByRole("dialog", { name: "Meal details" });
+    expect(modal).toBeInTheDocument();
+    expect(screen.getByTestId("meal-details-modal")).toBeInTheDocument();
+
+    await user.click(modal);
+    expect(screen.queryByTestId("meal-details-modal")).not.toBeInTheDocument();
   });
 });
