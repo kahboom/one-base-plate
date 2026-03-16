@@ -1198,7 +1198,7 @@
         "Allow the user to reopen an imported meal later and understand which components came from which original recipe lines without re-parsing the archive.",
         "Verify imported meals remain compatible with planner, grocery list, duplicate handling, images, and local-first storage after Paprika metadata and mappings are added."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": ["F046", "F047"],
       "acceptanceRefs": ["S004", "S007", "S010"]
     }

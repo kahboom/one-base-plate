@@ -12,6 +12,7 @@ import GroceryList from "./pages/GroceryList";
 import RescueMode from "./pages/RescueMode";
 import MealHistory from "./pages/MealHistory";
 import RecipeImport from "./pages/RecipeImport";
+import PaprikaImport from "./pages/PaprikaImport";
 import { loadHouseholds } from "./storage";
 
 function DefaultRoute() {
@@ -69,6 +70,10 @@ function App() {
       <Route
         path="/household/:householdId/import-recipe"
         element={<RecipeImport />}
+      />
+      <Route
+        path="/household/:householdId/import-paprika"
+        element={<PaprikaImport />}
       />
     </Routes>
   );

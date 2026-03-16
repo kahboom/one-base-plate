@@ -47,6 +47,18 @@ export interface MealComponent {
   alternativeIngredientIds?: string[];
   role: "protein" | "carb" | "veg" | "sauce" | "topping";
   quantity: string;
+  unit?: string;
+  originalSourceLine?: string;
+  matchType?: "existing" | "new" | "ignored";
+  confidence?: number;
+}
+
+export interface RecipeProvenance {
+  sourceSystem: string;
+  externalId?: string;
+  sourceUrl?: string;
+  importTimestamp: string;
+  syncTimestamp?: string;
 }
 
 export interface RecipeLink {
@@ -66,6 +78,19 @@ export interface BaseMeal {
   recipeLinks?: RecipeLink[];
   notes?: string;
   imageUrl?: string;
+  provenance?: RecipeProvenance;
+  prepTimeMinutes?: number;
+  cookTimeMinutes?: number;
+  servings?: string;
+  importMappings?: ImportMapping[];
+}
+
+export interface ImportMapping {
+  originalLine: string;
+  parsedName: string;
+  action: "use" | "create" | "ignore";
+  ingredientId?: string;
+  matchType?: "existing" | "new" | "ignored";
 }
 
 export interface AssemblyVariant {

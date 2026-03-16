@@ -150,6 +150,54 @@ export function MealDetailContent({
         </Section>
       )}
 
+      {meal.provenance && (
+        <Section title="Import info">
+          <div className="flex flex-wrap gap-3 text-sm text-text-secondary" data-testid="meal-provenance">
+            <span>Source: {meal.provenance.sourceSystem}</span>
+            {meal.provenance.sourceUrl && (
+              <a
+                href={meal.provenance.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand hover:underline"
+              >
+                Original recipe
+              </a>
+            )}
+            <span>Imported: {new Date(meal.provenance.importTimestamp).toLocaleDateString()}</span>
+            {meal.prepTimeMinutes != null && meal.prepTimeMinutes > 0 && (
+              <span>Prep: {meal.prepTimeMinutes} min</span>
+            )}
+            {meal.cookTimeMinutes != null && meal.cookTimeMinutes > 0 && (
+              <span>Cook: {meal.cookTimeMinutes} min</span>
+            )}
+            {meal.servings && <span>Servings: {meal.servings}</span>}
+          </div>
+        </Section>
+      )}
+
+      {meal.importMappings && meal.importMappings.length > 0 && (
+        <Section title="Original recipe lines">
+          <div className="space-y-1" data-testid="import-mappings">
+            {meal.importMappings.map((mapping, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm">
+                <Chip
+                  variant={
+                    mapping.action === "use" ? "success"
+                    : mapping.action === "create" ? "warning"
+                    : "neutral"
+                  }
+                  className="text-[10px]"
+                >
+                  {mapping.action}
+                </Chip>
+                <span className="text-text-secondary">{mapping.originalLine}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
       {meal.notes && (
         <Section title="Notes">
           <p className="text-sm text-text-secondary whitespace-pre-wrap" data-testid="meal-notes">

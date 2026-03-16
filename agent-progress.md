@@ -664,5 +664,34 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 26 tests: 5 normalizeIngredientName tests (lowercase, trim, collapse spaces, strip punctuation, combined), 3 toSentenceCase tests (capitalize, empty, preserve), 10 migrateHouseholdIngredients tests (normalize, trim+collapse, duplicates, survivor pick, meal references, alternative IDs, grocery references, idempotent, preserve non-duplicates, merge metadata), 3 runMigrationIfNeeded tests (migrate+flag, no re-migrate, empty storage), 5 end-to-end tests (sentence-case display, meal associations, catalog links, no orphans, lowercase storage + sentence-case display)
 - Verified: tsc --noEmit passes, vitest passes (652 tests, 3 pre-existing f033 failures unrelated to F047), all F047 steps satisfied
 
+### F048 - App can import Paprika .paprikarecipes exports, preserve recipe provenance, and convert recipes into reviewable base-meal drafts (2026-03-16)
+- Installed `jszip` dependency for parsing .paprikarecipes zip archive format
+- Added `RecipeProvenance` interface to types (sourceSystem, externalId, sourceUrl, importTimestamp, syncTimestamp) and optional `provenance`, `prepTimeMinutes`, `cookTimeMinutes`, `servings`, `importMappings` fields on `BaseMeal`
+- Added `ImportMapping` interface to types (originalLine, parsedName, action, ingredientId, matchType) for preserving import decision records
+- Added optional component-level metadata to `MealComponent`: `unit`, `originalSourceLine`, `matchType`, `confidence`
+- Created `src/paprika-parser.ts` with:
+  - `parsePaprikaFile`: parses .paprikarecipes zip archives, decompresses individual .paprikarecipe gzip entries, extracts JSON recipe records
+  - `parseRecipeIngredients`: parses ingredient text lines from a Paprika recipe and matches against household ingredients and catalog
+  - `detectDuplicateMeal`: case-insensitive name matching against existing meals
+  - `parsePaprikaRecipes`: bulk parsing of multiple recipes with duplicate detection and default selection state
+  - `buildDraftMeal`: creates a draft BaseMeal with provenance, mapped components, import mappings, recipe links, timing metadata, and new ingredients
+  - Time parsing supports hours+minutes format (e.g. "1h 30m") and plain numbers
+  - Difficulty mapping from Paprika text to easy/medium/hard enum
+- Created `PaprikaImport` page (`src/pages/PaprikaImport.tsx`) at `/household/:householdId/import-paprika` with 4-step flow:
+  - **Upload step**: File input for .paprikarecipes with error handling for invalid files
+  - **Select step**: Bulk recipe selection with select-all, select-none, select-by-category; duplicate detection with skip/merge/keep-both actions; recipe metadata display (time, servings, categories, ingredient count)
+  - **Review step**: Per-recipe ingredient review with match status chips (matched/catalog/unmatched), per-line action dropdowns (Use match/Create new/Ignore), category selector for new manual ingredients, recipe-by-recipe navigation
+  - **Done step**: Import confirmation with count and navigation to meals/home
+- Added "Import Paprika" button to both IngredientManager and BaseMealManager control bars
+- Added route `/household/:householdId/import-paprika` to App.tsx
+- Updated MealDetail page with:
+  - Conditional "Import info" section showing provenance (source system, original recipe link, import date, prep/cook times, servings)
+  - Conditional "Original recipe lines" section showing import mappings with action chips (use/create/ignore) — allows reopening imported meals to understand component origins without re-parsing
+- Import mappings and provenance are lightweight sections that don't dominate the page
+- All new fields are optional — existing saved data works without migration
+- Imported meals remain compatible with planner overlap scoring, grocery list generation, and local-first storage
+- Created 33 tests: 5 parseRecipeIngredients tests (matching, unmatched, empty, quantities, default actions), 2 detectDuplicateMeal tests (found, not found), 1 parsePaprikaRecipes bulk test (multi-recipe with duplicate detection), 12 buildDraftMeal tests (provenance, time mapping, prep/cook preservation, difficulty, servings, recipe links, notes, import mappings, component metadata, catalog creation, fallback time, hours parsing), 4 UI tests (upload step, error handling, IngredientManager button, BaseMealManager button), 4 MealDetail provenance tests (shown, hidden, mappings shown, mappings hidden), 3 compatibility tests (planner overlap, save/load persistence, backward compatibility), 2 duplicate detection tests (meal name, ingredient name)
+- Verified: tsc --noEmit passes, vitest passes (684 tests, 9 pre-existing f035 failures unrelated to F048), all F048 steps satisfied
+
 ## Next Task
 - All features complete! No remaining tasks with passes=false.
