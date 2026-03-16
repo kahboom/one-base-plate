@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Ingredient, BaseMeal, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
@@ -6,6 +6,11 @@ import {
   parsePaprikaFile,
   parsePaprikaRecipes,
   buildDraftMeal,
+  computeBulkSummary,
+  applyBulkAction,
+  saveImportSession,
+  loadImportSession,
+  clearImportSession,
 } from "../paprika-parser";
 import type { ParsedPaprikaRecipe, PaprikaReviewLine } from "../paprika-parser";
 import {
@@ -19,6 +24,7 @@ import {
   FieldLabel,
   EmptyState,
   HouseholdNav,
+  Section,
 } from "../components/ui";
 
 type Step = "upload" | "select" | "review" | "done";
@@ -38,9 +44,9 @@ export default function PaprikaImport() {
 
   const [step, setStep] = useState<Step>("upload");
   const [parsedRecipes, setParsedRecipes] = useState<ParsedPaprikaRecipe[]>([]);
-  const [reviewIndex, setReviewIndex] = useState(0);
   const [importedCount, setImportedCount] = useState(0);
   const [error, setError] = useState("");
+  const [reviewFilter, setReviewFilter] = useState<"all" | "ambiguous">("all");
 
   useEffect(() => {
     if (!householdId) return;
@@ -50,7 +56,25 @@ export default function PaprikaImport() {
       setMeals(household.baseMeals);
       setHouseholdName(household.name);
     }
+
+    // Restore saved session if available
+    const session = loadImportSession(householdId);
+    if (session && session.step !== "done") {
+      setParsedRecipes(session.parsedRecipes);
+      setStep(session.step);
+    }
+
     setLoaded(true);
+  }, [householdId]);
+
+  const persistSession = useCallback((recipes: ParsedPaprikaRecipe[], currentStep: Step) => {
+    if (!householdId || currentStep === "done" || currentStep === "upload") return;
+    saveImportSession({
+      householdId,
+      parsedRecipes: recipes,
+      step: currentStep,
+      savedAt: new Date().toISOString(),
+    });
   }, [householdId]);
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -67,6 +91,7 @@ export default function PaprikaImport() {
       const parsed = parsePaprikaRecipes(recipes, ingredients, meals);
       setParsedRecipes(parsed);
       setStep("select");
+      persistSession(parsed, "select");
     } catch {
       setError("Failed to parse file. Make sure it is a valid .paprikarecipes export.");
     }
@@ -92,29 +117,66 @@ export default function PaprikaImport() {
     return [...cats].sort();
   }, [parsedRecipes]);
 
+  const bulkSummary = useMemo(
+    () => computeBulkSummary(selectedRecipes),
+    [selectedRecipes],
+  );
+
+  const allReviewLines = useMemo(() => {
+    const lines: { line: PaprikaReviewLine; globalRecipeIdx: number; lineIdx: number }[] = [];
+    for (const recipe of parsedRecipes) {
+      if (!recipe.selected) continue;
+      const globalIdx = parsedRecipes.indexOf(recipe);
+      recipe.parsedLines.forEach((line, lineIdx) => {
+        lines.push({ line, globalRecipeIdx: globalIdx, lineIdx });
+      });
+    }
+    return lines;
+  }, [parsedRecipes]);
+
+  const filteredReviewLines = useMemo(() => {
+    if (reviewFilter === "ambiguous") {
+      return allReviewLines.filter(
+        ({ line }) => line.status === "unmatched" && line.name,
+      );
+    }
+    return allReviewLines;
+  }, [allReviewLines, reviewFilter]);
+
   function toggleRecipe(index: number) {
     setParsedRecipes((prev) => {
       const next = [...prev];
       next[index] = { ...next[index]!, selected: !next[index]!.selected };
+      persistSession(next, step);
       return next;
     });
   }
 
   function selectAll() {
-    setParsedRecipes((prev) => prev.map((r) => ({ ...r, selected: true })));
+    setParsedRecipes((prev) => {
+      const next = prev.map((r) => ({ ...r, selected: true }));
+      persistSession(next, step);
+      return next;
+    });
   }
 
   function selectNone() {
-    setParsedRecipes((prev) => prev.map((r) => ({ ...r, selected: false })));
+    setParsedRecipes((prev) => {
+      const next = prev.map((r) => ({ ...r, selected: false }));
+      persistSession(next, step);
+      return next;
+    });
   }
 
   function selectByCategory(cat: string) {
-    setParsedRecipes((prev) =>
-      prev.map((r) => ({
+    setParsedRecipes((prev) => {
+      const next = prev.map((r) => ({
         ...r,
         selected: r.raw.categories.includes(cat),
-      })),
-    );
+      }));
+      persistSession(next, step);
+      return next;
+    });
   }
 
   function handleDuplicateAction(index: number, action: "skip" | "merge" | "keep-both") {
@@ -131,6 +193,7 @@ export default function PaprikaImport() {
         }
       }
       next[index] = recipe;
+      persistSession(next, step);
       return next;
     });
   }
@@ -143,14 +206,23 @@ export default function PaprikaImport() {
       lines[lineIdx] = { ...lines[lineIdx]!, ...updates };
       recipe.parsedLines = lines;
       next[recipeIdx] = recipe;
+      persistSession(next, "review");
+      return next;
+    });
+  }
+
+  function handleBulkAction(action: "approve-matched" | "create-all-new" | "ignore-instructions") {
+    setParsedRecipes((prev) => {
+      const next = applyBulkAction(prev, action);
+      persistSession(next, "review");
       return next;
     });
   }
 
   function handleStartReview() {
     if (selectedRecipes.length === 0) return;
-    setReviewIndex(0);
     setStep("review");
+    persistSession(parsedRecipes, "review");
   }
 
   function handleSaveAll() {
@@ -188,6 +260,7 @@ export default function PaprikaImport() {
     household.ingredients = [...household.ingredients, ...allNewIngredients];
     household.baseMeals = [...household.baseMeals, ...newMeals];
     saveHousehold(household);
+    clearImportSession();
 
     setImportedCount(selectedRecipes.length);
     setStep("done");
@@ -327,7 +400,7 @@ export default function PaprikaImport() {
               >
                 Review {selectedRecipes.length} recipe{selectedRecipes.length !== 1 ? "s" : ""}
               </Button>
-              <Button onClick={() => { setStep("upload"); setParsedRecipes([]); }}>
+              <Button onClick={() => { setStep("upload"); setParsedRecipes([]); clearImportSession(); }}>
                 Back
               </Button>
             </ActionGroup>
@@ -335,50 +408,152 @@ export default function PaprikaImport() {
         </div>
       )}
 
-      {step === "review" && selectedRecipes.length > 0 && (
+      {step === "review" && (
         <div data-testid="paprika-review-step">
-          <div className="mb-4 flex items-center gap-2">
-            <Chip variant="info">
-              Recipe {reviewIndex + 1} of {selectedRecipes.length}
-            </Chip>
-            <h3 className="text-lg font-semibold text-text-primary">
-              {selectedRecipes[reviewIndex]?.raw.name}
-            </h3>
+          <Section title="Bulk ingredient review">
+            <div className="mb-4 flex flex-wrap gap-2" data-testid="bulk-summary">
+              <Chip variant="success">{bulkSummary.matched.length} exact matches</Chip>
+              <Chip variant="info">{bulkSummary.catalog.length} catalog matches</Chip>
+              <Chip variant="warning">{bulkSummary.unmatched.length} unmatched</Chip>
+              <Chip variant="neutral">{bulkSummary.instruction.length} instructions</Chip>
+            </div>
+
+            <div className="mb-4 flex flex-wrap gap-2" data-testid="bulk-actions">
+              <Button
+                small
+                onClick={() => handleBulkAction("approve-matched")}
+                data-testid="bulk-approve-matched"
+              >
+                Approve all matches
+              </Button>
+              <Button
+                small
+                onClick={() => handleBulkAction("create-all-new")}
+                data-testid="bulk-create-new"
+              >
+                Create all new
+              </Button>
+              <Button
+                small
+                onClick={() => handleBulkAction("ignore-instructions")}
+                data-testid="bulk-ignore-instructions"
+              >
+                Ignore all instructions
+              </Button>
+            </div>
+
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-sm text-text-secondary">Show:</span>
+              <Button
+                small
+                variant={reviewFilter === "all" ? "primary" : "default"}
+                onClick={() => setReviewFilter("all")}
+                data-testid="filter-all"
+              >
+                All ({allReviewLines.length})
+              </Button>
+              <Button
+                small
+                variant={reviewFilter === "ambiguous" ? "primary" : "default"}
+                onClick={() => setReviewFilter("ambiguous")}
+                data-testid="filter-ambiguous"
+              >
+                Ambiguous only ({allReviewLines.filter(({ line }) => line.status === "unmatched" && line.name).length})
+              </Button>
+            </div>
+          </Section>
+
+          <div className="space-y-2" data-testid="review-lines">
+            {filteredReviewLines.map(({ line, globalRecipeIdx, lineIdx }, i) => (
+              <Card
+                key={`${globalRecipeIdx}-${lineIdx}`}
+                data-testid={`review-line-${i}`}
+                className={line.action === "ignore" ? "opacity-50" : ""}
+              >
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-text-muted mb-0.5" data-testid={`review-line-recipe-${i}`}>
+                      {line.recipeName}
+                    </p>
+                    <p className="text-sm font-medium text-text-primary truncate">
+                      {line.raw}
+                    </p>
+                    <p className="text-xs text-text-muted">
+                      {line.quantity && <span>Qty: {line.quantity}{line.unit ? ` ${line.unit}` : ""} · </span>}
+                      Parsed: {line.name || <em>instruction/note</em>}
+                    </p>
+                    {line.matchedIngredient && (
+                      <Chip variant="success" className="mt-1 text-[10px]">
+                        Matched: {line.matchedIngredient.name}
+                      </Chip>
+                    )}
+                    {line.matchedCatalog && !line.matchedIngredient && (
+                      <Chip variant="info" className="mt-1 text-[10px]">
+                        Catalog: {line.matchedCatalog.name}
+                      </Chip>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={line.action}
+                      onChange={(e) =>
+                        updateReviewLine(globalRecipeIdx, lineIdx, {
+                          action: e.target.value as PaprikaReviewLine["action"],
+                        })
+                      }
+                      className="w-28"
+                      data-testid={`review-action-${i}`}
+                    >
+                      {line.matchedIngredient && <option value="use">Use match</option>}
+                      <option value="create">Create new</option>
+                      <option value="ignore">Ignore</option>
+                    </Select>
+
+                    {line.action === "create" && !line.matchedCatalog && (
+                      <Select
+                        value={line.newCategory}
+                        onChange={(e) =>
+                          updateReviewLine(globalRecipeIdx, lineIdx, {
+                            newCategory: e.target.value as IngredientCategory,
+                          })
+                        }
+                        className="w-28"
+                        data-testid={`review-category-${i}`}
+                      >
+                        {CATEGORY_OPTIONS.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </Select>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
 
-          {selectedRecipes[reviewIndex] && (
-            <RecipeReviewCard
-              recipe={selectedRecipes[reviewIndex]}
-              recipeIndex={parsedRecipes.indexOf(selectedRecipes[reviewIndex]!)}
-              onUpdateLine={updateReviewLine}
-            />
+          {filteredReviewLines.length === 0 && reviewFilter === "ambiguous" && (
+            <EmptyState>No ambiguous lines to review. All ingredients are resolved.</EmptyState>
           )}
 
           <div className="mt-4">
             <ActionGroup>
-              {reviewIndex > 0 && (
-                <Button onClick={() => setReviewIndex((i) => i - 1)}>
-                  Previous
-                </Button>
-              )}
-              {reviewIndex < selectedRecipes.length - 1 ? (
-                <Button
-                  variant="primary"
-                  onClick={() => setReviewIndex((i) => i + 1)}
-                  data-testid="next-recipe-btn"
-                >
-                  Next recipe
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  onClick={handleSaveAll}
-                  data-testid="import-save-all-btn"
-                >
-                  Import {selectedRecipes.length} recipe{selectedRecipes.length !== 1 ? "s" : ""}
-                </Button>
-              )}
-              <Button onClick={() => setStep("select")}>Back to selection</Button>
+              <Button
+                variant="primary"
+                onClick={handleSaveAll}
+                data-testid="import-save-all-btn"
+              >
+                Import {selectedRecipes.length} recipe{selectedRecipes.length !== 1 ? "s" : ""}
+              </Button>
+              <Button onClick={() => { setStep("select"); persistSession(parsedRecipes, "select"); }}>
+                Back to selection
+              </Button>
+              <Button
+                onClick={() => { persistSession(parsedRecipes, "review"); navigate(`/household/${householdId}/home`); }}
+                data-testid="pause-import-btn"
+              >
+                Save &amp; resume later
+              </Button>
             </ActionGroup>
           </div>
         </div>
@@ -409,107 +584,5 @@ export default function PaprikaImport() {
         </div>
       )}
     </PageShell>
-  );
-}
-
-function RecipeReviewCard({
-  recipe,
-  recipeIndex,
-  onUpdateLine,
-}: {
-  recipe: ParsedPaprikaRecipe;
-  recipeIndex: number;
-  onUpdateLine: (recipeIdx: number, lineIdx: number, updates: Partial<PaprikaReviewLine>) => void;
-}) {
-  const matchedCount = recipe.parsedLines.filter((l) => l.action === "use").length;
-  const createCount = recipe.parsedLines.filter((l) => l.action === "create").length;
-  const ignoredCount = recipe.parsedLines.filter((l) => l.action === "ignore").length;
-
-  return (
-    <>
-      {(recipe.raw.total_time || recipe.raw.servings || recipe.raw.source) && (
-        <Card className="mb-3">
-          <div className="flex flex-wrap gap-4 text-sm text-text-secondary">
-            {recipe.raw.total_time && <span>Time: {recipe.raw.total_time}</span>}
-            {recipe.raw.prep_time && <span>Prep: {recipe.raw.prep_time}</span>}
-            {recipe.raw.cook_time && <span>Cook: {recipe.raw.cook_time}</span>}
-            {recipe.raw.servings && <span>Servings: {recipe.raw.servings}</span>}
-            {recipe.raw.source && <span>Source: {recipe.raw.source}</span>}
-          </div>
-        </Card>
-      )}
-
-      <div className="mb-3 flex flex-wrap gap-2">
-        <Chip variant="success">{matchedCount} matched</Chip>
-        <Chip variant="warning">{createCount} to create</Chip>
-        <Chip variant="neutral">{ignoredCount} ignored</Chip>
-      </div>
-
-      <div className="space-y-2" data-testid="review-lines">
-        {recipe.parsedLines.map((line, i) => (
-          <Card
-            key={i}
-            data-testid={`review-line-${i}`}
-            className={line.action === "ignore" ? "opacity-50" : ""}
-          >
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text-primary truncate">
-                  {line.raw}
-                </p>
-                <p className="text-xs text-text-muted">
-                  {line.quantity && <span>Qty: {line.quantity} · </span>}
-                  Parsed: {line.name || <em>empty</em>}
-                </p>
-                {line.matchedIngredient && (
-                  <Chip variant="success" className="mt-1 text-[10px]">
-                    Matched: {line.matchedIngredient.name}
-                  </Chip>
-                )}
-                {line.matchedCatalog && !line.matchedIngredient && (
-                  <Chip variant="info" className="mt-1 text-[10px]">
-                    Catalog: {line.matchedCatalog.name}
-                  </Chip>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Select
-                  value={line.action}
-                  onChange={(e) =>
-                    onUpdateLine(recipeIndex, i, {
-                      action: e.target.value as PaprikaReviewLine["action"],
-                    })
-                  }
-                  className="w-28"
-                  data-testid={`review-action-${i}`}
-                >
-                  {line.matchedIngredient && <option value="use">Use match</option>}
-                  <option value="create">Create new</option>
-                  <option value="ignore">Ignore</option>
-                </Select>
-
-                {line.action === "create" && !line.matchedCatalog && (
-                  <Select
-                    value={line.newCategory}
-                    onChange={(e) =>
-                      onUpdateLine(recipeIndex, i, {
-                        newCategory: e.target.value as IngredientCategory,
-                      })
-                    }
-                    className="w-28"
-                    data-testid={`review-category-${i}`}
-                  >
-                    {CATEGORY_OPTIONS.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </Select>
-                )}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </>
   );
 }

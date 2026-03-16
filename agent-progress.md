@@ -693,5 +693,25 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 33 tests: 5 parseRecipeIngredients tests (matching, unmatched, empty, quantities, default actions), 2 detectDuplicateMeal tests (found, not found), 1 parsePaprikaRecipes bulk test (multi-recipe with duplicate detection), 12 buildDraftMeal tests (provenance, time mapping, prep/cook preservation, difficulty, servings, recipe links, notes, import mappings, component metadata, catalog creation, fallback time, hours parsing), 4 UI tests (upload step, error handling, IngredientManager button, BaseMealManager button), 4 MealDetail provenance tests (shown, hidden, mappings shown, mappings hidden), 3 compatibility tests (planner overlap, save/load persistence, backward compatibility), 2 duplicate detection tests (meal name, ingredient name)
 - Verified: tsc --noEmit passes, vitest passes (684 tests, 9 pre-existing f035 failures unrelated to F048), all F048 steps satisfied
 
+### F049 - Paprika import supports bulk ingredient review and robust ingredient-line parsing (2026-03-16)
+- Enhanced `parseIngredientLine` in `recipe-parser.ts` to handle decimal quantities (1.5), fractions (1/2), "of" phrasing ("1 pinch of salt"), parenthetical notes ("quinoa (any color)"), and preparation suffixes ("lime, zested and squeezed")
+- Fixed numbered-list stripping regex (`\d+[.)]\s*` → `\d+[.)]\s+`) so decimal quantities like `1.5` are no longer truncated
+- Added word-boundary assertions to unit pattern to prevent single-letter units (like `l` for liter) from matching partial words (like `lime`)
+- Added `isInstructionLine` function detecting: asterisk-prefixed notes, imperative verb phrases, and unusually long freeform sentences (>80 chars)
+- Added `unit` field to `ParsedIngredientLine` interface for separate unit tracking while keeping `quantity` backward-compatible (still includes unit string)
+- Added `recipeIndex` and `recipeName` fields to `PaprikaReviewLine` for cross-recipe line identification in bulk review
+- Added `computeBulkSummary` function categorizing all lines across selected recipes into matched/catalog/unmatched/instruction buckets
+- Added `applyBulkAction` function supporting three bulk operations: approve-matched, create-all-new, ignore-instructions
+- Added `PaprikaImportSession` type with `saveImportSession`, `loadImportSession`, `clearImportSession` for localStorage session persistence
+- Replaced recipe-by-recipe mandatory review in PaprikaImport with bulk review workflow showing all lines across all selected recipes in one view
+- Added bulk action buttons (Approve all matches, Create all new, Ignore all instructions) in review step
+- Added "All/Ambiguous only" filter toggle to focus on unresolved lines
+- Added recipe name label on each review line for cross-recipe context
+- Added "Save & resume later" button that persists session to localStorage — session restored on page reload
+- Session auto-cleared after successful import completion
+- Import mappings preserve raw lines, parsed names, quantities, units, and final actions for auditing
+- Created 37 tests: 8 enhanced parser tests (decimal, fraction, parenthetical, "of", prep suffix, rinsed well, combined, unit field), 5 isInstructionLine tests (asterisk, verbs, long sentences, normal lines, empty), 5 bulk summary/action tests (categorization, deselected exclusion, approve-matched, create-new, ignore-instructions), 3 session persistence tests (save/load, wrong household, clear), 3 review line metadata tests (recipeIndex/recipeName, quantity/unit, instruction detection), 2 compatibility tests (valid draft meals, grocery/planner unaffected), 8 UI tests (summary chips, bulk buttons, filter, recipe labels, pause/resume, session restore, session clear, multi-recipe lines), 2 instruction detection tests (auto-ignore, asterisk notes), 1 audit preservation test (import mappings)
+- Verified: tsc --noEmit passes (pre-existing f035/f036/f042/f043/f045/f048 test errors only), vitest passes (721 tests, 9 pre-existing f035 failures unrelated to F049), all F049 steps satisfied
+
 ## Next Task
 - All features complete! No remaining tasks with passes=false.

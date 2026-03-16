@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import type { Ingredient, IngredientCategory, MealComponent, RecipeProvenance, ImportMapping, BaseMeal, RecipeLink } from "./types";
-import { matchIngredient, parseIngredientLine, guessComponentRole } from "./recipe-parser";
+import { matchIngredient, parseIngredientLine, guessComponentRole, isInstructionLine } from "./recipe-parser";
 import type { ParsedIngredientLine } from "./recipe-parser";
 import { catalogIngredientToHousehold } from "./catalog";
 import { normalizeIngredientName } from "./storage";
@@ -34,6 +34,90 @@ export interface ParsedPaprikaRecipe {
 export interface PaprikaReviewLine extends ParsedIngredientLine {
   action: "use" | "create" | "ignore";
   newCategory: IngredientCategory;
+  recipeIndex: number;
+  recipeName: string;
+}
+
+export interface BulkReviewSummary {
+  matched: PaprikaReviewLine[];
+  catalog: PaprikaReviewLine[];
+  unmatched: PaprikaReviewLine[];
+  instruction: PaprikaReviewLine[];
+}
+
+export interface PaprikaImportSession {
+  householdId: string;
+  parsedRecipes: ParsedPaprikaRecipe[];
+  step: "upload" | "select" | "review" | "done";
+  savedAt: string;
+}
+
+const SESSION_KEY = "onebaseplate_paprika_session";
+
+export function saveImportSession(session: PaprikaImportSession): void {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+}
+
+export function loadImportSession(householdId: string): PaprikaImportSession | null {
+  const raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) return null;
+  try {
+    const session = JSON.parse(raw) as PaprikaImportSession;
+    if (session.householdId === householdId) return session;
+  } catch {
+    // ignore corrupt session
+  }
+  return null;
+}
+
+export function clearImportSession(): void {
+  localStorage.removeItem(SESSION_KEY);
+}
+
+export function computeBulkSummary(recipes: ParsedPaprikaRecipe[]): BulkReviewSummary {
+  const matched: PaprikaReviewLine[] = [];
+  const catalog: PaprikaReviewLine[] = [];
+  const unmatched: PaprikaReviewLine[] = [];
+  const instruction: PaprikaReviewLine[] = [];
+
+  for (const recipe of recipes) {
+    if (!recipe.selected) continue;
+    for (const line of recipe.parsedLines) {
+      if (line.action === "ignore" && !line.name) {
+        instruction.push(line);
+      } else if (line.status === "matched") {
+        matched.push(line);
+      } else if (line.status === "catalog") {
+        catalog.push(line);
+      } else {
+        unmatched.push(line);
+      }
+    }
+  }
+
+  return { matched, catalog, unmatched, instruction };
+}
+
+export function applyBulkAction(
+  recipes: ParsedPaprikaRecipe[],
+  action: "approve-matched" | "create-all-new" | "ignore-instructions",
+): ParsedPaprikaRecipe[] {
+  return recipes.map((recipe) => {
+    if (!recipe.selected) return recipe;
+    const updatedLines = recipe.parsedLines.map((line) => {
+      if (action === "approve-matched" && line.status === "matched") {
+        return { ...line, action: "use" as const };
+      }
+      if (action === "create-all-new" && line.status === "unmatched" && line.name) {
+        return { ...line, action: "create" as const };
+      }
+      if (action === "ignore-instructions" && !line.name) {
+        return { ...line, action: "ignore" as const };
+      }
+      return line;
+    });
+    return { ...recipe, parsedLines: updatedLines };
+  });
 }
 
 function parseTimeToMinutes(timeStr: string): number {
@@ -125,6 +209,7 @@ export async function parsePaprikaFile(file: File): Promise<PaprikaRecipe[]> {
 export function parseRecipeIngredients(
   recipe: PaprikaRecipe,
   householdIngredients: Ingredient[],
+  recipeIndex: number = 0,
 ): PaprikaReviewLine[] {
   if (!recipe.ingredients) return [];
   const lines = recipe.ingredients
@@ -133,29 +218,52 @@ export function parseRecipeIngredients(
     .filter((l) => l.length > 0);
 
   return lines.map((raw) => {
-    const { quantity, name } = parseIngredientLine(raw);
-    if (!name) {
+    // Check if line is an instruction before parsing
+    if (isInstructionLine(raw)) {
       return {
         raw,
         quantity: "",
+        unit: "",
         name: "",
         matchedIngredient: null,
         matchedCatalog: null,
         status: "unmatched" as const,
         action: "ignore" as const,
         newCategory: "pantry" as IngredientCategory,
+        recipeIndex,
+        recipeName: recipe.name,
+      };
+    }
+
+    const { quantity, unit, name } = parseIngredientLine(raw);
+    if (!name) {
+      return {
+        raw,
+        quantity: "",
+        unit: "",
+        name: "",
+        matchedIngredient: null,
+        matchedCatalog: null,
+        status: "unmatched" as const,
+        action: "ignore" as const,
+        newCategory: "pantry" as IngredientCategory,
+        recipeIndex,
+        recipeName: recipe.name,
       };
     }
     const { ingredient, catalogItem, status } = matchIngredient(name, householdIngredients);
     return {
       raw,
       quantity,
+      unit,
       name,
       matchedIngredient: ingredient,
       matchedCatalog: catalogItem,
       status,
       action: status === "unmatched" ? ("ignore" as const) : status === "catalog" ? ("create" as const) : ("use" as const),
       newCategory: (catalogItem?.category ?? "pantry") as IngredientCategory,
+      recipeIndex,
+      recipeName: recipe.name,
     };
   });
 }
@@ -178,8 +286,8 @@ export function parsePaprikaRecipes(
   householdIngredients: Ingredient[],
   existingMeals: BaseMeal[],
 ): ParsedPaprikaRecipe[] {
-  return recipes.map((raw) => {
-    const parsedLines = parseRecipeIngredients(raw, householdIngredients);
+  return recipes.map((raw, i) => {
+    const parsedLines = parseRecipeIngredients(raw, householdIngredients, i);
     const { isDuplicate, existingMealId } = detectDuplicateMeal(raw.name, existingMeals);
     return {
       raw,
