@@ -68,7 +68,7 @@ export default function GroceryList() {
         <PageHeader
           title="Grocery List"
           subtitle={`Household: ${household.name}`}
-          subtitleTo={`/household/${householdId}/home`}
+          subtitleTo={`/households?edit=${householdId}`}
         />
         <EmptyState>No weekly plan saved yet. Generate and save a plan first.</EmptyState>
       </PageShell>
@@ -87,7 +87,11 @@ export default function GroceryList() {
   return (
     <PageShell>
       <HouseholdNav householdId={householdId ?? ""} />
-      <PageHeader title="Grocery List" subtitle={`${items.length} ingredients from ${plan.days.length}-day plan`} />
+      <PageHeader
+        title="Grocery List"
+        subtitle={`Household: ${household.name}`}
+        subtitleTo={`/households?edit=${householdId}`}
+      />
 
       <div className="mb-4 flex flex-wrap items-center gap-4">
         <span className="text-sm text-text-secondary" data-testid="grocery-summary">

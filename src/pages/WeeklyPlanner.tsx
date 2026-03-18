@@ -218,7 +218,7 @@ export default function WeeklyPlanner() {
       <PageHeader
         title="Weekly Planner"
         subtitle={`Household: ${household.name}`}
-        subtitleTo={`/household/${householdId}/home`}
+        subtitleTo={`/households?edit=${householdId}`}
       />
 
       {household.baseMeals.length === 0 ? (

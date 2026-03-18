@@ -147,6 +147,25 @@ describe("F011: generateGroceryList engine", () => {
     const pasta = list.find((i) => i.name === "pasta");
     expect(pasta!.quantity).toBe("");
   });
+
+  it("ignores empty ingredient IDs in components", () => {
+    const mealWithInvalidComponent: BaseMeal = {
+      ...mealPasta,
+      id: "meal-invalid",
+      components: [
+        { ingredientId: "", role: "protein", quantity: "1" },
+        { ingredientId: "   ", role: "veg", quantity: "1" },
+        { ingredientId: "ing-pasta", role: "carb", quantity: "200g" },
+      ],
+    };
+    const days: DayPlan[] = [
+      { day: "Monday", baseMealId: "meal-invalid", variants: [] },
+    ];
+    const list = generateGroceryList(days, [mealWithInvalidComponent], ingredients);
+    expect(list).toHaveLength(1);
+    expect(list[0]!.ingredientId).toBe("ing-pasta");
+    expect(list[0]!.name).toBe("pasta");
+  });
 });
 
 describe("F011: GroceryList page renders grouped list", () => {

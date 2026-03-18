@@ -34,6 +34,18 @@ export function getAllIngredientIds(component: MealComponent): string[] {
   return ids;
 }
 
+function getValidIngredientIds(component: MealComponent): string[] {
+  const seen = new Set<string>();
+  const validIds: string[] = [];
+  for (const id of getAllIngredientIds(component)) {
+    const trimmed = id.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    validIds.push(trimmed);
+  }
+  return validIds;
+}
+
 function pickBestIngredient(
   component: MealComponent,
   member: HouseholdMember,
@@ -468,11 +480,8 @@ export function computeGroceryPreview(
     const meal = meals.find((m) => m.id === day.baseMealId);
     if (!meal) continue;
     for (const component of meal.components) {
-      ingredientIds.add(component.ingredientId);
-      if (component.alternativeIngredientIds) {
-        for (const altId of component.alternativeIngredientIds) {
-          ingredientIds.add(altId);
-        }
+      for (const id of getValidIngredientIds(component)) {
+        ingredientIds.add(id);
       }
     }
   }
@@ -629,7 +638,7 @@ export function generateGroceryList(
     if (!meal) continue;
 
     for (const component of meal.components) {
-      const allIds = getAllIngredientIds(component);
+      const allIds = getValidIngredientIds(component);
       for (const id of allIds) {
         const existing = itemMap.get(id);
         if (existing) {

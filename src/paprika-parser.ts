@@ -40,9 +40,9 @@ export interface PaprikaReviewLine extends ParsedIngredientLine {
 
 export interface BulkReviewSummary {
   matched: PaprikaReviewLine[];
-  catalog: PaprikaReviewLine[];
-  unmatched: PaprikaReviewLine[];
-  instruction: PaprikaReviewLine[];
+  ambiguous: PaprikaReviewLine[];
+  createNew: PaprikaReviewLine[];
+  ignored: PaprikaReviewLine[];
 }
 
 export interface PaprikaImportSession {
@@ -54,8 +54,46 @@ export interface PaprikaImportSession {
 
 const SESSION_KEY = "onebaseplate_paprika_session";
 
+function toSessionRecipeSnapshot(recipe: ParsedPaprikaRecipe): ParsedPaprikaRecipe {
+  // Keep only fields needed to resume select/review/import flows.
+  const raw: PaprikaRecipe = {
+    name: recipe.raw.name ?? "",
+    ingredients: "",
+    directions: "",
+    notes: recipe.raw.notes ?? "",
+    source: recipe.raw.source ?? "",
+    source_url: recipe.raw.source_url ?? "",
+    prep_time: recipe.raw.prep_time ?? "",
+    cook_time: recipe.raw.cook_time ?? "",
+    total_time: recipe.raw.total_time ?? "",
+    difficulty: recipe.raw.difficulty ?? "",
+    servings: recipe.raw.servings ?? "",
+    categories: Array.isArray(recipe.raw.categories) ? recipe.raw.categories : [],
+    image_url: recipe.raw.image_url ?? "",
+    photo_data: null,
+    uid: recipe.raw.uid ?? "",
+  };
+
+  return {
+    ...recipe,
+    raw,
+  };
+}
+
 export function saveImportSession(session: PaprikaImportSession): void {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  try {
+    const compactSession: PaprikaImportSession = {
+      ...session,
+      parsedRecipes: session.parsedRecipes.map(toSessionRecipeSnapshot),
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(compactSession));
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "QuotaExceededError") {
+      // Don't crash the import flow when browser storage is full.
+      return;
+    }
+    throw error;
+  }
 }
 
 export function loadImportSession(householdId: string): PaprikaImportSession | null {
@@ -76,26 +114,28 @@ export function clearImportSession(): void {
 
 export function computeBulkSummary(recipes: ParsedPaprikaRecipe[]): BulkReviewSummary {
   const matched: PaprikaReviewLine[] = [];
-  const catalog: PaprikaReviewLine[] = [];
-  const unmatched: PaprikaReviewLine[] = [];
-  const instruction: PaprikaReviewLine[] = [];
+  const ambiguous: PaprikaReviewLine[] = [];
+  const createNew: PaprikaReviewLine[] = [];
+  const ignored: PaprikaReviewLine[] = [];
 
   for (const recipe of recipes) {
     if (!recipe.selected) continue;
     for (const line of recipe.parsedLines) {
-      if (line.action === "ignore" && !line.name) {
-        instruction.push(line);
-      } else if (line.status === "matched") {
+      if (line.status === "unmatched" && line.name && line.action !== "create") {
+        ambiguous.push(line);
+      } else if (line.action === "ignore") {
+        ignored.push(line);
+      } else if (line.action === "create") {
+        createNew.push(line);
+      } else if (line.action === "use" && line.status === "matched") {
         matched.push(line);
-      } else if (line.status === "catalog") {
-        catalog.push(line);
       } else {
-        unmatched.push(line);
+        ignored.push(line);
       }
     }
   }
 
-  return { matched, catalog, unmatched, instruction };
+  return { matched, ambiguous, createNew, ignored };
 }
 
 export function applyBulkAction(
@@ -235,13 +275,15 @@ export function parseRecipeIngredients(
       };
     }
 
-    const { quantity, unit, name } = parseIngredientLine(raw);
+    const { quantity, unit, quantityValue, name, prepNotes } = parseIngredientLine(raw);
     if (!name) {
       return {
         raw,
         quantity: "",
         unit: "",
+        quantityValue: undefined,
         name: "",
+        prepNotes: [],
         matchedIngredient: null,
         matchedCatalog: null,
         status: "unmatched" as const,
@@ -256,7 +298,9 @@ export function parseRecipeIngredients(
       raw,
       quantity,
       unit,
+      quantityValue,
       name,
+      prepNotes,
       matchedIngredient: ingredient,
       matchedCatalog: catalogItem,
       status,
@@ -312,7 +356,12 @@ export function buildDraftMeal(
       mappings.push({
         originalLine: line.raw,
         parsedName: line.name,
+        cleanedIngredientName: line.name,
+        parsedQuantityValue: line.quantityValue,
+        parsedQuantityUnit: line.unit || undefined,
+        prepNotes: line.prepNotes,
         action: "ignore",
+        chosenAction: "ignore",
         matchType: "ignored",
       });
       continue;
@@ -323,14 +372,22 @@ export function buildDraftMeal(
         ingredientId: line.matchedIngredient.id,
         role: guessComponentRole(line.matchedIngredient.category),
         quantity: line.quantity,
+        unit: line.unit || undefined,
+        prepNote: line.prepNotes?.join(", ") || undefined,
         originalSourceLine: line.raw,
         matchType: "existing",
       });
       mappings.push({
         originalLine: line.raw,
         parsedName: line.name,
+        cleanedIngredientName: line.name,
+        parsedQuantityValue: line.quantityValue,
+        parsedQuantityUnit: line.unit || undefined,
+        prepNotes: line.prepNotes,
         action: "use",
+        chosenAction: "use",
         ingredientId: line.matchedIngredient.id,
+        finalMatchedIngredientId: line.matchedIngredient.id,
         matchType: "existing",
       });
     } else if (line.action === "create") {
@@ -354,14 +411,22 @@ export function buildDraftMeal(
         ingredientId: ing.id,
         role: guessComponentRole(ing.category),
         quantity: line.quantity,
+        unit: line.unit || undefined,
+        prepNote: line.prepNotes?.join(", ") || undefined,
         originalSourceLine: line.raw,
         matchType: "new",
       });
       mappings.push({
         originalLine: line.raw,
         parsedName: line.name,
+        cleanedIngredientName: line.name,
+        parsedQuantityValue: line.quantityValue,
+        parsedQuantityUnit: line.unit || undefined,
+        prepNotes: line.prepNotes,
         action: "create",
+        chosenAction: "create",
         ingredientId: ing.id,
+        finalMatchedIngredientId: ing.id,
         matchType: "new",
       });
     }

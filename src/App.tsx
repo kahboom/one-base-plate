@@ -13,15 +13,19 @@ import RescueMode from "./pages/RescueMode";
 import MealHistory from "./pages/MealHistory";
 import RecipeImport from "./pages/RecipeImport";
 import PaprikaImport from "./pages/PaprikaImport";
-import { loadHouseholds } from "./storage";
+import { loadHouseholds, loadDefaultHouseholdId } from "./storage";
 
 function DefaultRoute() {
   const households = loadHouseholds();
-  const firstHouseholdId = households[0]?.id;
-  if (!firstHouseholdId) {
+  const storedDefaultId = loadDefaultHouseholdId();
+  const hasStoredDefault = storedDefaultId
+    ? households.some((household) => household.id === storedDefaultId)
+    : false;
+  const targetHouseholdId = hasStoredDefault ? storedDefaultId : households[0]?.id;
+  if (!targetHouseholdId) {
     return <HouseholdList />;
   }
-  return <Navigate to={`/household/${firstHouseholdId}/home`} replace />;
+  return <Navigate to={`/household/${targetHouseholdId}/home`} replace />;
 }
 
 function App() {

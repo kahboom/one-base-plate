@@ -153,7 +153,7 @@ export default function RecipeImport() {
       <PageHeader
         title="Import Recipe"
         subtitle={`Household: ${householdName}`}
-        subtitleTo={`/household/${householdId}/home`}
+        subtitleTo={`/households?edit=${householdId}`}
       />
 
       {step === "input" && (

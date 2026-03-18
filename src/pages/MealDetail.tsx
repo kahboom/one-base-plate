@@ -50,7 +50,7 @@ export default function MealDetail() {
       <PageHeader
         title={meal.name}
         subtitle={`Household: ${household.name}`}
-        subtitleTo={`/household/${householdId}/home`}
+        subtitleTo={`/households?edit=${householdId}`}
       />
       <MealDetailContent
         meal={meal}

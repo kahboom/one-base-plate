@@ -129,7 +129,7 @@ export default function Planner() {
       <PageHeader
         title="Meal Planner"
         subtitle={`Household: ${household.name}`}
-        subtitleTo={`/household/${householdId}/home`}
+        subtitleTo={`/households?edit=${householdId}`}
       />
 
       {household.baseMeals.length === 0 ? (

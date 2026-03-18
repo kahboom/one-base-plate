@@ -48,6 +48,7 @@ export interface MealComponent {
   role: "protein" | "carb" | "veg" | "sauce" | "topping";
   quantity: string;
   unit?: string;
+  prepNote?: string;
   originalSourceLine?: string;
   matchType?: "existing" | "new" | "ignored";
   confidence?: number;
@@ -88,8 +89,14 @@ export interface BaseMeal {
 export interface ImportMapping {
   originalLine: string;
   parsedName: string;
+  cleanedIngredientName?: string;
+  parsedQuantityValue?: number;
+  parsedQuantityUnit?: string;
+  prepNotes?: string[];
   action: "use" | "create" | "ignore";
+  chosenAction?: "use" | "create" | "ignore";
   ingredientId?: string;
+  finalMatchedIngredientId?: string;
   matchType?: "existing" | "new" | "ignored";
 }
 

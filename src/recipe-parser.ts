@@ -6,7 +6,9 @@ export interface ParsedIngredientLine {
   raw: string;
   quantity: string;
   unit: string;
+  quantityValue?: number;
   name: string;
+  prepNotes?: string[];
   matchedIngredient: Ingredient | null;
   matchedCatalog: CatalogIngredient | null;
   status: "matched" | "catalog" | "unmatched";
@@ -23,6 +25,100 @@ const QUANTITY_PATTERN = /^([\d¼½¾⅓⅔⅛⅜⅝⅞.,/\s-]+)\s*(g\b|kg\b|ml\
 
 // Imperative verbs that suggest an instruction line, not an ingredient
 const IMPERATIVE_VERBS = /^(preheat|heat|cook|bake|roast|saut[eé]|boil|simmer|blend|mix|stir|whisk|fold|drain|rinse|combine|serve|garnish|let|place|remove|set|pour|add|season|toss|arrange|slice|dice|chop|mince|grill|fry|broil|marinate|reduce|reserve|note|optional|tip|see)\b/i;
+const PREP_DESCRIPTORS = new Set([
+  "grated", "shredded", "chopped", "diced", "minced", "sliced", "crushed", "zested", "peeled", "rinsed", "drained",
+  "julienned", "trimmed", "cubed", "halved", "quartered", "torn", "packed", "sifted", "freshly", "finely", "roughly",
+  "thinly", "thickly", "softened", "melted", "toasted", "thawed", "frozen",
+]);
+const QUALIFIER_PREFIXES = [
+  "low-sodium",
+  "reduced-sodium",
+  "no-salt-added",
+  "unsalted",
+  "salted",
+  "extra-virgin",
+  "light",
+];
+
+function parseQuantityValue(rawQuantity: string): number | undefined {
+  const trimmed = rawQuantity.trim();
+  if (!trimmed) return undefined;
+  const unicodeFractions: Record<string, number> = {
+    "¼": 0.25,
+    "½": 0.5,
+    "¾": 0.75,
+    "⅓": 1 / 3,
+    "⅔": 2 / 3,
+    "⅛": 0.125,
+    "⅜": 0.375,
+    "⅝": 0.625,
+    "⅞": 0.875,
+  };
+  const unicodeOnly = trimmed.replace(/\s+/g, "");
+  if (unicodeFractions[unicodeOnly] !== undefined) return unicodeFractions[unicodeOnly];
+
+  const mixedMatch = trimmed.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+  if (mixedMatch) {
+    const whole = parseInt(mixedMatch[1]!, 10);
+    const num = parseInt(mixedMatch[2]!, 10);
+    const den = parseInt(mixedMatch[3]!, 10);
+    if (den !== 0) return whole + (num / den);
+  }
+
+  const fracMatch = trimmed.match(/^(\d+)\/(\d+)$/);
+  if (fracMatch) {
+    const num = parseInt(fracMatch[1]!, 10);
+    const den = parseInt(fracMatch[2]!, 10);
+    if (den !== 0) return num / den;
+  }
+
+  const rangeMatch = trimmed.match(/^(\d+(?:[.,]\d+)?)-(\d+(?:[.,]\d+)?)$/);
+  if (rangeMatch) {
+    return parseFloat(rangeMatch[1]!.replace(",", "."));
+  }
+
+  const normalized = trimmed.replace(",", ".");
+  const asNumber = parseFloat(normalized);
+  return Number.isFinite(asNumber) ? asNumber : undefined;
+}
+
+function stripLeadingPrepDescriptors(name: string, notes: string[]): string {
+  const parts = name.split(/\s+/).filter(Boolean);
+  let idx = 0;
+  while (idx < parts.length && PREP_DESCRIPTORS.has(parts[idx]!.toLowerCase())) {
+    notes.push(parts[idx]!.toLowerCase());
+    idx += 1;
+  }
+  return parts.slice(idx).join(" ").trim();
+}
+
+function stripLeadingQualifiers(name: string, notes: string[]): string {
+  let out = name.trim();
+  for (const prefix of QUALIFIER_PREFIXES) {
+    const pattern = new RegExp(`^${prefix}\\s+`, "i");
+    if (pattern.test(out)) {
+      notes.push(prefix);
+      out = out.replace(pattern, "").trim();
+    }
+  }
+  return out;
+}
+
+function stripTrailingPrepPhrases(name: string, notes: string[]): string {
+  let out = name.trim();
+  const trailingPatterns = [
+    /\s+(?:to\s+taste|optional|for\s+serving|for\s+garnish)$/i,
+    /\s+(?:rinsed|drained|peeled|zested|minced|chopped|diced|sliced|grated|shredded|crushed)(?:\s+well)?$/i,
+  ];
+  for (const pattern of trailingPatterns) {
+    const match = out.match(pattern);
+    if (match) {
+      notes.push(match[0]!.trim().toLowerCase());
+      out = out.replace(pattern, "").trim();
+    }
+  }
+  return out;
+}
 
 export function isInstructionLine(line: string): boolean {
   const trimmed = line.trim();
@@ -30,6 +126,7 @@ export function isInstructionLine(line: string): boolean {
 
   // Lines starting with * or ** that look like notes/instructions
   if (/^\*{1,2}\s/.test(trimmed)) return true;
+  if (/^(?:#+|>{1,2})\s*(?:note|tip|optional|see|for\s+)/i.test(trimmed)) return true;
 
   // Unusually long lines are likely instructions or notes (> 80 chars)
   if (trimmed.length > 80) return true;
@@ -49,12 +146,14 @@ export function isInstructionLine(line: string): boolean {
   return false;
 }
 
-export function parseIngredientLine(line: string): { quantity: string; unit: string; name: string } {
+export function parseIngredientLine(
+  line: string,
+): { quantity: string; unit: string; quantityValue?: number; name: string; prepNotes: string[] } {
   const trimmed = line.trim();
-  if (!trimmed) return { quantity: "", unit: "", name: "" };
+  if (!trimmed) return { quantity: "", unit: "", quantityValue: undefined, name: "", prepNotes: [] };
 
   // Detect instruction lines
-  if (isInstructionLine(trimmed)) return { quantity: "", unit: "", name: "" };
+  if (isInstructionLine(trimmed)) return { quantity: "", unit: "", quantityValue: undefined, name: "", prepNotes: [] };
 
   // Remove leading bullet points, dashes, asterisks, numbers with dots/parens (but not decimals like 1.5)
   let cleaned = trimmed
@@ -63,8 +162,10 @@ export function parseIngredientLine(line: string): { quantity: string; unit: str
     .trim();
 
   const match = cleaned.match(QUANTITY_PATTERN);
-  if (match && match[0].length > 0) {
+  const prepNotes: string[] = [];
+  if (match && match[1]?.trim()) {
     const quantityPart = match[0].trim();
+    const quantityValue = parseQuantityValue(match[1]!.trim());
     const rawUnit = (match[2] ?? "").trim();
     let namePart = cleaned.slice(match[0].length).trim();
 
@@ -72,24 +173,41 @@ export function parseIngredientLine(line: string): { quantity: string; unit: str
       // Handle "of" phrasing: "1 cup of flour" → name is "flour"
       namePart = namePart.replace(/^of\s+/i, "");
 
-      // Strip parenthetical notes: "quinoa (any color)" → "quinoa"
-      namePart = namePart.replace(/\s*\([^)]*\)\s*/g, " ").trim();
+      namePart = namePart.replace(/\(([^)]*)\)/g, (_, note: string) => {
+        if (note.trim()) prepNotes.push(note.trim().toLowerCase());
+        return " ";
+      });
+      const commaParts = namePart.split(",").map((part) => part.trim()).filter(Boolean);
+      let canonical = commaParts.shift() ?? "";
+      if (commaParts.length > 0) {
+        prepNotes.push(...commaParts.map((part) => part.toLowerCase()));
+      }
 
-      // Strip preparation suffixes after comma: "lime, zested and squeezed" → "lime"
-      namePart = namePart.replace(/,\s*((?:finely|roughly|freshly|thinly|thickly)?\s*(?:diced|chopped|minced|sliced|grated|shredded|julienned|crushed|peeled|cored|seeded|deveined|zested|squeezed|rinsed|drained|trimmed|cubed|halved|quartered|torn|melted|softened|frozen|thawed|toasted|divided|packed|sifted|optional|to taste|for serving|for garnish).*)/i, "").trim();
+      canonical = stripLeadingQualifiers(canonical, prepNotes);
+      canonical = stripLeadingPrepDescriptors(canonical, prepNotes);
+      canonical = stripTrailingPrepPhrases(canonical, prepNotes);
+      canonical = canonical.replace(/\s+/g, " ").trim();
 
-      // Also strip trailing "rinsed well", "well rinsed" etc. without comma
-      namePart = namePart.replace(/\s+(?:rinsed\s+well|well\s+rinsed)$/i, "").trim();
-
-      return { quantity: quantityPart, unit: rawUnit, name: namePart };
+      return { quantity: quantityPart, unit: rawUnit, quantityValue, name: canonical, prepNotes };
     }
   }
 
   // No quantity found - still strip parenthetical and prep suffixes from name
-  cleaned = cleaned.replace(/\s*\([^)]*\)\s*/g, " ").trim();
-  cleaned = cleaned.replace(/,\s*((?:finely|roughly|freshly|thinly|thickly)?\s*(?:diced|chopped|minced|sliced|grated|shredded|julienned|crushed|peeled|cored|seeded|deveined|zested|squeezed|rinsed|drained|trimmed|cubed|halved|quartered|torn|melted|softened|frozen|thawed|toasted|divided|packed|sifted|optional|to taste|for serving|for garnish).*)/i, "").trim();
+  cleaned = cleaned.replace(/\(([^)]*)\)/g, (_, note: string) => {
+    if (note.trim()) prepNotes.push(note.trim().toLowerCase());
+    return " ";
+  }).trim();
+  const commaParts = cleaned.split(",").map((part) => part.trim()).filter(Boolean);
+  let canonical = commaParts.shift() ?? "";
+  if (commaParts.length > 0) {
+    prepNotes.push(...commaParts.map((part) => part.toLowerCase()));
+  }
+  canonical = stripLeadingQualifiers(canonical, prepNotes);
+  canonical = stripLeadingPrepDescriptors(canonical, prepNotes);
+  canonical = stripTrailingPrepPhrases(canonical, prepNotes);
+  canonical = canonical.replace(/\s+/g, " ").trim();
 
-  return { quantity: "", unit: "", name: cleaned };
+  return { quantity: "", unit: "", quantityValue: undefined, name: canonical, prepNotes };
 }
 
 function normalizeForMatch(s: string): string {
@@ -160,16 +278,28 @@ export function parseRecipeText(
     .filter((l) => l.length > 0);
 
   const parsed: ParsedIngredientLine[] = lines.map((raw) => {
-    const { quantity, unit, name } = parseIngredientLine(raw);
+    const { quantity, unit, quantityValue, name, prepNotes } = parseIngredientLine(raw);
     if (!name) {
-      return { raw, quantity: "", unit: "", name: "", matchedIngredient: null, matchedCatalog: null, status: "unmatched" as const };
+      return {
+        raw,
+        quantity: "",
+        unit: "",
+        quantityValue: undefined,
+        name: "",
+        prepNotes: [],
+        matchedIngredient: null,
+        matchedCatalog: null,
+        status: "unmatched" as const,
+      };
     }
     const { ingredient, catalogItem, status } = matchIngredient(name, householdIngredients);
     return {
       raw,
       quantity,
       unit,
+      quantityValue,
       name,
+      prepNotes,
       matchedIngredient: ingredient,
       matchedCatalog: catalogItem,
       status,

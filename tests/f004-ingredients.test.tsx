@@ -155,3 +155,44 @@ describe("F004: Ingredients persist across re-open", () => {
     expect(screen.getByText("Salmon")).toBeInTheDocument();
   });
 });
+
+describe("F004: Ingredient delete behavior", () => {
+  it("hides delete while creating a brand new ingredient", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderIngredientManager("h-ing");
+
+    await user.click(screen.getAllByText("Add ingredient")[0]!);
+    const modal = screen.getByTestId("ingredient-modal");
+
+    expect(within(modal).queryByTestId("delete-ingredient-btn")).not.toBeInTheDocument();
+  });
+
+  it("shows delete for existing ingredients and removes them", async () => {
+    const household = seedHousehold();
+    household.ingredients = [
+      {
+        id: "ing-delete",
+        name: "Delete Me",
+        category: "pantry",
+        tags: [],
+        shelfLifeHint: "",
+        freezerFriendly: false,
+        babySafeWithAdaptation: false,
+        source: "manual",
+      },
+    ];
+    saveHousehold(household);
+
+    const user = userEvent.setup();
+    renderIngredientManager("h-ing");
+
+    await user.click(screen.getByTestId("ingredient-row-ing-delete"));
+    const modal = screen.getByTestId("ingredient-modal");
+    await user.click(within(modal).getByTestId("delete-ingredient-btn"));
+
+    expect(screen.queryByText("Delete Me")).not.toBeInTheDocument();
+    const saved = loadHousehold("h-ing")!;
+    expect(saved.ingredients.some((i) => i.id === "ing-delete")).toBe(false);
+  });
+});

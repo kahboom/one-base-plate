@@ -47,6 +47,7 @@ export default function PaprikaImport() {
   const [importedCount, setImportedCount] = useState(0);
   const [error, setError] = useState("");
   const [reviewFilter, setReviewFilter] = useState<"all" | "ambiguous">("all");
+  const [sessionSavedAt, setSessionSavedAt] = useState<string | null>(null);
 
   useEffect(() => {
     if (!householdId) return;
@@ -62,6 +63,7 @@ export default function PaprikaImport() {
     if (session && session.step !== "done") {
       setParsedRecipes(session.parsedRecipes);
       setStep(session.step);
+      setSessionSavedAt(session.savedAt);
     }
 
     setLoaded(true);
@@ -75,7 +77,15 @@ export default function PaprikaImport() {
       step: currentStep,
       savedAt: new Date().toISOString(),
     });
+    setSessionSavedAt(new Date().toISOString());
   }, [householdId]);
+
+  const sessionSaveLabel = useMemo(() => {
+    if (!sessionSavedAt) return "Not saved yet";
+    const date = new Date(sessionSavedAt);
+    if (Number.isNaN(date.getTime())) return "Saved to draft";
+    return `Saved to draft ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  }, [sessionSavedAt]);
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -137,7 +147,7 @@ export default function PaprikaImport() {
   const filteredReviewLines = useMemo(() => {
     if (reviewFilter === "ambiguous") {
       return allReviewLines.filter(
-        ({ line }) => line.status === "unmatched" && line.name,
+        ({ line }) => line.status === "unmatched" && line.action !== "create" && Boolean(line.name),
       );
     }
     return allReviewLines;
@@ -274,7 +284,7 @@ export default function PaprikaImport() {
       <PageHeader
         title="Import from Paprika"
         subtitle={`Household: ${householdName}`}
-        subtitleTo={`/household/${householdId}/home`}
+        subtitleTo={`/households?edit=${householdId}`}
       />
 
       {step === "upload" && (
@@ -311,6 +321,7 @@ export default function PaprikaImport() {
           <div className="mb-4 flex flex-wrap gap-2">
             <Chip variant="info">{parsedRecipes.length} recipes found</Chip>
             <Chip variant="success">{selectedRecipes.length} selected</Chip>
+            <Chip variant="neutral" data-testid="import-session-status">{sessionSaveLabel}</Chip>
             {duplicateCount > 0 && (
               <Chip variant="warning">{duplicateCount} duplicates</Chip>
             )}
@@ -413,10 +424,13 @@ export default function PaprikaImport() {
           <Section title="Bulk ingredient review">
             <div className="mb-4 flex flex-wrap gap-2" data-testid="bulk-summary">
               <Chip variant="success">{bulkSummary.matched.length} exact matches</Chip>
-              <Chip variant="info">{bulkSummary.catalog.length} catalog matches</Chip>
-              <Chip variant="warning">{bulkSummary.unmatched.length} unmatched</Chip>
-              <Chip variant="neutral">{bulkSummary.instruction.length} instructions</Chip>
+              <Chip variant="warning">{bulkSummary.ambiguous.length} ambiguous</Chip>
+              <Chip variant="info">{bulkSummary.createNew.length} create new</Chip>
+              <Chip variant="neutral">{bulkSummary.ignored.length} ignored</Chip>
             </div>
+            <p className="mb-3 text-xs text-text-muted" data-testid="import-session-status">
+              {sessionSaveLabel}
+            </p>
 
             <div className="mb-4 flex flex-wrap gap-2" data-testid="bulk-actions">
               <Button
@@ -458,7 +472,7 @@ export default function PaprikaImport() {
                 onClick={() => setReviewFilter("ambiguous")}
                 data-testid="filter-ambiguous"
               >
-                Ambiguous only ({allReviewLines.filter(({ line }) => line.status === "unmatched" && line.name).length})
+                Ambiguous only ({allReviewLines.filter(({ line }) => line.status === "unmatched" && line.action !== "create" && line.name).length})
               </Button>
             </div>
           </Section>
@@ -482,6 +496,13 @@ export default function PaprikaImport() {
                       {line.quantity && <span>Qty: {line.quantity}{line.unit ? ` ${line.unit}` : ""} · </span>}
                       Parsed: {line.name || <em>instruction/note</em>}
                     </p>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {line.action === "ignore" && <Chip variant="neutral" className="text-[10px]">Ignored</Chip>}
+                      {line.status === "unmatched" && line.action !== "create" && line.name && (
+                        <Chip variant="warning" className="text-[10px]">Unresolved</Chip>
+                      )}
+                      {line.action === "create" && <Chip variant="info" className="text-[10px]">Create new</Chip>}
+                    </div>
                     {line.matchedIngredient && (
                       <Chip variant="success" className="mt-1 text-[10px]">
                         Matched: {line.matchedIngredient.name}
@@ -506,7 +527,7 @@ export default function PaprikaImport() {
                       data-testid={`review-action-${i}`}
                     >
                       {line.matchedIngredient && <option value="use">Use match</option>}
-                      <option value="create">Create new</option>
+                      <option value="create">{line.matchedCatalog ? "Create from catalog" : "Create new"}</option>
                       <option value="ignore">Ignore</option>
                     </Select>
 

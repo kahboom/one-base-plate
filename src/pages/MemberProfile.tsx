@@ -102,7 +102,7 @@ export default function MemberProfile() {
       <PageHeader
         title={`${member.name} — ${member.role}`}
         subtitle={`Household: ${householdName}`}
-        subtitleTo={`/household/${householdId}/home`}
+        subtitleTo={`/households?edit=${householdId}`}
       />
 
       <Section title="Safe Foods">

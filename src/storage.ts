@@ -4,6 +4,7 @@ import seedData from "./seed-data.json";
 const STORAGE_KEY = "onebaseplate_households";
 const SEEDED_KEY = "onebaseplate_seeded";
 const MIGRATION_KEY = "onebaseplate_migrated_v1";
+const DEFAULT_HOUSEHOLD_KEY = "onebaseplate_default_household_id";
 
 export function seedIfNeeded(): void {
   if (localStorage.getItem(SEEDED_KEY)) return;
@@ -39,6 +40,18 @@ export function saveHousehold(household: Household): void {
 
 export function deleteHousehold(id: string): void {
   saveHouseholds(loadHouseholds().filter((h) => h.id !== id));
+}
+
+export function loadDefaultHouseholdId(): string | null {
+  return localStorage.getItem(DEFAULT_HOUSEHOLD_KEY);
+}
+
+export function saveDefaultHouseholdId(id: string): void {
+  localStorage.setItem(DEFAULT_HOUSEHOLD_KEY, id);
+}
+
+export function clearDefaultHouseholdId(): void {
+  localStorage.removeItem(DEFAULT_HOUSEHOLD_KEY);
 }
 
 export function exportHouseholdsJSON(householdIds?: string[]): string {

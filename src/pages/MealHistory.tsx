@@ -43,7 +43,7 @@ export default function MealHistory() {
       <PageHeader
         title="Meal History"
         subtitle={`Household: ${household.name}`}
-        subtitleTo={`/household/${householdId}/home`}
+        subtitleTo={`/households?edit=${householdId}`}
       />
 
       {outcomes.length === 0 ? (

@@ -112,9 +112,23 @@ describe("Enhanced parseIngredientLine", () => {
     expect(result.name).toBe("flour");
   });
 
+  it("handles mixed fractions like 1 1/2 cups", () => {
+    const result = parseIngredientLine("1 1/2 cups milk");
+    expect(result.quantity).toBe("1 1/2 cups");
+    expect(result.quantityValue).toBeCloseTo(1.5);
+    expect(result.name).toBe("milk");
+  });
+
   it("strips parenthetical notes", () => {
     const result = parseIngredientLine("1 cup quinoa (any color)");
     expect(result.name).toBe("quinoa");
+  });
+
+  it("parses quinoa with parenthetical note and trailing prep phrase", () => {
+    const result = parseIngredientLine("1 cup quinoa (any color), rinsed well");
+    expect(result.name).toBe("quinoa");
+    expect(result.prepNotes).toContain("any color");
+    expect(result.prepNotes).toContain("rinsed well");
   });
 
   it("handles 'of' phrasing", () => {
@@ -125,6 +139,8 @@ describe("Enhanced parseIngredientLine", () => {
   it("strips preparation suffixes after comma", () => {
     const result = parseIngredientLine("1 lime, zested and squeezed");
     expect(result.name).toBe("lime");
+    expect(result.quantityValue).toBe(1);
+    expect(result.prepNotes).toContain("zested and squeezed");
   });
 
   it("strips 'rinsed well' suffix", () => {
@@ -142,6 +158,29 @@ describe("Enhanced parseIngredientLine", () => {
     const result = parseIngredientLine("3 tbsp olive oil");
     expect(result.unit).toBe("tbsp");
     expect(result.name).toBe("olive oil");
+  });
+
+  it("strips leading prep descriptors like grated Parmesan", () => {
+    const result = parseIngredientLine("1/2 cup grated Parmesan");
+    expect(result.name).toBe("Parmesan");
+    expect(result.prepNotes).toContain("grated");
+  });
+
+  it("preserves compound names with qualifiers like low-sodium beef broth", () => {
+    const result = parseIngredientLine("4 cups low-sodium beef broth");
+    expect(result.name).toBe("beef broth");
+    expect(result.prepNotes).toContain("low-sodium");
+  });
+
+  it("strips descriptor from diced tomatoes while preserving core ingredient", () => {
+    const result = parseIngredientLine("2 cups diced tomatoes");
+    expect(result.name).toBe("tomatoes");
+    expect(result.prepNotes).toContain("diced");
+  });
+
+  it("preserves compound names like cannellini beans and olive oil", () => {
+    expect(parseIngredientLine("1 can cannellini beans").name).toBe("cannellini beans");
+    expect(parseIngredientLine("2 tbsp olive oil").name).toBe("olive oil");
   });
 });
 
@@ -175,7 +214,7 @@ describe("isInstructionLine", () => {
 
 /* ---- Bulk review engine tests ---- */
 describe("computeBulkSummary", () => {
-  it("categorizes lines across multiple recipes into matched, catalog, unmatched, and instruction", () => {
+  it("categorizes lines across multiple recipes into matched, ambiguous, create-new, and ignored", () => {
     const hh = makeHousehold();
     const recipe1 = makePaprikaRecipe({ name: "R1", ingredients: "200g chicken breast\nsome mystery spice" });
     const recipe2 = makePaprikaRecipe({ name: "R2", ingredients: "1 cup rice\npasta" });
@@ -183,8 +222,9 @@ describe("computeBulkSummary", () => {
 
     const summary = computeBulkSummary(parsed);
     expect(summary.matched.length).toBe(2); // chicken + rice
-    expect(summary.catalog.length).toBeGreaterThanOrEqual(1); // pasta from catalog
-    expect(summary.unmatched.length + summary.instruction.length).toBeGreaterThanOrEqual(1); // mystery spice
+    expect(summary.createNew.length).toBeGreaterThanOrEqual(1); // pasta from catalog defaults to create
+    expect(summary.ambiguous.length).toBeGreaterThanOrEqual(1); // mystery spice unresolved
+    expect(summary.ignored.length).toBeGreaterThanOrEqual(0);
   });
 
   it("excludes deselected recipes from summary", () => {
@@ -353,6 +393,23 @@ describe("Bulk-reviewed import compatibility", () => {
       expect(ing).toBeDefined();
     }
   });
+
+  it("end-to-end bulk review import keeps valid ingredient references", () => {
+    const hh = makeHousehold();
+    const recipe = makePaprikaRecipe({
+      name: "End to End Meal",
+      ingredients: "200g chicken breast\n1 cup rice\n1 pinch of salt",
+    });
+    const parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
+    const updated = applyBulkAction(parsed, "approve-matched");
+    const { meal, newIngredients } = buildDraftMeal(updated[0]!.raw, updated[0]!.parsedLines);
+
+    const combinedIngredients = [...hh.ingredients, ...newIngredients];
+    for (const component of meal.components) {
+      expect(combinedIngredients.some((ing) => ing.id === component.ingredientId)).toBe(true);
+    }
+    expect(meal.importMappings?.every((m) => m.originalLine && m.action)).toBe(true);
+  });
 });
 
 /* ---- UI: Bulk review workflow ---- */
@@ -429,6 +486,7 @@ describe("PaprikaImport bulk review UI", () => {
   });
 
   it("has pause/resume button that saves session", async () => {
+    const user = userEvent.setup();
     const hh = makeHousehold();
     saveHousehold(hh);
     const recipe = makePaprikaRecipe();
@@ -442,6 +500,8 @@ describe("PaprikaImport bulk review UI", () => {
 
     renderAt("/household/h-bulk/import-paprika");
     expect(screen.getByTestId("pause-import-btn")).toBeInTheDocument();
+    await user.click(screen.getByTestId("pause-import-btn"));
+    expect(loadImportSession("h-bulk")).not.toBeNull();
   });
 
   it("restores saved session on page load", () => {
@@ -505,6 +565,22 @@ describe("PaprikaImport bulk review UI", () => {
     const reviewLines = screen.getAllByTestId(/review-line-\d+/);
     expect(reviewLines.length).toBe(2);
   });
+
+  it("shows visible saved-state status in review flow", () => {
+    const hh = makeHousehold();
+    saveHousehold(hh);
+    const recipe = makePaprikaRecipe({ name: "Saved State Recipe" });
+    const parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
+    saveImportSession({
+      householdId: "h-bulk",
+      parsedRecipes: parsed,
+      step: "review",
+      savedAt: new Date().toISOString(),
+    });
+
+    renderAt("/household/h-bulk/import-paprika");
+    expect(screen.getAllByTestId("import-session-status")[0]!.textContent).toMatch(/Saved to draft/);
+  });
 });
 
 /* ---- Instruction detection in Paprika context ---- */
@@ -551,9 +627,14 @@ describe("Review data preserved for auditing", () => {
     expect(chickenMapping).toBeDefined();
     expect(chickenMapping!.action).toBe("use");
     expect(chickenMapping!.parsedName).toBeTruthy();
+    expect(chickenMapping!.parsedQuantityValue).toBeDefined();
+    expect(chickenMapping!.parsedQuantityUnit).toBeDefined();
+    expect(chickenMapping!.chosenAction).toBe("use");
+    expect(chickenMapping!.finalMatchedIngredientId).toBeTruthy();
 
     const noteMapping = meal.importMappings!.find((m) => m.originalLine.includes("cooking note"));
     expect(noteMapping).toBeDefined();
     expect(noteMapping!.action).toBe("ignore");
+    expect(noteMapping!.chosenAction).toBe("ignore");
   });
 });
