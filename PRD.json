@@ -1531,6 +1531,31 @@
       "acceptanceRefs": [
         "S007"
       ]
+    },
+    {
+      "id": "F052",
+      "phase": 2,
+      "priority": "P1",
+      "category": "ux",
+      "description": "Create Household (S006) is polished in place into a compact, guided setup with clearer action hierarchy",
+      "steps": [
+        "Refine the existing Create Household screen in place with clear hierarchy sections for header, household details, and members without changing routes or data model behavior.",
+        "Replace always-expanded member blocks with compact member rows/cards that surface name, role, and texture level at a glance, with inline expand/edit behavior.",
+        "Replace the oversized member empty state with a lighter, less dominant empty state and explicit call to action text such as 'Add your first member'.",
+        "Keep Add member visible and low-friction from the members section and near the final action area so adding members feels fast.",
+        "Make Create household the clear primary action while keeping Add member secondary and visually calmer.",
+        "De-emphasize remove-member controls while preserving explicit confirmation behavior before deletion.",
+        "Maintain responsive mobile usability and preserve existing local-first create/edit flows for household and member data."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F041",
+        "F035",
+        "F033"
+      ],
+      "acceptanceRefs": [
+        "S006"
+      ]
     }
   ],
   "milestones": [
@@ -1612,7 +1637,8 @@
         "F048",
         "F049",
         "F050",
-        "F051"
+        "F051",
+        "F052"
       ]
     }
   ],
@@ -1686,6 +1712,7 @@
     "F049",
     "F050",
     "F051",
+    "F052",
     "F020",
     "F037",
     "F038",
@@ -2048,7 +2075,8 @@
       "F033",
       "F035",
       "F038",
-      "F041"
+      "F041",
+      "F052"
     ],
     "S007": [
       "F005",

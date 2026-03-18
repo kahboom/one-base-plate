@@ -3,8 +3,16 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { Household, MemberRole } from "../src/types";
-import { loadHouseholds, saveHousehold, loadHousehold, saveHouseholds } from "../src/storage";
+import {
+  loadHouseholds,
+  saveHousehold,
+  loadHousehold,
+  saveHouseholds,
+  loadDefaultHouseholdId,
+  saveDefaultHouseholdId,
+} from "../src/storage";
 import HouseholdSetup from "../src/pages/HouseholdSetup";
+import HouseholdList from "../src/pages/HouseholdList";
 import App from "../src/App";
 
 beforeEach(() => {
@@ -74,6 +82,7 @@ describe("F002: Household setup UI", () => {
       <MemoryRouter initialEntries={["/household/new"]}>
         <Routes>
           <Route path="/household/:id" element={<HouseholdSetup />} />
+          <Route path="/household/:householdId/home" element={<div>Home</div>} />
         </Routes>
       </MemoryRouter>,
     );
@@ -83,14 +92,15 @@ describe("F002: Household setup UI", () => {
     await user.type(nameInput, "Mixed Family");
 
     // Add 4 members
-    const addButton = screen.getByText("Add member");
+    const membersSection = screen.getByTestId("members-section");
+    const addButton = within(membersSection).getByRole("button", { name: "Add member" });
     await user.click(addButton);
     await user.click(addButton);
     await user.click(addButton);
     await user.click(addButton);
 
     // Get all member cards by test ID prefix
-    const memberCards = screen.getAllByText("Member").map((el) => el.closest("[data-testid^='member-']") as HTMLElement);
+    const memberCards = screen.getAllByTestId(/^member-/);
     expect(memberCards).toHaveLength(4);
 
     // Fill in member details with different roles
@@ -104,16 +114,27 @@ describe("F002: Household setup UI", () => {
     for (let i = 0; i < memberConfigs.length; i++) {
       const card = memberCards[i]!;
       const config = memberConfigs[i]!;
+      const editButton = within(card).queryByRole("button", { name: "Edit" });
+      if (editButton) {
+        await user.click(editButton);
+      }
       const nameField = within(card).getByPlaceholderText("Member name");
       await user.type(nameField, config.name);
 
       if (config.role !== "adult") {
-        const roleSelect = within(card).getByDisplayValue("adult");
+        const roleSelect = within(card).getByRole("combobox", { name: "Role" });
         await user.selectOptions(roleSelect, config.role);
+      }
+
+      const doneButton = within(card).queryByRole("button", { name: "Done" });
+      if (doneButton) {
+        await user.click(doneButton);
       }
     }
 
-    // Auto-save persists on change; verify persistence
+    await user.click(screen.getByText("Create household"));
+
+    // Explicit save persists household; verify persistence
     const households = loadHouseholds();
     expect(households).toHaveLength(1);
 
@@ -202,11 +223,11 @@ describe("F002: Household setup UI", () => {
     // Verify household name is displayed
     expect(screen.getByDisplayValue("Persisted Family")).toBeInTheDocument();
 
-    // Verify all 4 members are shown
-    expect(screen.getByDisplayValue("Parent")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Child")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Baby")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Other Parent")).toBeInTheDocument();
+    // Verify all 4 members are shown in compact rows
+    expect(screen.getByText("Parent")).toBeInTheDocument();
+    expect(screen.getByText("Child")).toBeInTheDocument();
+    expect(screen.getByText("Baby")).toBeInTheDocument();
+    expect(screen.getByText("Other Parent")).toBeInTheDocument();
 
     // Verify member count
     expect(screen.getByText("Members (4)")).toBeInTheDocument();
@@ -223,17 +244,35 @@ describe("F002: Household setup UI", () => {
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByText("Add member"));
-    await user.click(screen.getByText("Add member"));
+    const membersSection = screen.getByTestId("members-section");
+    const addButton = within(membersSection).getByRole("button", { name: "Add member" });
+    await user.click(addButton);
+    await user.click(addButton);
 
     expect(screen.getByText("Members (2)")).toBeInTheDocument();
 
-    const removeButtons = screen.getAllByText("Remove member");
-    await user.click(removeButtons[0]!);
+    const firstCard = screen.getAllByTestId(/^member-/)[0]!;
+    await user.click(within(firstCard).getByRole("button", { name: "Remove" }));
 
     const dialog = screen.getByRole("dialog");
     await user.click(within(dialog).getByText("Remove"));
 
+    expect(screen.getByText("Members (1)")).toBeInTheDocument();
+  });
+
+  it("shows a lightweight empty state with a first-member CTA", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/household/new"]}>
+        <Routes>
+          <Route path="/household/:id" element={<HouseholdSetup />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("No members yet.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Add your first member" }));
     expect(screen.getByText("Members (1)")).toBeInTheDocument();
   });
 });
@@ -270,8 +309,70 @@ describe("F002: Household list", () => {
     );
 
     expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
-    expect(screen.getByText("Family A")).toBeInTheDocument();
     expect(screen.getByTestId("app-nav")).toBeInTheDocument();
+  });
+
+  it("redirects / to stored default household when valid", () => {
+    saveHouseholds([
+      {
+        id: "h1",
+        name: "Family A",
+        members: [],
+        ingredients: [],
+        baseMeals: [],
+        weeklyPlans: [],
+      },
+      {
+        id: "h2",
+        name: "Family B",
+        members: [],
+        ingredients: [],
+        baseMeals: [],
+        weeklyPlans: [],
+      },
+    ]);
+    saveDefaultHouseholdId("h2");
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId("app-nav")).toBeInTheDocument();
+    expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/household/h2/home");
+  });
+
+  it("falls back to first household when stored default is invalid", () => {
+    saveHouseholds([
+      {
+        id: "h1",
+        name: "Family A",
+        members: [],
+        ingredients: [],
+        baseMeals: [],
+        weeklyPlans: [],
+      },
+      {
+        id: "h2",
+        name: "Family B",
+        members: [],
+        ingredients: [],
+        baseMeals: [],
+        weeklyPlans: [],
+      },
+    ]);
+    saveDefaultHouseholdId("missing-id");
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId("app-nav")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/household/h1/home");
   });
 
   it("shows browse-first controls for household list", () => {
@@ -284,10 +385,10 @@ describe("F002: Household list", () => {
     );
 
     expect(screen.getByTestId("household-control-bar")).toBeInTheDocument();
-    expect(screen.getByTestId("household-search")).toBeInTheDocument();
+    expect(screen.getByText("Create Household")).toBeInTheDocument();
   });
 
-  it("shows filter empty state when search has no matches", async () => {
+  it("does not show a household search input", async () => {
     const user = userEvent.setup();
     localStorage.setItem("onebase-tour-completed", "true");
     saveHouseholds([
@@ -308,8 +409,7 @@ describe("F002: Household list", () => {
     );
 
     await user.click(screen.getByText("Households"));
-    await user.type(screen.getByTestId("household-search"), "zzzz");
-    expect(screen.getByText("No households match your search.")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Search households...")).not.toBeInTheDocument();
   });
 
   it("shows per-member profile links inside household modal", async () => {
@@ -345,8 +445,80 @@ describe("F002: Household list", () => {
     );
 
     await user.click(screen.getByText("Households"));
-    await user.click(screen.getByTestId("household-row-h1"));
+    const row = screen.getByTestId("household-row-h1");
+    await user.click(within(row).getByRole("button", { name: /Edit Family A/i }));
     const link = screen.getByTestId("modal-member-profile-m1");
     expect(link).toHaveAttribute("href", "/household/h1/member/m1");
+  });
+
+  it("sets a household as current from the Households page", async () => {
+    const user = userEvent.setup();
+    saveHouseholds([
+      {
+        id: "h1",
+        name: "Family A",
+        members: [],
+        ingredients: [],
+        baseMeals: [],
+        weeklyPlans: [],
+      },
+      {
+        id: "h2",
+        name: "Family B",
+        members: [],
+        ingredients: [],
+        baseMeals: [],
+        weeklyPlans: [],
+      },
+    ]);
+    saveDefaultHouseholdId("h1");
+
+    render(
+      <MemoryRouter initialEntries={["/households"]}>
+        <HouseholdList />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByTestId("set-current-household-h2"));
+
+    expect(loadDefaultHouseholdId()).toBe("h2");
+    expect(screen.getByTestId("household-current-h2")).toBeInTheDocument();
+  });
+
+  it("reassigns current household when deleting the current one", async () => {
+    const user = userEvent.setup();
+    saveHouseholds([
+      {
+        id: "h1",
+        name: "Family A",
+        members: [],
+        ingredients: [],
+        baseMeals: [],
+        weeklyPlans: [],
+      },
+      {
+        id: "h2",
+        name: "Family B",
+        members: [],
+        ingredients: [],
+        baseMeals: [],
+        weeklyPlans: [],
+      },
+    ]);
+    saveDefaultHouseholdId("h2");
+
+    render(
+      <MemoryRouter initialEntries={["/households"]}>
+        <HouseholdList />
+      </MemoryRouter>,
+    );
+
+    const row = screen.getByTestId("household-row-h2");
+    await user.click(within(row).getByRole("button", { name: /Edit Family B/i }));
+    await user.click(screen.getByRole("button", { name: "Delete household" }));
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(loadDefaultHouseholdId()).toBe("h1");
+    expect(screen.getByTestId("household-current-h1")).toBeInTheDocument();
   });
 });

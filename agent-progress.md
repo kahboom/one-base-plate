@@ -782,5 +782,25 @@ All completed features satisfy their referenced screen acceptance criteria for t
   - `npm run test -- tests/f005-base-meals.test.tsx tests/f028-multi-protein.test.tsx tests/f029-recipe-links-notes.test.tsx tests/f037-photos.test.tsx tests/f038-inline-ingredient.test.tsx tests/f025-styling.test.tsx` passes (78 tests).
   - `ReadLints` reports no linter errors on touched files.
 
+### F052 - Create Household (S006) focused UX polish in place (2026-03-18)
+- Added new S006-specific UX feature `F052` to `PRD.json` and mapped it to `S006`; included in milestone `M5` and implementation order for explicit tracking.
+- Updated `CHANGELOG.md` with a dedicated 2026-03-18 PRD-alignment entry documenting the new Create Household polish feature scope.
+- Refactored `src/pages/HouseholdSetup.tsx` in place (no new flow, no data model changes):
+  - Introduced clearer section hierarchy with compact header purpose, household-details card, members card, and action card.
+  - Replaced always-expanded member forms with compact member rows showing name, role, and texture chips.
+  - Added inline expand/edit behavior (`Edit`/`Done`) so only one member row is expanded at a time, reducing form bulk.
+  - Replaced the dominant dashed empty state with a lighter members empty state and explicit CTA text (`Add your first member`).
+  - Kept Add member visible both in the members section header and near the final primary action.
+  - Clarified action hierarchy: `Create household` / `Save household` remains primary; `Add member` is secondary.
+  - De-emphasized destructive member removal UI to a subtle inline control while preserving confirmation dialog behavior.
+- Updated tests for compact member UX while preserving functionality:
+  - `tests/f002-household.test.tsx`: adapted member add/edit/remove interactions for compact-expand rows, updated persisted-member assertions to scan compact summaries, and added lightweight empty-state CTA coverage.
+  - `tests/f025-styling.test.tsx`: updated HouseholdSetup empty-state text assertion.
+  - `tests/f035-delete-confirmation.test.tsx`: aligned member remove selectors/assertions with compact row controls.
+- Verification:
+  - `npm run test -- tests/f002-household.test.tsx tests/f025-styling.test.tsx` passes (31 tests).
+  - `npm run test -- tests/f033-mobile.test.tsx -t "Responsive page header"` passes (1 targeted responsiveness test).
+  - `ReadLints` reports no linter errors on touched files.
+
 ## Next Task
 - `F049` remains the immediate next incomplete feature in PRD order (`passes=false`, dependency `F048` satisfied), with `F050` queued directly after it to keep implementation focused on bulk import cleanup and resolution UX.

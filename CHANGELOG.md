@@ -40,3 +40,17 @@
 - Milestone changes: M5 now includes F051
 - UI spec changes: no new screen; added explicit S007 polish feature mapped to S007
 - Data model changes: none
+
+### 2026-03-18 — Add focused S006 Create Household UX polish feature
+- Requestor: product owner
+- Reason: Create Household worked functionally but still felt like a bulky form with weak hierarchy and clunky member editing.
+- Scope: PRD alignment for S006 in-place UX polish, compact member editing rows, lighter empty state, and clearer primary/secondary action hierarchy.
+- Files changed: PRD.json
+- Sections changed: features, milestones, implementationOrder, screenToFeatureMap
+- New feature IDs: F052
+- Reopened feature IDs: none
+- Removed/deprecated feature IDs: none
+- Dependency changes: F052 depends on F041, F035, F033
+- Milestone changes: M5 now includes F052
+- UI spec changes: no new screen; added explicit S006 polish feature mapped to S006
+- Data model changes: none

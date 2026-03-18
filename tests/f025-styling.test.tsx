@@ -140,7 +140,7 @@ describe("F025: Empty states", () => {
       </MemoryRouter>,
     );
     expect(
-      screen.getByText("No members yet. Add a member to get started."),
+      screen.getByText("No members yet."),
     ).toBeInTheDocument();
   });
 

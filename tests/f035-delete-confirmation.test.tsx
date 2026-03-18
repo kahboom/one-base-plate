@@ -170,8 +170,8 @@ describe("F035: Remove member confirmation", () => {
       </MemoryRouter>
     );
 
-    const removeBtns = screen.getAllByText("Remove member");
-    await user.click(removeBtns[0]);
+    const removeBtns = screen.getAllByRole("button", { name: "Remove" });
+    await user.click(removeBtns[0]!);
 
     const dialog = screen.getByRole("dialog");
     expect(dialog).toBeInTheDocument();
@@ -190,17 +190,17 @@ describe("F035: Remove member confirmation", () => {
       </MemoryRouter>
     );
 
-    const removeBtns = screen.getAllByText("Remove member");
-    await user.click(removeBtns[0]);
+    const removeBtns = screen.getAllByRole("button", { name: "Remove" });
+    await user.click(removeBtns[0]!);
 
     // Member still visible before confirmation
-    expect(screen.getByDisplayValue("Alice")).toBeInTheDocument();
+    expect(screen.getByText("Alice")).toBeInTheDocument();
 
     const dialog = screen.getByRole("dialog");
     await user.click(within(dialog).getByText("Remove"));
 
-    expect(screen.queryByDisplayValue("Alice")).not.toBeInTheDocument();
-    expect(screen.getByDisplayValue("Bob")).toBeInTheDocument();
+    expect(screen.queryByText("Alice")).not.toBeInTheDocument();
+    expect(screen.getByText("Bob")).toBeInTheDocument();
   });
 
   it("cancels member removal and keeps member", async () => {
@@ -215,14 +215,14 @@ describe("F035: Remove member confirmation", () => {
       </MemoryRouter>
     );
 
-    const removeBtns = screen.getAllByText("Remove member");
-    await user.click(removeBtns[0]);
+    const removeBtns = screen.getAllByRole("button", { name: "Remove" });
+    await user.click(removeBtns[0]!);
 
     const dialog = screen.getByRole("dialog");
     await user.click(within(dialog).getByText("Cancel"));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByDisplayValue("Alice")).toBeInTheDocument();
+    expect(screen.getByText("Alice")).toBeInTheDocument();
   });
 });
 
