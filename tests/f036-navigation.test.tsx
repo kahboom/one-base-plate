@@ -61,17 +61,15 @@ function seedHousehold(): Household {
   return household;
 }
 
-const NAV_LINKS = [
+const GLOBAL_NAV_LINKS = [
   "Home",
   "Weekly planner",
   "Meal planner",
   "Grocery list",
   "Rescue mode",
   "Meal history",
-  "Ingredients",
-  "Base meals",
-  "Households",
 ];
+const SECTION_LINKS = ["Households", "Ingredients", "Base meals"];
 
 function renderRoute(path: string) {
   return render(
@@ -99,95 +97,130 @@ beforeEach(() => {
 });
 
 describe("F036: Consistent navigation across all household screens", () => {
-  describe("HouseholdNav appears with consistent links on all pages", () => {
-    it("Home page has all nav links", () => {
+  describe("Global nav appears with consistent links on all pages", () => {
+    it("Home page has all global nav links", () => {
       seedHousehold();
       renderRoute("/household/h-nav/home");
-      const nav = screen.getByRole("navigation");
-      for (const label of NAV_LINKS) {
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      for (const label of GLOBAL_NAV_LINKS) {
         expect(within(nav).getByText(label)).toBeInTheDocument();
       }
     });
 
-    it("Planner page has all nav links", () => {
+    it("Planner page has all global nav links", () => {
       seedHousehold();
       renderRoute("/household/h-nav/planner");
-      const nav = screen.getByRole("navigation");
-      for (const label of NAV_LINKS) {
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      for (const label of GLOBAL_NAV_LINKS) {
         expect(within(nav).getByText(label)).toBeInTheDocument();
       }
     });
 
-    it("Weekly planner page has all nav links", () => {
+    it("Weekly planner page has all global nav links", () => {
       seedHousehold();
       renderRoute("/household/h-nav/weekly");
-      const nav = screen.getByRole("navigation");
-      for (const label of NAV_LINKS) {
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      for (const label of GLOBAL_NAV_LINKS) {
         expect(within(nav).getByText(label)).toBeInTheDocument();
       }
     });
 
-    it("Grocery list page has all nav links", () => {
+    it("Grocery list page has all global nav links", () => {
       seedHousehold();
       renderRoute("/household/h-nav/grocery");
-      const nav = screen.getByRole("navigation");
-      for (const label of NAV_LINKS) {
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      for (const label of GLOBAL_NAV_LINKS) {
         expect(within(nav).getByText(label)).toBeInTheDocument();
       }
     });
 
-    it("Rescue mode page has all nav links", () => {
+    it("Rescue mode page has all global nav links", () => {
       seedHousehold();
       renderRoute("/household/h-nav/rescue");
-      const nav = screen.getByRole("navigation");
-      for (const label of NAV_LINKS) {
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      for (const label of GLOBAL_NAV_LINKS) {
         expect(within(nav).getByText(label)).toBeInTheDocument();
       }
     });
 
-    it("Meal detail page has all nav links", () => {
+    it("Meal detail page has all global nav links", () => {
       seedHousehold();
       renderRoute("/household/h-nav/meal/meal1");
-      const nav = screen.getByRole("navigation");
-      for (const label of NAV_LINKS) {
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      for (const label of GLOBAL_NAV_LINKS) {
         expect(within(nav).getByText(label)).toBeInTheDocument();
       }
     });
 
-    it("Ingredient manager page has all nav links", () => {
+    it("Ingredient manager page has all global nav links", () => {
       seedHousehold();
       renderRoute("/household/h-nav/ingredients");
-      const nav = screen.getByRole("navigation");
-      for (const label of NAV_LINKS) {
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      for (const label of GLOBAL_NAV_LINKS) {
         expect(within(nav).getByText(label)).toBeInTheDocument();
       }
     });
 
-    it("Base meal manager page has all nav links", () => {
+    it("Base meal manager page has all global nav links", () => {
       seedHousehold();
       renderRoute("/household/h-nav/meals");
-      const nav = screen.getByRole("navigation");
-      for (const label of NAV_LINKS) {
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      for (const label of GLOBAL_NAV_LINKS) {
         expect(within(nav).getByText(label)).toBeInTheDocument();
       }
     });
 
-    it("Meal history page has all nav links", () => {
+    it("Meal history page has all global nav links", () => {
       seedHousehold();
       renderRoute("/household/h-nav/history");
-      const nav = screen.getByRole("navigation");
-      for (const label of NAV_LINKS) {
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      for (const label of GLOBAL_NAV_LINKS) {
         expect(within(nav).getByText(label)).toBeInTheDocument();
       }
     });
 
-    it("Household setup page has all nav links for saved household", () => {
+    it("Household setup page has all global nav links for saved household", () => {
       seedHousehold();
       renderRoute("/household/h-nav");
-      const nav = screen.getByRole("navigation");
-      for (const label of NAV_LINKS) {
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      for (const label of GLOBAL_NAV_LINKS) {
         expect(within(nav).getByText(label)).toBeInTheDocument();
       }
+    });
+  });
+
+  describe("Section tabs appear only on section pages", () => {
+    it("Ingredient manager shows section tabs", () => {
+      seedHousehold();
+      renderRoute("/household/h-nav/ingredients");
+      const sectionNav = screen.getByTestId("section-nav");
+      for (const label of SECTION_LINKS) {
+        expect(within(sectionNav).getByText(label)).toBeInTheDocument();
+      }
+    });
+
+    it("Base meal manager shows section tabs", () => {
+      seedHousehold();
+      renderRoute("/household/h-nav/meals");
+      const sectionNav = screen.getByTestId("section-nav");
+      for (const label of SECTION_LINKS) {
+        expect(within(sectionNav).getByText(label)).toBeInTheDocument();
+      }
+    });
+
+    it("Household setup shows section tabs", () => {
+      seedHousehold();
+      renderRoute("/household/h-nav");
+      const sectionNav = screen.getByTestId("section-nav");
+      for (const label of SECTION_LINKS) {
+        expect(within(sectionNav).getByText(label)).toBeInTheDocument();
+      }
+    });
+
+    it("Grocery list shows only global nav", () => {
+      seedHousehold();
+      renderRoute("/household/h-nav/grocery");
+      expect(screen.queryByTestId("section-nav")).not.toBeInTheDocument();
     });
   });
 
@@ -209,7 +242,7 @@ describe("F036: Consistent navigation across all household screens", () => {
     it("Home link in nav points to /household/:id/home", () => {
       seedHousehold();
       renderRoute("/household/h-nav/weekly");
-      const nav = screen.getByRole("navigation");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
       const homeLink = within(nav).getByText("Home");
       expect(homeLink.closest("a")).toHaveAttribute("href", "/household/h-nav/home");
     });
@@ -217,7 +250,7 @@ describe("F036: Consistent navigation across all household screens", () => {
     it("nav links use consistent hrefs", () => {
       seedHousehold();
       renderRoute("/household/h-nav/planner");
-      const nav = screen.getByRole("navigation");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
       const links = nav.querySelectorAll("a");
       const hrefs = Array.from(links).map((a) => a.getAttribute("href"));
       expect(hrefs).toContain("/household/h-nav/home");
@@ -226,7 +259,7 @@ describe("F036: Consistent navigation across all household screens", () => {
       expect(hrefs).toContain("/household/h-nav/grocery");
       expect(hrefs).toContain("/household/h-nav/rescue");
       expect(hrefs).toContain("/household/h-nav/history");
-      expect(hrefs).toContain("/households");
+      expect(hrefs).not.toContain("/households");
     });
   });
 
@@ -235,7 +268,7 @@ describe("F036: Consistent navigation across all household screens", () => {
       seedHousehold();
       const user = userEvent.setup();
       renderRoute("/household/h-nav/weekly");
-      const nav = screen.getByRole("navigation");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
       await user.click(within(nav).getByText("Home"));
       expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
     });
@@ -244,7 +277,7 @@ describe("F036: Consistent navigation across all household screens", () => {
       seedHousehold();
       const user = userEvent.setup();
       renderRoute("/household/h-nav/planner");
-      const nav = screen.getByRole("navigation");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
       await user.click(within(nav).getByText("Home"));
       expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
     });
@@ -253,7 +286,7 @@ describe("F036: Consistent navigation across all household screens", () => {
       seedHousehold();
       const user = userEvent.setup();
       renderRoute("/household/h-nav/grocery");
-      const nav = screen.getByRole("navigation");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
       await user.click(within(nav).getByText("Home"));
       expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
     });
@@ -262,7 +295,7 @@ describe("F036: Consistent navigation across all household screens", () => {
       seedHousehold();
       const user = userEvent.setup();
       renderRoute("/household/h-nav/rescue");
-      const nav = screen.getByRole("navigation");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
       await user.click(within(nav).getByText("Home"));
       expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
     });
@@ -282,13 +315,13 @@ describe("F036: Consistent navigation across all household screens", () => {
     it("links appear in the same order on all pages", () => {
       seedHousehold();
       renderRoute("/household/h-nav/home");
-      const homeNav = screen.getByRole("navigation");
+      const homeNav = screen.getByRole("navigation", { name: "Global navigation" });
       const homeOrder = Array.from(homeNav.querySelectorAll("a")).map((a) => a.textContent);
 
       cleanup();
       seedHousehold();
       renderRoute("/household/h-nav/planner");
-      const plannerNav = screen.getByRole("navigation");
+      const plannerNav = screen.getByRole("navigation", { name: "Global navigation" });
       const plannerOrder = Array.from(plannerNav.querySelectorAll("a")).map((a) => a.textContent);
 
       expect(homeOrder).toEqual(plannerOrder);
@@ -299,7 +332,7 @@ describe("F036: Consistent navigation across all household screens", () => {
     it("nav is rendered as a nav element with pill-bar styling", () => {
       seedHousehold();
       renderRoute("/household/h-nav/home");
-      const nav = screen.getByRole("navigation");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
       expect(nav.className).toContain("border");
       expect(nav.className).toContain("flex-wrap");
       expect(nav.className).toContain("rounded-md");
@@ -308,7 +341,7 @@ describe("F036: Consistent navigation across all household screens", () => {
     it("inactive nav links use pill styling with hover state", () => {
       seedHousehold();
       renderRoute("/household/h-nav/home");
-      const nav = screen.getByRole("navigation");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
       const link = within(nav).getByText("Weekly planner");
       expect(link.className).toContain("rounded-pill");
       expect(link.className).toContain("hover:bg-brand-light");
@@ -317,7 +350,7 @@ describe("F036: Consistent navigation across all household screens", () => {
     it("active nav link has brand background and white text", () => {
       seedHousehold();
       renderRoute("/household/h-nav/home");
-      const nav = screen.getByRole("navigation");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
       const homeLink = within(nav).getByText("Home");
       expect(homeLink.className).toContain("bg-brand");
       expect(homeLink.className).toContain("text-white");
@@ -326,7 +359,7 @@ describe("F036: Consistent navigation across all household screens", () => {
     it("active nav link has aria-current=page", () => {
       seedHousehold();
       renderRoute("/household/h-nav/home");
-      const nav = screen.getByRole("navigation");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
       const homeLink = within(nav).getByText("Home");
       expect(homeLink).toHaveAttribute("aria-current", "page");
     });
@@ -334,7 +367,7 @@ describe("F036: Consistent navigation across all household screens", () => {
     it("inactive nav link does not have aria-current", () => {
       seedHousehold();
       renderRoute("/household/h-nav/home");
-      const nav = screen.getByRole("navigation");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
       const weeklyLink = within(nav).getByText("Weekly planner");
       expect(weeklyLink).not.toHaveAttribute("aria-current");
     });
@@ -342,7 +375,7 @@ describe("F036: Consistent navigation across all household screens", () => {
     it("nav links have touch-friendly min-height for mobile", () => {
       seedHousehold();
       renderRoute("/household/h-nav/home");
-      const nav = screen.getByRole("navigation");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
       const link = within(nav).getByText("Meal planner");
       expect(link.className).toContain("min-h-[36px]");
     });
@@ -351,22 +384,14 @@ describe("F036: Consistent navigation across all household screens", () => {
       seedHousehold();
       const user = userEvent.setup();
       renderRoute("/household/h-nav/home");
-      let nav = screen.getByRole("navigation");
+      let nav = screen.getByRole("navigation", { name: "Global navigation" });
       expect(within(nav).getByText("Home")).toHaveAttribute("aria-current", "page");
       expect(within(nav).getByText("Weekly planner")).not.toHaveAttribute("aria-current");
 
       await user.click(within(nav).getByText("Weekly planner"));
-      nav = screen.getByRole("navigation");
+      nav = screen.getByRole("navigation", { name: "Global navigation" });
       expect(within(nav).getByText("Weekly planner")).toHaveAttribute("aria-current", "page");
       expect(within(nav).getByText("Home")).not.toHaveAttribute("aria-current");
-    });
-
-    it("Households link is never marked active", () => {
-      seedHousehold();
-      renderRoute("/household/h-nav/home");
-      const nav = screen.getByRole("navigation");
-      const households = within(nav).getByText("Households");
-      expect(households).not.toHaveAttribute("aria-current");
     });
   });
 });

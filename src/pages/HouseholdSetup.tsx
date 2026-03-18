@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import type { Household, HouseholdMember, MemberRole, TextureLevel } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, Card, Button, Input, Select, HouseholdNav, FieldLabel, Chip, ConfirmDialog, useConfirm } from "../components/ui";
+import { PageShell, Card, Button, Input, Select, HouseholdNav, FieldLabel, Chip, ConfirmDialog, useConfirm, SectionNav } from "../components/ui";
 
 function createEmptyMember(): HouseholdMember {
   return {
@@ -200,6 +200,7 @@ export default function HouseholdSetup() {
           </p>
         )}
       </section>
+      <SectionNav householdId={isNew ? undefined : id} />
 
       <Card className="mb-4">
         <h2 className="mb-3 text-base font-semibold text-text-primary">Household details</h2>

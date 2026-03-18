@@ -202,23 +202,17 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
     });
   });
 
-  describe("Navigation links for Ingredients and Base meals in HouseholdNav", () => {
-    it("HouseholdNav includes Ingredients link", () => {
+  describe("Section tabs for Ingredients and Base meals", () => {
+    it("Base meals page shows Ingredients section tab link", () => {
       seedHousehold();
-      render(
-        <MemoryRouter initialEntries={["/household/h-inline/home"]}>
-          <Routes>
-            <Route path="/household/:householdId/home" element={<Home />} />
-          </Routes>
-        </MemoryRouter>,
-      );
-      const nav = screen.getByRole("navigation");
-      const ingredientsLink = within(nav).getByText("Ingredients");
+      renderBaseMealManager("h-inline");
+      const sectionNav = screen.getByTestId("section-nav");
+      const ingredientsLink = within(sectionNav).getByText("Ingredients");
       expect(ingredientsLink).toBeInTheDocument();
       expect(ingredientsLink.closest("a")).toHaveAttribute("href", "/household/h-inline/ingredients");
     });
 
-    it("HouseholdNav includes Base meals link", () => {
+    it("Home page does not show section tabs", () => {
       seedHousehold();
       render(
         <MemoryRouter initialEntries={["/household/h-inline/home"]}>
@@ -227,10 +221,7 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
           </Routes>
         </MemoryRouter>,
       );
-      const nav = screen.getByRole("navigation");
-      const mealsLink = within(nav).getByText("Base meals");
-      expect(mealsLink).toBeInTheDocument();
-      expect(mealsLink.closest("a")).toHaveAttribute("href", "/household/h-inline/meals");
+      expect(screen.queryByTestId("section-nav")).not.toBeInTheDocument();
     });
   });
 

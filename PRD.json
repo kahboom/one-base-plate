@@ -1556,6 +1556,33 @@
       "acceptanceRefs": [
         "S006"
       ]
+    },
+    {
+      "id": "F053",
+      "phase": 2,
+      "priority": "P1",
+      "category": "ux",
+      "description": "Separate global navigation from section navigation for consistent wayfinding",
+      "steps": [
+        "Use one consistent global navigation bar across household pages with only top-level pages: Home, Weekly planner, Meal planner, Grocery list, Rescue mode, and Meal history.",
+        "Move section-level links such as Households, Ingredients, and Base meals into a separate secondary navigation shown only on section pages.",
+        "Render section navigation below the page title or section header so users can distinguish app-wide movement from section-local movement.",
+        "Remove mixed navigation rows that combine top-level and section-level destinations.",
+        "Maintain consistent order, active-state styling, and spacing for global and section navigation patterns.",
+        "Preserve existing routes, page components, and storage/planner behavior while refactoring navigation structure."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F036"
+      ],
+      "acceptanceRefs": [
+        "S001",
+        "S003",
+        "S005",
+        "S006",
+        "S008",
+        "S010"
+      ]
     }
   ],
   "milestones": [
@@ -1638,7 +1665,8 @@
         "F049",
         "F050",
         "F051",
-        "F052"
+        "F052",
+        "F053"
       ]
     }
   ],
@@ -1713,6 +1741,7 @@
     "F050",
     "F051",
     "F052",
+    "F053",
     "F020",
     "F037",
     "F038",
@@ -2030,7 +2059,8 @@
       "F033",
       "F036",
       "F037",
-      "F038"
+      "F038",
+      "F053"
     ],
     "S002": [
       "F006",
@@ -2054,7 +2084,8 @@
       "F033",
       "F036",
       "F038",
-      "F042"
+      "F042",
+      "F053"
     ],
     "S004": [
       "F006",
@@ -2064,7 +2095,8 @@
     ],
     "S005": [
       "F012",
-      "F036"
+      "F036",
+      "F053"
     ],
     "S006": [
       "F002",
@@ -2076,7 +2108,8 @@
       "F035",
       "F038",
       "F041",
-      "F052"
+      "F052",
+      "F053"
     ],
     "S007": [
       "F005",
@@ -2097,7 +2130,8 @@
       "F011",
       "F020",
       "F036",
-      "F037"
+      "F037",
+      "F053"
     ],
     "S009": [
       "F034"
@@ -2112,7 +2146,8 @@
       "F046",
       "F048",
       "F049",
-      "F050"
+      "F050",
+      "F053"
     ]
   },
   "agentExecutionRules": [

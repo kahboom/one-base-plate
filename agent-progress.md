@@ -802,5 +802,29 @@ All completed features satisfy their referenced screen acceptance criteria for t
   - `npm run test -- tests/f033-mobile.test.tsx -t "Responsive page header"` passes (1 targeted responsiveness test).
   - `ReadLints` reports no linter errors on touched files.
 
+### F053 - Global vs section navigation consistency (2026-03-18)
+- Added explicit PRD feature `F053` to define and track a two-level navigation hierarchy:
+  - Global nav for top-level app pages only (Home, Weekly planner, Meal planner, Grocery list, Rescue mode, Meal history).
+  - Section tabs for section-level pages (Households, Ingredients, Base meals).
+- Updated `PRD.json` to include `F053` in features, milestone `M5`, implementation order, and screen mappings (`S001`, `S003`, `S005`, `S006`, `S008`, `S010`).
+- Updated `CHANGELOG.md` with a 2026-03-18 PRD-changelog entry for the new navigation consistency feature.
+- Refactored shared navigation in `src/components/ui.tsx`:
+  - Added `GlobalNav` and `SectionNav` components with separate item definitions and active-state logic.
+  - Kept `HouseholdNav` as a backward-compatible alias to `GlobalNav` to avoid route/component churn.
+  - Added explicit nav/test hooks: `data-testid="global-nav"` and `data-testid="section-nav"`.
+- Wired section tabs into section-level pages only (below page headers):
+  - `src/pages/HouseholdList.tsx`
+  - `src/pages/HouseholdSetup.tsx`
+  - `src/pages/IngredientManager.tsx`
+  - `src/pages/BaseMealManager.tsx`
+- Updated affected tests for the split navigation pattern and routing expectations:
+  - `tests/f036-navigation.test.tsx`
+  - `tests/f041-household-click-setup.test.tsx`
+  - `tests/f038-inline-ingredient.test.tsx`
+  - `tests/f002-household.test.tsx`
+- Verification:
+  - `npm run test -- tests/f036-navigation.test.tsx tests/f041-household-click-setup.test.tsx tests/f038-inline-ingredient.test.tsx tests/f002-household.test.tsx` passes (72 tests).
+  - `ReadLints` reports no linter errors on touched files.
+
 ## Next Task
 - `F049` remains the immediate next incomplete feature in PRD order (`passes=false`, dependency `F048` satisfied), with `F050` queued directly after it to keep implementation focused on bulk import cleanup and resolution UX.

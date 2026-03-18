@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import type { Ingredient, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold, toSentenceCase, normalizeIngredientName } from "../storage";
 import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from "../catalog";
-import { PageShell, PageHeader, Card, Button, Input, Select, Chip, FieldLabel, EmptyState, HouseholdNav } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, Chip, FieldLabel, EmptyState, HouseholdNav, SectionNav } from "../components/ui";
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
   "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
@@ -77,14 +77,18 @@ function DuplicateWarningDialog({
 /* ---------- Ingredient edit modal ---------- */
 function IngredientModal({
   ingredient,
+  isNewIngredient,
   allIngredients,
   onChange,
+  onDelete,
   onClose,
   onDuplicateFound,
 }: {
   ingredient: Ingredient;
+  isNewIngredient: boolean;
   allIngredients: Ingredient[];
   onChange: (updated: Ingredient) => void;
+  onDelete: () => void;
   onClose: () => void;
   onDuplicateFound: (newIng: Ingredient, existing: Ingredient) => void;
 }) {
@@ -254,7 +258,8 @@ function IngredientModal({
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-end border-t border-border-light pt-4">
+        <div className="mt-6 flex items-center justify-between border-t border-border-light pt-4">
+          {isNewIngredient ? <span /> : <Button variant="danger" onClick={onDelete} data-testid="delete-ingredient-btn">Delete</Button>}
           <Button variant="primary" onClick={() => {
             if (duplicates.length > 0) {
               onDuplicateFound(ingredient, duplicates[0]!);
@@ -334,6 +339,7 @@ export default function IngredientManager() {
     newIngredient: Ingredient;
     existingIngredient: Ingredient;
   } | null>(null);
+  const [newIngredientIds, setNewIngredientIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!householdId) return;
@@ -378,6 +384,7 @@ export default function IngredientManager() {
   function addIngredient() {
     const newIng = createEmptyIngredient();
     setIngredients((prev) => [...prev, newIng]);
+    setNewIngredientIds((prev) => new Set(prev).add(newIng.id));
     setEditingId(newIng.id);
   }
 
@@ -385,6 +392,16 @@ export default function IngredientManager() {
     setIngredients((prev) =>
       prev.map((ing) => (ing.id === updated.id ? updated : ing)),
     );
+  }
+
+  function deleteIngredient(ingredientId: string) {
+    setIngredients((prev) => prev.filter((ing) => ing.id !== ingredientId));
+    setNewIngredientIds((prev) => {
+      const next = new Set(prev);
+      next.delete(ingredientId);
+      return next;
+    });
+    setEditingId(null);
   }
 
   if (!loaded) return null;
@@ -395,8 +412,9 @@ export default function IngredientManager() {
       <PageHeader
         title="Ingredients"
         subtitle={`Household: ${householdName}`}
-        subtitleTo={`/household/${householdId}/home`}
+        subtitleTo={`/households?edit=${householdId}`}
       />
+      <SectionNav householdId={householdId ?? ""} />
 
       {/* Control bar */}
       <Card className="mb-4" data-testid="ingredient-control-bar">
@@ -474,12 +492,19 @@ export default function IngredientManager() {
       {editingIngredient && (
         <IngredientModal
           ingredient={editingIngredient}
+          isNewIngredient={newIngredientIds.has(editingIngredient.id)}
           allIngredients={ingredients}
           onChange={updateIngredient}
+          onDelete={() => deleteIngredient(editingIngredient.id)}
           onClose={() => {
             if (editingIngredient.name) {
               updateIngredient({ ...editingIngredient, name: normalizeIngredientName(editingIngredient.name) });
             }
+            setNewIngredientIds((prev) => {
+              const next = new Set(prev);
+              next.delete(editingIngredient.id);
+              return next;
+            });
             setEditingId(null);
           }}
           onDuplicateFound={(newIng, existing) => {
@@ -497,6 +522,11 @@ export default function IngredientManager() {
             setIngredients((prev) =>
               prev.filter((i) => i.id !== duplicateWarning.newIngredient.id),
             );
+            setNewIngredientIds((prev) => {
+              const next = new Set(prev);
+              next.delete(duplicateWarning.newIngredient.id);
+              return next;
+            });
             setEditingId(null);
           }
           setDuplicateWarning(null);

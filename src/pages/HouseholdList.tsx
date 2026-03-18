@@ -1,8 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import type { Household, HouseholdMember, MemberRole, TextureLevel } from "../types";
-import { loadHouseholds, deleteHousehold, exportHouseholdsJSON, importHouseholdsJSON, saveHousehold } from "../storage";
-import { PageShell, Card, Button, EmptyState, ConfirmDialog, useConfirm, FieldLabel, Input, Select, HouseholdNav } from "../components/ui";
+import {
+  loadHouseholds,
+  deleteHousehold,
+  exportHouseholdsJSON,
+  importHouseholdsJSON,
+  saveHousehold,
+  loadDefaultHouseholdId,
+  saveDefaultHouseholdId,
+  clearDefaultHouseholdId,
+} from "../storage";
+import { PageShell, PageHeader, Card, Button, EmptyState, ConfirmDialog, useConfirm, FieldLabel, Input, Select, HouseholdNav, SectionNav } from "../components/ui";
 import AppModal from "../components/AppModal";
 
 const ROLE_OPTIONS: MemberRole[] = ["adult", "toddler", "baby", "pet"];
@@ -24,28 +33,53 @@ function createEmptyMember(): HouseholdMember {
 
 function HouseholdRow({
   household,
-  onClick,
+  isCurrent,
+  onEdit,
+  onSetCurrent,
 }: {
   household: Household;
-  onClick: () => void;
+  isCurrent: boolean;
+  onEdit: () => void;
+  onSetCurrent: () => void;
 }) {
   return (
-    <button
-      type="button"
-      className="flex w-full items-center gap-3 rounded-md border border-border-light bg-surface px-3 py-2.5 text-left transition-colors hover:bg-bg hover:shadow-card cursor-pointer min-h-[48px]"
-      onClick={onClick}
+    <div
+      className="flex w-full items-center gap-3 rounded-md border border-border-light bg-surface px-3 py-2.5 text-left transition-colors hover:bg-bg hover:shadow-card min-h-[48px]"
       data-testid={`household-row-${household.id}`}
-      aria-label={`Edit ${household.name || "unnamed household"}`}
     >
       <span className="flex-1 min-w-0">
         <span className="block text-sm font-medium text-text-primary truncate">
-          {household.name || <span className="italic text-text-muted">Unnamed</span>}
+          {household.name || <span className="italic text-text-muted">Unnamed</span>}{" "}
+          {isCurrent && (
+            <span className="text-xs font-semibold text-brand" data-testid={`household-current-${household.id}`}>
+              (Current)
+            </span>
+          )}
         </span>
         <span className="block text-xs text-text-muted truncate">
           {household.members.length} member{household.members.length !== 1 ? "s" : ""} · {household.members.map((m) => m.name || "Unnamed").join(", ") || "No members"}
         </span>
       </span>
-    </button>
+      <div className="flex items-center gap-2">
+        {!isCurrent && (
+          <Button
+            small
+            onClick={onSetCurrent}
+            aria-label={`Set ${household.name || "unnamed household"} as current`}
+            data-testid={`set-current-household-${household.id}`}
+          >
+            Set current
+          </Button>
+        )}
+        <Button
+          small
+          onClick={onEdit}
+          aria-label={`Edit ${household.name || "unnamed household"}`}
+        >
+          Edit
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -111,27 +145,38 @@ function MemberEditor({
 
 function HouseholdModal({
   household,
-  onChange,
+  onSave,
   onClose,
   onDelete,
 }: {
   household: Household;
-  onChange: (updated: Household) => void;
+  onSave: (updated: Household) => void;
   onClose: () => void;
   onDelete: () => void;
 }) {
+  const [draft, setDraft] = useState<Household>(household);
+
+  useEffect(() => {
+    setDraft(household);
+  }, [household]);
+
   function addMember() {
-    onChange({ ...household, members: [...household.members, createEmptyMember()] });
+    setDraft((prev) => ({ ...prev, members: [...prev.members, createEmptyMember()] }));
   }
 
   function updateMember(index: number, updated: HouseholdMember) {
-    const members = [...household.members];
+    const members = [...draft.members];
     members[index] = updated;
-    onChange({ ...household, members });
+    setDraft((prev) => ({ ...prev, members }));
   }
 
   function removeMember(index: number) {
-    onChange({ ...household, members: household.members.filter((_, i) => i !== index) });
+    setDraft((prev) => ({ ...prev, members: prev.members.filter((_, i) => i !== index) }));
+  }
+
+  function handleSave() {
+    onSave(draft);
+    onClose();
   }
 
   return (
@@ -153,31 +198,30 @@ function HouseholdModal({
           </div>
           <Button variant="ghost" onClick={onClose} aria-label="Close modal">✕</Button>
         </div>
-        <HouseholdNav householdId={household.id} />
 
         <FieldLabel label="Household name" className="mb-4">
           <Input
             type="text"
-            value={household.name}
-            onChange={(e) => onChange({ ...household, name: e.target.value })}
+            value={draft.name}
+            onChange={(e) => setDraft((prev) => ({ ...prev, name: e.target.value }))}
             placeholder="Household name"
             data-testid="modal-household-name"
           />
         </FieldLabel>
 
         <h3 className="mb-2 text-base font-semibold text-text-primary">
-          Members ({household.members.length})
+          Members ({draft.members.length})
         </h3>
 
-        {household.members.length === 0 && (
+        {draft.members.length === 0 && (
           <EmptyState>No members yet. Add a member to get started.</EmptyState>
         )}
 
         <div className="mt-3">
-          {household.members.map((member, i) => (
+          {draft.members.map((member, i) => (
             <MemberEditor
               key={member.id}
-              householdId={household.id}
+              householdId={draft.id}
               member={member}
               onChange={(updated) => updateMember(i, updated)}
               onRemove={() => removeMember(i)}
@@ -189,7 +233,10 @@ function HouseholdModal({
 
         <div className="mt-4 flex items-center justify-between">
           <Button variant="danger" small onClick={onDelete}>Delete household</Button>
-          <Button variant="primary" onClick={onClose}>Done</Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button variant="primary" onClick={handleSave}>Save</Button>
+          </div>
         </div>
       </div>
     </AppModal>
@@ -198,26 +245,90 @@ function HouseholdModal({
 
 export default function HouseholdList() {
   const [households, setHouseholds] = useState<Household[]>([]);
+  const [defaultHouseholdId, setDefaultHouseholdId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setHouseholds(loadHouseholds());
+    const loaded = loadHouseholds();
+    setHouseholds(loaded);
+    const storedDefault = loadDefaultHouseholdId();
+    if (storedDefault && loaded.some((household) => household.id === storedDefault)) {
+      setDefaultHouseholdId(storedDefault);
+      return;
+    }
+    const fallbackId = loaded[0]?.id ?? null;
+    setDefaultHouseholdId(fallbackId);
+    if (fallbackId) {
+      saveDefaultHouseholdId(fallbackId);
+    } else {
+      clearDefaultHouseholdId();
+    }
   }, []);
+
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId) return;
+    if (households.some((household) => household.id === editId)) {
+      setEditingId(editId);
+    }
+  }, [households, searchParams]);
+
+  function openEditModal(householdId: string) {
+    setEditingId(householdId);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("edit", householdId);
+    setSearchParams(nextParams, { replace: true });
+  }
+
+  function closeEditModal() {
+    setEditingId(null);
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextParams.has("edit")) {
+      nextParams.delete("edit");
+      setSearchParams(nextParams, { replace: true });
+    }
+  }
 
   function handleDelete(household: Household) {
     requestConfirm(household.name || "Unnamed household", () => {
       deleteHousehold(household.id);
-      setHouseholds(loadHouseholds());
+      const updatedHouseholds = loadHouseholds();
+      setHouseholds(updatedHouseholds);
+      if (defaultHouseholdId === household.id) {
+        const fallbackId = updatedHouseholds[0]?.id ?? null;
+        setDefaultHouseholdId(fallbackId);
+        if (fallbackId) {
+          saveDefaultHouseholdId(fallbackId);
+        } else {
+          clearDefaultHouseholdId();
+        }
+      } else if (
+        defaultHouseholdId &&
+        !updatedHouseholds.some((existingHousehold) => existingHousehold.id === defaultHouseholdId)
+      ) {
+        const fallbackId = updatedHouseholds[0]?.id ?? null;
+        setDefaultHouseholdId(fallbackId);
+        if (fallbackId) {
+          saveDefaultHouseholdId(fallbackId);
+        } else {
+          clearDefaultHouseholdId();
+        }
+      }
       setEditingId((prev) => (prev === household.id ? null : prev));
     });
   }
 
-  function updateHousehold(updated: Household) {
+  function saveEditedHousehold(updated: Household) {
     saveHousehold(updated);
     setHouseholds(loadHouseholds());
+  }
+
+  function setCurrentHousehold(householdId: string) {
+    saveDefaultHouseholdId(householdId);
+    setDefaultHouseholdId(householdId);
   }
 
   function handleExport() {
@@ -243,6 +354,15 @@ export default function HouseholdList() {
       try {
         const result = importHouseholdsJSON(reader.result as string, "merge");
         setHouseholds(result);
+        if (!defaultHouseholdId || !result.some((household) => household.id === defaultHouseholdId)) {
+          const fallbackId = result[0]?.id ?? null;
+          setDefaultHouseholdId(fallbackId);
+          if (fallbackId) {
+            saveDefaultHouseholdId(fallbackId);
+          } else {
+            clearDefaultHouseholdId();
+          }
+        }
       } catch {
         alert("Invalid JSON file. Please check the file format.");
       }
@@ -251,54 +371,41 @@ export default function HouseholdList() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  const filteredHouseholds = useMemo(() => {
-    if (!searchQuery.trim()) return households;
-    const q = searchQuery.toLowerCase();
-    return households.filter((h) => {
-      if (h.name.toLowerCase().includes(q)) return true;
-      return h.members.some((m) => m.name.toLowerCase().includes(q));
-    });
-  }, [households, searchQuery]);
-
   const editingHousehold = editingId
     ? households.find((h) => h.id === editingId) ?? null
     : null;
+  const currentHousehold = (defaultHouseholdId
+    ? households.find((household) => household.id === defaultHouseholdId) ?? null
+    : null) ?? households[0] ?? null;
 
   return (
     <PageShell>
-      <HouseholdNav />
-      <Card className="mb-4" data-testid="household-control-bar">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="flex-1 min-w-0">
-            <Input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search households..."
-              data-testid="household-search"
-            />
-          </div>
+      <HouseholdNav householdId={currentHousehold?.id} />
+      <PageHeader title="Households" />
+      <SectionNav householdId={currentHousehold?.id} />
+      <div className="mb-4 flex" data-testid="household-control-bar">
+        <div className="w-full sm:w-auto sm:ml-auto">
           <Link to="/household/new">
-            <Button variant="primary">Create Household</Button>
+            <Button variant="primary" className="w-full sm:w-auto">Create Household</Button>
           </Link>
         </div>
-      </Card>
+      </div>
 
       <h2 className="mb-3 text-sm font-medium text-text-secondary">
-        Households ({households.length}){filteredHouseholds.length !== households.length && ` · showing ${filteredHouseholds.length}`}
+        Households ({households.length})
       </h2>
 
       {households.length === 0 ? (
         <EmptyState>No households yet. Create one to get started.</EmptyState>
-      ) : filteredHouseholds.length === 0 ? (
-        <EmptyState>No households match your search.</EmptyState>
       ) : (
         <div className="space-y-1.5" data-testid="household-list">
-          {filteredHouseholds.map((household) => (
+          {households.map((household) => (
             <HouseholdRow
               key={household.id}
               household={household}
-              onClick={() => setEditingId(household.id)}
+              isCurrent={household.id === currentHousehold?.id}
+              onSetCurrent={() => setCurrentHousehold(household.id)}
+              onEdit={() => openEditModal(household.id)}
             />
           ))}
         </div>
@@ -320,8 +427,8 @@ export default function HouseholdList() {
       {editingHousehold && (
         <HouseholdModal
           household={editingHousehold}
-          onChange={updateHousehold}
-          onClose={() => setEditingId(null)}
+          onSave={saveEditedHousehold}
+          onClose={closeEditModal}
           onDelete={() => handleDelete(editingHousehold)}
         />
       )}

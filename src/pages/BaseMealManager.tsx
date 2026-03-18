@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { BaseMeal, MealComponent, Ingredient, RecipeLink, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold, toSentenceCase, normalizeIngredientName } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Select, FieldLabel, EmptyState, Chip, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, Input, Select, FieldLabel, EmptyState, Chip, ConfirmDialog, useConfirm, HouseholdNav, SectionNav } from "../components/ui";
 
 type ComponentRole = MealComponent["role"];
 const COMPONENT_ROLES: ComponentRole[] = ["protein", "carb", "veg", "sauce", "topping"];
@@ -750,6 +750,7 @@ export default function BaseMealManager() {
         subtitle={`Household: ${householdName}`}
         subtitleTo={`/households?edit=${householdId}`}
       />
+      <SectionNav householdId={householdId ?? ""} />
 
       <Card className="mb-4" data-testid="meal-control-bar">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">

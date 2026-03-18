@@ -54,3 +54,17 @@
 - Milestone changes: M5 now includes F052
 - UI spec changes: no new screen; added explicit S006 polish feature mapped to S006
 - Data model changes: none
+
+### 2026-03-18 — Add global-vs-section navigation consistency feature
+- Requestor: product owner
+- Reason: nav hierarchy was ambiguous and mixed global app pages with section-level pages in one row, causing inconsistent wayfinding.
+- Scope: PRD alignment for two-level navigation (global nav + section tabs), consistent placement across pages, and active-state clarity.
+- Files changed: PRD.json
+- Sections changed: features, milestones, implementationOrder, screenToFeatureMap
+- New feature IDs: F053
+- Reopened feature IDs: none
+- Removed/deprecated feature IDs: none
+- Dependency changes: F053 depends on F036
+- Milestone changes: M5 now includes F053
+- UI spec changes: no new screen; added explicit navigation-consistency feature mapped to S001/S003/S005/S006/S008/S010
+- Data model changes: none

@@ -309,7 +309,7 @@ describe("F002: Household list", () => {
     );
 
     expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
-    expect(screen.getByTestId("app-nav")).toBeInTheDocument();
+    expect(screen.getByTestId("global-nav")).toBeInTheDocument();
   });
 
   it("redirects / to stored default household when valid", () => {
@@ -339,7 +339,7 @@ describe("F002: Household list", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByTestId("app-nav")).toBeInTheDocument();
+    expect(screen.getByTestId("global-nav")).toBeInTheDocument();
     expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/household/h2/home");
   });
@@ -366,12 +366,12 @@ describe("F002: Household list", () => {
     saveDefaultHouseholdId("missing-id");
 
     render(
-      <MemoryRouter initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/households"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(screen.getByTestId("app-nav")).toBeInTheDocument();
+    expect(screen.getByTestId("global-nav")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/household/h1/home");
   });
 
@@ -389,7 +389,6 @@ describe("F002: Household list", () => {
   });
 
   it("does not show a household search input", async () => {
-    const user = userEvent.setup();
     localStorage.setItem("onebase-tour-completed", "true");
     saveHouseholds([
       {
@@ -408,7 +407,6 @@ describe("F002: Household list", () => {
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByText("Households"));
     expect(screen.queryByPlaceholderText("Search households...")).not.toBeInTheDocument();
   });
 
@@ -439,12 +437,11 @@ describe("F002: Household list", () => {
     ]);
 
     render(
-      <MemoryRouter initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/households"]}>
         <App />
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByText("Households"));
     const row = screen.getByTestId("household-row-h1");
     await user.click(within(row).getByRole("button", { name: /Edit Family A/i }));
     const link = screen.getByTestId("modal-member-profile-m1");

@@ -29,8 +29,6 @@ export function PageShell({ children }: { children: ReactNode }) {
 /* ---------- Page header ---------- */
 export function PageHeader({
   title,
-  subtitle,
-  subtitleTo,
 }: {
   title: string;
   subtitle?: string;
@@ -39,17 +37,6 @@ export function PageHeader({
   return (
     <div className="mb-8">
       <h1 className="text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">{title}</h1>
-      {subtitle && (
-        <p className="mt-1 text-base text-text-muted">
-          {subtitleTo ? (
-            <Link to={subtitleTo} className="font-medium text-brand hover:underline">
-              {subtitle}
-            </Link>
-          ) : (
-            subtitle
-          )}
-        </p>
-      )}
     </div>
   );
 }
@@ -222,16 +209,116 @@ export function NavBar({
   );
 }
 
-const NAV_ITEMS: { label: string; path: string }[] = [
+const GLOBAL_NAV_ITEMS: { label: string; path: string }[] = [
   { label: "Home", path: "/home" },
   { label: "Weekly planner", path: "/weekly" },
   { label: "Meal planner", path: "/planner" },
   { label: "Grocery list", path: "/grocery" },
   { label: "Rescue mode", path: "/rescue" },
   { label: "Meal history", path: "/history" },
+];
+
+const SECTION_NAV_ITEMS: { label: string; path: string }[] = [
+  { label: "Households", path: "/households" },
   { label: "Ingredients", path: "/ingredients" },
   { label: "Base meals", path: "/meals" },
 ];
+
+function navBaseClass() {
+  return "flex flex-wrap items-center gap-1.5 rounded-md border border-border-light bg-surface px-2 py-2 shadow-card sm:gap-2 sm:px-3";
+}
+
+function buildHouseholdPath(householdId: string | undefined, itemPath: string) {
+  if (itemPath === "/households") {
+    return itemPath;
+  }
+  return householdId ? `/household/${householdId}${itemPath}` : itemPath;
+}
+
+function isGlobalItemActive(currentPath: string, householdId: string | undefined, itemPath: string) {
+  if (!householdId) return false;
+  const prefix = `/household/${householdId}`;
+  if (itemPath === "/home") {
+    return currentPath === `${prefix}/home` || currentPath === prefix || currentPath === `${prefix}/`;
+  }
+  if (itemPath === "/planner") {
+    return currentPath.startsWith(`${prefix}/planner`) || currentPath.startsWith(`${prefix}/meal/`);
+  }
+  return currentPath.startsWith(`${prefix}${itemPath}`);
+}
+
+function isSectionItemActive(currentPath: string, householdId: string | undefined, itemPath: string) {
+  if (itemPath === "/households") {
+    if (currentPath === "/households" || currentPath === "/") {
+      return true;
+    }
+    if (!householdId) return false;
+    return currentPath === `/household/${householdId}`;
+  }
+  if (!householdId) return false;
+  return currentPath.startsWith(`/household/${householdId}${itemPath}`);
+}
+
+export function GlobalNav({ householdId }: { householdId?: string }) {
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  return (
+    <nav
+      className={`${navBaseClass()} mb-6`}
+      data-testid="global-nav"
+      aria-label="Global navigation"
+    >
+      {GLOBAL_NAV_ITEMS.map((item) => {
+        const href = buildHouseholdPath(householdId, item.path);
+        const active = isGlobalItemActive(currentPath, householdId, item.path);
+        return (
+          <Link
+            key={item.path}
+            to={href}
+            className={navLinkClass(active)}
+            aria-current={active ? "page" : undefined}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+export function SectionNav({ householdId }: { householdId?: string }) {
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  return (
+    <div
+      className={`${navBaseClass()} mb-6`}
+      data-testid="section-nav"
+      aria-label="Section tabs"
+    >
+      {SECTION_NAV_ITEMS.map((item) => {
+        const href = buildHouseholdPath(householdId, item.path);
+        const active = isSectionItemActive(currentPath, householdId, item.path);
+        return (
+          <Link
+            key={item.path}
+            to={href}
+            className={navLinkClass(active)}
+            aria-current={active ? "page" : undefined}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------- Backward-compatible global nav alias ---------- */
+export function HouseholdNav({ householdId }: { householdId?: string }) {
+  return <GlobalNav householdId={householdId} />;
+}
 
 function navLinkClass(isActive: boolean) {
   const base =
@@ -241,46 +328,6 @@ function navLinkClass(isActive: boolean) {
     : `${base} text-text-secondary hover:bg-brand-light hover:text-brand`;
 }
 
-export function HouseholdNav({ householdId }: { householdId?: string }) {
-  const location = useLocation();
-  const currentPath = location.pathname;
-  const hasHouseholdScope = Boolean(householdId);
-  const prefix = hasHouseholdScope ? `/household/${householdId}` : "";
-
-  function isActive(itemPath: string) {
-    const full = `${prefix}${itemPath}`;
-    if (itemPath === "/home") {
-      return currentPath === full || currentPath === prefix || currentPath === `${prefix}/`;
-    }
-    return currentPath.startsWith(full);
-  }
-
-  return (
-    <nav
-      className="mb-6 flex flex-wrap items-center gap-1.5 rounded-md border border-border-light bg-surface px-2 py-2 shadow-card sm:gap-2 sm:px-3"
-      data-testid="app-nav"
-    >
-      {hasHouseholdScope &&
-        NAV_ITEMS.map((item) => (
-          <Link
-            key={item.path}
-            to={`${prefix}${item.path}`}
-            className={navLinkClass(isActive(item.path))}
-            aria-current={isActive(item.path) ? "page" : undefined}
-          >
-            {item.label}
-          </Link>
-        ))}
-      <Link
-        to="/households"
-        className={navLinkClass(!hasHouseholdScope && (currentPath === "/" || currentPath === "/households"))}
-        aria-current={!hasHouseholdScope && (currentPath === "/" || currentPath === "/households") ? "page" : undefined}
-      >
-        Households
-      </Link>
-    </nav>
-  );
-}
 
 /* ---------- Form row ---------- */
 export function FormRow({ children }: { children: ReactNode }) {
