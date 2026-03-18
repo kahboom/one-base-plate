@@ -76,6 +76,17 @@ function getMealModal() {
   return screen.getByTestId("meal-modal");
 }
 
+async function expandComponent(
+  user: ReturnType<typeof userEvent.setup>,
+  modal: HTMLElement,
+  index: number,
+) {
+  const toggle = within(modal).getByTestId(`component-toggle-${index}`);
+  if (toggle.getAttribute("aria-expanded") !== "true") {
+    await user.click(toggle);
+  }
+}
+
 async function addMeal(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText("Add meal"));
   return getMealModal();
@@ -111,24 +122,34 @@ describe("F005: Create a base meal from components", () => {
     await user.click(within(modal).getByText("Add component"));
     await user.click(within(modal).getByText("Add component"));
 
-    expect(
-      within(modal).getByText("Components (3)"),
-    ).toBeInTheDocument();
+    expect(within(modal).getAllByTestId(/component-card-/)).toHaveLength(3);
 
     // Select ingredients for each component
-    const ingredientSelects = within(modal).getAllByDisplayValue(
-      "Select ingredient",
+    await expandComponent(user, modal, 0);
+    await user.selectOptions(
+      within(modal).getByTestId("component-card-0").querySelector("select")!,
+      "ing-chicken",
+    );
+    await expandComponent(user, modal, 1);
+    await user.selectOptions(
+      within(modal).getByTestId("component-card-1").querySelector("select")!,
+      "ing-rice",
+    );
+    await expandComponent(user, modal, 2);
+    await user.selectOptions(
+      within(modal).getByTestId("component-card-2").querySelector("select")!,
+      "ing-broccoli",
     );
 
-    await user.selectOptions(ingredientSelects[0]!, "ing-chicken");
-    await user.selectOptions(ingredientSelects[1]!, "ing-rice");
-    await user.selectOptions(ingredientSelects[2]!, "ing-broccoli");
-
     // Set roles for components (second → carb, third → veg)
-    const roleSelects = within(modal).getAllByDisplayValue("protein");
-    // roleSelects[0] is already protein, change others
-    await user.selectOptions(roleSelects[1]!, "carb");
-    await user.selectOptions(roleSelects[2]!, "veg");
+    await user.selectOptions(
+      within(modal).getByTestId("component-card-1").querySelectorAll("select")[1]!,
+      "carb",
+    );
+    await user.selectOptions(
+      within(modal).getByTestId("component-card-2").querySelectorAll("select")[1]!,
+      "veg",
+    );
 
     // Auto-save persists; verify
     const saved = loadHousehold("h-meals")!;
@@ -185,9 +206,9 @@ describe("F005: Remove meal and components", () => {
     renderBaseMealManager("h-meals");
 
     await addMeal(user);
-    await user.click(within(getMealModal()).getByText("Done"));
+    await user.click(within(getMealModal()).getByText("Save meal"));
     await addMeal(user);
-    await user.click(within(getMealModal()).getByText("Done"));
+    await user.click(within(getMealModal()).getByText("Save meal"));
     expect(screen.getByText("Meals (2)")).toBeInTheDocument();
 
     await user.click(screen.getAllByTestId(/^meal-row-/)[0]!);
@@ -208,12 +229,13 @@ describe("F005: Remove meal and components", () => {
 
     await user.click(within(modal).getByText("Add component"));
     await user.click(within(modal).getByText("Add component"));
-    expect(within(modal).getByText("Components (2)")).toBeInTheDocument();
+    expect(within(modal).getAllByTestId(/component-card-/)).toHaveLength(2);
 
-    const removeButtons = within(modal).getAllByText("Remove component");
-    await user.click(removeButtons[0]!);
+    await expandComponent(user, modal, 0);
+    const firstCard = within(modal).getByTestId("component-card-0");
+    await user.click(within(firstCard).getByText("Remove component"));
 
-    expect(within(modal).getByText("Components (1)")).toBeInTheDocument();
+    expect(within(modal).getAllByTestId(/component-card-/)).toHaveLength(1);
   });
 });
 
@@ -248,5 +270,66 @@ describe("F005: Meals persist across re-open", () => {
     expect(within(modal).getByDisplayValue("Roast Chicken Dinner")).toBeInTheDocument();
     expect(within(modal).getByDisplayValue("roast")).toBeInTheDocument();
     expect(within(modal).getByDisplayValue("45")).toBeInTheDocument();
+  });
+});
+
+describe("S007 UX refactor: editor flow hierarchy and actions", () => {
+  it("renders core sections in the new hierarchy", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderBaseMealManager("h-meals");
+
+    const modal = await addMeal(user);
+    const identity = within(modal).getByTestId("meal-identity-section");
+    const structure = within(modal).getByTestId("meal-structure-section");
+    const planning = within(modal).getByTestId("meal-planning-section");
+    const secondary = within(modal).getByTestId("meal-secondary-section");
+
+    const getPos = (el: HTMLElement) =>
+      Array.from(modal.querySelectorAll("*")).indexOf(el);
+
+    expect(getPos(identity)).toBeLessThan(getPos(structure));
+    expect(getPos(structure)).toBeLessThan(getPos(planning));
+    expect(getPos(planning)).toBeLessThan(getPos(secondary));
+  });
+
+  it("keeps components collapsed by default and expandable", async () => {
+    const household = seedHousehold();
+    household.baseMeals = [
+      {
+        id: "meal-collapsed",
+        name: "Collapsed test",
+        components: [{ ingredientId: "ing-chicken", role: "protein", quantity: "300g" }],
+        defaultPrep: "roast",
+        estimatedTimeMinutes: 25,
+        difficulty: "easy",
+        rescueEligible: false,
+        wasteReuseHints: [],
+      },
+    ];
+    saveHousehold(household);
+
+    const user = userEvent.setup();
+    renderBaseMealManager("h-meals");
+    await user.click(screen.getByTestId("meal-row-meal-collapsed"));
+
+    const modal = getMealModal();
+    const toggle = within(modal).getByTestId("component-toggle-0");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(within(modal).getByTestId("add-ingredient-inline")).toBeInTheDocument();
+  });
+
+  it("uses explicit save action text and closes modal", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderBaseMealManager("h-meals");
+
+    const modal = await addMeal(user);
+    expect(within(modal).getByText("Save meal")).toBeInTheDocument();
+    await user.click(within(modal).getByText("Save meal"));
+    expect(screen.queryByTestId("meal-modal")).not.toBeInTheDocument();
   });
 });

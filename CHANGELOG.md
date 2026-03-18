@@ -12,3 +12,31 @@
 - UI spec changes: added S010 Ingredient Manager
 - Data model changes: Ingredient gains source and catalogItemId; added IngredientCatalogItem
 - Notes: ingredient screen should be browse-first and compact; desktop may be table-like but must not become a dense spreadsheet UI
+
+### 2026-03-17 — Reopen Paprika import for scale and parser hardening
+- Requestor: product owner
+- Reason: Paprika import already existed, but large libraries still required overly manual review and parser output still made obvious ingredient mistakes.
+- Scope: PRD alignment for F049, Paprika bulk-review UX, resumable import drafts, ingredient-line parser hardening, audit metadata, and regression coverage.
+- Files changed: PRD.json, src/recipe-parser.ts, src/paprika-parser.ts, src/pages/PaprikaImport.tsx, src/types.ts, tests/f049-bulk-paprika-review.test.tsx, agent-progress.md
+- Sections changed: features, screenToFeatureMap, parser/matching, import session behavior, import mapping metadata, test coverage
+- New feature IDs: none
+- Reopened feature IDs: F049
+- Removed/deprecated feature IDs: none
+- Dependency changes: none
+- Milestone changes: none (F049 remains in M5 after F048)
+- UI spec changes: no new screens; wired F048/F049 into existing S007 and S010 screen mappings
+- Data model changes: added prep metadata and richer import audit fields (quantity value/unit, cleaned ingredient name, prep notes, chosen action, final matched ingredient id) while preserving existing provenance and local-first storage behavior
+
+### 2026-03-18 — Add focused S007 Base Meal Editor UX polish feature
+- Requestor: product owner
+- Reason: Base Meal Editor is functional but still feels like a long admin form; S007 needs a cleaner structure-first meal-building flow without changing core planner/storage behavior.
+- Scope: PRD alignment for S007 UX refactor, compact component editing, alternatives UX clarity, section hierarchy, and calmer action design.
+- Files changed: PRD.json
+- Sections changed: features, milestones, implementationOrder, screenToFeatureMap
+- New feature IDs: F051
+- Reopened feature IDs: none
+- Removed/deprecated feature IDs: none
+- Dependency changes: F051 depends on F038, F035, F033
+- Milestone changes: M5 now includes F051
+- UI spec changes: no new screen; added explicit S007 polish feature mapped to S007
+- Data model changes: none

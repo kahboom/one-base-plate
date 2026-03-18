@@ -129,6 +129,7 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       const user = userEvent.setup();
       await user.click(screen.getByTestId("meal-row-meal1"));
       const modal = screen.getByTestId("meal-modal");
+      await user.click(within(modal).getByTestId("component-toggle-0"));
       expect(within(modal).getByTestId("add-ingredient-inline")).toBeInTheDocument();
     });
 
@@ -138,6 +139,7 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       const user = userEvent.setup();
       await user.click(screen.getByTestId("meal-row-meal1"));
       const modal = screen.getByTestId("meal-modal");
+      await user.click(within(modal).getByTestId("component-toggle-0"));
       await user.click(within(modal).getByTestId("add-ingredient-inline"));
       expect(within(modal).getByTestId("inline-ingredient-form")).toBeInTheDocument();
       expect(within(modal).getByTestId("inline-ingredient-name")).toBeInTheDocument();
@@ -150,6 +152,7 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       const user = userEvent.setup();
       await user.click(screen.getByTestId("meal-row-meal1"));
       const modal = screen.getByTestId("meal-modal");
+      await user.click(within(modal).getByTestId("component-toggle-0"));
       await user.click(within(modal).getByTestId("add-ingredient-inline"));
       await user.type(within(modal).getByTestId("inline-ingredient-name"), "Broccoli");
       await user.selectOptions(within(modal).getByTestId("inline-ingredient-category"), "veg");
@@ -171,6 +174,7 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       const user = userEvent.setup();
       await user.click(screen.getByTestId("meal-row-meal1"));
       const modal = screen.getByTestId("meal-modal");
+      await user.click(within(modal).getByTestId("component-toggle-0"));
       await user.click(within(modal).getByTestId("add-ingredient-inline"));
       await user.type(within(modal).getByTestId("inline-ingredient-name"), "Tofu");
       const inlineForm = within(modal).getByTestId("inline-ingredient-form");
@@ -187,6 +191,7 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       const user = userEvent.setup();
       await user.click(screen.getByTestId("meal-row-meal1"));
       const modal = screen.getByTestId("meal-modal");
+      await user.click(within(modal).getByTestId("component-toggle-0"));
       await user.click(within(modal).getByTestId("add-ingredient-inline"));
       await user.type(within(modal).getByTestId("inline-ingredient-name"), "Rice");
       await user.selectOptions(within(modal).getByTestId("inline-ingredient-category"), "carb");
@@ -272,6 +277,7 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       const user = userEvent.setup();
       await user.click(screen.getByTestId("meal-row-meal1"));
       const modal = screen.getByTestId("meal-modal");
+      await user.click(within(modal).getByTestId("component-toggle-0"));
       await user.click(within(modal).getByTestId("add-ingredient-inline"));
       await user.type(within(modal).getByTestId("inline-ingredient-name"), "Pasta");
       await user.click(within(modal).getByTestId("inline-ingredient-save"));
@@ -287,6 +293,7 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       await user.click(screen.getByTestId("meal-row-meal1"));
       const modal = screen.getByTestId("meal-modal");
       // Create ingredient inline
+      await user.click(within(modal).getByTestId("component-toggle-0"));
       await user.click(within(modal).getByTestId("add-ingredient-inline"));
       await user.type(within(modal).getByTestId("inline-ingredient-name"), "Tofu");
       await user.selectOptions(within(modal).getByTestId("inline-ingredient-category"), "protein");

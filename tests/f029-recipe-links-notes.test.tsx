@@ -112,6 +112,7 @@ describe("F029: Recipe links in Base Meal Editor", () => {
 
     await user.click(screen.getByTestId("meal-row-meal-plain"));
     const modal = screen.getByTestId("meal-modal");
+    await user.click(within(modal).getByTestId("recipe-links-section").querySelector("summary")!);
     const editor = within(modal).getByTestId("recipe-links-editor");
     const labelInput = within(editor).getByTestId("recipe-link-label");
     const urlInput = within(editor).getByTestId("recipe-link-url");
@@ -142,6 +143,7 @@ describe("F029: Recipe links in Base Meal Editor", () => {
 
     await user.click(screen.getByTestId("meal-row-meal-plain"));
     const modal = screen.getByTestId("meal-modal");
+    await user.click(within(modal).getByTestId("recipe-links-section").querySelector("summary")!);
     const editor = within(modal).getByTestId("recipe-links-editor");
 
     // Add first link
@@ -175,6 +177,7 @@ describe("F029: Recipe links in Base Meal Editor", () => {
 
     await user.click(screen.getByTestId("meal-row-meal-basic"));
     const modal = screen.getByTestId("meal-modal");
+    await user.click(within(modal).getByTestId("recipe-links-section").querySelector("summary")!);
 
     // Should start with 2 links
     expect(within(modal).getByTestId("recipe-link-0")).toBeInTheDocument();
@@ -203,6 +206,7 @@ describe("F029: Recipe links in Base Meal Editor", () => {
 
     await user.click(screen.getByTestId("meal-row-meal-plain"));
     const modal = screen.getByTestId("meal-modal");
+    await user.click(within(modal).getByTestId("recipe-links-section").querySelector("summary")!);
     const editor = within(modal).getByTestId("recipe-links-editor");
     await user.type(within(editor).getByTestId("recipe-link-url"), "https://example.com/recipe");
     await user.click(within(editor).getByText("Add link"));
@@ -227,6 +231,7 @@ describe("F029: Notes in Base Meal Editor", () => {
 
     await user.click(screen.getByTestId("meal-row-meal-plain"));
     const modal = screen.getByTestId("meal-modal");
+    await user.click(within(modal).getByTestId("notes-section").querySelector("summary")!);
     const notesArea = within(modal).getByTestId("meal-notes");
     await user.type(notesArea, "Blend toddler sauce smooth");
 
@@ -237,6 +242,7 @@ describe("F029: Notes in Base Meal Editor", () => {
 
   it("persists notes across reopen", async () => {
     seedHousehold();
+    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h-rl/meals"]}>
         <Routes>
@@ -245,8 +251,9 @@ describe("F029: Notes in Base Meal Editor", () => {
       </MemoryRouter>,
     );
 
-    await userEvent.setup().click(screen.getByTestId("meal-row-meal-basic"));
+    await user.click(screen.getByTestId("meal-row-meal-basic"));
     const modal = screen.getByTestId("meal-modal");
+    await user.click(within(modal).getByTestId("notes-section").querySelector("summary")!);
     const notesArea = within(modal).getByTestId("meal-notes") as HTMLTextAreaElement;
     expect(notesArea.value).toBe("Gousto version works well. Blend toddler sauce smooth.");
   });

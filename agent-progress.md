@@ -713,5 +713,74 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Created 37 tests: 8 enhanced parser tests (decimal, fraction, parenthetical, "of", prep suffix, rinsed well, combined, unit field), 5 isInstructionLine tests (asterisk, verbs, long sentences, normal lines, empty), 5 bulk summary/action tests (categorization, deselected exclusion, approve-matched, create-new, ignore-instructions), 3 session persistence tests (save/load, wrong household, clear), 3 review line metadata tests (recipeIndex/recipeName, quantity/unit, instruction detection), 2 compatibility tests (valid draft meals, grocery/planner unaffected), 8 UI tests (summary chips, bulk buttons, filter, recipe labels, pause/resume, session restore, session clear, multi-recipe lines), 2 instruction detection tests (auto-ignore, asterisk notes), 1 audit preservation test (import mappings)
 - Verified: tsc --noEmit passes (pre-existing f035/f036/f042/f043/f045/f048 test errors only), vitest passes (721 tests, 9 pre-existing f035 failures unrelated to F049), all F049 steps satisfied
 
+### F049 (reopened) - Paprika import supports bulk ingredient review, resumable sessions, and robust ingredient-line parsing at scale (2026-03-17)
+- Reopened F049 in `PRD.json` as unfinished (`passes=false`) with expanded acceptance scope for high-volume Paprika imports.
+- Updated F049 steps to require summary-first review, grouped status counts (matched/ambiguous/create-new/ignored), batch actions, resumable import sessions, explicit saved-draft UI state, and stronger parsing/audit requirements.
+- Kept F049 in milestone M5 and in implementation order directly after F048; preserved dependencies and existing Paprika provenance model expectations.
+- Updated screen wiring in `screenToFeatureMap` so `F048` and `F049` map to both `S007` and `S010`.
+- Hardened parser behavior in `src/recipe-parser.ts`:
+  - Added quantity value parsing for decimals, fractions, and mixed fractions.
+  - Preserved unitless quantity counts.
+  - Removed post-quantity `of` phrasing.
+  - Extracted prep/qualifier metadata from parentheticals and trailing comma phrases.
+  - Stripped leading prep descriptors (`grated`, `diced`, etc.) before canonical matching while preserving prep notes.
+  - Preserved compound names and removed qualifier prefixes (e.g., `low-sodium beef broth` → `beef broth` + prep note).
+  - Expanded instruction-line detection for note-like symbol prefixes.
+- Expanded import audit metadata and component metadata:
+  - `MealComponent` now supports `prepNote`.
+  - `ImportMapping` now supports `cleanedIngredientName`, `parsedQuantityValue`, `parsedQuantityUnit`, `prepNotes`, `chosenAction`, and `finalMatchedIngredientId`.
+  - `buildDraftMeal` now writes richer audit fields for `use`, `create`, and `ignore` actions while preserving existing mapping/provenance fields.
+- Refined Paprika bulk review UX in `src/pages/PaprikaImport.tsx`:
+  - Summary chips now reflect matched/ambiguous/create-new/ignored.
+  - Ambiguous filter focuses unresolved unmatched named lines.
+  - Added visible import session save status text ("Saved to draft ...") in select/review steps.
+  - Preserved resume and back-out behavior via import session persistence.
+  - Added per-line state chips for ignored/unresolved/create-new clarity.
+- Updated `CHANGELOG.md` with a new 2026-03-17 entry explaining why Paprika import was reopened despite prior availability.
+- Expanded F049 tests in `tests/f049-bulk-paprika-review.test.tsx`:
+  - Added required parser cases: quinoa parenthetical+prep, salt with `of`, decimal water, lime with prep phrase, grated Parmesan, low-sodium beef broth, diced tomatoes, cannellini beans, olive oil, and mixed fractions.
+  - Updated bulk summary assertions for matched/ambiguous/create-new/ignored model.
+  - Added saved-state visibility coverage and pause/resume persistence assertion.
+  - Added end-to-end style compatibility assertion that imported draft components still reference valid ingredient ids.
+  - Added richer audit assertions for parsed quantity/unit, chosen action, and final matched id.
+- Verification:
+  - `npm run test -- tests/f049-bulk-paprika-review.test.tsx tests/f048-paprika-import.test.tsx` passes (78 tests).
+  - `npm run test` still reports pre-existing failures in `tests/f035-delete-confirmation.test.tsx` (9 failures), unrelated to Paprika import changes.
+
+### PRD import-priority rewrite - F049/F050 scope realignment (2026-03-18)
+- Updated `PRD.json` so recipe import is explicitly treated as a high-priority product problem (manual cleanup reduction at scale), not only parser correctness.
+- Refined feature boundaries:
+  - `F048` now focuses on Paprika archive ingest, metadata/provenance retention, duplicate meal handling, and draft creation entry into ingredient-resolution review.
+  - `F049` now focuses on import-quality gates: non-ingredient suppression, normalization before matching, quantity/unit stripping for matching while preserving audit data, improved fuzzy suggestions with confidence levels, and blocking draft creation until unresolved lines are handled or intentionally ignored.
+  - Added new `F050` (`P0`, `passes=false`, depends on `F049`) for Bulk Import Resolution UX: unresolved count visibility, grouped repeated unresolved names, apply-one-resolution-to-all occurrences, status filters (unresolved/ignored/matched/low-confidence), exceptions-only review, resumable progress, and duplicate-prevention safeguards.
+- Reordered and rewired planning metadata so import cleanup remains the active stream:
+  - Added `F050` to milestone `M5`.
+  - Inserted `F050` immediately after `F049` in `implementationOrder` and before unrelated nav/shell backlog.
+  - Added `F050` to `screenToFeatureMap` for `S007` and `S010`.
+- Captured behavior already present in app but previously under-specified in PRD (saved-session clarity, unresolved-focused review semantics, and import resolution safety expectations) so spec and current workflow are aligned.
+- Rationale: current bulk Paprika imports still require too much manual intervention, so import cleanup and grouped bulk resolution are now explicit near-term priorities.
+
+### F051 - Base Meal Editor (S007) focused UX refactor in place (2026-03-18)
+- Added new S007-specific UX feature `F051` to `PRD.json` and mapped it to `S007`; included in milestone `M5` and implementation order for explicit tracking.
+- Updated `CHANGELOG.md` with a dedicated 2026-03-18 PRD-alignment entry documenting the new S007 polish feature scope.
+- Refactored `src/pages/BaseMealManager.tsx` in place (no parallel editor) into a clearer meal-building flow:
+  - Sticky modal header with prominent meal title and summary chips (time, difficulty, rescue eligibility).
+  - Clear section hierarchy with explicit order and test IDs: identity, structure/components, planning metadata, and secondary references.
+  - Components are compact cards collapsed by default with summary lines; expand on demand for editing.
+  - Alternatives UX now shows default ingredient clearly, renders alternatives as visible chips, and uses an explicit add-alternative searchable/selectable picker.
+  - Inline ingredient creation remains available inside component editing and still auto-selects the created ingredient.
+  - Recipe links, notes, and image editing moved into lower-priority collapsible sections.
+  - Action clarity improved with sticky footer and explicit primary action text (`Save meal`), while destructive action is visually de-emphasized and confirmation flow preserved.
+- Updated S007-adjacent tests for the new editor behavior:
+  - `tests/f005-base-meals.test.tsx`: adapted component interactions to collapsed cards and added coverage for section hierarchy, collapsed-by-default behavior, and explicit save action closing.
+  - `tests/f028-multi-protein.test.tsx`: adapted alternatives assertions to expanded component cards and new alternatives UI selectors.
+  - `tests/f029-recipe-links-notes.test.tsx`: adapted to collapsible recipe-links and notes sections.
+  - `tests/f037-photos.test.tsx`: adapted meal image assertions to collapsible image section.
+  - `tests/f038-inline-ingredient.test.tsx`: adapted inline ingredient flow to expand component editor first.
+  - `tests/f025-styling.test.tsx`: updated field-label expectation (`Meal name`).
+- Verification:
+  - `npm run test -- tests/f005-base-meals.test.tsx tests/f028-multi-protein.test.tsx tests/f029-recipe-links-notes.test.tsx tests/f037-photos.test.tsx tests/f038-inline-ingredient.test.tsx tests/f025-styling.test.tsx` passes (78 tests).
+  - `ReadLints` reports no linter errors on touched files.
+
 ## Next Task
-- All features complete! No remaining tasks with passes=false.
+- `F049` remains the immediate next incomplete feature in PRD order (`passes=false`, dependency `F048` satisfied), with `F050` queued directly after it to keep implementation focused on bulk import cleanup and resolution UX.

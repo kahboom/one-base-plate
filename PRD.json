@@ -1429,7 +1429,7 @@
         "Store component-level metadata for imported meals, including role, optional quantity and unit, original source line, match type, and optional confidence.",
         "During import review, preserve each parsed ingredient line as an explicit mapping record instead of discarding the import decision after save.",
         "Support imported ingredient match outcomes of use existing ingredient, create new ingredient, or ignore, and persist that result with the imported meal draft.",
-        "Allow the user to review imported recipes in bulk, including import-all, import-selected, or import-by-category flows before saving draft meals.",
+        "Allow the user to prepare Paprika intake in bulk, including import-all, import-selected, or import-by-category recipe selection before entering ingredient-resolution review.",
         "Create reviewable draft base meals with mapped components, recipe links, retained Paprika metadata, and optional notes instead of blindly auto-saving finished meals.",
         "Detect duplicate imported meals and duplicate ingredient matches using normalized lowercase rules and offer skip, merge, or keep-both review actions where appropriate.",
         "Show imported recipe provenance and retained timing metadata on the saved base meal detail screen in a lightweight way that does not dominate the page.",
@@ -1452,18 +1452,22 @@
       "phase": 2,
       "priority": "P0",
       "category": "functional",
-      "description": "Paprika import supports bulk ingredient review and robust ingredient-line parsing",
+      "description": "Paprika import quality gates minimize manual cleanup for large imports through stronger parsing, normalization, and match confidence",
       "steps": [
-        "Replace recipe-by-recipe mandatory review with a bulk import review workflow that summarizes matched, ambiguous, create-new, and ignored ingredient lines across the selected Paprika recipes.",
-        "Allow the user to review unresolved ingredient matches in bulk rather than stepping through every recipe one at a time.",
-        "Support bulk actions such as approve all exact matches, create all clearly new ingredients, ignore all instruction-like lines, and review only ambiguous lines.",
-        "Persist import session progress so backing out of review does not silently discard all previous work.",
-        "Allow the user to pause an import session and resume it later from the same review state.",
-        "Improve ingredient-line parsing for common recipe patterns including leading quantities, decimal quantities, fractions, optional parenthetical notes, preparation suffixes, and 'of' phrasing.",
-        "Correctly extract ingredient names from lines such as '1 cup quinoa (any color), rinsed well', '1 pinch of salt', '1.5 cups of water', and '1 lime, zested and squeezed'.",
-        "Detect and ignore instruction or note lines that are not ingredients, including lines beginning with symbols such as '*', imperative verb phrases, and unusually long freeform sentences.",
-        "Preserve raw ingredient lines, parsed name, parsed quantity, parsed unit, and final review action for later auditing and re-editing.",
-        "Verify bulk-reviewed Paprika imports still produce compatible draft base meals, ingredient links, grocery behavior, and local-first persistence."
+        "Treat import success as a product-quality target: large Paprika imports are not complete unless manual ingredient cleanup is substantially reduced versus per-line intervention.",
+        "Normalize parsed ingredient strings before matching using canonical lowercase rules plus punctuation cleanup, pluralization normalization, spacing collapse, common abbreviation normalization, and quantity/unit token cleanup.",
+        "Strip quantities and units before ingredient-name matching while preserving parsed quantity value and parsed unit for component data and import audit records.",
+        "Ignore non-ingredient lines during parsing and review candidate generation, including section headers, subheadings, notes, and lines such as 'ingredients for filling' and 'other ingredients'.",
+        "Detect and ignore instruction-like lines that are not ingredients, including symbol-prefixed notes, imperative cooking phrases, and long freeform instructional text.",
+        "Support robust quantity parsing for decimals, fractions, mixed fractions, unitless counts, parenthetical notes, preparation descriptors, and post-quantity 'of' phrasing cleanup.",
+        "Correctly parse ingredient names from lines such as '1 cup quinoa (any color), rinsed well', '1 pinch of salt', '1.5 cups of water', '1 lime, zested and squeezed', '1/2 cup grated Parmesan', and '4 cups low-sodium beef broth'.",
+        "Strip preparation descriptors like grated, shredded, chopped, diced, minced, sliced, crushed, zested, peeled, rinsed, and drained before canonical matching while preserving prep metadata.",
+        "Preserve compound ingredient names such as beef broth, chicken broth, olive oil, soy sauce, parmesan cheese, diced tomatoes, and cannellini beans during matching instead of collapsing to broad nouns.",
+        "Improve fuzzy and alias matching quality for common pantry items, spices, cheeses, herbs, sweeteners, and frequent household variants while preserving household-first matching priority.",
+        "Produce suggested matches with explicit confidence levels (for example exact/strong/low-confidence) so low-confidence matches can be reviewed before save.",
+        "Preserve raw ingredient lines, parsed quantity value, parsed quantity unit, cleaned ingredient name, prep notes, match type, confidence level, chosen action, and final matched ingredient id for later auditing and re-editing.",
+        "Prevent creating draft meals from the import batch until unresolved ingredient lines are either resolved to an explicit action or intentionally ignored.",
+        "Verify the improved flow still preserves MealComponent and ImportedIngredientMatch-compatible metadata, respects duplicate handling and canonical lowercase storage, and remains compatible with planner, grocery list, and local-first storage."
       ],
       "passes": true,
       "dependencies": [
@@ -1472,6 +1476,60 @@
       "acceptanceRefs": [
         "S007",
         "S010"
+      ]
+    },
+    {
+      "id": "F050",
+      "phase": 2,
+      "priority": "P0",
+      "category": "functional",
+      "description": "Paprika bulk import resolution UX groups repeated unresolved ingredients and enables fast, safe exception-first review",
+      "steps": [
+        "Provide a bulk ingredient-resolution table or list for Paprika imports with unresolved count visibility and grouped status counts for unresolved, ignored, matched, and low-confidence lines.",
+        "Group repeated unresolved lines by normalized ingredient name so users resolve one grouped issue instead of handling every duplicate line independently.",
+        "Support one-click apply-to-all behavior that applies a chosen resolution to all occurrences sharing the same normalized ingredient name across the selected import set.",
+        "Support line and group actions: match existing ingredient, add from catalog, create new ingredient, and ignore.",
+        "Support batch actions for repeated unresolved groups and for commonly repeated obvious outcomes without forcing per-line review.",
+        "Support review filters for unresolved, ignored, matched, and low-confidence, plus an exceptions-only view that hides already-safe lines.",
+        "Require low-confidence suggestions to remain visible in exceptions views until explicitly accepted, replaced, or ignored.",
+        "Show when mapping progress is saved, persist progress safely, and allow the user to leave and return without losing grouped resolutions or per-line overrides.",
+        "Apply duplicate-prevention safeguards: when a likely existing household or catalog match is available, do not silently create a new noisy duplicate ingredient entry.",
+        "Validate that final import save creates draft base meals only after grouped unresolved items are handled or intentionally ignored, while preserving provenance and import mapping auditability."
+      ],
+      "passes": false,
+      "dependencies": [
+        "F049"
+      ],
+      "acceptanceRefs": [
+        "S007",
+        "S010"
+      ]
+    },
+    {
+      "id": "F051",
+      "phase": 2,
+      "priority": "P1",
+      "category": "ux",
+      "description": "Base Meal Editor (S007) is refactored in place into a structure-first meal-building flow with compact component editing",
+      "steps": [
+        "Refactor the existing Base Meal Editor screen in place so it reads as a meal-building tool instead of a long generic form, without creating a parallel editor.",
+        "Establish a clear section hierarchy in the editor flow: meal identity/header first, components/structure second, planning metadata third, and secondary reference content (recipe links, notes, image) last.",
+        "Render components as compact collapsed rows or cards by default, with concise summaries and expand-on-demand editing so repeated controls are not shown all at once.",
+        "Improve protein alternatives UX by clearly separating the default ingredient from alternatives, rendering alternatives as visible chips/cards, and providing an explicit add-alternative action with searchable/selectable picker behavior.",
+        "Keep inline ingredient creation available while editing components and ensure newly created ingredients are immediately selectable in component and alternative flows.",
+        "Move recipe links, notes, and image editing into lower-priority collapsible sections that remain editable and persistent but no longer dominate the top of the editor.",
+        "Make destructive actions calmer and secondary to save actions while preserving explicit delete confirmation behavior.",
+        "Clarify save behavior with a clear primary save action label and use sticky header/footer treatment (or equivalent) so long editor sessions remain easy to navigate on desktop and mobile.",
+        "Preserve routes, local-first storage behavior, planner compatibility, and existing saved meal data semantics throughout the refactor."
+      ],
+      "passes": false,
+      "dependencies": [
+        "F038",
+        "F035",
+        "F033"
+      ],
+      "acceptanceRefs": [
+        "S007"
       ]
     }
   ],
@@ -1552,7 +1610,9 @@
         "F046",
         "F047",
         "F048",
-        "F049"
+        "F049",
+        "F050",
+        "F051"
       ]
     }
   ],
@@ -1624,6 +1684,8 @@
     "F047",
     "F048",
     "F049",
+    "F050",
+    "F051",
     "F020",
     "F037",
     "F038",
@@ -1997,7 +2059,11 @@
       "F033",
       "F035",
       "F037",
-      "F038"
+      "F038",
+      "F048",
+      "F049",
+      "F050",
+      "F051"
     ],
     "S008": [
       "F011",
@@ -2015,7 +2081,10 @@
       "F043",
       "F044",
       "F045",
-      "F046"
+      "F046",
+      "F048",
+      "F049",
+      "F050"
     ]
   },
   "agentExecutionRules": [

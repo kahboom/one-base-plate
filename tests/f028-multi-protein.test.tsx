@@ -145,11 +145,12 @@ describe("F028: Base Meal Editor alternatives UI", () => {
     // The meal has chicken with tofu as alternative
     await user.click(screen.getByTestId("meal-row-meal-stir-fry"));
     const modal = screen.getByTestId("meal-modal");
-    const altsList = within(modal).getByTestId("alternatives-list");
+    await user.click(within(modal).getByTestId("component-toggle-0"));
+    const altsList = within(modal).getByTestId("alternatives-list-0");
     expect(within(altsList).getByText("Tofu")).toBeInTheDocument();
 
     // Can add a new meal and add alternatives
-    await user.click(within(modal).getByText("Done"));
+    await user.click(within(modal).getByText("Save meal"));
     await user.click(screen.getByText("Add meal"));
     // Should have at least 2 meals now
     expect(screen.getByText("Meals (2)")).toBeInTheDocument();
@@ -168,11 +169,12 @@ describe("F028: Base Meal Editor alternatives UI", () => {
 
     await user.click(screen.getByTestId("meal-row-meal-stir-fry"));
     const modal = screen.getByTestId("meal-modal");
-    const altsList = within(modal).getByTestId("alternatives-list");
+    await user.click(within(modal).getByTestId("component-toggle-0"));
+    const altsList = within(modal).getByTestId("alternatives-list-0");
     expect(within(altsList).getByText("Tofu")).toBeInTheDocument();
 
     // Remove tofu alternative
-    const removeBtn = within(altsList).getByText("x");
+    const removeBtn = within(altsList).getByRole("button", { name: /remove alternative tofu/i });
     await user.click(removeBtn);
 
     // Auto-save persists; verify

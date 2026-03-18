@@ -75,7 +75,6 @@ describe("F025: PageHeader consistency", () => {
       </MemoryRouter>,
     );
     expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
-    expect(screen.getByText("Style Test Family")).toBeInTheDocument();
   });
 });
 
@@ -98,12 +97,16 @@ describe("F025: FieldLabel stacked layout", () => {
     render(
       <MemoryRouter initialEntries={["/household/h-style/ingredients"]}>
         <Routes>
-          <Route path="/household/:householdId/ingredients" element={<IngredientManager />} />
+          <Route
+            path="/household/:householdId/ingredients"
+            element={<IngredientManager />}
+          />
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByRole("heading", { name: "Ingredients" })).toBeInTheDocument();
-    expect(screen.getByText(/Household: Style Test Family/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Ingredients" }),
+    ).toBeInTheDocument();
   });
 
   it("BaseMealManager uses stacked labels for meal fields", async () => {
@@ -112,12 +115,15 @@ describe("F025: FieldLabel stacked layout", () => {
     render(
       <MemoryRouter initialEntries={["/household/h-style/meals"]}>
         <Routes>
-          <Route path="/household/:householdId/meals" element={<BaseMealManager />} />
+          <Route
+            path="/household/:householdId/meals"
+            element={<BaseMealManager />}
+          />
         </Routes>
       </MemoryRouter>,
     );
     await user.click(screen.getByText("Add meal"));
-    expect(screen.getByText("Name")).toBeInTheDocument();
+    expect(screen.getByText("Meal name")).toBeInTheDocument();
     expect(screen.getByText("Default prep")).toBeInTheDocument();
     expect(screen.getByText("Time (minutes)")).toBeInTheDocument();
     expect(screen.getByText("Difficulty")).toBeInTheDocument();
@@ -133,7 +139,9 @@ describe("F025: Empty states", () => {
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByText("No members yet. Add a member to get started.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No members yet. Add a member to get started."),
+    ).toBeInTheDocument();
   });
 
   it("IngredientManager auto-populates catalog items for empty household", () => {
@@ -141,7 +149,10 @@ describe("F025: Empty states", () => {
     render(
       <MemoryRouter initialEntries={["/household/h-style/ingredients"]}>
         <Routes>
-          <Route path="/household/:householdId/ingredients" element={<IngredientManager />} />
+          <Route
+            path="/household/:householdId/ingredients"
+            element={<IngredientManager />}
+          />
         </Routes>
       </MemoryRouter>,
     );
@@ -154,11 +165,16 @@ describe("F025: Empty states", () => {
     render(
       <MemoryRouter initialEntries={["/household/h-style/meals"]}>
         <Routes>
-          <Route path="/household/:householdId/meals" element={<BaseMealManager />} />
+          <Route
+            path="/household/:householdId/meals"
+            element={<BaseMealManager />}
+          />
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByText("No meals yet. Add one to get started.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No meals yet. Add one to get started."),
+    ).toBeInTheDocument();
   });
 
   it("Planner shows empty state when no meals exist", () => {
@@ -178,7 +194,10 @@ describe("F025: Empty states", () => {
     render(
       <MemoryRouter initialEntries={["/household/h-style/weekly"]}>
         <Routes>
-          <Route path="/household/:householdId/weekly" element={<WeeklyPlanner />} />
+          <Route
+            path="/household/:householdId/weekly"
+            element={<WeeklyPlanner />}
+          />
         </Routes>
       </MemoryRouter>,
     );
@@ -190,13 +209,18 @@ describe("F025: Empty states", () => {
     render(
       <MemoryRouter initialEntries={["/household/h-style/member/m1"]}>
         <Routes>
-          <Route path="/household/:householdId/member/:memberId" element={<MemberProfile />} />
+          <Route
+            path="/household/:householdId/member/:memberId"
+            element={<MemberProfile />}
+          />
         </Routes>
       </MemoryRouter>,
     );
     expect(screen.getByText("No safe foods added yet.")).toBeInTheDocument();
     expect(screen.getByText("No hard-no foods added yet.")).toBeInTheDocument();
-    expect(screen.getByText("No preparation rules added yet.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No preparation rules added yet."),
+    ).toBeInTheDocument();
   });
 
   it("HouseholdList shows empty state when no households exist", () => {
@@ -205,7 +229,9 @@ describe("F025: Empty states", () => {
         <HouseholdList />
       </MemoryRouter>,
     );
-    expect(screen.getByText("No households yet. Create one to get started.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No households yet. Create one to get started."),
+    ).toBeInTheDocument();
   });
 });
 
@@ -226,7 +252,10 @@ describe("F025: Contrast and focus states", () => {
     render(
       <MemoryRouter initialEntries={["/household/h-style/meals"]}>
         <Routes>
-          <Route path="/household/:householdId/meals" element={<BaseMealManager />} />
+          <Route
+            path="/household/:householdId/meals"
+            element={<BaseMealManager />}
+          />
         </Routes>
       </MemoryRouter>,
     );

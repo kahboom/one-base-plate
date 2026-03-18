@@ -201,6 +201,7 @@ describe("F037 — Base Meal Manager image input", () => {
     );
     await user.click(screen.getByTestId("meal-row-meal1"));
     const modal = screen.getByTestId("meal-modal");
+    await user.click(within(modal).getByTestId("image-section").querySelector("summary")!);
     expect(within(modal).getByTestId("meal-image-url")).toBeInTheDocument();
   });
 
@@ -217,6 +218,7 @@ describe("F037 — Base Meal Manager image input", () => {
     );
     await user.click(screen.getByTestId("meal-row-meal2"));
     const modal = screen.getByTestId("meal-modal");
+    await user.click(within(modal).getByTestId("image-section").querySelector("summary")!);
     const preview = within(modal).getByTestId("meal-image-preview");
     expect(preview).toHaveAttribute("src", "https://example.com/bowl.jpg");
   });
@@ -235,6 +237,7 @@ describe("F037 — Base Meal Manager image input", () => {
     );
     await user.click(screen.getByTestId("meal-row-meal1"));
     const modal = screen.getByTestId("meal-modal");
+    await user.click(within(modal).getByTestId("image-section").querySelector("summary")!);
     await user.type(within(modal).getByTestId("meal-image-url"), "https://example.com/stir-fry.jpg");
     // Auto-save persists
     const saved = loadHousehold("h1");
@@ -254,6 +257,7 @@ describe("F037 — Base Meal Manager image input", () => {
     );
     await user.click(screen.getByTestId("meal-row-meal1"));
     const modal = screen.getByTestId("meal-modal");
+    await user.click(within(modal).getByTestId("image-section").querySelector("summary")!);
     expect(within(modal).getByTestId("meal-image-upload")).toBeInTheDocument();
   });
 });
@@ -415,6 +419,7 @@ describe("F037 — Mobile readability", () => {
     );
     await user.click(screen.getByTestId("meal-row-meal2"));
     const modal = screen.getByTestId("meal-modal");
+    await user.click(within(modal).getByTestId("image-section").querySelector("summary")!);
     const preview = within(modal).getByTestId("meal-image-preview");
     expect(preview.className).toContain("h-24");
     expect(preview.className).toContain("w-36");
