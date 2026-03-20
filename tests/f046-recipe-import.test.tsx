@@ -345,12 +345,6 @@ describe("RecipeImport page", () => {
 });
 
 describe("Import recipe navigation", () => {
-  it("IngredientManager has Import recipe button", () => {
-    saveHousehold(makeHousehold());
-    renderAt("/household/h-import/ingredients");
-    expect(screen.getByTestId("import-recipe-btn")).toBeInTheDocument();
-  });
-
   it("BaseMealManager has Import recipe button", () => {
     saveHousehold(makeHousehold());
     renderAt("/household/h-import/meals");

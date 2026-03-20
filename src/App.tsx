@@ -14,6 +14,7 @@ import RescueMode from "./pages/RescueMode";
 import MealHistory from "./pages/MealHistory";
 import RecipeImport from "./pages/RecipeImport";
 import PaprikaImport from "./pages/PaprikaImport";
+import Settings from "./pages/Settings";
 import { loadHouseholds, loadDefaultHouseholdId } from "./storage";
 
 function DefaultRoute() {
@@ -49,6 +50,7 @@ function App() {
         <Route path="history" element={<MealHistory />} />
         <Route path="import-recipe" element={<RecipeImport />} />
         <Route path="import-paprika" element={<PaprikaImport />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>
   );

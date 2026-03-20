@@ -366,18 +366,10 @@ describe("F048 - Paprika import UI", () => {
     expect(screen.getByTestId("paprika-error")).toBeInTheDocument();
   });
 
-  it("Import Paprika button exists in IngredientManager", () => {
+  it("Import Paprika button exists on Settings", () => {
     const h = makeHousehold();
     saveHousehold(h);
-    renderAt("/household/h-paprika/ingredients");
-
-    expect(screen.getByTestId("import-paprika-btn")).toBeInTheDocument();
-  });
-
-  it("Import Paprika button exists in BaseMealManager", () => {
-    const h = makeHousehold();
-    saveHousehold(h);
-    renderAt("/household/h-paprika/meals");
+    renderAt("/household/h-paprika/settings");
 
     expect(screen.getByTestId("import-paprika-btn")).toBeInTheDocument();
   });

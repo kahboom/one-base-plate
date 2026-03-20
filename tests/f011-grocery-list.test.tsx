@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 import type { Household, BaseMeal, Ingredient, HouseholdMember, DayPlan, WeeklyPlan } from "../src/types";
 import { saveHousehold } from "../src/storage";
 import { generateGroceryList } from "../src/planner";
@@ -134,9 +135,9 @@ describe("F011: generateGroceryList engine", () => {
     ];
     const list = generateGroceryList(days, [mealPasta, mealRice], ingredients);
     const chicken = list.find((i) => i.name === "chicken");
-    expect(chicken!.usedInMeals).toEqual(["Pasta with chicken"]);
+    expect(chicken!.usedInMeals).toEqual([{ id: "meal-pasta", name: "Pasta with chicken" }]);
     const rice = list.find((i) => i.name === "rice");
-    expect(rice!.usedInMeals).toEqual(["Rice with salmon"]);
+    expect(rice!.usedInMeals).toEqual([{ id: "meal-rice", name: "Rice with salmon" }]);
   });
 
   it("shows no quantity label for single-use ingredients", () => {
@@ -216,8 +217,27 @@ describe("F011: GroceryList page renders grouped list", () => {
     renderGroceryList("h-grocery");
 
     const chickenItem = screen.getByTestId("grocery-item-ing-chicken");
-    const mealLink = within(chickenItem).getByTestId("meal-link-ing-chicken");
+    const mealLink = within(chickenItem).getByTestId("meal-link-ing-chicken-meal-pasta");
     expect(mealLink).toHaveTextContent("Pasta with chicken");
+    expect(mealLink).toHaveAttribute("href", "/household/h-grocery/meal/meal-pasta");
+  });
+
+  it("navigates to meal detail when recipe link is clicked", async () => {
+    const plan = makePlan([
+      { day: "Monday", baseMealId: "meal-pasta", variants: [] },
+    ]);
+    seedHousehold(plan);
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/household/h-grocery/grocery"]}>
+        <Routes>{householdLayoutRouteBranch}</Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByTestId("grocery-categories");
+    await user.click(screen.getByTestId("meal-link-ing-chicken-meal-pasta"));
+
+    expect(await screen.findByRole("heading", { name: "Pasta with chicken" })).toBeInTheDocument();
   });
 });
 

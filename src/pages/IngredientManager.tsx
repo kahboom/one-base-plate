@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import type { Ingredient, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold, toSentenceCase, normalizeIngredientName } from "../storage";
 import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from "../catalog";
@@ -517,12 +517,6 @@ export default function IngredientManager() {
             </Select>
           </FieldLabel>
           <Button onClick={addIngredient}>Add ingredient</Button>
-          <Link to={`/household/${householdId}/import-recipe`}>
-            <Button data-testid="import-recipe-btn">Import recipe</Button>
-          </Link>
-          <Link to={`/household/${householdId}/import-paprika`}>
-            <Button data-testid="import-paprika-btn">Import Paprika</Button>
-          </Link>
         </div>
       </Card>
 

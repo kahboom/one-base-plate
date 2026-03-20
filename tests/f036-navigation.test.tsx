@@ -62,7 +62,7 @@ const GLOBAL_NAV_LINKS = [
   "Rescue mode",
   "Meal history",
 ];
-const SECTION_LINKS = ["All households", "Ingredients", "Base meals"];
+const SECTION_LINKS = ["All households", "Ingredients", "Base meals", "Settings"];
 
 function renderRoute(path: string) {
   return render(
@@ -154,6 +154,15 @@ describe("F036: Consistent navigation across all household screens", () => {
       }
     });
 
+    it("Settings page has all global nav links", () => {
+      seedHousehold();
+      renderRoute("/household/h-nav/settings");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      for (const label of GLOBAL_NAV_LINKS) {
+        expect(within(nav).getByText(label)).toBeInTheDocument();
+      }
+    });
+
     it("Meal history page has all global nav links", () => {
       seedHousehold();
       renderRoute("/household/h-nav/history");
@@ -190,6 +199,7 @@ describe("F036: Consistent navigation across all household screens", () => {
       "/household/h-nav/ingredients",
       "/household/h-nav/meals",
       "/household/h-nav/meal/meal1",
+      "/household/h-nav/settings",
       "/household/h-nav",
     ])("secondary nav on %s", (path) => {
       seedHousehold();
@@ -215,6 +225,13 @@ describe("F036: Consistent navigation across all household screens", () => {
       seedHousehold();
       renderRoute("/household/h-nav/meal/meal1");
       const link = within(screen.getByTestId("section-nav")).getByText("Base meals");
+      expect(link).toHaveAttribute("aria-current", "page");
+    });
+
+    it("Settings marks Settings as active in secondary nav", () => {
+      seedHousehold();
+      renderRoute("/household/h-nav/settings");
+      const link = within(screen.getByTestId("section-nav")).getByText("Settings");
       expect(link).toHaveAttribute("aria-current", "page");
     });
 

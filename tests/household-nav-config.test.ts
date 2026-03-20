@@ -11,6 +11,7 @@ describe("householdNavConfig", () => {
 
   it("buildHouseholdPath maps global segments under household", () => {
     expect(buildHouseholdPath(hid, "/weekly")).toBe(`${prefix}/weekly`);
+    expect(buildHouseholdPath(hid, "/settings")).toBe(`${prefix}/settings`);
     expect(buildHouseholdPath(hid, "/households")).toBe("/households");
   });
 
@@ -35,5 +36,10 @@ describe("householdNavConfig", () => {
     expect(isSecondaryNavItemActive(`${prefix}/meals`, hid, "/meals")).toBe(true);
     expect(isSecondaryNavItemActive(`${prefix}/meal/abc`, hid, "/meals")).toBe(true);
     expect(isSecondaryNavItemActive(`${prefix}/ingredients`, hid, "/meals")).toBe(false);
+  });
+
+  it("secondary: Settings active only on settings", () => {
+    expect(isSecondaryNavItemActive(`${prefix}/settings`, hid, "/settings")).toBe(true);
+    expect(isSecondaryNavItemActive(`${prefix}/meals`, hid, "/settings")).toBe(false);
   });
 });

@@ -18,6 +18,7 @@ export const SECONDARY_NAV_ITEMS = [
   { label: "All households", path: "/households" },
   { label: "Ingredients", path: "/ingredients" },
   { label: "Base meals", path: "/meals" },
+  { label: "Settings", path: "/settings" },
 ] as const;
 
 export type SecondaryNavPath = (typeof SECONDARY_NAV_ITEMS)[number]["path"];
@@ -73,6 +74,9 @@ export function isSecondaryNavItemActive(
       currentPath.startsWith(`${prefix}/meals`) ||
       currentPath.startsWith(`${prefix}/meal/`)
     );
+  }
+  if (itemPath === "/settings") {
+    return currentPath.startsWith(`${prefix}/settings`);
   }
   return false;
 }

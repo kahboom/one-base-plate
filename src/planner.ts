@@ -739,8 +739,13 @@ export function rankWeeklySuggestedMeals(
   });
 }
 
+export interface GroceryMealRef {
+  id: string;
+  name: string;
+}
+
 export interface GroceryListItem extends GroceryItem {
-  usedInMeals: string[];
+  usedInMeals: GroceryMealRef[];
 }
 
 const CATEGORY_ORDER: IngredientCategory[] = [
@@ -752,7 +757,7 @@ export function generateGroceryList(
   meals: BaseMeal[],
   ingredients: Ingredient[],
 ): GroceryListItem[] {
-  const itemMap = new Map<string, { quantity: number; mealNames: Set<string> }>();
+  const itemMap = new Map<string, { quantity: number; mealIds: Set<string> }>();
 
   for (const day of days) {
     const meal = meals.find((m) => m.id === day.baseMealId);
@@ -764,9 +769,9 @@ export function generateGroceryList(
         const existing = itemMap.get(id);
         if (existing) {
           existing.quantity += 1;
-          existing.mealNames.add(meal.name);
+          existing.mealIds.add(meal.id);
         } else {
-          itemMap.set(id, { quantity: 1, mealNames: new Set([meal.name]) });
+          itemMap.set(id, { quantity: 1, mealIds: new Set([meal.id]) });
         }
       }
     }
@@ -781,7 +786,12 @@ export function generateGroceryList(
       category: ing?.category ?? "pantry",
       quantity: data.quantity > 1 ? `×${data.quantity}` : "",
       owned: false,
-      usedInMeals: [...data.mealNames],
+      usedInMeals: [...data.mealIds]
+        .map((mealId) => {
+          const m = meals.find((mm) => mm.id === mealId);
+          return { id: mealId, name: m?.name ?? mealId };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name)),
     });
   }
 
@@ -842,7 +852,10 @@ export function formatPlanForExport(
       lines.push(`  ${category.charAt(0).toUpperCase() + category.slice(1)}:`);
       for (const item of catItems) {
         const qty = item.quantity ? ` ${item.quantity}` : "";
-        const meals_used = item.usedInMeals.length > 0 ? ` (${item.usedInMeals.join(", ")})` : "";
+        const meals_used =
+          item.usedInMeals.length > 0
+            ? ` (${item.usedInMeals.map((m) => m.name).join(", ")})`
+            : "";
         lines.push(`    - ${item.name}${qty}${meals_used}`);
       }
     }

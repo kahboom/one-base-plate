@@ -13,6 +13,7 @@ import MealHistory from "../src/pages/MealHistory";
 import MemberProfile from "../src/pages/MemberProfile";
 import RecipeImport from "../src/pages/RecipeImport";
 import PaprikaImport from "../src/pages/PaprikaImport";
+import Settings from "../src/pages/Settings";
 
 /** Mirrors `App.tsx` household branch for MemoryRouter tests */
 export const householdLayoutRouteBranch = (
@@ -30,5 +31,6 @@ export const householdLayoutRouteBranch = (
     <Route path="history" element={<MealHistory />} />
     <Route path="import-recipe" element={<RecipeImport />} />
     <Route path="import-paprika" element={<PaprikaImport />} />
+    <Route path="settings" element={<Settings />} />
   </Route>
 );

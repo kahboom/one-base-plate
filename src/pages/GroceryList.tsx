@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import type { Household, WeeklyPlan, IngredientCategory } from "../types";
 import { loadHousehold, toSentenceCase } from "../storage";
 import { generateGroceryList, type GroceryListItem } from "../planner";
@@ -177,14 +177,15 @@ export default function GroceryList() {
                       )}
                     </div>
                     <div className="ml-9 flex flex-wrap gap-1 sm:ml-0">
-                      {item.usedInMeals.map((mealName) => (
-                        <span
-                          key={mealName}
-                          className="text-xs text-text-muted"
-                          data-testid={`meal-link-${item.ingredientId}`}
+                      {item.usedInMeals.map((meal) => (
+                        <Link
+                          key={meal.id}
+                          to={`/household/${householdId}/meal/${meal.id}`}
+                          className="text-xs text-brand hover:underline"
+                          data-testid={`meal-link-${item.ingredientId}-${meal.id}`}
                         >
-                          {mealName}
-                        </span>
+                          {meal.name}
+                        </Link>
                       ))}
                     </div>
                   </li>

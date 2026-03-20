@@ -819,9 +819,6 @@ export default function BaseMealManager() {
           <Link to={`/household/${householdId}/import-recipe`}>
             <Button data-testid="import-recipe-btn">Import recipe</Button>
           </Link>
-          <Link to={`/household/${householdId}/import-paprika`}>
-            <Button data-testid="import-paprika-btn">Import Paprika</Button>
-          </Link>
         </div>
       </Card>
 

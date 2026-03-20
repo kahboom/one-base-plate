@@ -2,13 +2,28 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
-import type { Household } from "../src/types";
+import type { Household, Ingredient } from "../src/types";
 import { saveHousehold, loadHousehold } from "../src/storage";
 import { MASTER_CATALOG } from "../src/catalog";
 import IngredientManager from "../src/pages/IngredientManager";
+import { DEFAULT_INCREMENTAL_PAGE_SIZE } from "../src/hooks/useIncrementalList";
 import { loadAllIngredientListRows } from "./incremental-load-helpers";
 
 const CATALOG_SIZE = MASTER_CATALOG.length;
+
+/** Unique names so catalog merge still yields a list larger than one incremental page. */
+function manyExtraIngredients(count: number): Ingredient[] {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `bulk-${i}`,
+    name: `bulk ingredient ${String(i).padStart(4, "0")}`,
+    category: "pantry",
+    tags: [],
+    shelfLifeHint: "",
+    freezerFriendly: false,
+    babySafeWithAdaptation: false,
+    source: "manual",
+  }));
+}
 
 function seedHousehold(): Household {
   const household: Household = {
@@ -117,6 +132,30 @@ describe("F004: Tag ingredients", () => {
     await user.click(removeBtn);
 
     expect(within(modal).queryByTestId("tag-mashable")).not.toBeInTheDocument();
+  });
+});
+
+describe("F004: Incremental ingredient list", () => {
+  it("renders one page of rows then load more reveals more", async () => {
+    const household = seedHousehold();
+    household.ingredients = manyExtraIngredients(55);
+    saveHousehold(household);
+
+    const user = userEvent.setup();
+    renderIngredientManager("h-ing");
+
+    const total = loadHousehold("h-ing")!.ingredients.length;
+    expect(total).toBeGreaterThan(DEFAULT_INCREMENTAL_PAGE_SIZE);
+
+    const list = screen.getByTestId("ingredient-list");
+    const rowButtons = () =>
+      within(list).getAllByRole("button", { name: /^Edit / });
+
+    expect(rowButtons()).toHaveLength(DEFAULT_INCREMENTAL_PAGE_SIZE);
+
+    await user.click(screen.getByTestId("ingredient-list-load-more"));
+
+    expect(rowButtons()).toHaveLength(Math.min(DEFAULT_INCREMENTAL_PAGE_SIZE * 2, total));
   });
 });
 

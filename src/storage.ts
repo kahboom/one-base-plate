@@ -54,6 +54,12 @@ export function clearDefaultHouseholdId(): void {
   localStorage.removeItem(DEFAULT_HOUSEHOLD_KEY);
 }
 
+/** Removes all households and clears the stored default household id. */
+export function clearAllHouseholdsAndDefault(): void {
+  saveHouseholds([]);
+  clearDefaultHouseholdId();
+}
+
 export function exportHouseholdsJSON(householdIds?: string[]): string {
   const all = loadHouseholds();
   const data = householdIds
