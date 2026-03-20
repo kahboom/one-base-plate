@@ -59,7 +59,6 @@ describe("F045: Catalog linkage stored on ingredients", () => {
 
   it("catalog-populated ingredients persist catalogId to storage on save", async () => {
     seedHousehold();
-    const user = userEvent.setup();
     renderPage();
 
     // Auto-save persists; verify

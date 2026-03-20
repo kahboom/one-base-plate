@@ -6,6 +6,7 @@ import type { Household } from "../src/types";
 import { saveHousehold, loadHousehold } from "../src/storage";
 import { MASTER_CATALOG } from "../src/catalog";
 import IngredientManager from "../src/pages/IngredientManager";
+import { loadAllIngredientListRows } from "./incremental-load-helpers";
 
 const CATALOG_SIZE = MASTER_CATALOG.length;
 
@@ -151,6 +152,7 @@ describe("F004: Ingredients persist across re-open", () => {
     ).length;
     const expected = 2 + CATALOG_SIZE - catalogDupes;
     expect(screen.getByText(`Items (${expected})`)).toBeInTheDocument();
+    loadAllIngredientListRows();
     expect(screen.getByText("Oats")).toBeInTheDocument();
     expect(screen.getByText("Salmon")).toBeInTheDocument();
   });

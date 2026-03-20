@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -11,7 +11,7 @@ import {
   buildDraftMeal,
 } from "../src/paprika-parser";
 import type { PaprikaRecipe, PaprikaReviewLine } from "../src/paprika-parser";
-import type { Household, Ingredient, BaseMeal } from "../src/types";
+import type { Household, BaseMeal } from "../src/types";
 
 function makeHousehold(): Household {
   return {
@@ -486,6 +486,36 @@ describe("F048 - Provenance on MealDetail", () => {
     expect(mappings).toBeInTheDocument();
     expect(mappings.textContent).toContain("200g chicken breast");
     expect(mappings.textContent).toContain("1 tbsp soy sauce");
+    expect(screen.getByText("Adjust ingredient links")).toBeInTheDocument();
+    expect(screen.getByTestId("import-mapping-adjust")).toBeInTheDocument();
+  });
+
+  it("does not show post-import adjust when meal has mappings but no provenance", () => {
+    const h = makeHousehold();
+    h.baseMeals = [
+      {
+        id: "m-map-no-prov",
+        name: "Mapped no provenance",
+        components: [],
+        defaultPrep: "",
+        estimatedTimeMinutes: 30,
+        difficulty: "easy",
+        rescueEligible: false,
+        wasteReuseHints: [],
+        importMappings: [
+          {
+            originalLine: "1 tsp salt",
+            parsedName: "salt",
+            action: "ignore",
+            matchType: "ignored",
+          },
+        ],
+      },
+    ];
+    saveHousehold(h);
+    renderAt("/household/h-paprika/meal/m-map-no-prov");
+
+    expect(screen.queryByTestId("import-mapping-adjust")).not.toBeInTheDocument();
   });
 
   it("does not show import mappings when none exist", () => {

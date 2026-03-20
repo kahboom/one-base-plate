@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes } from "react-router-dom";
 import type { Household, BaseMeal, Ingredient, HouseholdMember } from "../src/types";
 import { saveHousehold } from "../src/storage";
 import { generateAssemblyVariants } from "../src/planner";
-import Planner from "../src/pages/Planner";
+import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 const ingredients: Ingredient[] = [
   {
@@ -140,12 +140,7 @@ function seedHousehold(): Household {
 function renderPlanner(householdId: string) {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/planner`]}>
-      <Routes>
-        <Route
-          path="/household/:householdId/planner"
-          element={<Planner />}
-        />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }
@@ -258,10 +253,11 @@ describe("F006: Planner page selects meal and shows variants", () => {
 
     await user.click(screen.getByTestId("selectable-meal-pasta"));
 
-    expect(screen.getByText("Shared base")).toBeInTheDocument();
-    expect(screen.getByText(/Pasta \(carb/i)).toBeInTheDocument();
-    expect(screen.getByText(/Chicken breast \(protein/i)).toBeInTheDocument();
-    expect(screen.getByText(/Broccoli \(veg/i)).toBeInTheDocument();
+    const mealPlan = screen.getByTestId("meal-plan");
+    expect(within(mealPlan).getByText("Shared base")).toBeInTheDocument();
+    expect(within(mealPlan).getByText(/Pasta \(carb/i)).toBeInTheDocument();
+    expect(within(mealPlan).getByText(/Chicken breast \(protein/i)).toBeInTheDocument();
+    expect(within(mealPlan).getByText(/Broccoli \(veg/i)).toBeInTheDocument();
   });
 
   it("shows empty state when no meals exist", () => {

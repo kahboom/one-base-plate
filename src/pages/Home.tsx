@@ -9,15 +9,7 @@ import {
   computePatternScore,
 } from "../planner";
 import MealCard from "../components/MealCard";
-import {
-  PageShell,
-  PageHeader,
-  Card,
-  Section,
-  HouseholdNav,
-  Button,
-  Chip,
-} from "../components/ui";
+import { PageHeader, Card, Section, Button, Chip } from "../components/ui";
 import GuidedTour from "../components/GuidedTour";
 import AppModal from "../components/AppModal";
 import { MealDetailContent } from "./MealDetail";
@@ -157,8 +149,7 @@ export default function Home() {
   }
 
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId ?? ""} />
+    <>
       <GuidedTour />
       <PageHeader
         title="What should we eat tonight?"
@@ -423,6 +414,6 @@ export default function Home() {
           )}
         </div>
       </AppModal>
-    </PageShell>
+    </>
   );
 }

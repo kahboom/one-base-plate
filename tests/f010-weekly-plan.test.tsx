@@ -269,7 +269,6 @@ describe("F010: Weekly Planner page", () => {
     renderWeeklyPlanner("h-weekly");
 
     expect(screen.getByText("Weekly Planner")).toBeInTheDocument();
-    expect(screen.getByText(/Weekly Test Family/)).toBeInTheDocument();
 
     await user.click(screen.getByTestId("generate-btn"));
 

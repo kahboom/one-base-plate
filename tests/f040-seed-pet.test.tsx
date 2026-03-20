@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { Household, HouseholdMember, Ingredient, BaseMeal } from "../src/types";
 import { saveHousehold, loadHousehold, seedIfNeeded } from "../src/storage";
@@ -12,6 +13,7 @@ import {
   generateRescueMeals,
 } from "../src/planner";
 import HouseholdSetup from "../src/pages/HouseholdSetup";
+import HouseholdLayout from "../src/layouts/HouseholdLayout";
 import Planner from "../src/pages/Planner";
 
 const petMember: HouseholdMember = {
@@ -182,19 +184,26 @@ describe("F040: Pet exclusion from explanations", () => {
 });
 
 describe("F040: HouseholdSetup includes pet role option", () => {
-  it("role selector includes 'pet' option", () => {
+  it("role selector includes 'pet' option", async () => {
+    const user = userEvent.setup();
     const household = makeHousehold([{ ...adultMember, id: "m1", name: "Test" }]);
     saveHousehold(household);
 
     render(
       <MemoryRouter initialEntries={["/household/H004"]}>
         <Routes>
-          <Route path="/household/:id" element={<HouseholdSetup />} />
+          <Route path="/household/:householdId" element={<HouseholdLayout />}>
+            <Route index element={<HouseholdSetup />} />
+          </Route>
         </Routes>
       </MemoryRouter>,
     );
 
-    const selects = screen.getAllByRole("combobox");
+    const memberCard = screen.getAllByTestId(/^member-/)[0]!;
+    await user.click(within(memberCard).getByRole("button", { name: "Edit" }));
+
+    const membersSection = screen.getByTestId("members-section");
+    const selects = within(membersSection).getAllByRole("combobox");
     const roleSelect = selects.find((s) => {
       const options = Array.from(s.querySelectorAll("option"));
       return options.some((o) => o.value === "adult");

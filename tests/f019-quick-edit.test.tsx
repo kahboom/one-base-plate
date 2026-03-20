@@ -1,13 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes } from "react-router-dom";
 import type { Household } from "../src/types";
 import { saveHousehold, loadHousehold } from "../src/storage";
-import Planner from "../src/pages/Planner";
-import MemberProfile from "../src/pages/MemberProfile";
-import HouseholdSetup from "../src/pages/HouseholdSetup";
-import Home from "../src/pages/Home";
+import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 function seedHousehold(): Household {
   const household: Household = {
@@ -91,18 +88,7 @@ function seedHousehold(): Household {
 function renderApp(initialPath: string) {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
-      <Routes>
-        <Route path="/household/:householdId/home" element={<Home />} />
-        <Route path="/household/:id" element={<HouseholdSetup />} />
-        <Route
-          path="/household/:householdId/planner"
-          element={<Planner />}
-        />
-        <Route
-          path="/household/:householdId/member/:memberId"
-          element={<MemberProfile />}
-        />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }

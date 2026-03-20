@@ -1,3 +1,17 @@
+### 2026-03-20 — Browse-first Meal + Weekly planner (4/6/8 caps, shared modal, ranking tweak)
+- Requestor: product owner
+- Reason: align tray caps with mobile/tablet/desktop spec; avoid rendering full libraries on Meal Planner; pinned meals should not sit in failure-only deprioritization tier.
+- Scope: `useSuggestedTrayCap` hook (640/1024 breakpoints), shared `BrowseMealsModal`, Meal Planner capped tray + browse parity, `rankWeeklySuggestedMeals` pinned exception for failure-only tier, tighter compact `MealCard`, tests (`planner-suggested-ui`, weekly UI/ranking, `f033`, `f042` matchMedia).
+- Files changed: `src/hooks/useSuggestedTrayCap.ts`, `src/components/planner/BrowseMealsModal.tsx`, `src/pages/WeeklyPlanner.tsx`, `src/pages/Planner.tsx`, `src/planner.ts`, `src/components/MealCard.tsx`, `tests/weekly-planner-suggested-ui.test.tsx`, `tests/planner-suggested-ui.test.tsx`, `tests/weekly-suggested-ranking.test.ts`, `tests/f033-mobile.test.tsx`, `tests/f042-share-plan.test.tsx`, `CHANGELOG.md`
+
+### 2026-03-19 — Weekly Planner capped suggested meals + browse library
+- Requestor: product owner
+- Reason: the suggested-meals tray rendered every base meal, overwhelming large libraries; suggestions were overlap-only and not aligned with learned signals.
+- Scope: `rankWeeklySuggestedMeals` in planner engine, Weekly Planner tray UX (responsive cap, horizontal strip on small viewports), browse-all modal with search, effort filter, and pagination; MealCard `showActionsWhenCompact`; tests and PRD S003 / F054.
+- Files changed: `src/planner.ts`, `src/pages/WeeklyPlanner.tsx`, `src/components/MealCard.tsx`, `tests/setup.ts`, `tests/weekly-suggested-ranking.test.ts`, `tests/weekly-planner-suggested-ui.test.tsx`, `tests/f010-weekly-plan.test.tsx`, `PRD.json`, `CHANGELOG.md`
+- New feature IDs: F054
+- UI spec changes: S003 Weekly Planner (subset tray, browse path, ranking, mobile strip)
+
 ### 2026-03-14 — Revamped navigation and ingredient workflow
 - Requestor: product owner
 - Reason: current ingredient management is too manual and too bulky; household navigation still looks visually weak and out of place

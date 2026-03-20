@@ -6,13 +6,14 @@ import {
   generateAssemblyVariants,
   computeMealOverlap,
   generateMealExplanation,
-  computeOutcomeScore,
+  rankWeeklySuggestedMeals,
   learnCompatibilityPatterns,
-  computePatternScore,
 } from "../planner";
-import type { OverlapResult, MealExplanation, LearnedPatterns } from "../planner";
+import type { MealExplanation, LearnedPatterns } from "../planner";
 import MealCard from "../components/MealCard";
-import { PageShell, PageHeader, Card, Chip, Section, EmptyState, HouseholdNav } from "../components/ui";
+import BrowseMealsModal from "../components/planner/BrowseMealsModal";
+import { useSuggestedTrayCap } from "../hooks/useSuggestedTrayCap";
+import { PageHeader, Card, Chip, Section, EmptyState, Button } from "../components/ui";
 
 export default function Planner() {
   const { householdId } = useParams<{ householdId: string }>();
@@ -20,6 +21,8 @@ export default function Planner() {
   const [selectedMealId, setSelectedMealId] = useState<string>("");
   const [variants, setVariants] = useState<AssemblyVariant[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [browseMealsOpen, setBrowseMealsOpen] = useState(false);
+  const trayCap = useSuggestedTrayCap();
 
   const regenerateVariants = useCallback(
     (h: Household, mealId: string) => {
@@ -57,17 +60,22 @@ export default function Planner() {
     (m) => m.id === selectedMealId,
   );
 
-  const mealOverlaps = useMemo(() => {
-    if (!household) return new Map<string, OverlapResult>();
-    const map = new Map<string, OverlapResult>();
-    for (const meal of household.baseMeals) {
-      map.set(
-        meal.id,
-        computeMealOverlap(meal, household.members, household.ingredients),
-      );
-    }
-    return map;
+  const suggestionRows = useMemo(() => {
+    if (!household || household.baseMeals.length === 0) return [];
+    return rankWeeklySuggestedMeals(
+      household.baseMeals,
+      household.members,
+      household.ingredients,
+      household.mealOutcomes ?? [],
+      household.pinnedMealIds ?? [],
+      [],
+    );
   }, [household]);
+
+  const trayRows = useMemo(
+    () => suggestionRows.slice(0, trayCap),
+    [suggestionRows, trayCap],
+  );
 
   const patterns = useMemo<LearnedPatterns | undefined>(() => {
     if (!household) return undefined;
@@ -76,23 +84,14 @@ export default function Planner() {
     return learnCompatibilityPatterns(outcomes, household.baseMeals, household.members, household.ingredients);
   }, [household]);
 
-  const rankedMeals = useMemo(() => {
-    if (!household) return [];
-    const outcomes = household.mealOutcomes ?? [];
-    return [...household.baseMeals].sort((a, b) => {
-      const overlapA = mealOverlaps.get(a.id)?.score ?? 0;
-      const overlapB = mealOverlaps.get(b.id)?.score ?? 0;
-      const outcomeA = computeOutcomeScore(a.id, outcomes).score;
-      const outcomeB = computeOutcomeScore(b.id, outcomes).score;
-      const patternA = patterns ? computePatternScore(a, patterns, household.members, household.ingredients) : 0;
-      const patternB = patterns ? computePatternScore(b, patterns, household.members, household.ingredients) : 0;
-      return (overlapB + outcomeB + patternB) - (overlapA + outcomeA + patternA);
-    });
-  }, [household, mealOverlaps, patterns]);
-
-  const selectedOverlap = selectedMealId
-    ? mealOverlaps.get(selectedMealId)
-    : undefined;
+  const selectedOverlap = useMemo(() => {
+    if (!selectedMealId || !household) return undefined;
+    const row = suggestionRows.find((r) => r.meal.id === selectedMealId);
+    if (row) return row.overlap;
+    const meal = household.baseMeals.find((m) => m.id === selectedMealId);
+    if (!meal) return undefined;
+    return computeMealOverlap(meal, household.members, household.ingredients);
+  }, [selectedMealId, household, suggestionRows]);
 
   const selectedExplanation = useMemo<MealExplanation | undefined>(() =>
     selectedMeal && household
@@ -123,16 +122,17 @@ export default function Planner() {
     return <p>Household not found.</p>;
   }
 
+  const totalMeals = household.baseMeals.length;
+
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId ?? ""} />
+    <>
       <PageHeader
         title="Meal Planner"
         subtitle={`Household: ${household.name}`}
         subtitleTo={`/households?edit=${householdId}`}
       />
 
-      {household.baseMeals.length === 0 ? (
+      {totalMeals === 0 ? (
         <EmptyState>
           No base meals available.{" "}
           <Link to={`/household/${householdId}/ingredients`} className="font-medium text-brand hover:underline">Add ingredients</Link>{" "}
@@ -141,34 +141,95 @@ export default function Planner() {
           to get started.
         </EmptyState>
       ) : (
-        <Section title="Choose a meal">
-          <div data-testid="meal-card-grid" className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {rankedMeals.map((meal) => {
-              const overlap = mealOverlaps.get(meal.id);
-              const isSelected = meal.id === selectedMealId;
-              return (
-                <div
-                  key={meal.id}
-                  className={`cursor-pointer rounded-lg transition-all ${isSelected ? "outline-2 outline-brand" : ""}`}
-                  onClick={() => handleSelectMeal(meal.id)}
-                  data-testid={`selectable-${meal.id}`}
-                >
-                  <MealCard
-                    meal={meal}
-                    members={household.members}
-                    ingredients={household.ingredients}
-                    overlap={overlap}
-                    outcomes={household.mealOutcomes ?? []}
-                    patterns={patterns}
-                    pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
-                    onPin={() => handleTogglePin(meal.id)}
-                    onOpen={() => handleSelectMeal(meal.id)}
-                  />
-                </div>
-              );
-            })}
+        <Section>
+          <div data-testid="meal-planner-suggested" className="mt-2">
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-text-primary">Suggested meals</h2>
+                <p className="mt-1 text-sm text-text-secondary" data-testid="meal-planner-tray-summary" aria-live="polite">
+                  Top {trayRows.length} of {totalMeals} meal{totalMeals !== 1 ? "s" : ""}
+                </p>
+              </div>
+              <Button
+                type="button"
+                data-testid="meal-planner-browse-all-btn"
+                onClick={() => setBrowseMealsOpen(true)}
+              >
+                Browse all meals
+              </Button>
+            </div>
+            <div
+              data-testid="meal-card-grid"
+              className="mb-6 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch] sm:grid sm:snap-none sm:overflow-visible sm:pb-0 sm:grid-cols-3 lg:grid-cols-4"
+            >
+              {trayRows.map(({ meal, overlap }) => {
+                const isSelected = meal.id === selectedMealId;
+                return (
+                  <div
+                    key={meal.id}
+                    className={`flex h-full min-h-0 min-w-[min(260px,85vw)] max-w-[min(260px,85vw)] shrink-0 snap-start flex-col sm:min-w-0 sm:max-w-none cursor-pointer rounded-lg transition-all ${
+                      isSelected ? "outline-2 outline-brand outline-offset-2" : ""
+                    }`}
+                    onClick={() => handleSelectMeal(meal.id)}
+                    data-testid={`selectable-${meal.id}`}
+                  >
+                    <MealCard
+                      meal={meal}
+                      members={household.members}
+                      ingredients={household.ingredients}
+                      overlap={overlap}
+                      outcomes={household.mealOutcomes ?? []}
+                      patterns={patterns}
+                      pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
+                      onPin={() => handleTogglePin(meal.id)}
+                      onOpen={() => handleSelectMeal(meal.id)}
+                      detailUrl={`/household/${householdId}/meal/${meal.id}`}
+                      compact
+                      showActionsWhenCompact
+                      selected={isSelected}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </Section>
+      )}
+
+      {household && totalMeals > 0 && (
+        <BrowseMealsModal
+          open={browseMealsOpen}
+          onClose={() => setBrowseMealsOpen(false)}
+          rows={suggestionRows}
+          renderMealCard={({ meal, overlap }) => {
+            const isSelected = meal.id === selectedMealId;
+            return (
+              <div
+                className={`cursor-pointer rounded-lg transition-all ${
+                  isSelected ? "outline-2 outline-brand outline-offset-2" : ""
+                }`}
+                onClick={() => handleSelectMeal(meal.id)}
+                data-testid={`browse-selectable-${meal.id}`}
+              >
+                <MealCard
+                  meal={meal}
+                  members={household.members}
+                  ingredients={household.ingredients}
+                  overlap={overlap}
+                  outcomes={household.mealOutcomes ?? []}
+                  patterns={patterns}
+                  pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
+                  onPin={() => handleTogglePin(meal.id)}
+                  onOpen={() => handleSelectMeal(meal.id)}
+                  detailUrl={`/household/${householdId}/meal/${meal.id}`}
+                  compact
+                  showActionsWhenCompact
+                  selected={isSelected}
+                />
+              </div>
+            );
+          }}
+        />
       )}
 
       {selectedMeal && (
@@ -295,6 +356,6 @@ export default function Planner() {
           </Section>
         </Card>
       )}
-    </PageShell>
+    </>
   );
 }

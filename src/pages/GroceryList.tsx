@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import type { Household, WeeklyPlan, IngredientCategory } from "../types";
 import { loadHousehold, toSentenceCase } from "../storage";
 import { generateGroceryList, type GroceryListItem } from "../planner";
-import { PageShell, PageHeader, Card, Button, Chip, EmptyState, HouseholdNav } from "../components/ui";
+import { PageHeader, Card, Button, Chip, EmptyState } from "../components/ui";
 
 const CATEGORY_LABELS: Record<IngredientCategory, string> = {
   protein: "Protein",
@@ -63,15 +63,14 @@ export default function GroceryList() {
 
   if (!plan || items.length === 0) {
     return (
-      <PageShell>
-        <HouseholdNav householdId={householdId ?? ""} />
+      <>
         <PageHeader
           title="Grocery List"
           subtitle={`Household: ${household.name}`}
           subtitleTo={`/households?edit=${householdId}`}
         />
         <EmptyState>No weekly plan saved yet. Generate and save a plan first.</EmptyState>
-      </PageShell>
+      </>
     );
   }
 
@@ -85,8 +84,7 @@ export default function GroceryList() {
   const visibleCount = items.filter((i) => !ownedIds.has(i.ingredientId)).length;
 
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId ?? ""} />
+    <>
       <PageHeader
         title="Grocery List"
         subtitle={`Household: ${household.name}`}
@@ -196,6 +194,6 @@ export default function GroceryList() {
           </Card>
         ))}
       </div>
-    </PageShell>
+    </>
   );
 }

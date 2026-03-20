@@ -1,12 +1,19 @@
 import { useState, useCallback } from "react";
 import type { ReactNode, ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes } from "react";
+import AppModal from "./AppModal";
 import { Link, useParams, useLocation } from "react-router-dom";
+import {
+  GLOBAL_NAV_ITEMS,
+  SECONDARY_NAV_ITEMS,
+  buildHouseholdPath,
+  isGlobalNavItemActive,
+  isSecondaryNavItemActive,
+} from "../nav/householdNavConfig";
 
 /* ---------- App header (OneBasePlate brand) ---------- */
 export function AppHeader() {
-  const { householdId, id } = useParams<{ householdId?: string; id?: string }>();
-  const hId = householdId ?? id;
-  const homeHref = hId ? `/household/${hId}/home` : "/households";
+  const { householdId } = useParams<{ householdId?: string }>();
+  const homeHref = householdId ? `/household/${householdId}/home` : "/households";
   return (
     <header className="mb-6 pb-4 border-b border-border-light">
       <Link to={homeHref} className="text-2xl font-bold tracking-tight text-text-primary hover:text-brand transition-colors">
@@ -29,6 +36,8 @@ export function PageShell({ children }: { children: ReactNode }) {
 /* ---------- Page header ---------- */
 export function PageHeader({
   title,
+  subtitle,
+  subtitleTo,
 }: {
   title: string;
   subtitle?: string;
@@ -37,6 +46,17 @@ export function PageHeader({
   return (
     <div className="mb-8">
       <h1 className="text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">{title}</h1>
+      {subtitle && (
+        <p className="mt-2 text-sm text-text-secondary">
+          {subtitleTo ? (
+            <Link to={subtitleTo} className="font-medium text-brand hover:underline">
+              {subtitle}
+            </Link>
+          ) : (
+            subtitle
+          )}
+        </p>
+      )}
     </div>
   );
 }
@@ -209,69 +229,27 @@ export function NavBar({
   );
 }
 
-const GLOBAL_NAV_ITEMS: { label: string; path: string }[] = [
-  { label: "Home", path: "/home" },
-  { label: "Weekly planner", path: "/weekly" },
-  { label: "Meal planner", path: "/planner" },
-  { label: "Grocery list", path: "/grocery" },
-  { label: "Rescue mode", path: "/rescue" },
-  { label: "Meal history", path: "/history" },
-];
-
-const SECTION_NAV_ITEMS: { label: string; path: string }[] = [
-  { label: "Households", path: "/households" },
-  { label: "Ingredients", path: "/ingredients" },
-  { label: "Base meals", path: "/meals" },
-];
-
 function navBaseClass() {
   return "flex flex-wrap items-center gap-1.5 rounded-md border border-border-light bg-surface px-2 py-2 shadow-card sm:gap-2 sm:px-3";
-}
-
-function buildHouseholdPath(householdId: string | undefined, itemPath: string) {
-  if (itemPath === "/households") {
-    return itemPath;
-  }
-  return householdId ? `/household/${householdId}${itemPath}` : itemPath;
-}
-
-function isGlobalItemActive(currentPath: string, householdId: string | undefined, itemPath: string) {
-  if (!householdId) return false;
-  const prefix = `/household/${householdId}`;
-  if (itemPath === "/home") {
-    return currentPath === `${prefix}/home` || currentPath === prefix || currentPath === `${prefix}/`;
-  }
-  if (itemPath === "/planner") {
-    return currentPath.startsWith(`${prefix}/planner`) || currentPath.startsWith(`${prefix}/meal/`);
-  }
-  return currentPath.startsWith(`${prefix}${itemPath}`);
-}
-
-function isSectionItemActive(currentPath: string, householdId: string | undefined, itemPath: string) {
-  if (itemPath === "/households") {
-    if (currentPath === "/households" || currentPath === "/") {
-      return true;
-    }
-    if (!householdId) return false;
-    return currentPath === `/household/${householdId}`;
-  }
-  if (!householdId) return false;
-  return currentPath.startsWith(`/household/${householdId}${itemPath}`);
 }
 
 export function GlobalNav({ householdId }: { householdId?: string }) {
   const location = useLocation();
   const currentPath = location.pathname;
 
+  if (!householdId) {
+    return null;
+  }
+
   return (
     <nav
-      className={`${navBaseClass()} mb-6`}
+      className={navBaseClass()}
       data-testid="global-nav"
       aria-label="Global navigation"
     >
       {GLOBAL_NAV_ITEMS.map((item) => {
         const href = buildHouseholdPath(householdId, item.path);
-        const active = isGlobalItemActive(currentPath, householdId, item.path);
+        const active = isGlobalNavItemActive(currentPath, householdId, item.path);
         return (
           <Link
             key={item.path}
@@ -287,30 +265,49 @@ export function GlobalNav({ householdId }: { householdId?: string }) {
   );
 }
 
-export function SectionNav({ householdId }: { householdId?: string }) {
+export function SecondaryNav({ householdId }: { householdId?: string }) {
   const location = useLocation();
   const currentPath = location.pathname;
 
+  const items = SECONDARY_NAV_ITEMS.filter(
+    (item) => item.path === "/households" || Boolean(householdId),
+  );
+
   return (
     <div
-      className={`${navBaseClass()} mb-6`}
+      className="border-t border-border-light pt-3"
       data-testid="section-nav"
-      aria-label="Section tabs"
+      aria-label="Secondary navigation"
     >
-      {SECTION_NAV_ITEMS.map((item) => {
-        const href = buildHouseholdPath(householdId, item.path);
-        const active = isSectionItemActive(currentPath, householdId, item.path);
-        return (
-          <Link
-            key={item.path}
-            to={href}
-            className={navLinkClass(active)}
-            aria-current={active ? "page" : undefined}
-          >
-            {item.label}
-          </Link>
-        );
-      })}
+      <div className={`${navBaseClass()} border-dashed bg-bg`}>
+        {items.map((item) => {
+          const href = buildHouseholdPath(householdId, item.path);
+          const active = isSecondaryNavItemActive(currentPath, householdId, item.path);
+          return (
+            <Link
+              key={item.path}
+              to={href}
+              className={navLinkClass(active)}
+              aria-current={active ? "page" : undefined}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** @deprecated Use SecondaryNav; kept for tests and incremental migration */
+export const SectionNav = SecondaryNav;
+
+/** Global + secondary navigation stack (PRD F053) */
+export function HouseholdNavStack({ householdId }: { householdId?: string }) {
+  return (
+    <div className="mb-6 space-y-3">
+      <GlobalNav householdId={householdId} />
+      <SecondaryNav householdId={householdId} />
     </div>
   );
 }
@@ -371,18 +368,15 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-label={title}>
-      <div className="w-full max-w-sm rounded-md border border-border-light bg-surface p-6 shadow-card-hover">
-        <h2 className="mb-2 text-lg font-bold text-text-primary">{title}</h2>
-        <p className="mb-6 text-sm text-text-secondary">{message}</p>
-        <div className="flex gap-3">
-          <Button variant="danger" onClick={onConfirm}>{confirmLabel}</Button>
-          <Button onClick={onCancel}>Cancel</Button>
-        </div>
+    <AppModal open={open} onClose={onCancel} ariaLabel={title} className="max-w-sm p-6">
+      <h2 className="mb-2 text-lg font-bold text-text-primary">{title}</h2>
+      <p className="mb-6 text-sm text-text-secondary">{message}</p>
+      <div className="flex gap-3">
+        <Button variant="danger" onClick={onConfirm}>{confirmLabel}</Button>
+        <Button onClick={onCancel}>Cancel</Button>
       </div>
-    </div>
+    </AppModal>
   );
 }
 

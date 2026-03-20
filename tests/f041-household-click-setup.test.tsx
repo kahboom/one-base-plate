@@ -7,6 +7,7 @@ import { saveHousehold, loadHousehold } from "../src/storage";
 import HouseholdList from "../src/pages/HouseholdList";
 import HouseholdSetup from "../src/pages/HouseholdSetup";
 import Home from "../src/pages/Home";
+import HouseholdLayout from "../src/layouts/HouseholdLayout";
 
 function seedHousehold(): Household {
   const household: Household = {
@@ -40,8 +41,10 @@ function renderApp(path: string) {
       <Routes>
         <Route path="/" element={<HouseholdList />} />
         <Route path="/household/new" element={<HouseholdSetup />} />
-        <Route path="/household/:id" element={<HouseholdSetup />} />
-        <Route path="/household/:householdId/home" element={<Home />} />
+        <Route path="/household/:householdId" element={<HouseholdLayout />}>
+          <Route index element={<HouseholdSetup />} />
+          <Route path="home" element={<Home />} />
+        </Route>
       </Routes>
     </MemoryRouter>,
   );
@@ -156,11 +159,11 @@ describe("F041: Clicking a household navigates to Edit setup; remove Household s
       expect(within(nav).getByText("Home")).toBeInTheDocument();
     });
 
-    it("Households link is present in section tabs", () => {
+    it("All households link is present in secondary nav", () => {
       seedHousehold();
       renderApp("/household/h-041");
       const sectionNav = screen.getByTestId("section-nav");
-      expect(within(sectionNav).getByText("Households")).toBeInTheDocument();
+      expect(within(sectionNav).getByText("All households")).toBeInTheDocument();
     });
   });
 

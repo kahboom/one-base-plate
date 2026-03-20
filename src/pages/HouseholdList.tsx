@@ -11,7 +11,7 @@ import {
   saveDefaultHouseholdId,
   clearDefaultHouseholdId,
 } from "../storage";
-import { PageShell, PageHeader, Card, Button, EmptyState, ConfirmDialog, useConfirm, FieldLabel, Input, Select, HouseholdNav, SectionNav } from "../components/ui";
+import { PageShell, PageHeader, Card, Button, EmptyState, ConfirmDialog, useConfirm, FieldLabel, Input, Select, HouseholdNavStack } from "../components/ui";
 import AppModal from "../components/AppModal";
 
 const ROLE_OPTIONS: MemberRole[] = ["adult", "toddler", "baby", "pet"];
@@ -380,9 +380,8 @@ export default function HouseholdList() {
 
   return (
     <PageShell>
-      <HouseholdNav householdId={currentHousehold?.id} />
+      <HouseholdNavStack householdId={currentHousehold?.id} />
       <PageHeader title="Households" />
-      <SectionNav householdId={currentHousehold?.id} />
       <div className="mb-4 flex" data-testid="household-control-bar">
         <div className="w-full sm:w-auto sm:ml-auto">
           <Link to="/household/new">

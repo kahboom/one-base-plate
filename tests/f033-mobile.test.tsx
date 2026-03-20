@@ -6,10 +6,8 @@ import type { Household } from "../src/types";
 import { saveHousehold } from "../src/storage";
 import HouseholdList from "../src/pages/HouseholdList";
 import HouseholdSetup from "../src/pages/HouseholdSetup";
-import BaseMealManager from "../src/pages/BaseMealManager";
-import Planner from "../src/pages/Planner";
-import WeeklyPlanner from "../src/pages/WeeklyPlanner";
-import Home from "../src/pages/Home";
+import HouseholdLayout from "../src/layouts/HouseholdLayout";
+import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 function seedHousehold(): Household {
   const household: Household = {
@@ -83,7 +81,7 @@ describe("F033: Touch-friendly tap targets", () => {
     render(
       <MemoryRouter initialEntries={["/household/new"]}>
         <Routes>
-          <Route path="/household/:id" element={<HouseholdSetup />} />
+          <Route path="/household/new" element={<HouseholdSetup />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -96,9 +94,7 @@ describe("F033: Touch-friendly tap targets", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h-mobile/meals"]}>
-        <Routes>
-          <Route path="/household/:householdId/meals" element={<BaseMealManager />} />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     await user.click(screen.getByTestId("meal-row-meal-pasta"));
@@ -113,7 +109,7 @@ describe("F033: Responsive page header", () => {
     render(
       <MemoryRouter initialEntries={["/household/new"]}>
         <Routes>
-          <Route path="/household/:id" element={<HouseholdSetup />} />
+          <Route path="/household/new" element={<HouseholdSetup />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -140,32 +136,29 @@ describe("F033: Mobile-friendly card layouts", () => {
       </MemoryRouter>,
     );
     const row = screen.getByTestId("household-row-h1");
-    expect(row.tagName).toBe("BUTTON");
+    expect(row.tagName).toBe("DIV");
     expect(row.className).toContain("min-h-[48px]");
   });
 
-  it("meal planner uses responsive grid for meal cards", () => {
+  it("meal planner uses horizontal strip on small viewports and grid from sm up", () => {
     seedHousehold();
     render(
       <MemoryRouter initialEntries={["/household/h-mobile/planner"]}>
-        <Routes>
-          <Route path="/household/:householdId/planner" element={<Planner />} />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     const grid = screen.getByTestId("meal-card-grid");
-    expect(grid.className).toContain("grid");
-    expect(grid.className).toContain("grid-cols-1");
-    expect(grid.className).toContain("sm:grid-cols-2");
+    expect(grid.className).toContain("flex");
+    expect(grid.className).toContain("overflow-x-auto");
+    expect(grid.className).toContain("sm:grid");
+    expect(grid.className).toContain("sm:grid-cols-3");
   });
 
   it("weekly planner day cards use responsive grid", () => {
     seedHousehold();
     render(
       <MemoryRouter initialEntries={["/household/h-mobile/weekly"]}>
-        <Routes>
-          <Route path="/household/:householdId/weekly" element={<WeeklyPlanner />} />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     const dayCards = screen.getByTestId("day-cards");
@@ -180,12 +173,10 @@ describe("F033: NavBar mobile-friendly wrapping", () => {
     seedHousehold();
     render(
       <MemoryRouter initialEntries={["/household/h-mobile/home"]}>
-        <Routes>
-          <Route path="/household/:householdId/home" element={<Home />} />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
-    const nav = screen.getByRole("navigation");
+    const nav = screen.getByRole("navigation", { name: "Global navigation" });
     expect(nav.textContent).not.toContain("|");
   });
 
@@ -194,11 +185,13 @@ describe("F033: NavBar mobile-friendly wrapping", () => {
     render(
       <MemoryRouter initialEntries={["/household/h-mobile"]}>
         <Routes>
-          <Route path="/household/:id" element={<HouseholdSetup />} />
+          <Route path="/household/:householdId" element={<HouseholdLayout />}>
+            <Route index element={<HouseholdSetup />} />
+          </Route>
         </Routes>
       </MemoryRouter>,
     );
-    const nav = screen.getByRole("navigation");
+    const nav = screen.getByRole("navigation", { name: "Global navigation" });
     expect(nav.textContent).not.toContain("|");
   });
 });
@@ -237,9 +230,7 @@ describe("F033: Weekly strip horizontal scroll on Home", () => {
 
     render(
       <MemoryRouter initialEntries={["/household/h-mobile/home"]}>
-        <Routes>
-          <Route path="/household/:householdId/home" element={<Home />} />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     const strip = screen.getByTestId("weekly-strip");
@@ -255,9 +246,7 @@ describe("F033: Planner interactions work with tap", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h-mobile/planner"]}>
-        <Routes>
-          <Route path="/household/:householdId/planner" element={<Planner />} />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     const selectableCard = screen.getByTestId("selectable-meal-pasta");

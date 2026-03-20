@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { Household } from "../types";
 import { loadHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Chip, HouseholdNav, EmptyState, Section } from "../components/ui";
+import { PageHeader, Card, Chip, EmptyState, Section } from "../components/ui";
 
 const outcomeLabels: Record<string, string> = {
   success: "Worked well",
@@ -38,8 +38,7 @@ export default function MealHistory() {
   }
 
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId ?? ""} />
+    <>
       <PageHeader
         title="Meal History"
         subtitle={`Household: ${household.name}`}
@@ -73,6 +72,6 @@ export default function MealHistory() {
           </div>
         </Section>
       )}
-    </PageShell>
+    </>
   );
 }

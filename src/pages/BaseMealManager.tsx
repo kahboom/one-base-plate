@@ -2,7 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { BaseMeal, MealComponent, Ingredient, RecipeLink, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold, toSentenceCase, normalizeIngredientName } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Select, FieldLabel, EmptyState, Chip, ConfirmDialog, useConfirm, HouseholdNav, SectionNav } from "../components/ui";
+import { PageHeader, Card, Button, Input, Select, FieldLabel, EmptyState, Chip, ConfirmDialog, useConfirm } from "../components/ui";
+import AppModal from "../components/AppModal";
+import MealImageSlot from "../components/MealImageSlot";
+import { useIncrementalList } from "../hooks/useIncrementalList";
+import { sortBaseMeals, type BaseMealSortKey, type SortDir } from "../lib/listSort";
+
+const MEAL_SORT_OPTIONS: { value: string; label: string; key: BaseMealSortKey; dir: SortDir }[] = [
+  { value: "name-asc", label: "Name (A–Z)", key: "name", dir: "asc" },
+  { value: "name-desc", label: "Name (Z–A)", key: "name", dir: "desc" },
+  { value: "time-asc", label: "Time (short → long)", key: "estimatedTimeMinutes", dir: "asc" },
+  { value: "time-desc", label: "Time (long → short)", key: "estimatedTimeMinutes", dir: "desc" },
+  { value: "difficulty-asc", label: "Difficulty (easy → hard)", key: "difficulty", dir: "asc" },
+  { value: "difficulty-desc", label: "Difficulty (hard → easy)", key: "difficulty", dir: "desc" },
+  { value: "components-asc", label: "Components (few → many)", key: "componentCount", dir: "asc" },
+  { value: "components-desc", label: "Components (many → few)", key: "componentCount", dir: "desc" },
+];
 
 type ComponentRole = MealComponent["role"];
 const COMPONENT_ROLES: ComponentRole[] = ["protein", "carb", "veg", "sauce", "topping"];
@@ -428,17 +443,31 @@ function MealModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-label="Edit meal">
-      <div className="w-full max-w-4xl max-h-[92vh] overflow-hidden rounded-md border border-border-light bg-surface shadow-card-hover" data-testid="meal-modal">
-        <div className="sticky top-0 z-10 border-b border-border-light bg-surface px-4 py-3 sm:px-6">
+    <AppModal
+      open
+      onClose={onClose}
+      ariaLabel="Edit meal"
+      className="flex max-h-[92vh] min-h-0 w-full max-w-4xl flex-col overflow-hidden p-0"
+      panelTestId="meal-modal"
+    >
+        <div className="shrink-0 border-b border-border-light bg-surface px-4 py-3 sm:px-6">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="truncate text-xl font-bold text-text-primary">
-                {toSentenceCase(meal.name) || "New meal"}
-              </h2>
-              <span className="text-xs text-text-muted">
-                Build one shared meal structure with clear component choices
-              </span>
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <MealImageSlot
+                variant="modalHeader"
+                imageUrl={meal.imageUrl}
+                alt=""
+                imageTestId="meal-modal-header-image"
+                placeholderTestId="meal-modal-header-image-placeholder"
+              />
+              <div className="min-w-0">
+                <h2 className="truncate text-xl font-bold text-text-primary">
+                  {toSentenceCase(meal.name) || "New meal"}
+                </h2>
+                <span className="text-xs text-text-muted">
+                  Build one shared meal structure with clear component choices
+                </span>
+              </div>
             </div>
             <Button variant="ghost" onClick={onClose} aria-label="Close modal">Close</Button>
           </div>
@@ -451,7 +480,7 @@ function MealModal({
           </div>
         </div>
 
-        <div className="space-y-6 overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="flex-1 min-h-0 space-y-6 overflow-y-auto px-4 py-5 sm:px-6">
           <section data-testid="meal-identity-section" className="space-y-3">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">1. Meal identity</h3>
             <FieldLabel label="Meal name">
@@ -599,21 +628,20 @@ function MealModal({
                   </label>
                 </div>
                 {meal.imageUrl && (
-                  <div className="mt-2">
-                    <img
-                      src={meal.imageUrl}
-                      alt={meal.name || "Meal"}
-                      className="h-24 w-36 rounded-md border border-border-light object-cover"
-                      data-testid="meal-image-preview"
-                    />
-                  </div>
+                  <MealImageSlot
+                    variant="editorPreview"
+                    imageUrl={meal.imageUrl}
+                    alt={meal.name || "Meal"}
+                    imageTestId="meal-image-preview"
+                    placeholderTestId="meal-image-preview-placeholder"
+                  />
                 )}
               </FieldLabel>
             </details>
           </section>
         </div>
 
-        <div className="sticky bottom-0 z-10 flex items-center justify-between gap-3 border-t border-border-light bg-surface px-4 py-3 sm:px-6">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border-light bg-surface px-4 py-3 sm:px-6">
           <Button
             variant="ghost"
             small
@@ -627,8 +655,7 @@ function MealModal({
             <Button variant="primary" onClick={onClose}>Save meal</Button>
           </div>
         </div>
-      </div>
-    </div>
+    </AppModal>
   );
 }
 
@@ -647,13 +674,13 @@ function MealRow({
       data-testid={`meal-row-${meal.id}`}
       aria-label={`Edit ${meal.name || "unnamed meal"}`}
     >
-      {meal.imageUrl && (
-        <img
-          src={meal.imageUrl}
-          alt=""
-          className="h-8 w-8 flex-shrink-0 rounded object-cover border border-border-light"
-        />
-      )}
+      <MealImageSlot
+        variant="row"
+        imageUrl={meal.imageUrl}
+        alt=""
+        imageTestId="meal-row-image"
+        placeholderTestId="meal-row-image-placeholder"
+      />
       <span className="flex-1 min-w-0">
         <span className="block text-sm font-medium text-text-primary truncate">
           {meal.name ? toSentenceCase(meal.name) : <span className="italic text-text-muted">Unnamed</span>}
@@ -683,6 +710,7 @@ export default function BaseMealManager() {
   const [loaded, setLoaded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mealSort, setMealSort] = useState(MEAL_SORT_OPTIONS[0]!.value);
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
 
   useEffect(() => {
@@ -710,6 +738,19 @@ export default function BaseMealManager() {
     const q = searchQuery.toLowerCase();
     return meals.filter((meal) => meal.name.toLowerCase().includes(q));
   }, [meals, searchQuery]);
+
+  const sortedMeals = useMemo(() => {
+    const opt = MEAL_SORT_OPTIONS.find((o) => o.value === mealSort) ?? MEAL_SORT_OPTIONS[0]!;
+    return sortBaseMeals(filteredMeals, opt.key, opt.dir);
+  }, [filteredMeals, mealSort]);
+
+  const resetDeps = useMemo(() => [searchQuery, mealSort] as const, [searchQuery, mealSort]);
+  const {
+    visibleItems: visibleMeals,
+    hasMore: mealListHasMore,
+    loadMore: loadMoreMeals,
+    sentinelRef: mealListSentinelRef,
+  } = useIncrementalList(sortedMeals, { resetDeps: [...resetDeps] });
 
   const editingMeal = editingId
     ? meals.find((meal) => meal.id === editingId) ?? null
@@ -743,14 +784,12 @@ export default function BaseMealManager() {
   if (!loaded) return null;
 
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId ?? ""} />
+    <>
       <PageHeader
         title="Base Meals"
         subtitle={`Household: ${householdName}`}
         subtitleTo={`/households?edit=${householdId}`}
       />
-      <SectionNav householdId={householdId ?? ""} />
 
       <Card className="mb-4" data-testid="meal-control-bar">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -763,6 +802,19 @@ export default function BaseMealManager() {
               data-testid="meal-search"
             />
           </div>
+          <FieldLabel label="Sort" className="sm:w-56 shrink-0">
+            <Select
+              value={mealSort}
+              onChange={(e) => setMealSort(e.target.value)}
+              data-testid="meal-sort"
+            >
+              {MEAL_SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </Select>
+          </FieldLabel>
           <Button onClick={addMeal}>Add meal</Button>
           <Link to={`/household/${householdId}/import-recipe`}>
             <Button data-testid="import-recipe-btn">Import recipe</Button>
@@ -773,8 +825,14 @@ export default function BaseMealManager() {
         </div>
       </Card>
 
-      <h2 className="mb-3 text-sm font-medium text-text-secondary">
-        Meals ({meals.length}){filteredMeals.length !== meals.length && ` · showing ${filteredMeals.length}`}
+      <h2 className="mb-3 text-sm font-medium text-text-secondary" data-testid="meal-list-summary">
+        <span>Meals ({meals.length})</span>
+        {filteredMeals.length !== meals.length && (
+          <span>{` · ${filteredMeals.length} match${filteredMeals.length !== 1 ? "es" : ""}`}</span>
+        )}
+        {sortedMeals.length > 0 && visibleMeals.length < sortedMeals.length && (
+          <span>{` · showing ${visibleMeals.length} of ${sortedMeals.length}`}</span>
+        )}
       </h2>
 
       {meals.length === 0 ? (
@@ -783,13 +841,21 @@ export default function BaseMealManager() {
         <EmptyState>No meals match your search.</EmptyState>
       ) : (
         <div className="space-y-1.5" data-testid="meal-list">
-          {filteredMeals.map((meal) => (
+          {visibleMeals.map((meal) => (
             <MealRow
               key={meal.id}
               meal={meal}
               onClick={() => setEditingId(meal.id)}
             />
           ))}
+          <div ref={mealListSentinelRef} className="h-px w-full" aria-hidden />
+          {mealListHasMore && (
+            <div className="flex justify-center pt-2">
+              <Button type="button" variant="default" onClick={loadMoreMeals} data-testid="meal-list-load-more">
+                Load more meals
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -812,6 +878,6 @@ export default function BaseMealManager() {
         onConfirm={confirm}
         onCancel={cancel}
       />
-    </PageShell>
+    </>
   );
 }

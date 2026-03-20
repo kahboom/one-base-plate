@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="appleBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff4d4d" />
+      <stop offset="100%" stop-color="#d62828" />
+    </linearGradient>
+  </defs>
+  <path
+    d="M36 13c4-5 3-10 2-12-5 1-9 6-10 11 2 1 5 1 8 1z"
+    fill="#5a3d2b"
+  />
+  <path
+    d="M35 9c5-2 9-1 13 2-4 1-8 4-10 8-3-2-4-6-3-10z"
+    fill="#2f9e44"
+  />
+  <path
+    d="M32 17c-7-6-22-4-25 10-3 15 8 31 25 31s28-16 25-31c-3-14-18-16-25-10z"
+    fill="url(#appleBody)"
+  />
+  <circle cx="24" cy="28" r="5" fill="#ffffff" fill-opacity="0.2" />
+</svg>

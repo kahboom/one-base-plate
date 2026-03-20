@@ -4,17 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { Household } from "../src/types";
 import { saveHousehold } from "../src/storage";
-import Home from "../src/pages/Home";
-import Planner from "../src/pages/Planner";
-import WeeklyPlanner from "../src/pages/WeeklyPlanner";
-import GroceryList from "../src/pages/GroceryList";
-import RescueMode from "../src/pages/RescueMode";
-import MealDetail from "../src/pages/MealDetail";
-import IngredientManager from "../src/pages/IngredientManager";
-import BaseMealManager from "../src/pages/BaseMealManager";
 import HouseholdSetup from "../src/pages/HouseholdSetup";
-import MealHistory from "../src/pages/MealHistory";
-import MemberProfile from "../src/pages/MemberProfile";
+import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 function seedHousehold(): Household {
   const household: Household = {
@@ -39,6 +30,7 @@ function seedHousehold(): Household {
         name: "Chicken",
         category: "protein",
         tags: [],
+        shelfLifeHint: "",
         babySafeWithAdaptation: true,
         freezerFriendly: false,
       },
@@ -48,10 +40,11 @@ function seedHousehold(): Household {
         id: "meal1",
         name: "Test Meal",
         components: [{ ingredientId: "i1", role: "protein", quantity: "200g" }],
-        prepTimeMinutes: 15,
+        defaultPrep: "pan-fry",
+        estimatedTimeMinutes: 15,
         difficulty: "easy",
         rescueEligible: true,
-        defaultPrepMethod: "pan-fry",
+        wasteReuseHints: [],
       },
     ],
     weeklyPlans: [],
@@ -69,23 +62,14 @@ const GLOBAL_NAV_LINKS = [
   "Rescue mode",
   "Meal history",
 ];
-const SECTION_LINKS = ["Households", "Ingredients", "Base meals"];
+const SECTION_LINKS = ["All households", "Ingredients", "Base meals"];
 
 function renderRoute(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/household/:householdId/home" element={<Home />} />
-        <Route path="/household/:householdId/planner" element={<Planner />} />
-        <Route path="/household/:householdId/weekly" element={<WeeklyPlanner />} />
-        <Route path="/household/:householdId/grocery" element={<GroceryList />} />
-        <Route path="/household/:householdId/rescue" element={<RescueMode />} />
-        <Route path="/household/:householdId/meal/:mealId" element={<MealDetail />} />
-        <Route path="/household/:householdId/ingredients" element={<IngredientManager />} />
-        <Route path="/household/:householdId/meals" element={<BaseMealManager />} />
-        <Route path="/household/:householdId/history" element={<MealHistory />} />
-        <Route path="/household/:householdId/member/:memberId" element={<MemberProfile />} />
-        <Route path="/household/:id" element={<HouseholdSetup />} />
+        <Route path="/household/new" element={<HouseholdSetup />} />
+        {householdLayoutRouteBranch}
         <Route path="/households" element={<div>All Households Page</div>} />
       </Routes>
     </MemoryRouter>,
@@ -189,38 +173,64 @@ describe("F036: Consistent navigation across all household screens", () => {
     });
   });
 
-  describe("Section tabs appear only on section pages", () => {
-    it("Ingredient manager shows section tabs", () => {
+  describe("Secondary nav appears on household shell screens (F053)", () => {
+    function expectSecondaryNavLabels() {
+      const sectionNav = screen.getByTestId("section-nav");
+      for (const label of SECTION_LINKS) {
+        expect(within(sectionNav).getByText(label)).toBeInTheDocument();
+      }
+    }
+
+    it.each([
+      "/household/h-nav/home",
+      "/household/h-nav/weekly",
+      "/household/h-nav/planner",
+      "/household/h-nav/grocery",
+      "/household/h-nav/rescue",
+      "/household/h-nav/ingredients",
+      "/household/h-nav/meals",
+      "/household/h-nav/meal/meal1",
+      "/household/h-nav",
+    ])("secondary nav on %s", (path) => {
+      seedHousehold();
+      renderRoute(path);
+      expectSecondaryNavLabels();
+    });
+
+    it("Ingredient manager marks Ingredients as active in secondary nav", () => {
       seedHousehold();
       renderRoute("/household/h-nav/ingredients");
-      const sectionNav = screen.getByTestId("section-nav");
-      for (const label of SECTION_LINKS) {
-        expect(within(sectionNav).getByText(label)).toBeInTheDocument();
-      }
+      const ingredientsLink = within(screen.getByTestId("section-nav")).getByText("Ingredients");
+      expect(ingredientsLink).toHaveAttribute("aria-current", "page");
     });
 
-    it("Base meal manager shows section tabs", () => {
+    it("Base meal manager marks Base meals as active in secondary nav", () => {
       seedHousehold();
       renderRoute("/household/h-nav/meals");
-      const sectionNav = screen.getByTestId("section-nav");
-      for (const label of SECTION_LINKS) {
-        expect(within(sectionNav).getByText(label)).toBeInTheDocument();
-      }
+      const link = within(screen.getByTestId("section-nav")).getByText("Base meals");
+      expect(link).toHaveAttribute("aria-current", "page");
     });
 
-    it("Household setup shows section tabs", () => {
+    it("Meal detail marks Base meals as active in secondary nav", () => {
       seedHousehold();
-      renderRoute("/household/h-nav");
-      const sectionNav = screen.getByTestId("section-nav");
-      for (const label of SECTION_LINKS) {
-        expect(within(sectionNav).getByText(label)).toBeInTheDocument();
-      }
+      renderRoute("/household/h-nav/meal/meal1");
+      const link = within(screen.getByTestId("section-nav")).getByText("Base meals");
+      expect(link).toHaveAttribute("aria-current", "page");
     });
 
-    it("Grocery list shows only global nav", () => {
+    it("Meal detail does not mark Meal planner active in global nav", () => {
       seedHousehold();
-      renderRoute("/household/h-nav/grocery");
-      expect(screen.queryByTestId("section-nav")).not.toBeInTheDocument();
+      renderRoute("/household/h-nav/meal/meal1");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      const plannerLink = within(nav).getByText("Meal planner");
+      expect(plannerLink).not.toHaveAttribute("aria-current", "page");
+    });
+
+    it("global nav never shows Household setup", () => {
+      seedHousehold();
+      renderRoute("/household/h-nav/home");
+      const nav = screen.getByRole("navigation", { name: "Global navigation" });
+      expect(within(nav).queryByText("Household setup")).not.toBeInTheDocument();
     });
   });
 

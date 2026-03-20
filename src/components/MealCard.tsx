@@ -3,6 +3,7 @@ import type { BaseMeal, HouseholdMember, Ingredient, MealOutcome } from "../type
 import type { OverlapResult, LearnedPatterns } from "../planner";
 import { computeMealOverlap, generateShortReason } from "../planner";
 import { Chip, Button } from "./ui";
+import MealImageSlot from "./MealImageSlot";
 
 export interface MealCardProps {
   meal: BaseMeal;
@@ -18,6 +19,8 @@ export interface MealCardProps {
   pinned?: boolean;
   detailUrl?: string;
   compact?: boolean;
+  /** When compact, still render assign/pin/details (e.g. Weekly Planner tray). */
+  showActionsWhenCompact?: boolean;
   draggable?: boolean;
   selected?: boolean;
 }
@@ -48,6 +51,7 @@ export default function MealCard({
   pinned = false,
   detailUrl,
   compact = false,
+  showActionsWhenCompact = false,
   draggable: isDraggable = false,
   selected = false,
 }: MealCardProps) {
@@ -57,6 +61,8 @@ export default function MealCard({
   const needsExtraPrep = overlap.memberDetails.some(
     (d) => d.compatibility === "with-adaptation",
   );
+  const tightTray = compact && showActionsWhenCompact;
+  const cardImageVariant = tightTray ? "card-tight" : compact ? "card-compact" : "card";
 
   function handleDragStart(e: React.DragEvent) {
     e.dataTransfer.setData("application/meal-id", meal.id);
@@ -69,30 +75,36 @@ export default function MealCard({
       draggable={isDraggable}
       onDragStart={isDraggable ? handleDragStart : undefined}
       className={`w-full rounded-md border bg-surface shadow-card transition-shadow hover:shadow-card-hover sm:w-auto ${
-        selected ? "border-brand ring-2 ring-brand-light" : "border-border-light"
-      } ${isDraggable ? "cursor-grab active:cursor-grabbing" : ""} ${compact ? "sm:min-w-[160px] p-3" : "sm:min-w-[220px] p-4"}`}
+        selected ? "border-brand ring-2 ring-brand/40" : "border-border-light"
+      } ${isDraggable ? "cursor-grab active:cursor-grabbing" : ""} ${
+        tightTray ? "sm:min-w-[150px] p-2.5" : compact ? "sm:min-w-[160px] p-3" : "sm:min-w-[220px] p-4"
+      } ${tightTray ? "flex h-full min-h-0 flex-col" : ""}`}
     >
-      {meal.imageUrl && (
-        <img
-          src={meal.imageUrl}
-          alt={meal.name}
-          className={`mb-2 w-full rounded-md border border-border-light object-cover ${compact ? "max-h-24" : "max-h-36"}`}
-          data-testid="meal-card-image"
-        />
-      )}
-      <div className="mb-2">
+      <MealImageSlot
+        variant={cardImageVariant}
+        imageUrl={meal.imageUrl}
+        alt={meal.name}
+        imageTestId="meal-card-image"
+        placeholderTestId="meal-thumb-placeholder"
+      />
+      <div className={tightTray ? "mb-1.5" : "mb-2"}>
         <strong className={compact ? "text-[0.95rem]" : "text-lg"}>
           {meal.name}
         </strong>
       </div>
 
-      <div className="mb-2 flex gap-3 text-sm text-text-secondary">
+      <div
+        className={`flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-text-secondary ${tightTray ? "mb-1.5" : "mb-2"}`}
+      >
         <span data-testid="prep-time">{meal.estimatedTimeMinutes} min</span>
         <span data-testid="effort-level">{meal.difficulty}</span>
         <span data-testid="overlap-score">{overlap.score}/{overlap.total} overlap</span>
       </div>
 
-      <div data-testid="compatibility-chips" className="mb-2 flex flex-wrap gap-1">
+      <div
+        data-testid="compatibility-chips"
+        className={`flex flex-wrap gap-1 ${tightTray ? "mb-1.5" : "mb-2"}`}
+      >
         {overlap.memberDetails.map((detail) => {
           const member = members.find((m) => m.id === detail.memberId);
           if (!member) return null;
@@ -119,24 +131,30 @@ export default function MealCard({
 
       <p
         data-testid="short-reason"
-        className="mb-2 text-xs italic text-text-muted"
+        className={`text-xs italic text-text-muted ${tightTray ? "mb-1.5 line-clamp-2" : "mb-2"}`}
       >
         {shortReason}
       </p>
 
-      <div data-testid="state-chips" className="mb-2 flex flex-wrap gap-1">
+      <div
+        data-testid="state-chips"
+        className={`flex flex-wrap gap-1 ${tightTray ? "mb-1.5" : "mb-2"}`}
+      >
         {pinned && <Chip variant="success">Pinned</Chip>}
         {isHighOverlap && <Chip variant="info">High overlap</Chip>}
         {needsExtraPrep && <Chip variant="warning">Needs extra prep</Chip>}
         {meal.rescueEligible && <Chip variant="neutral">Rescue eligible</Chip>}
       </div>
 
-      {!compact && (
-        <div className="flex flex-wrap gap-2">
+      {(!compact || showActionsWhenCompact) && (
+        <div className={`flex flex-wrap ${tightTray ? "mt-auto gap-1.5" : "gap-2"}`}>
           {onAssign && (
             <Button
               small
-              onClick={onAssign}
+              onClick={(e) => {
+                e.stopPropagation();
+                onAssign();
+              }}
               data-testid={`assign-${meal.id}`}
             >
               Assign
@@ -146,7 +164,10 @@ export default function MealCard({
             <Button
               small
               variant={pinned ? "danger" : "default"}
-              onClick={onPin}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPin();
+              }}
               data-testid={`pin-${meal.id}`}
             >
               {pinned ? "Unpin" : "Pin"}
@@ -155,7 +176,10 @@ export default function MealCard({
           {onOpen && (
             <Button
               small
-              onClick={onOpen}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpen();
+              }}
               data-testid={`open-${meal.id}`}
             >
               Details
@@ -164,18 +188,18 @@ export default function MealCard({
           {onDetailClick && !onOpen && (
             <Button
               small
-              onClick={onDetailClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDetailClick();
+              }}
               data-testid={`detail-link-${meal.id}`}
             >
               Details
             </Button>
           )}
           {detailUrl && !onOpen && !onDetailClick && (
-            <Link to={detailUrl}>
-              <Button
-                small
-                data-testid={`detail-link-${meal.id}`}
-              >
+            <Link to={detailUrl} onClick={(e) => e.stopPropagation()}>
+              <Button small data-testid={`detail-link-${meal.id}`}>
                 Details
               </Button>
             </Link>

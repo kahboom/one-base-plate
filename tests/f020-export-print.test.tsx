@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes } from "react-router-dom";
 import type { Household, BaseMeal, Ingredient, HouseholdMember, DayPlan, WeeklyPlan, AssemblyVariant } from "../src/types";
 import { saveHousehold } from "../src/storage";
 import { formatPlanForExport, generateGroceryList, generateAssemblyVariants } from "../src/planner";
-import WeeklyPlanner from "../src/pages/WeeklyPlanner";
-import GroceryList from "../src/pages/GroceryList";
+import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 const ingredients: Ingredient[] = [
   { id: "ing-pasta", name: "pasta", category: "carb", tags: [], shelfLifeHint: "", freezerFriendly: false, babySafeWithAdaptation: true },
@@ -85,9 +84,7 @@ function seedHousehold(plan?: WeeklyPlan): Household {
 function renderWeeklyPlanner(householdId: string) {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/weekly`]}>
-      <Routes>
-        <Route path="/household/:householdId/weekly" element={<WeeklyPlanner />} />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }
@@ -95,9 +92,7 @@ function renderWeeklyPlanner(householdId: string) {
 function renderGroceryList(householdId: string) {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/grocery`]}>
-      <Routes>
-        <Route path="/household/:householdId/grocery" element={<GroceryList />} />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }

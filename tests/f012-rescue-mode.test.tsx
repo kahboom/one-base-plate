@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes } from "react-router-dom";
 import type { Household, BaseMeal, Ingredient, HouseholdMember } from "../src/types";
 import { saveHousehold, loadHousehold } from "../src/storage";
 import { generateRescueMeals } from "../src/planner";
-import RescueMode from "../src/pages/RescueMode";
-import Home from "../src/pages/Home";
+import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 const ingredients: Ingredient[] = [
   { id: "ing-pasta", name: "pasta", category: "carb", tags: ["staple"], shelfLifeHint: "", freezerFriendly: false, babySafeWithAdaptation: true },
@@ -84,9 +83,7 @@ function seedHousehold(meals: BaseMeal[] = [rescueMealFast, rescueMealMedium, no
 function renderRescueMode(householdId: string) {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/rescue`]}>
-      <Routes>
-        <Route path="/household/:householdId/rescue" element={<RescueMode />} />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }
@@ -94,9 +91,7 @@ function renderRescueMode(householdId: string) {
 function renderHome(householdId: string) {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/home`]}>
-      <Routes>
-        <Route path="/household/:householdId/home" element={<Home />} />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }

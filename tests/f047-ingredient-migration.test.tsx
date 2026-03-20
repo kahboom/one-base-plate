@@ -13,6 +13,7 @@ import {
   runMigrationIfNeeded,
 } from "../src/storage";
 import IngredientManager from "../src/pages/IngredientManager";
+import { loadAllIngredientListRows } from "./incremental-load-helpers";
 
 function makeIngredient(overrides: Partial<Ingredient> & { id: string; name: string }): Ingredient {
   return {
@@ -321,6 +322,8 @@ describe("Post-migration end-to-end", () => {
         </Routes>
       </MemoryRouter>,
     );
+
+    loadAllIngredientListRows();
 
     const loaded = loadHousehold("h-f047")!;
     expect(loaded.ingredients[0]!.name).toBe("chicken breast");

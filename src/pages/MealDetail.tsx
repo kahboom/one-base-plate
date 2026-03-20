@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import type { Household, BaseMeal } from "../types";
+import type { Household, BaseMeal, Ingredient } from "../types";
 import { loadHousehold, saveHousehold, toSentenceCase } from "../storage";
 import {
   generateAssemblyVariants,
   computeMealOverlap,
   getAllIngredientIds,
 } from "../planner";
-import { PageShell, PageHeader, Card, Button, Chip, Section, HouseholdNav } from "../components/ui";
+import { PageHeader, Card, Button, Chip, Section } from "../components/ui";
+import MealImageSlot from "../components/MealImageSlot";
+import ImportMappingAdjust from "../components/ImportMappingAdjust";
 
 export default function MealDetail() {
   const { householdId, mealId } = useParams<{
@@ -44,9 +46,24 @@ export default function MealDetail() {
     setHousehold(updatedHousehold);
   }
 
+  function handlePersistMeal(updatedMeal: BaseMeal, newIngredients: Ingredient[]) {
+    if (!household) return;
+    const extra = newIngredients.filter(
+      (n) => !household.ingredients.some((x) => x.id === n.id),
+    );
+    const updatedHousehold: Household = {
+      ...household,
+      ingredients: [...household.ingredients, ...extra],
+      baseMeals: household.baseMeals.map((m) =>
+        m.id === updatedMeal.id ? updatedMeal : m,
+      ),
+    };
+    saveHousehold(updatedHousehold);
+    setHousehold(updatedHousehold);
+  }
+
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId ?? ""} />
+    <>
       <PageHeader
         title={meal.name}
         subtitle={`Household: ${household.name}`}
@@ -58,8 +75,9 @@ export default function MealDetail() {
         overlapLabel={`${overlap.score}/${overlap.total}`}
         isPinned={isPinned}
         onTogglePin={handleTogglePin}
+        onPersistMeal={handlePersistMeal}
       />
-    </PageShell>
+    </>
   );
 }
 
@@ -69,6 +87,8 @@ interface MealDetailContentProps {
   overlapLabel: string;
   isPinned: boolean;
   onTogglePin: () => void;
+  /** Meal detail page only — enables post-import line editing */
+  onPersistMeal?: (meal: BaseMeal, newIngredients: Ingredient[]) => void;
 }
 
 export function MealDetailContent({
@@ -77,6 +97,7 @@ export function MealDetailContent({
   overlapLabel,
   isPinned,
   onTogglePin,
+  onPersistMeal,
 }: MealDetailContentProps) {
   const overlap = computeMealOverlap(meal, household.members, household.ingredients);
   const variants = generateAssemblyVariants(meal, household.members, household.ingredients);
@@ -96,14 +117,13 @@ export function MealDetailContent({
   return (
     <>
       <Card data-testid="meal-hero" className="mb-6">
-        {meal.imageUrl && (
-          <img
-            src={meal.imageUrl}
-            alt={meal.name}
-            className="mb-4 w-full max-h-64 rounded-md border border-border-light object-cover"
-            data-testid="meal-hero-image"
-          />
-        )}
+        <MealImageSlot
+          variant="detail"
+          imageUrl={meal.imageUrl}
+          alt={meal.name}
+          imageTestId="meal-hero-image"
+          placeholderTestId="meal-hero-image-placeholder"
+        />
         <div className="flex flex-wrap gap-4 text-sm text-text-secondary">
           <span>Prep: {meal.defaultPrep || "—"}</span>
           <span>{meal.estimatedTimeMinutes} min</span>
@@ -125,7 +145,6 @@ export function MealDetailContent({
       </Card>
 
       <MealStructure
-        meal={meal}
         componentsByRole={componentsByRole}
         ingredientName={ingredientName}
       />
@@ -195,6 +214,9 @@ export function MealDetailContent({
               </div>
             ))}
           </div>
+          {meal.provenance && onPersistMeal && (
+            <ImportMappingAdjust meal={meal} household={household} onPersist={onPersistMeal} />
+          )}
         </Section>
       )}
 
@@ -256,12 +278,10 @@ export function MealDetailContent({
 }
 
 function MealStructure({
-  meal,
   componentsByRole,
   ingredientName,
 }: {
-  meal: BaseMeal;
-  componentsByRole: Map<string, typeof meal.components>;
+  componentsByRole: Map<string, BaseMeal["components"]>;
   ingredientName: (id: string) => string;
 }) {
   const roleLabels: Record<string, string> = {

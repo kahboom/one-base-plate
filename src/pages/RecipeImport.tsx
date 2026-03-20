@@ -3,10 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import type { Ingredient, BaseMeal, MealComponent, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold, normalizeIngredientName } from "../storage";
 import { catalogIngredientToHousehold } from "../catalog";
-import type { CatalogIngredient } from "../catalog";
 import { parseRecipeText, guessComponentRole } from "../recipe-parser";
 import type { ParsedIngredientLine } from "../recipe-parser";
-import { PageShell, PageHeader, Card, Button, Input, Select, ActionGroup, Chip, FieldLabel, EmptyState, HouseholdNav } from "../components/ui";
+import { PageHeader, Card, Button, Input, Select, ActionGroup, Chip, FieldLabel, EmptyState } from "../components/ui";
 
 type Step = "input" | "review" | "draft";
 
@@ -148,8 +147,7 @@ export default function RecipeImport() {
   if (!loaded) return null;
 
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId ?? ""} />
+    <>
       <PageHeader
         title="Import Recipe"
         subtitle={`Household: ${householdName}`}
@@ -263,12 +261,14 @@ export default function RecipeImport() {
             <EmptyState>No ingredient lines parsed. Go back and paste recipe text.</EmptyState>
           )}
 
-          <ActionGroup className="mt-4">
-            <Button variant="primary" onClick={handleBuildDraft} data-testid="import-build-draft-btn">
-              Build meal draft
-            </Button>
-            <Button onClick={() => setStep("input")}>Back</Button>
-          </ActionGroup>
+          <div className="mt-4">
+            <ActionGroup>
+              <Button variant="primary" onClick={handleBuildDraft} data-testid="import-build-draft-btn">
+                Build meal draft
+              </Button>
+              <Button onClick={() => setStep("input")}>Back</Button>
+            </ActionGroup>
+          </div>
         </div>
       )}
 
@@ -368,6 +368,6 @@ export default function RecipeImport() {
           </ActionGroup>
         </div>
       )}
-    </PageShell>
+    </>
   );
 }

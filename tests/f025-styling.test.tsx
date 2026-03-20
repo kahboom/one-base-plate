@@ -6,12 +6,7 @@ import type { Household } from "../src/types";
 import { saveHousehold } from "../src/storage";
 import HouseholdList from "../src/pages/HouseholdList";
 import HouseholdSetup from "../src/pages/HouseholdSetup";
-import MemberProfile from "../src/pages/MemberProfile";
-import IngredientManager from "../src/pages/IngredientManager";
-import BaseMealManager from "../src/pages/BaseMealManager";
-import Planner from "../src/pages/Planner";
-import WeeklyPlanner from "../src/pages/WeeklyPlanner";
-import Home from "../src/pages/Home";
+import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 function seedHousehold(): Household {
   const household: Household = {
@@ -58,7 +53,7 @@ describe("F025: PageHeader consistency", () => {
     render(
       <MemoryRouter initialEntries={["/household/new"]}>
         <Routes>
-          <Route path="/household/:id" element={<HouseholdSetup />} />
+          <Route path="/household/new" element={<HouseholdSetup />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -69,9 +64,7 @@ describe("F025: PageHeader consistency", () => {
     seedHousehold();
     render(
       <MemoryRouter initialEntries={["/household/h-style/home"]}>
-        <Routes>
-          <Route path="/household/:householdId/home" element={<Home />} />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
@@ -83,7 +76,7 @@ describe("F025: FieldLabel stacked layout", () => {
     render(
       <MemoryRouter initialEntries={["/household/new"]}>
         <Routes>
-          <Route path="/household/:id" element={<HouseholdSetup />} />
+          <Route path="/household/new" element={<HouseholdSetup />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -96,12 +89,7 @@ describe("F025: FieldLabel stacked layout", () => {
     seedHousehold();
     render(
       <MemoryRouter initialEntries={["/household/h-style/ingredients"]}>
-        <Routes>
-          <Route
-            path="/household/:householdId/ingredients"
-            element={<IngredientManager />}
-          />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     expect(
@@ -114,12 +102,7 @@ describe("F025: FieldLabel stacked layout", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h-style/meals"]}>
-        <Routes>
-          <Route
-            path="/household/:householdId/meals"
-            element={<BaseMealManager />}
-          />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     await user.click(screen.getByText("Add meal"));
@@ -135,7 +118,7 @@ describe("F025: Empty states", () => {
     render(
       <MemoryRouter initialEntries={["/household/new"]}>
         <Routes>
-          <Route path="/household/:id" element={<HouseholdSetup />} />
+          <Route path="/household/new" element={<HouseholdSetup />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -148,12 +131,7 @@ describe("F025: Empty states", () => {
     seedHousehold();
     render(
       <MemoryRouter initialEntries={["/household/h-style/ingredients"]}>
-        <Routes>
-          <Route
-            path="/household/:householdId/ingredients"
-            element={<IngredientManager />}
-          />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     // Catalog auto-populates, so the list is never empty
@@ -164,12 +142,7 @@ describe("F025: Empty states", () => {
     seedHousehold();
     render(
       <MemoryRouter initialEntries={["/household/h-style/meals"]}>
-        <Routes>
-          <Route
-            path="/household/:householdId/meals"
-            element={<BaseMealManager />}
-          />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     expect(
@@ -181,9 +154,7 @@ describe("F025: Empty states", () => {
     seedHousehold();
     render(
       <MemoryRouter initialEntries={["/household/h-style/planner"]}>
-        <Routes>
-          <Route path="/household/:householdId/planner" element={<Planner />} />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     expect(screen.getByText(/No base meals available/)).toBeInTheDocument();
@@ -193,12 +164,7 @@ describe("F025: Empty states", () => {
     seedHousehold();
     render(
       <MemoryRouter initialEntries={["/household/h-style/weekly"]}>
-        <Routes>
-          <Route
-            path="/household/:householdId/weekly"
-            element={<WeeklyPlanner />}
-          />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     expect(screen.getByText(/No base meals available/)).toBeInTheDocument();
@@ -208,12 +174,7 @@ describe("F025: Empty states", () => {
     seedHousehold();
     render(
       <MemoryRouter initialEntries={["/household/h-style/member/m1"]}>
-        <Routes>
-          <Route
-            path="/household/:householdId/member/:memberId"
-            element={<MemberProfile />}
-          />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
     expect(screen.getByText("No safe foods added yet.")).toBeInTheDocument();
@@ -251,12 +212,7 @@ describe("F025: Contrast and focus states", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/household/h-style/meals"]}>
-        <Routes>
-          <Route
-            path="/household/:householdId/meals"
-            element={<BaseMealManager />}
-          />
-        </Routes>
+        <Routes>{householdLayoutRouteBranch}</Routes>
       </MemoryRouter>,
     );
 

@@ -6,6 +6,7 @@ import type { Household, Ingredient } from "../src/types";
 import { saveHousehold, loadHousehold } from "../src/storage";
 import { MASTER_CATALOG, searchCatalog, catalogIngredientToHousehold, getCatalogByCategory } from "../src/catalog";
 import IngredientManager from "../src/pages/IngredientManager";
+import { loadAllIngredientListRows } from "./incremental-load-helpers";
 
 const CATALOG_SIZE = MASTER_CATALOG.length;
 
@@ -116,6 +117,7 @@ describe("F044: Catalog auto-populates on the ingredient page", () => {
   it("ingredient list auto-populates with all catalog items for empty household", () => {
     seedHousehold();
     renderPage();
+    loadAllIngredientListRows();
 
     expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
     expect(screen.getByText("Chicken breast")).toBeInTheDocument();
@@ -127,6 +129,7 @@ describe("F044: Catalog auto-populates on the ingredient page", () => {
   it("does not duplicate household items that match catalog names", () => {
     seedHousehold([makeIngredient({ name: "Pasta", category: "carb" })]);
     renderPage();
+    loadAllIngredientListRows();
 
     // Pasta exists in both household and catalog — should not be duplicated
     const pastaMatches = screen.getAllByText("Pasta");
@@ -139,6 +142,7 @@ describe("F044: Catalog auto-populates on the ingredient page", () => {
   it("household items appear alongside catalog items", () => {
     seedHousehold([makeIngredient({ name: "Unicorn meat", category: "protein" })]);
     renderPage();
+    loadAllIngredientListRows();
 
     expect(screen.getByText("Unicorn meat")).toBeInTheDocument();
     expect(screen.getByText("Chicken breast")).toBeInTheDocument();

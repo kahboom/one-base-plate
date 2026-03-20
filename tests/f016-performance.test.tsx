@@ -18,17 +18,9 @@ import {
 } from "../src/planner";
 
 import HouseholdList from "../src/pages/HouseholdList";
-import HouseholdSetup from "../src/pages/HouseholdSetup";
-import MemberProfile from "../src/pages/MemberProfile";
-import IngredientManager from "../src/pages/IngredientManager";
-import BaseMealManager from "../src/pages/BaseMealManager";
-import Planner from "../src/pages/Planner";
-import WeeklyPlanner from "../src/pages/WeeklyPlanner";
-import GroceryList from "../src/pages/GroceryList";
-import RescueMode from "../src/pages/RescueMode";
-import Home from "../src/pages/Home";
 
 import fixtureH001 from "../fixtures/households/H001-conflicting-baseline.json";
+import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 function loadFixture(): Household {
   const h = fixtureH001 as Household;
@@ -41,15 +33,7 @@ function renderRoute(path: string) {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/" element={<HouseholdList />} />
-        <Route path="/household/:id" element={<HouseholdSetup />} />
-        <Route path="/household/:householdId/member/:memberId" element={<MemberProfile />} />
-        <Route path="/household/:householdId/ingredients" element={<IngredientManager />} />
-        <Route path="/household/:householdId/meals" element={<BaseMealManager />} />
-        <Route path="/household/:householdId/planner" element={<Planner />} />
-        <Route path="/household/:householdId/weekly" element={<WeeklyPlanner />} />
-        <Route path="/household/:householdId/grocery" element={<GroceryList />} />
-        <Route path="/household/:householdId/rescue" element={<RescueMode />} />
-        <Route path="/household/:householdId/home" element={<Home />} />
+        {householdLayoutRouteBranch}
       </Routes>
     </MemoryRouter>,
   );
@@ -77,10 +61,10 @@ describe("F016: App loads and renders with representative fixture", () => {
     loadFixture();
     renderRoute("/household/H001");
     expect(screen.getByDisplayValue("Conflicting household baseline")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Alex")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Jordan")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Riley")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Sam")).toBeInTheDocument();
+    expect(screen.getByText("Alex")).toBeInTheDocument();
+    expect(screen.getByText("Jordan")).toBeInTheDocument();
+    expect(screen.getByText("Riley")).toBeInTheDocument();
+    expect(screen.getByText("Sam")).toBeInTheDocument();
   });
 
   it("renders Planner with meal cards ranked by overlap", () => {
@@ -102,10 +86,13 @@ describe("F016: App loads and renders with representative fixture", () => {
 });
 
 describe("F016: Navigation across setup, planning, and grocery screens", () => {
-  it("navigates from HouseholdSetup to MemberProfile and back without errors", () => {
+  it("navigates from HouseholdSetup to MemberProfile and back without errors", async () => {
+    const user = userEvent.setup();
     loadFixture();
     renderRoute("/household/H001");
-    const editLinks = screen.getAllByText(/Edit profile/i);
+    const firstMemberCard = screen.getAllByTestId(/^member-/)[0]!;
+    await user.click(within(firstMemberCard).getByRole("button", { name: "Edit" }));
+    const editLinks = screen.getAllByText(/Edit profile details/i);
     expect(editLinks.length).toBeGreaterThan(0);
   });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { Household } from "../src/types";
@@ -8,6 +8,7 @@ import IngredientManager from "../src/pages/IngredientManager";
 import BaseMealManager from "../src/pages/BaseMealManager";
 import MealDetail from "../src/pages/MealDetail";
 import MealCard from "../src/components/MealCard";
+import { loadAllIngredientListRows } from "./incremental-load-helpers";
 
 function makeHousehold(overrides: Partial<Household> = {}): Household {
   return {
@@ -110,6 +111,7 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
+    loadAllIngredientListRows();
     await user.click(screen.getByTestId("ingredient-row-i1"));
     const modal = screen.getByTestId("ingredient-modal");
     expect(within(modal).getByTestId("ingredient-image-url")).toBeInTheDocument();
@@ -126,6 +128,7 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
+    loadAllIngredientListRows();
     await user.click(screen.getByTestId("ingredient-row-i2"));
     const modal = screen.getByTestId("ingredient-modal");
     const preview = within(modal).getByTestId("ingredient-image-preview");
@@ -144,6 +147,7 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
+    loadAllIngredientListRows();
     await user.click(screen.getByTestId("ingredient-row-i1"));
     const modal = screen.getByTestId("ingredient-modal");
     await user.type(within(modal).getByTestId("ingredient-image-url"), "https://example.com/chicken.jpg");
@@ -163,6 +167,7 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
+    loadAllIngredientListRows();
     await user.click(screen.getByTestId("ingredient-row-i1"));
     const modal = screen.getByTestId("ingredient-modal");
     expect(within(modal).getByTestId("ingredient-image-upload")).toBeInTheDocument();
@@ -179,6 +184,7 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
+    loadAllIngredientListRows();
     await user.click(screen.getByTestId("ingredient-row-i2"));
     const modal = screen.getByTestId("ingredient-modal");
     const preview = within(modal).getByTestId("ingredient-image-preview");
@@ -221,6 +227,59 @@ describe("F037 — Base Meal Manager image input", () => {
     await user.click(within(modal).getByTestId("image-section").querySelector("summary")!);
     const preview = within(modal).getByTestId("meal-image-preview");
     expect(preview).toHaveAttribute("src", "https://example.com/bowl.jpg");
+  });
+
+  it("shows header thumbnail next to summary when meal has imageUrl", async () => {
+    const user = userEvent.setup();
+    const h = makeHousehold();
+    saveHousehold(h);
+    render(
+      <MemoryRouter initialEntries={["/household/h1/meals"]}>
+        <Routes>
+          <Route path="/household/:householdId/meals" element={<BaseMealManager />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByTestId("meal-row-meal2"));
+    const modal = screen.getByTestId("meal-modal");
+    const headerImg = within(modal).getByTestId("meal-modal-header-image");
+    expect(headerImg).toHaveAttribute("src", "https://example.com/bowl.jpg");
+  });
+
+  it("shows header placeholder when meal has no imageUrl", async () => {
+    const user = userEvent.setup();
+    const h = makeHousehold();
+    saveHousehold(h);
+    render(
+      <MemoryRouter initialEntries={["/household/h1/meals"]}>
+        <Routes>
+          <Route path="/household/:householdId/meals" element={<BaseMealManager />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByTestId("meal-row-meal1"));
+    const modal = screen.getByTestId("meal-modal");
+    expect(within(modal).getByTestId("meal-modal-header-image-placeholder")).toBeInTheDocument();
+    expect(within(modal).queryByTestId("meal-modal-header-image")).not.toBeInTheDocument();
+  });
+
+  it("shows header placeholder when image fails to load", async () => {
+    const user = userEvent.setup();
+    const h = makeHousehold();
+    saveHousehold(h);
+    render(
+      <MemoryRouter initialEntries={["/household/h1/meals"]}>
+        <Routes>
+          <Route path="/household/:householdId/meals" element={<BaseMealManager />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByTestId("meal-row-meal2"));
+    const modal = screen.getByTestId("meal-modal");
+    const headerImg = within(modal).getByTestId("meal-modal-header-image");
+    fireEvent.error(headerImg);
+    expect(within(modal).getByTestId("meal-modal-header-image-placeholder")).toBeInTheDocument();
+    expect(within(modal).queryByTestId("meal-modal-header-image")).not.toBeInTheDocument();
   });
 
   it("persists meal imageUrl on save", async () => {
@@ -275,11 +334,11 @@ describe("F037 — MealDetail hero image", () => {
     );
     const heroImage = screen.getByTestId("meal-hero-image");
     expect(heroImage).toHaveAttribute("src", "https://example.com/bowl.jpg");
-    expect(heroImage.className).toContain("rounded-md");
+    expect(heroImage.parentElement?.className).toContain("rounded-md");
     expect(heroImage.className).toContain("object-cover");
   });
 
-  it("does not show hero image when meal has no imageUrl", () => {
+  it("shows hero placeholder when meal has no imageUrl", () => {
     const h = makeHousehold();
     saveHousehold(h);
     render(
@@ -289,6 +348,7 @@ describe("F037 — MealDetail hero image", () => {
         </Routes>
       </MemoryRouter>,
     );
+    expect(screen.getByTestId("meal-hero-image-placeholder")).toBeInTheDocument();
     expect(screen.queryByTestId("meal-hero-image")).toBeNull();
   });
 
@@ -305,6 +365,7 @@ describe("F037 — MealDetail hero image", () => {
     const heroImage = screen.getByTestId("meal-hero-image");
     expect(heroImage.className).toContain("w-full");
     expect(heroImage.className).toContain("max-h-64");
+    expect(heroImage.parentElement?.className).toContain("w-full");
   });
 });
 
@@ -324,7 +385,7 @@ describe("F037 — MealCard thumbnail", () => {
     expect(thumb).toHaveAttribute("src", "https://example.com/bowl.jpg");
   });
 
-  it("does not show thumbnail when meal has no imageUrl", () => {
+  it("shows thumbnail placeholder when meal has no imageUrl", () => {
     const h = makeHousehold();
     render(
       <MemoryRouter>
@@ -335,6 +396,7 @@ describe("F037 — MealCard thumbnail", () => {
         />
       </MemoryRouter>,
     );
+    expect(screen.getByTestId("meal-thumb-placeholder")).toBeInTheDocument();
     expect(screen.queryByTestId("meal-card-image")).toBeNull();
   });
 
@@ -381,8 +443,8 @@ describe("F037 — MealCard thumbnail", () => {
       </MemoryRouter>,
     );
     const thumb = screen.getByTestId("meal-card-image");
-    expect(thumb.className).toContain("rounded-md");
-    expect(thumb.className).toContain("border");
+    expect(thumb.parentElement?.className).toContain("rounded-md");
+    expect(thumb.parentElement?.className).toContain("border");
     expect(thumb.className).toContain("object-cover");
   });
 });
@@ -399,6 +461,7 @@ describe("F037 — Mobile readability", () => {
         </Routes>
       </MemoryRouter>,
     );
+    loadAllIngredientListRows();
     await user.click(screen.getByTestId("ingredient-row-i2"));
     const modal = screen.getByTestId("ingredient-modal");
     const preview = within(modal).getByTestId("ingredient-image-preview");
@@ -421,7 +484,7 @@ describe("F037 — Mobile readability", () => {
     const modal = screen.getByTestId("meal-modal");
     await user.click(within(modal).getByTestId("image-section").querySelector("summary")!);
     const preview = within(modal).getByTestId("meal-image-preview");
-    expect(preview.className).toContain("h-24");
-    expect(preview.className).toContain("w-36");
+    expect(preview.parentElement?.className).toContain("h-24");
+    expect(preview.parentElement?.className).toContain("w-36");
   });
 });

@@ -2,9 +2,21 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { Household, WeeklyPlan, DayPlan, BaseMeal, MealOutcome, MealOutcomeResult } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { generateWeeklyPlan, computeMealOverlap, generateAssemblyVariants, computeWeekEffortBalance, computeGroceryPreview, formatPlanForExport } from "../planner";
+import {
+  generateWeeklyPlan,
+  computeMealOverlap,
+  generateAssemblyVariants,
+  computeWeekEffortBalance,
+  computeGroceryPreview,
+  formatPlanForExport,
+  rankWeeklySuggestedMeals,
+  learnCompatibilityPatterns,
+} from "../planner";
+import type { LearnedPatterns } from "../planner";
 import MealCard from "../components/MealCard";
-import { PageShell, PageHeader, Button, Select, Section, EmptyState, Chip, Input, HouseholdNav } from "../components/ui";
+import BrowseMealsModal from "../components/planner/BrowseMealsModal";
+import { useSuggestedTrayCap } from "../hooks/useSuggestedTrayCap";
+import { PageHeader, Button, Select, Section, EmptyState, Chip, Input } from "../components/ui";
 
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -17,6 +29,8 @@ export default function WeeklyPlanner() {
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
+  const [browseMealsOpen, setBrowseMealsOpen] = useState(false);
+  const trayCap = useSuggestedTrayCap();
 
   async function handleShare() {
     if (!shareRef.current || !plan || plan.days.length === 0) return;
@@ -188,20 +202,39 @@ export default function WeeklyPlanner() {
     return `${overlap.score}/${overlap.total}`;
   }
 
-  const rankedMealsForSuggestion = useMemo(() => {
+  const suggestionRows = useMemo(() => {
     if (!household || household.baseMeals.length === 0) return [];
-    return [...household.baseMeals]
-      .map((meal) => ({
-        meal,
-        overlap: computeMealOverlap(meal, household.members, household.ingredients),
-      }))
-      .sort((a, b) => b.overlap.score - a.overlap.score);
+    return rankWeeklySuggestedMeals(
+      household.baseMeals,
+      household.members,
+      household.ingredients,
+      household.mealOutcomes ?? [],
+      household.pinnedMealIds ?? [],
+      plan?.days ?? [],
+    );
+  }, [household, plan?.days]);
+
+  const learnedPatterns: LearnedPatterns | undefined = useMemo(() => {
+    if (!household) return undefined;
+    const outcomes = household.mealOutcomes ?? [];
+    if (outcomes.length === 0) return undefined;
+    return learnCompatibilityPatterns(
+      outcomes,
+      household.baseMeals,
+      household.members,
+      household.ingredients,
+    );
   }, [household]);
 
+  const trayRows = useMemo(
+    () => suggestionRows.slice(0, trayCap),
+    [suggestionRows, trayCap],
+  );
+
   function getSuggestedMeal(dayLabel: string): BaseMeal | null {
-    if (rankedMealsForSuggestion.length === 0) return null;
-    const index = DAY_LABELS.indexOf(dayLabel) % rankedMealsForSuggestion.length;
-    return rankedMealsForSuggestion[index]?.meal ?? null;
+    if (suggestionRows.length === 0) return null;
+    const index = DAY_LABELS.indexOf(dayLabel) % suggestionRows.length;
+    return suggestionRows[index]?.meal ?? null;
   }
 
   if (!loaded) return null;
@@ -213,8 +246,7 @@ export default function WeeklyPlanner() {
   const daySlots = DAY_LABELS.slice(0, numDays);
 
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId ?? ""} />
+    <>
       <PageHeader
         title="Weekly Planner"
         subtitle={`Household: ${household.name}`}
@@ -376,40 +408,87 @@ export default function WeeklyPlanner() {
       {household.baseMeals.length > 0 && (
         <Section>
           <div data-testid="suggested-tray" className="mt-6">
-            <h2 className="mb-3 text-xl font-semibold text-text-primary">Suggested meals</h2>
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-text-primary">Suggested meals</h2>
+                <p className="mt-1 text-sm text-text-secondary" data-testid="suggested-tray-summary" aria-live="polite">
+                  Top {trayRows.length} of {household.baseMeals.length} meal{household.baseMeals.length !== 1 ? "s" : ""} for this week
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  data-testid="browse-all-meals-btn"
+                  onClick={() => setBrowseMealsOpen(true)}
+                >
+                  Browse all meals
+                </Button>
+              </div>
+            </div>
             {selectedMealId && (
               <p className="mb-3 text-sm text-brand font-medium" data-testid="assign-prompt">
                 Tap a day to assign {household.baseMeals.find((m) => m.id === selectedMealId)?.name ?? "meal"}.{" "}
-                <button className="underline cursor-pointer" onClick={() => setSelectedMealId(null)}>Cancel</button>
+                <button type="button" className="underline cursor-pointer" onClick={() => setSelectedMealId(null)}>Cancel</button>
               </p>
             )}
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {[...household.baseMeals]
-                .map((meal) => ({
-                  meal,
-                  overlap: computeMealOverlap(meal, household.members, household.ingredients),
-                }))
-                .sort((a, b) => b.overlap.score - a.overlap.score)
-                .map(({ meal, overlap }) => (
+            <div
+              data-testid="suggested-tray-default"
+              className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch] sm:grid sm:snap-none sm:overflow-visible sm:pb-0 sm:grid-cols-3 lg:grid-cols-4"
+            >
+              {trayRows.map(({ meal, overlap }) => (
+                <div
+                  key={meal.id}
+                  className="flex h-full min-h-0 min-w-[min(260px,85vw)] max-w-[min(260px,85vw)] shrink-0 snap-start flex-col sm:min-w-0 sm:max-w-none"
+                >
                   <MealCard
-                    key={meal.id}
                     meal={meal}
                     members={household.members}
                     ingredients={household.ingredients}
                     overlap={overlap}
                     outcomes={household.mealOutcomes ?? []}
+                    patterns={learnedPatterns}
+                    detailUrl={`/household/${householdId}/meal/${meal.id}`}
+                    compact
+                    showActionsWhenCompact
                     draggable
                     selected={selectedMealId === meal.id}
                     pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
                     onAssign={() => setSelectedMealId(selectedMealId === meal.id ? null : meal.id)}
                     onPin={() => handleTogglePin(meal.id)}
                   />
-                ))}
+                </div>
+              ))}
             </div>
           </div>
         </Section>
       )}
-    </PageShell>
+
+      {household && (
+        <BrowseMealsModal
+          open={browseMealsOpen}
+          onClose={() => setBrowseMealsOpen(false)}
+          rows={suggestionRows}
+          renderMealCard={({ meal, overlap }) => (
+            <MealCard
+              meal={meal}
+              members={household.members}
+              ingredients={household.ingredients}
+              overlap={overlap}
+              outcomes={household.mealOutcomes ?? []}
+              patterns={learnedPatterns}
+              detailUrl={`/household/${householdId}/meal/${meal.id}`}
+              compact
+              showActionsWhenCompact
+              draggable
+              selected={selectedMealId === meal.id}
+              pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
+              onAssign={() => setSelectedMealId(selectedMealId === meal.id ? null : meal.id)}
+              onPin={() => handleTogglePin(meal.id)}
+            />
+          )}
+        />
+      )}
+    </>
   );
 }
 
@@ -440,7 +519,6 @@ const effortChipVariant: Record<string, "success" | "warning" | "danger"> = {
 function DayCard({
   dayLabel,
   dayPlan,
-  dayIndex: _dayIndex,
   suggestedMeal,
   mealName,
   overlapLabel,

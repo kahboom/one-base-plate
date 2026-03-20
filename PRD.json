@@ -1583,6 +1583,29 @@
         "S008",
         "S010"
       ]
+    },
+    {
+      "id": "F054",
+      "phase": 2,
+      "priority": "P1",
+      "category": "ux",
+      "description": "Weekly Planner suggested meals show a small ranked subset by default with browse-all for large libraries",
+      "steps": [
+        "Rank suggested meals by household overlap first, then outcome and learned pattern scores, ingredient reuse against the current week, pins, and prep/effort tie-breakers; deprioritize in-week repeats and failure-only history unless pinned or a clear favorite.",
+        "Show only a capped number of suggestions on the main planner (responsive: fewer on narrow viewports, more on desktop) with a horizontal scroll strip on small screens.",
+        "Provide Browse all meals with search, optional effort filter, and paginated meal cards so the main planner never renders the full library at once.",
+        "Preserve assign, pin, details, and drag/drop from suggested cards.",
+        "Add automated tests for ranking order, default cap, browse path, and pagination."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F022",
+        "F014",
+        "F033"
+      ],
+      "acceptanceRefs": [
+        "S003"
+      ]
     }
   ],
   "milestones": [
@@ -1666,7 +1689,8 @@
         "F050",
         "F051",
         "F052",
-        "F053"
+        "F053",
+        "F054"
       ]
     }
   ],
@@ -1742,6 +1766,7 @@
     "F051",
     "F052",
     "F053",
+    "F054",
     "F020",
     "F037",
     "F038",
@@ -1849,7 +1874,10 @@
         "requiredElements": [
           "Seven day cards for the current week",
           "Assigned meal or empty state per day",
-          "Suggested meal tray below the week",
+          "Suggested meal tray below the week showing only a small ranked subset by default (not the entire recipe library)",
+          "Header on suggested section with title, count summary such as top N of total, and Browse all meals entry point",
+          "Browse all meals path (modal or equivalent) with search and lightweight filtering; full library loaded in pages, not all cards on the main planner",
+          "Suggested ranking uses household fit first, then learned outcomes and patterns, ingredient reuse vs current plan, pins, and lower prep/effort as tie-breakers",
           "Drag-and-drop or tap-to-assign interaction",
           "Visible effort balance for the week",
           "Grocery preview summary",
@@ -1861,12 +1889,14 @@
           "Dragging a meal to a day should immediately assign it",
           "Assigned days should animate subtly on drop",
           "Users can tap a day to swap or clear a meal",
-          "Week view should work on mobile as a horizontal scroll or stacked card layout"
+          "Week view should work on mobile as a horizontal scroll or stacked card layout",
+          "Suggested meal strip on mobile should support horizontal scroll without rendering every meal in the library"
         ],
         "acceptance": [
           "User can build a week plan without entering a table or form view",
           "Plan changes update grocery preview immediately",
-          "The planner remains readable even with all seven days filled",
+          "The planner remains readable even with all seven days filled and with a large base meal library",
+          "Users can open the full meal library from the planner without the default view becoming an infinite wall of cards",
           "'Back to household' or equivalent returns user to Home screen; navigation links feel integrated, not tacked on"
         ]
       },
@@ -2085,7 +2115,8 @@
       "F036",
       "F038",
       "F042",
-      "F053"
+      "F053",
+      "F054"
     ],
     "S004": [
       "F006",

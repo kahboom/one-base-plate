@@ -618,6 +618,127 @@ export function generateWeeklyPlan(
   return days;
 }
 
+function difficultySortKey(difficulty: BaseMeal["difficulty"]): number {
+  if (difficulty === "easy") return 0;
+  if (difficulty === "medium") return 1;
+  return 2;
+}
+
+function collectIngredientIdsFromPlanDays(
+  days: DayPlan[],
+  meals: BaseMeal[],
+): Set<string> {
+  const ids = new Set<string>();
+  for (const day of days) {
+    const meal = meals.find((m) => m.id === day.baseMealId);
+    if (!meal) continue;
+    for (const c of meal.components) {
+      for (const id of getValidIngredientIds(c)) {
+        ids.add(id);
+      }
+    }
+  }
+  return ids;
+}
+
+function countMealIngredientReuse(meal: BaseMeal, planIngredientIds: Set<string>): number {
+  let n = 0;
+  for (const c of meal.components) {
+    for (const id of getValidIngredientIds(c)) {
+      if (planIngredientIds.has(id)) n += 1;
+    }
+  }
+  return n;
+}
+
+/** One fully-ranked row for weekly “suggested meals” (tray + browse). */
+export interface WeeklySuggestedMealRow {
+  meal: BaseMeal;
+  overlap: OverlapResult;
+  /** 0 = default; 1 = already on this week (unless strong repeat); 2 = repeated failure signal */
+  tier: number;
+  outcomeScore: number;
+  patternScore: number;
+  ingredientReuse: number;
+  pinned: boolean;
+}
+
+/**
+ * Rank meals for the Weekly Planner suggestion tray: household fit first, then learned
+ * outcome/pattern signals, ingredient reuse vs the current plan, pins, then time/effort.
+ */
+export function rankWeeklySuggestedMeals(
+  meals: BaseMeal[],
+  members: HouseholdMember[],
+  ingredients: Ingredient[],
+  outcomes: MealOutcome[],
+  pinnedMealIds: string[],
+  planDays: DayPlan[],
+): WeeklySuggestedMealRow[] {
+  if (meals.length === 0) return [];
+
+  const pinnedSet = new Set(pinnedMealIds);
+  const patterns = learnCompatibilityPatterns(outcomes, meals, members, ingredients);
+  const planIngredientIds = collectIngredientIdsFromPlanDays(planDays, meals);
+  const assignedMealIds = new Set(planDays.map((d) => d.baseMealId));
+
+  type SortRow = WeeklySuggestedMealRow & {
+    _time: number;
+    _difficulty: number;
+  };
+
+  const sortRows: SortRow[] = meals.map((meal) => {
+    const overlap = computeMealOverlap(meal, members, ingredients);
+    const os = computeOutcomeScore(meal.id, outcomes);
+    const patternScore = computePatternScore(meal, patterns, members, ingredients);
+    const ingredientReuse = countMealIngredientReuse(meal, planIngredientIds);
+    const pinned = pinnedSet.has(meal.id);
+    const inWeek = assignedMealIds.has(meal.id);
+    const strongRepeatOk = pinned || os.successCount >= 3;
+
+    let tier = 0;
+    const failureOnly = os.failureCount > 0 && os.successCount === 0;
+    if (failureOnly && !pinned) {
+      tier = 2;
+    } else if (inWeek && !strongRepeatOk) {
+      tier = 1;
+    }
+
+    return {
+      meal,
+      overlap,
+      tier,
+      outcomeScore: os.score,
+      patternScore,
+      ingredientReuse,
+      pinned,
+      _time: meal.estimatedTimeMinutes,
+      _difficulty: difficultySortKey(meal.difficulty),
+    };
+  });
+
+  sortRows.sort((a, b) => {
+    if (a.tier !== b.tier) return a.tier - b.tier;
+    if (a.overlap.score !== b.overlap.score) return b.overlap.score - a.overlap.score;
+    if (a.overlap.total !== b.overlap.total) return b.overlap.total - a.overlap.total;
+    if (a.outcomeScore !== b.outcomeScore) return b.outcomeScore - a.outcomeScore;
+    if (a.patternScore !== b.patternScore) return b.patternScore - a.patternScore;
+    if (a.ingredientReuse !== b.ingredientReuse) return b.ingredientReuse - a.ingredientReuse;
+    const pa = a.pinned ? 1 : 0;
+    const pb = b.pinned ? 1 : 0;
+    if (pa !== pb) return pb - pa;
+    if (a._time !== b._time) return a._time - b._time;
+    return a._difficulty - b._difficulty;
+  });
+
+  return sortRows.map((row) => {
+    // Internal sort fields are not part of the public row shape.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- strip _time, _difficulty from spread
+    const { _time, _difficulty, ...rest } = row;
+    return rest;
+  });
+}
+
 export interface GroceryListItem extends GroceryItem {
   usedInMeals: string[];
 }

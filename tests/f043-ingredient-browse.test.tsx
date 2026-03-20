@@ -3,9 +3,10 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { Household, Ingredient } from "../src/types";
-import { saveHousehold, loadHousehold } from "../src/storage";
+import { saveHousehold } from "../src/storage";
 import { MASTER_CATALOG } from "../src/catalog";
 import IngredientManager from "../src/pages/IngredientManager";
+import { loadAllIngredientListRows } from "./incremental-load-helpers";
 
 const CATALOG_SIZE = MASTER_CATALOG.length;
 
@@ -68,6 +69,7 @@ describe("F043: Browse-first compact list", () => {
     ];
     seedWithIngredients(ingredients);
     renderPage();
+    loadAllIngredientListRows();
 
     const list = screen.getByTestId("ingredient-list");
     const rows = within(list).getAllByTestId(/^ingredient-row-/);
@@ -87,6 +89,7 @@ describe("F043: Browse-first compact list", () => {
     ];
     seedWithIngredients(ingredients);
     renderPage();
+    loadAllIngredientListRows();
 
     const chickenRow = screen.getByTestId("ingredient-row-ing-chicken");
     expect(within(chickenRow).getByTitle("Freezer friendly")).toBeInTheDocument();
@@ -195,11 +198,10 @@ describe("F043: Search and filter controls", () => {
 
     const total = expectedTotal(ingredients);
     expect(screen.getByText(`Items (${total})`)).toBeInTheDocument();
-    expect(screen.queryByText(/showing/)).not.toBeInTheDocument();
 
     await user.selectOptions(screen.getByTestId("ingredient-category-filter"), "protein");
 
-    expect(screen.getByText(/showing/)).toBeInTheDocument();
+    expect(screen.getByTestId("ingredient-list-summary")).toHaveTextContent(/match/);
   });
 });
 
@@ -236,6 +238,7 @@ describe("F043: Modal editing", () => {
     await user.click(within(modal).getByText("Done"));
 
     expect(screen.queryByTestId("ingredient-modal")).not.toBeInTheDocument();
+    loadAllIngredientListRows();
     expect(screen.getByText("Turkey")).toBeInTheDocument();
   });
 
@@ -272,6 +275,7 @@ describe("F043: Comfortable with many ingredients", () => {
   it("handles many ingredients (catalog + custom) without rendering expanded forms", () => {
     seedWithIngredients([]);
     renderPage();
+    loadAllIngredientListRows();
 
     // Catalog items auto-populated
     expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
@@ -299,6 +303,7 @@ describe("F043: Auto-populated catalog", () => {
   it("auto-populates catalog items on load for empty households", () => {
     seedWithIngredients([]);
     renderPage();
+    loadAllIngredientListRows();
 
     // Should see all catalog items
     expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();

@@ -1,13 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes } from "react-router-dom";
 import type { Household } from "../src/types";
 import { saveHousehold, loadHousehold } from "../src/storage";
-import BaseMealManager from "../src/pages/BaseMealManager";
-import Planner from "../src/pages/Planner";
-import WeeklyPlanner from "../src/pages/WeeklyPlanner";
-import Home from "../src/pages/Home";
+import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 function seedHousehold(): Household {
   const household: Household = {
@@ -85,10 +82,7 @@ function seedEmptyHousehold(): Household {
 function renderBaseMealManager(householdId: string) {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/meals`]}>
-      <Routes>
-        <Route path="/household/:householdId/meals" element={<BaseMealManager />} />
-        <Route path="/household/:householdId/home" element={<div>Home Page</div>} />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }
@@ -96,11 +90,7 @@ function renderBaseMealManager(householdId: string) {
 function renderPlanner(householdId: string) {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/planner`]}>
-      <Routes>
-        <Route path="/household/:householdId/planner" element={<Planner />} />
-        <Route path="/household/:householdId/ingredients" element={<div>Ingredients Page</div>} />
-        <Route path="/household/:householdId/meals" element={<div>Base Meals Page</div>} />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }
@@ -108,11 +98,7 @@ function renderPlanner(householdId: string) {
 function renderWeeklyPlanner(householdId: string) {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/weekly`]}>
-      <Routes>
-        <Route path="/household/:householdId/weekly" element={<WeeklyPlanner />} />
-        <Route path="/household/:householdId/ingredients" element={<div>Ingredients Page</div>} />
-        <Route path="/household/:householdId/meals" element={<div>Base Meals Page</div>} />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }
@@ -212,16 +198,14 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       expect(ingredientsLink.closest("a")).toHaveAttribute("href", "/household/h-inline/ingredients");
     });
 
-    it("Home page does not show section tabs", () => {
+    it("Home page shows secondary nav from shared household shell", () => {
       seedHousehold();
       render(
         <MemoryRouter initialEntries={["/household/h-inline/home"]}>
-          <Routes>
-            <Route path="/household/:householdId/home" element={<Home />} />
-          </Routes>
+          <Routes>{householdLayoutRouteBranch}</Routes>
         </MemoryRouter>,
       );
-      expect(screen.queryByTestId("section-nav")).not.toBeInTheDocument();
+      expect(screen.getByTestId("section-nav")).toBeInTheDocument();
     });
   });
 
@@ -249,7 +233,7 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       renderPlanner("h-empty");
       const user = userEvent.setup();
       await user.click(screen.getByText("Add ingredients"));
-      expect(screen.getByText("Ingredients Page")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1, name: "Ingredients" })).toBeInTheDocument();
     });
 
     it("Weekly planner empty state link navigates to base meals page", async () => {
@@ -257,7 +241,7 @@ describe("F038: Inline ingredient creation and discoverable navigation", () => {
       renderWeeklyPlanner("h-empty");
       const user = userEvent.setup();
       await user.click(screen.getByText("add base meals"));
-      expect(screen.getByText("Base Meals Page")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1, name: "Base Meals" })).toBeInTheDocument();
     });
   });
 

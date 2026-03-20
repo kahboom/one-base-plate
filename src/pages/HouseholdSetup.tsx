@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useMatch } from "react-router-dom";
 import type { Household, HouseholdMember, MemberRole, TextureLevel } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, Card, Button, Input, Select, HouseholdNav, FieldLabel, Chip, ConfirmDialog, useConfirm, SectionNav } from "../components/ui";
+import { PageShell, Card, Button, Input, Select, FieldLabel, Chip, ConfirmDialog, useConfirm, HouseholdNavStack } from "../components/ui";
 
 function createEmptyMember(): HouseholdMember {
   return {
@@ -125,9 +125,11 @@ function MemberForm({
 }
 
 export default function HouseholdSetup() {
-  const { id } = useParams<{ id: string }>();
+  const { householdId } = useParams<{ householdId?: string }>();
   const navigate = useNavigate();
-  const isNew = id === "new";
+  const isStandaloneNew = useMatch({ path: "/household/new", end: true }) != null;
+  const isNew = isStandaloneNew;
+  const effectiveHouseholdId = isNew ? undefined : householdId;
 
   const [household, setHousehold] = useState<Household>(createEmptyHousehold);
   const [loaded, setLoaded] = useState(false);
@@ -135,14 +137,14 @@ export default function HouseholdSetup() {
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
 
   useEffect(() => {
-    if (!isNew && id) {
-      const existing = loadHousehold(id);
+    if (!isNew && householdId) {
+      const existing = loadHousehold(householdId);
       if (existing) {
         setHousehold(existing);
       }
     }
     setLoaded(true);
-  }, [id, isNew]);
+  }, [householdId, isNew]);
 
   function addMember() {
     const newMember = createEmptyMember();
@@ -179,10 +181,8 @@ export default function HouseholdSetup() {
 
   if (!loaded) return null;
 
-  return (
-    <PageShell>
-      <HouseholdNav householdId={isNew ? undefined : id} />
-
+  const body = (
+    <>
       <section className="mb-5">
         {isNew && (
           <p className="mb-2">
@@ -200,7 +200,6 @@ export default function HouseholdSetup() {
           </p>
         )}
       </section>
-      <SectionNav householdId={isNew ? undefined : id} />
 
       <Card className="mb-4">
         <h2 className="mb-3 text-base font-semibold text-text-primary">Household details</h2>
@@ -242,7 +241,7 @@ export default function HouseholdSetup() {
             }}
             onChange={(updated) => updateMember(i, updated)}
             onRemove={() => removeMember(member.id)}
-            householdId={isNew ? undefined : id}
+            householdId={effectiveHouseholdId}
           />
         ))}
       </Card>
@@ -264,6 +263,17 @@ export default function HouseholdSetup() {
         onConfirm={confirm}
         onCancel={cancel}
       />
-    </PageShell>
+    </>
   );
+
+  if (isStandaloneNew) {
+    return (
+      <PageShell>
+        <HouseholdNavStack householdId={undefined} />
+        {body}
+      </PageShell>
+    );
+  }
+
+  return body;
 }

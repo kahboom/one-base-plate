@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes } from "react-router-dom";
 import type { Household } from "../../src/types";
 import { saveHousehold, loadHousehold } from "../../src/storage";
 import {
@@ -16,15 +16,8 @@ import {
   computeMealOverlap,
 } from "../../src/planner";
 
-import HouseholdSetup from "../../src/pages/HouseholdSetup";
-import MemberProfile from "../../src/pages/MemberProfile";
-import Planner from "../../src/pages/Planner";
-import WeeklyPlanner from "../../src/pages/WeeklyPlanner";
-import RescueMode from "../../src/pages/RescueMode";
-import GroceryList from "../../src/pages/GroceryList";
-import Home from "../../src/pages/Home";
-
 import fixtureH001 from "../../fixtures/households/H001-conflicting-baseline.json";
+import { householdLayoutRouteBranch } from "../householdLayoutRoutes";
 
 function loadFixture(): Household {
   const h = fixtureH001 as Household;
@@ -35,15 +28,7 @@ function loadFixture(): Household {
 function renderRoute(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/household/:id" element={<HouseholdSetup />} />
-        <Route path="/household/:householdId/member/:memberId" element={<MemberProfile />} />
-        <Route path="/household/:householdId/planner" element={<Planner />} />
-        <Route path="/household/:householdId/weekly" element={<WeeklyPlanner />} />
-        <Route path="/household/:householdId/rescue" element={<RescueMode />} />
-        <Route path="/household/:householdId/grocery" element={<GroceryList />} />
-        <Route path="/household/:householdId/home" element={<Home />} />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }
@@ -58,10 +43,10 @@ describe("E2E: Household setup flow", () => {
     renderRoute("/household/H001");
 
     expect(screen.getByDisplayValue("Conflicting household baseline")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Alex")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Jordan")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Riley")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Sam")).toBeInTheDocument();
+    expect(screen.getByText("Alex")).toBeInTheDocument();
+    expect(screen.getByText("Jordan")).toBeInTheDocument();
+    expect(screen.getByText("Riley")).toBeInTheDocument();
+    expect(screen.getByText("Sam")).toBeInTheDocument();
   });
 
   it("persists member constraints through save and reload", () => {

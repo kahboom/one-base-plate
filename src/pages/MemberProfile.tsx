@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { HouseholdMember, PreparationRule } from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, PageHeader, Card, Button, Input, Section, FormRow, Chip, ConfirmDialog, useConfirm, HouseholdNav } from "../components/ui";
+import { PageHeader, Card, Button, Input, Section, FormRow, Chip, ConfirmDialog, useConfirm } from "../components/ui";
 
 export default function MemberProfile() {
   const { householdId, memberId } = useParams<{
@@ -97,8 +97,7 @@ export default function MemberProfile() {
   if (!member) return <p>Member not found.</p>;
 
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId} />
+    <>
       <PageHeader
         title={`${member.name} — ${member.role}`}
         subtitle={`Household: ${householdName}`}
@@ -247,6 +246,6 @@ export default function MemberProfile() {
         onConfirm={confirm}
         onCancel={cancel}
       />
-    </PageShell>
+    </>
   );
 }

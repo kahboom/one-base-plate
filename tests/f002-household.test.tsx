@@ -13,6 +13,7 @@ import {
 } from "../src/storage";
 import HouseholdSetup from "../src/pages/HouseholdSetup";
 import HouseholdList from "../src/pages/HouseholdList";
+import HouseholdLayout from "../src/layouts/HouseholdLayout";
 import App from "../src/App";
 
 beforeEach(() => {
@@ -81,7 +82,7 @@ describe("F002: Household setup UI", () => {
     render(
       <MemoryRouter initialEntries={["/household/new"]}>
         <Routes>
-          <Route path="/household/:id" element={<HouseholdSetup />} />
+          <Route path="/household/new" element={<HouseholdSetup />} />
           <Route path="/household/:householdId/home" element={<div>Home</div>} />
         </Routes>
       </MemoryRouter>,
@@ -215,7 +216,9 @@ describe("F002: Household setup UI", () => {
     render(
       <MemoryRouter initialEntries={["/household/h-reopen"]}>
         <Routes>
-          <Route path="/household/:id" element={<HouseholdSetup />} />
+          <Route path="/household/:householdId" element={<HouseholdLayout />}>
+            <Route index element={<HouseholdSetup />} />
+          </Route>
         </Routes>
       </MemoryRouter>,
     );
@@ -239,7 +242,7 @@ describe("F002: Household setup UI", () => {
     render(
       <MemoryRouter initialEntries={["/household/new"]}>
         <Routes>
-          <Route path="/household/:id" element={<HouseholdSetup />} />
+          <Route path="/household/new" element={<HouseholdSetup />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -266,7 +269,7 @@ describe("F002: Household setup UI", () => {
     render(
       <MemoryRouter initialEntries={["/household/new"]}>
         <Routes>
-          <Route path="/household/:id" element={<HouseholdSetup />} />
+          <Route path="/household/new" element={<HouseholdSetup />} />
         </Routes>
       </MemoryRouter>,
     );

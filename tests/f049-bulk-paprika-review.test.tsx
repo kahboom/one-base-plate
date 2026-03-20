@@ -415,7 +415,6 @@ describe("Bulk-reviewed import compatibility", () => {
 /* ---- UI: Bulk review workflow ---- */
 describe("PaprikaImport bulk review UI", () => {
   it("shows bulk summary chips with match counts in review step", async () => {
-    const user = userEvent.setup();
     const hh = makeHousehold();
     saveHousehold(hh);
 

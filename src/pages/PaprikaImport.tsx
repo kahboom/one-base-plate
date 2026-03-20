@@ -14,7 +14,6 @@ import {
 } from "../paprika-parser";
 import type { ParsedPaprikaRecipe, PaprikaReviewLine } from "../paprika-parser";
 import {
-  PageShell,
   PageHeader,
   Card,
   Button,
@@ -23,7 +22,6 @@ import {
   Chip,
   FieldLabel,
   EmptyState,
-  HouseholdNav,
   Section,
 } from "../components/ui";
 
@@ -279,8 +277,7 @@ export default function PaprikaImport() {
   if (!loaded) return null;
 
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId ?? ""} />
+    <>
       <PageHeader
         title="Import from Paprika"
         subtitle={`Household: ${householdName}`}
@@ -604,6 +601,6 @@ export default function PaprikaImport() {
           </ActionGroup>
         </div>
       )}
-    </PageShell>
+    </>
   );
 }

@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes } from "react-router-dom";
 import type { Household, BaseMeal, Ingredient, HouseholdMember, WeeklyPlan } from "../src/types";
 import { saveHousehold } from "../src/storage";
 import { generateWeeklyPlan } from "../src/planner";
-import WeeklyPlanner from "../src/pages/WeeklyPlanner";
-import Home from "../src/pages/Home";
+import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 const ingredients: Ingredient[] = [
   {
@@ -119,12 +118,7 @@ function seedHousehold(opts?: {
 function renderWeeklyPlanner(householdId: string) {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/weekly`]}>
-      <Routes>
-        <Route
-          path="/household/:householdId/weekly"
-          element={<WeeklyPlanner />}
-        />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }
@@ -132,12 +126,7 @@ function renderWeeklyPlanner(householdId: string) {
 function renderHome(householdId: string) {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/home`]}>
-      <Routes>
-        <Route
-          path="/household/:householdId/home"
-          element={<Home />}
-        />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }
@@ -243,7 +232,7 @@ describe("F021: Home screen with compact weekly strip", () => {
     renderHome("h-cal");
 
     expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
-    expect(screen.getByText("Weekly planner")).toBeInTheDocument();
+    expect(screen.getAllByText("Weekly planner").length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows mini weekly strip when a plan exists", () => {

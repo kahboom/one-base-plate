@@ -8,7 +8,7 @@ import {
   type RescueScenario,
   type RescueMeal,
 } from "../planner";
-import { PageShell, PageHeader, Card, Button, Chip, Section, HouseholdNav, EmptyState } from "../components/ui";
+import { PageHeader, Card, Button, Chip, Section, EmptyState } from "../components/ui";
 
 const SCENARIOS: { id: RescueScenario; label: string; description: string }[] = [
   { id: "low-energy", label: "Low energy", description: "Keep it simple tonight" },
@@ -117,8 +117,7 @@ export default function RescueMode() {
   const hasMeals = household.baseMeals.length > 0;
 
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId ?? ""} />
+    <>
       <PageHeader title="Rescue mode" subtitle="Fastest acceptable dinner — no guilt, just food" />
 
       {!hasMeals && (
@@ -223,6 +222,6 @@ export default function RescueMode() {
           No rescue-eligible meals found. Try adding meals with rescue eligibility enabled.
         </EmptyState>
       )}
-    </PageShell>
+    </>
   );
 }

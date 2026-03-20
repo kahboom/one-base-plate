@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import HouseholdLayout from "./layouts/HouseholdLayout";
 import HouseholdList from "./pages/HouseholdList";
 import HouseholdSetup from "./pages/HouseholdSetup";
 import MemberProfile from "./pages/MemberProfile";
@@ -33,52 +34,22 @@ function App() {
     <Routes>
       <Route path="/" element={<DefaultRoute />} />
       <Route path="/households" element={<HouseholdList />} />
-      <Route path="/household/:householdId/home" element={<Home />} />
-      <Route path="/household/:id" element={<HouseholdSetup />} />
-      <Route
-        path="/household/:householdId/member/:memberId"
-        element={<MemberProfile />}
-      />
-      <Route
-        path="/household/:householdId/ingredients"
-        element={<IngredientManager />}
-      />
-      <Route
-        path="/household/:householdId/meals"
-        element={<BaseMealManager />}
-      />
-      <Route
-        path="/household/:householdId/meal/:mealId"
-        element={<MealDetail />}
-      />
-      <Route
-        path="/household/:householdId/planner"
-        element={<Planner />}
-      />
-      <Route
-        path="/household/:householdId/weekly"
-        element={<WeeklyPlanner />}
-      />
-      <Route
-        path="/household/:householdId/grocery"
-        element={<GroceryList />}
-      />
-      <Route
-        path="/household/:householdId/rescue"
-        element={<RescueMode />}
-      />
-      <Route
-        path="/household/:householdId/history"
-        element={<MealHistory />}
-      />
-      <Route
-        path="/household/:householdId/import-recipe"
-        element={<RecipeImport />}
-      />
-      <Route
-        path="/household/:householdId/import-paprika"
-        element={<PaprikaImport />}
-      />
+      <Route path="/household/new" element={<HouseholdSetup />} />
+      <Route path="/household/:householdId" element={<HouseholdLayout />}>
+        <Route index element={<HouseholdSetup />} />
+        <Route path="home" element={<Home />} />
+        <Route path="member/:memberId" element={<MemberProfile />} />
+        <Route path="ingredients" element={<IngredientManager />} />
+        <Route path="meals" element={<BaseMealManager />} />
+        <Route path="meal/:mealId" element={<MealDetail />} />
+        <Route path="planner" element={<Planner />} />
+        <Route path="weekly" element={<WeeklyPlanner />} />
+        <Route path="grocery" element={<GroceryList />} />
+        <Route path="rescue" element={<RescueMode />} />
+        <Route path="history" element={<MealHistory />} />
+        <Route path="import-recipe" element={<RecipeImport />} />
+        <Route path="import-paprika" element={<PaprikaImport />} />
+      </Route>
     </Routes>
   );
 }

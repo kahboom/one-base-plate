@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { Household } from "../src/types";
@@ -330,6 +330,16 @@ describe("S007 UX refactor: editor flow hierarchy and actions", () => {
     const modal = await addMeal(user);
     expect(within(modal).getByText("Save meal")).toBeInTheDocument();
     await user.click(within(modal).getByText("Save meal"));
+    expect(screen.queryByTestId("meal-modal")).not.toBeInTheDocument();
+  });
+
+  it("closes meal modal when clicking the backdrop", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderBaseMealManager("h-meals");
+    await addMeal(user);
+    expect(screen.getByTestId("meal-modal")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("dialog", { name: /edit meal/i }));
     expect(screen.queryByTestId("meal-modal")).not.toBeInTheDocument();
   });
 });

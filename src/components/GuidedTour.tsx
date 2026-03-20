@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "./ui";
+import AppModal from "./AppModal";
 
 const TOUR_STORAGE_KEY = "onebase-tour-completed";
 
@@ -58,8 +59,6 @@ export default function GuidedTour() {
     }
   }, []);
 
-  if (!visible) return null;
-
   const step = TOUR_STEPS[stepIndex]!;
   const isLast = stepIndex === TOUR_STEPS.length - 1;
 
@@ -82,41 +81,42 @@ export default function GuidedTour() {
   }
 
   return (
-    <div
-      data-testid="guided-tour"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-label="Guided tour"
+    <AppModal
+      open={visible}
+      onClose={handleSkip}
+      ariaLabel="Guided tour"
+      closeOnBackdropClick={false}
+      backdropTestId="guided-tour"
+      className="max-w-md p-6"
     >
-      <div className="w-full max-w-md rounded-md border border-border-light bg-surface p-6 shadow-card-hover">
-        <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs font-medium text-text-muted" data-testid="tour-step-indicator">
-            Step {stepIndex + 1} of {TOUR_STEPS.length}
-          </span>
-          <button
-            onClick={handleSkip}
-            className="text-xs font-medium text-text-muted hover:text-text-primary"
-            data-testid="tour-skip"
-          >
-            Skip tour
-          </button>
-        </div>
-        <h2 className="mb-2 text-lg font-bold text-text-primary">{step.title}</h2>
-        <p className="mb-6 text-sm leading-relaxed text-text-secondary">{step.description}</p>
-        <div className="flex items-center justify-between">
-          <div className="flex gap-1.5">
-            {TOUR_STEPS.map((_, i) => (
-              <span
-                key={i}
-                className={`block h-1.5 w-6 rounded-pill ${i === stepIndex ? "bg-brand" : "bg-border-default"}`}
-              />
-            ))}
-          </div>
-          <Button variant="primary" onClick={handleNext} data-testid="tour-next">
-            {isLast ? "Get started" : "Next"}
-          </Button>
-        </div>
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-xs font-medium text-text-muted" data-testid="tour-step-indicator">
+          Step {stepIndex + 1} of {TOUR_STEPS.length}
+        </span>
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="text-xs font-medium text-text-muted hover:text-text-primary"
+          data-testid="tour-skip"
+        >
+          Skip tour
+        </button>
       </div>
-    </div>
+      <h2 className="mb-2 text-lg font-bold text-text-primary">{step.title}</h2>
+      <p className="mb-6 text-sm leading-relaxed text-text-secondary">{step.description}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1.5">
+          {TOUR_STEPS.map((_, i) => (
+            <span
+              key={i}
+              className={`block h-1.5 w-6 rounded-pill ${i === stepIndex ? "bg-brand" : "bg-border-default"}`}
+            />
+          ))}
+        </div>
+        <Button variant="primary" onClick={handleNext} data-testid="tour-next">
+          {isLast ? "Get started" : "Next"}
+        </Button>
+      </div>
+    </AppModal>
   );
 }

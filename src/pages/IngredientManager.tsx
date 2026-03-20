@@ -3,7 +3,17 @@ import { useParams, Link } from "react-router-dom";
 import type { Ingredient, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold, toSentenceCase, normalizeIngredientName } from "../storage";
 import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from "../catalog";
-import { PageShell, PageHeader, Card, Button, Input, Select, Chip, FieldLabel, EmptyState, HouseholdNav, SectionNav } from "../components/ui";
+import { PageHeader, Card, Button, Input, Select, Chip, FieldLabel, EmptyState } from "../components/ui";
+import AppModal from "../components/AppModal";
+import { useIncrementalList } from "../hooks/useIncrementalList";
+import { sortIngredients, type IngredientSortKey, type SortDir } from "../lib/listSort";
+
+const INGREDIENT_SORT_OPTIONS: { value: string; label: string; key: IngredientSortKey; dir: SortDir }[] = [
+  { value: "name-asc", label: "Name (A–Z)", key: "name", dir: "asc" },
+  { value: "name-desc", label: "Name (Z–A)", key: "name", dir: "desc" },
+  { value: "category-asc", label: "Category (A–Z)", key: "category", dir: "asc" },
+  { value: "category-desc", label: "Category (Z–A)", key: "category", dir: "desc" },
+];
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
   "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
@@ -59,18 +69,23 @@ function DuplicateWarningDialog({
 }) {
   if (!open || !existingIngredient) return null;
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" role="dialog" aria-label="Duplicate ingredient warning">
-      <div className="w-full max-w-sm rounded-md border border-border-light bg-surface p-6 shadow-card-hover" data-testid="duplicate-warning-dialog">
-        <h2 className="mb-2 text-lg font-bold text-text-primary">Duplicate ingredient</h2>
-        <p className="mb-4 text-sm text-text-secondary">
-          An ingredient named &ldquo;{duplicateName}&rdquo; already exists in your list. Would you like to keep the existing one or add a duplicate?
-        </p>
-        <div className="flex gap-3">
-          <Button variant="primary" onClick={onMerge} data-testid="duplicate-merge-btn">Keep existing</Button>
-          <Button onClick={onCancel} data-testid="duplicate-cancel-btn">Cancel</Button>
-        </div>
+    <AppModal
+      open
+      onClose={onCancel}
+      ariaLabel="Duplicate ingredient warning"
+      backdropClassName="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+      className="max-w-sm p-6"
+      panelTestId="duplicate-warning-dialog"
+    >
+      <h2 className="mb-2 text-lg font-bold text-text-primary">Duplicate ingredient</h2>
+      <p className="mb-4 text-sm text-text-secondary">
+        An ingredient named &ldquo;{duplicateName}&rdquo; already exists in your list. Would you like to keep the existing one or add a duplicate?
+      </p>
+      <div className="flex gap-3">
+        <Button variant="primary" onClick={onMerge} data-testid="duplicate-merge-btn">Keep existing</Button>
+        <Button onClick={onCancel} data-testid="duplicate-cancel-btn">Cancel</Button>
       </div>
-    </div>
+    </AppModal>
   );
 }
 
@@ -110,8 +125,13 @@ function IngredientModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-label="Edit ingredient">
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-md border border-border-light bg-surface p-6 shadow-card-hover" data-testid="ingredient-modal">
+    <AppModal
+      open
+      onClose={onClose}
+      ariaLabel="Edit ingredient"
+      className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6"
+      panelTestId="ingredient-modal"
+    >
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-text-primary">
@@ -268,8 +288,7 @@ function IngredientModal({
             }
           }}>Done</Button>
         </div>
-      </div>
-    </div>
+    </AppModal>
   );
 }
 
@@ -335,6 +354,7 @@ export default function IngredientManager() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<IngredientCategory | "">("");
   const [tagFilter, setTagFilter] = useState("");
+  const [ingredientSort, setIngredientSort] = useState(INGREDIENT_SORT_OPTIONS[0]!.value);
   const [duplicateWarning, setDuplicateWarning] = useState<{
     newIngredient: Ingredient;
     existingIngredient: Ingredient;
@@ -377,6 +397,23 @@ export default function IngredientManager() {
     });
   }, [ingredients, searchQuery, categoryFilter, tagFilter]);
 
+  const sortedIngredients = useMemo(() => {
+    const opt =
+      INGREDIENT_SORT_OPTIONS.find((o) => o.value === ingredientSort) ?? INGREDIENT_SORT_OPTIONS[0]!;
+    return sortIngredients(filteredIngredients, opt.key, opt.dir);
+  }, [filteredIngredients, ingredientSort]);
+
+  const ingredientResetDeps = useMemo(
+    () => [searchQuery, categoryFilter, tagFilter, ingredientSort] as const,
+    [searchQuery, categoryFilter, tagFilter, ingredientSort],
+  );
+  const {
+    visibleItems: visibleIngredients,
+    hasMore: ingredientListHasMore,
+    loadMore: loadMoreIngredients,
+    sentinelRef: ingredientListSentinelRef,
+  } = useIncrementalList(sortedIngredients, { resetDeps: [...ingredientResetDeps] });
+
   const editingIngredient = editingId
     ? ingredients.find((ing) => ing.id === editingId) ?? null
     : null;
@@ -407,14 +444,12 @@ export default function IngredientManager() {
   if (!loaded) return null;
 
   return (
-    <PageShell>
-      <HouseholdNav householdId={householdId ?? ""} />
+    <>
       <PageHeader
         title="Ingredients"
         subtitle={`Household: ${householdName}`}
         subtitleTo={`/households?edit=${householdId}`}
       />
-      <SectionNav householdId={householdId ?? ""} />
 
       {/* Control bar */}
       <Card className="mb-4" data-testid="ingredient-control-bar">
@@ -452,6 +487,19 @@ export default function IngredientManager() {
               ))}
             </Select>
           )}
+          <FieldLabel label="Sort" className="sm:w-48 shrink-0">
+            <Select
+              value={ingredientSort}
+              onChange={(e) => setIngredientSort(e.target.value)}
+              data-testid="ingredient-sort"
+            >
+              {INGREDIENT_SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </Select>
+          </FieldLabel>
           <Button onClick={addIngredient}>Add ingredient</Button>
           <Link to={`/household/${householdId}/import-recipe`}>
             <Button data-testid="import-recipe-btn">Import recipe</Button>
@@ -463,8 +511,14 @@ export default function IngredientManager() {
       </Card>
 
       {/* Items count */}
-      <h2 className="mb-3 text-sm font-medium text-text-secondary">
-        Items ({ingredients.length}){filteredIngredients.length !== ingredients.length && ` · showing ${filteredIngredients.length}`}
+      <h2 className="mb-3 text-sm font-medium text-text-secondary" data-testid="ingredient-list-summary">
+        <span>Items ({ingredients.length})</span>
+        {filteredIngredients.length !== ingredients.length && (
+          <span>{` · ${filteredIngredients.length} match${filteredIngredients.length !== 1 ? "es" : ""}`}</span>
+        )}
+        {sortedIngredients.length > 0 && visibleIngredients.length < sortedIngredients.length && (
+          <span>{` · showing ${visibleIngredients.length} of ${sortedIngredients.length}`}</span>
+        )}
       </h2>
 
       {/* Browse list */}
@@ -474,13 +528,21 @@ export default function IngredientManager() {
         <EmptyState>No ingredients match your filters.</EmptyState>
       ) : (
         <div className="space-y-1.5" data-testid="ingredient-list">
-          {filteredIngredients.map((ingredient) => (
+          {visibleIngredients.map((ingredient) => (
             <IngredientRow
               key={ingredient.id}
               ingredient={ingredient}
               onClick={() => setEditingId(ingredient.id)}
             />
           ))}
+          <div ref={ingredientListSentinelRef} className="h-px w-full" aria-hidden />
+          {ingredientListHasMore && (
+            <div className="flex justify-center pt-2">
+              <Button type="button" variant="default" onClick={loadMoreIngredients} data-testid="ingredient-list-load-more">
+                Load more ingredients
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -536,6 +598,6 @@ export default function IngredientManager() {
         }}
       />
 
-    </PageShell>
+    </>
   );
 }

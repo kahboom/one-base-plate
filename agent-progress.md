@@ -826,5 +826,16 @@ All completed features satisfy their referenced screen acceptance criteria for t
   - `npm run test -- tests/f036-navigation.test.tsx tests/f041-household-click-setup.test.tsx tests/f038-inline-ingredient.test.tsx tests/f002-household.test.tsx` passes (72 tests).
   - `ReadLints` reports no linter errors on touched files.
 
+### Navigation regression fix — shared household shell + secondary nav (2026-03-19)
+- **PRD:** F036, F038, F041, F053; screens S001, S003, S005, S006, S008, S010.
+- Centralized nav items and active-state rules in `src/nav/householdNavConfig.ts` (global vs secondary; “All households”; meal detail → Base meals active; setup index → All households active; Home global active only on `/home`).
+- Added `src/layouts/HouseholdLayout.tsx` rendering `AppHeader`, `HouseholdNavStack` (global + visually distinct secondary row), and `<Outlet />` for all `/household/:householdId/*` routes.
+- Nested household routes under `/household/:householdId` in `App.tsx`; explicit `/household/new` for create flow. `HouseholdSetup` uses `householdId` from the parent param and `useMatch("/household/new")` for create vs edit.
+- Removed per-page duplicate `HouseholdNav` / `SectionNav` / `PageShell` from household pages; `HouseholdList` uses `HouseholdNavStack` inside `PageShell`.
+- `PageHeader` now renders optional `subtitle` / `subtitleTo` (e.g. Rescue mode tagline).
+- `SecondaryNav` filters household-scoped links when no `householdId`; `GlobalNav` returns null without id.
+- Tests: `tests/householdLayoutRoutes.tsx` for MemoryRouter parity with App; broad test route updates; `tests/household-nav-config.test.ts`; expanded `tests/f036-navigation.test.tsx` for F053 acceptance.
+- Verification: `npx vitest run` (796 tests), `tests/household-nav-config.test.ts` passes.
+
 ## Next Task
 - `F049` remains the immediate next incomplete feature in PRD order (`passes=false`, dependency `F048` satisfied), with `F050` queued directly after it to keep implementation focused on bulk import cleanup and resolution UX.

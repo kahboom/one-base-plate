@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes } from "react-router-dom";
 import type { Household, BaseMeal, Ingredient, HouseholdMember, DayPlan, WeeklyPlan, AssemblyVariant } from "../src/types";
 import { saveHousehold } from "../src/storage";
 import { generateAssemblyVariants } from "../src/planner";
-import WeeklyPlanner from "../src/pages/WeeklyPlanner";
+import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 const ingredients: Ingredient[] = [
   { id: "ing-pasta", name: "pasta", category: "carb", tags: [], shelfLifeHint: "", freezerFriendly: false, babySafeWithAdaptation: true },
@@ -65,9 +65,7 @@ function seedHousehold(plan?: WeeklyPlan): Household {
 function renderWeeklyPlanner() {
   return render(
     <MemoryRouter initialEntries={["/household/h-share/weekly"]}>
-      <Routes>
-        <Route path="/household/:householdId/weekly" element={<WeeklyPlanner />} />
-      </Routes>
+      <Routes>{householdLayoutRouteBranch}</Routes>
     </MemoryRouter>,
   );
 }
@@ -82,6 +80,16 @@ vi.mock("html2canvas", () => ({
 beforeEach(() => {
   localStorage.clear();
   vi.restoreAllMocks();
+  vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
+    matches: query === "(min-width: 1024px)" || query === "(min-width: 640px)",
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
   mockToBlob.mockImplementation((cb: (blob: Blob | null) => void) => {
     cb(new Blob(["fake-image"], { type: "image/png" }));
   });
@@ -189,7 +197,8 @@ describe("F042 - Share weekly plan as image", () => {
 
       await waitFor(() => {
         expect(shareMock).toHaveBeenCalledTimes(1);
-        const call = shareMock.mock.calls[0]![0] as { files: File[]; title: string };
+        const tuple = shareMock.mock.calls[0] as unknown as [{ files: File[]; title: string }];
+        const call = tuple[0];
         expect(call.title).toBe("Weekly Meal Plan");
         expect(call.files).toHaveLength(1);
         expect(call.files[0]!.type).toBe("image/png");
