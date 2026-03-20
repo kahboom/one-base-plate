@@ -192,6 +192,8 @@ describe("F004: Ingredient delete behavior", () => {
     await user.click(screen.getByTestId("ingredient-row-ing-delete"));
     const modal = screen.getByTestId("ingredient-modal");
     await user.click(within(modal).getByTestId("delete-ingredient-btn"));
+    const deleteConfirm = screen.getByRole("dialog", { name: "Delete ingredient" });
+    await user.click(within(deleteConfirm).getByRole("button", { name: "Delete" }));
 
     expect(screen.queryByText("Delete Me")).not.toBeInTheDocument();
     const saved = loadHousehold("h-ing")!;

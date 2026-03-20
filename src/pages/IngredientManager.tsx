@@ -3,7 +3,18 @@ import { useParams, Link } from "react-router-dom";
 import type { Ingredient, IngredientCategory } from "../types";
 import { loadHousehold, saveHousehold, toSentenceCase, normalizeIngredientName } from "../storage";
 import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from "../catalog";
-import { PageHeader, Card, Button, Input, Select, Chip, FieldLabel, EmptyState } from "../components/ui";
+import {
+  PageHeader,
+  Card,
+  Button,
+  Input,
+  Select,
+  Chip,
+  FieldLabel,
+  EmptyState,
+  ConfirmDialog,
+  useConfirm,
+} from "../components/ui";
 import AppModal from "../components/AppModal";
 import { useIncrementalList } from "../hooks/useIncrementalList";
 import { sortIngredients, type IngredientSortKey, type SortDir } from "../lib/listSort";
@@ -360,6 +371,7 @@ export default function IngredientManager() {
     existingIngredient: Ingredient;
   } | null>(null);
   const [newIngredientIds, setNewIngredientIds] = useState<Set<string>>(new Set());
+  const { pending, requestConfirm, confirm, cancel } = useConfirm();
 
   useEffect(() => {
     if (!householdId) return;
@@ -431,14 +443,18 @@ export default function IngredientManager() {
     );
   }
 
-  function deleteIngredient(ingredientId: string) {
-    setIngredients((prev) => prev.filter((ing) => ing.id !== ingredientId));
-    setNewIngredientIds((prev) => {
-      const next = new Set(prev);
-      next.delete(ingredientId);
-      return next;
+  function removeIngredient(ingredientId: string) {
+    const ing = ingredients.find((i) => i.id === ingredientId);
+    const displayName = ing?.name.trim() ? toSentenceCase(ing.name) : "this ingredient";
+    requestConfirm(displayName, () => {
+      setIngredients((prev) => prev.filter((item) => item.id !== ingredientId));
+      setNewIngredientIds((prev) => {
+        const next = new Set(prev);
+        next.delete(ingredientId);
+        return next;
+      });
+      setEditingId(null);
     });
-    setEditingId(null);
   }
 
   if (!loaded) return null;
@@ -557,7 +573,7 @@ export default function IngredientManager() {
           isNewIngredient={newIngredientIds.has(editingIngredient.id)}
           allIngredients={ingredients}
           onChange={updateIngredient}
-          onDelete={() => deleteIngredient(editingIngredient.id)}
+          onDelete={() => removeIngredient(editingIngredient.id)}
           onClose={() => {
             if (editingIngredient.name) {
               updateIngredient({ ...editingIngredient, name: normalizeIngredientName(editingIngredient.name) });
@@ -596,6 +612,15 @@ export default function IngredientManager() {
         onCancel={() => {
           setDuplicateWarning(null);
         }}
+      />
+
+      <ConfirmDialog
+        open={!!pending}
+        title="Delete ingredient"
+        message={`Are you sure you want to delete "${pending?.entityName}"? This cannot be undone. Meals that use this ingredient may be affected.`}
+        confirmLabel="Delete"
+        onConfirm={confirm}
+        onCancel={cancel}
       />
 
     </>
