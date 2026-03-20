@@ -229,8 +229,9 @@ export function NavBar({
   );
 }
 
-function navBaseClass() {
-  return "flex flex-wrap items-center gap-1.5 rounded-md border border-border-light bg-surface px-2 py-2 shadow-card sm:gap-2 sm:px-3";
+/** Primary destinations: pill bar inside the unified household nav card */
+function globalNavRowClass() {
+  return "flex flex-wrap items-center gap-1.5 rounded-t-md border-b border-border-light bg-surface px-2 py-2 sm:gap-2 sm:px-3";
 }
 
 export function GlobalNav({ householdId }: { householdId?: string }) {
@@ -243,7 +244,7 @@ export function GlobalNav({ householdId }: { householdId?: string }) {
 
   return (
     <nav
-      className={navBaseClass()}
+      className={globalNavRowClass()}
       data-testid="global-nav"
       aria-label="Global navigation"
     >
@@ -273,39 +274,41 @@ export function SecondaryNav({ householdId }: { householdId?: string }) {
     (item) => item.path === "/households" || Boolean(householdId),
   );
 
+  const showDividerAbove = Boolean(householdId);
+
   return (
-    <div
-      className="border-t border-border-light pt-3"
+    <nav
+      className={`flex flex-wrap items-center gap-x-5 gap-y-1.5 px-3 py-2.5 sm:px-4 ${
+        showDividerAbove ? "border-t border-border-light bg-bg" : "bg-bg"
+      }`}
       data-testid="section-nav"
       aria-label="Secondary navigation"
     >
-      <div className={`${navBaseClass()} border-dashed bg-bg`}>
-        {items.map((item) => {
-          const href = buildHouseholdPath(householdId, item.path);
-          const active = isSecondaryNavItemActive(currentPath, householdId, item.path);
-          return (
-            <Link
-              key={item.path}
-              to={href}
-              className={navLinkClass(active)}
-              aria-current={active ? "page" : undefined}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-      </div>
-    </div>
+      {items.map((item) => {
+        const href = buildHouseholdPath(householdId, item.path);
+        const active = isSecondaryNavItemActive(currentPath, householdId, item.path);
+        return (
+          <Link
+            key={item.path}
+            to={href}
+            className={secondaryNavLinkClass(active)}
+            aria-current={active ? "page" : undefined}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
 /** @deprecated Use SecondaryNav; kept for tests and incremental migration */
 export const SectionNav = SecondaryNav;
 
-/** Global + secondary navigation stack (PRD F053) */
+/** Global + secondary navigation stack (PRD F053) — single card, secondary row is text links */
 export function HouseholdNavStack({ householdId }: { householdId?: string }) {
   return (
-    <div className="mb-6 space-y-3">
+    <div className="mb-6 overflow-hidden rounded-md border border-border-light bg-surface shadow-card">
       <GlobalNav householdId={householdId} />
       <SecondaryNav householdId={householdId} />
     </div>
@@ -323,6 +326,14 @@ function navLinkClass(isActive: boolean) {
   return isActive
     ? `${base} bg-brand text-white`
     : `${base} text-text-secondary hover:bg-brand-light hover:text-brand`;
+}
+
+function secondaryNavLinkClass(isActive: boolean) {
+  const base =
+    "inline-flex items-center rounded-md px-0.5 py-1 text-sm transition-colors min-h-[36px] whitespace-nowrap";
+  return isActive
+    ? `${base} font-semibold text-brand`
+    : `${base} font-medium text-text-secondary hover:text-brand`;
 }
 
 

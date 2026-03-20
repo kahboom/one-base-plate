@@ -29,6 +29,7 @@ const PREP_DESCRIPTORS = new Set([
   "grated", "shredded", "chopped", "diced", "minced", "sliced", "crushed", "zested", "peeled", "rinsed", "drained",
   "julienned", "trimmed", "cubed", "halved", "quartered", "torn", "packed", "sifted", "freshly", "finely", "roughly",
   "thinly", "thickly", "softened", "melted", "toasted", "thawed", "frozen",
+  "skinless", "boneless", "bone-in", "skin-on",
 ]);
 const QUALIFIER_PREFIXES = [
   "low-sodium",
@@ -104,6 +105,38 @@ function stripLeadingQualifiers(name: string, notes: string[]): string {
   return out;
 }
 
+function commaSegmentIsOnlyDescriptors(segment: string): boolean {
+  const words = segment.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return false;
+  return words.every((w) => PREP_DESCRIPTORS.has(w.toLowerCase()));
+}
+
+/** Move leading comma-separated descriptor clauses into prep notes (Paprika-style "skinless, boneless chicken breasts"). */
+function peelLeadingCommaDescriptorClauses(name: string, prepNotes: string[]): string {
+  const parts = name.split(",").map((p) => p.trim()).filter(Boolean);
+  while (parts.length > 1 && commaSegmentIsOnlyDescriptors(parts[0]!)) {
+    prepNotes.push(parts.shift()!.toLowerCase());
+  }
+  if (parts.length === 0) return "";
+  const rest = parts.join(", ");
+  return rest;
+}
+
+export function applyIngredientMatchSynonyms(name: string): string {
+  let out = name.trim().replace(/\s+/g, " ");
+  if (!out) return out;
+
+  const phraseSynonyms: Array<[RegExp, string]> = [
+    [/\b(?:skinless\s+)?(?:boneless\s+)?chicken\s+breasts?\b/gi, "chicken breast"],
+    [/\bpitas\b/gi, "pittas"],
+    [/\bpita\b/gi, "pittas"],
+  ];
+  for (const [re, replacement] of phraseSynonyms) {
+    out = out.replace(re, replacement);
+  }
+  return out.replace(/\s+/g, " ").trim();
+}
+
 function stripTrailingPrepPhrases(name: string, notes: string[]): string {
   let out = name.trim();
   const trailingPatterns = [
@@ -177,6 +210,7 @@ export function parseIngredientLine(
         if (note.trim()) prepNotes.push(note.trim().toLowerCase());
         return " ";
       });
+      namePart = peelLeadingCommaDescriptorClauses(namePart, prepNotes);
       const commaParts = namePart.split(",").map((part) => part.trim()).filter(Boolean);
       let canonical = commaParts.shift() ?? "";
       if (commaParts.length > 0) {
@@ -187,6 +221,7 @@ export function parseIngredientLine(
       canonical = stripLeadingPrepDescriptors(canonical, prepNotes);
       canonical = stripTrailingPrepPhrases(canonical, prepNotes);
       canonical = canonical.replace(/\s+/g, " ").trim();
+      canonical = applyIngredientMatchSynonyms(canonical);
 
       return { quantity: quantityPart, unit: rawUnit, quantityValue, name: canonical, prepNotes };
     }
@@ -197,6 +232,7 @@ export function parseIngredientLine(
     if (note.trim()) prepNotes.push(note.trim().toLowerCase());
     return " ";
   }).trim();
+  cleaned = peelLeadingCommaDescriptorClauses(cleaned, prepNotes);
   const commaParts = cleaned.split(",").map((part) => part.trim()).filter(Boolean);
   let canonical = commaParts.shift() ?? "";
   if (commaParts.length > 0) {
@@ -206,6 +242,7 @@ export function parseIngredientLine(
   canonical = stripLeadingPrepDescriptors(canonical, prepNotes);
   canonical = stripTrailingPrepPhrases(canonical, prepNotes);
   canonical = canonical.replace(/\s+/g, " ").trim();
+  canonical = applyIngredientMatchSynonyms(canonical);
 
   return { quantity: "", unit: "", quantityValue: undefined, name: canonical, prepNotes };
 }
@@ -237,11 +274,13 @@ export function matchIngredient(
 ): { ingredient: Ingredient | null; catalogItem: CatalogIngredient | null; status: ParsedIngredientLine["status"] } {
   if (!name.trim()) return { ingredient: null, catalogItem: null, status: "unmatched" };
 
+  const matchName = applyIngredientMatchSynonyms(name.trim());
+
   // Try household ingredients first
   let bestHousehold: Ingredient | null = null;
   let bestHouseholdScore = 0;
   for (const ing of householdIngredients) {
-    const score = matchScore(name, ing.name);
+    const score = matchScore(matchName, ing.name);
     if (score > bestHouseholdScore && score >= 0.5) {
       bestHouseholdScore = score;
       bestHousehold = ing;
@@ -255,7 +294,7 @@ export function matchIngredient(
   let bestCatalog: CatalogIngredient | null = null;
   let bestCatalogScore = 0;
   for (const ci of catalog) {
-    const score = matchScore(name, ci.name);
+    const score = matchScore(matchName, ci.name);
     if (score > bestCatalogScore && score >= 0.5) {
       bestCatalogScore = score;
       bestCatalog = ci;

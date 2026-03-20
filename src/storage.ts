@@ -1,26 +1,114 @@
+import { openDB } from "idb";
 import type { Household, Ingredient } from "./types";
 import seedData from "./seed-data.json";
 
-const STORAGE_KEY = "onebaseplate_households";
+export const STORAGE_KEY = "onebaseplate_households";
 const SEEDED_KEY = "onebaseplate_seeded";
 const MIGRATION_KEY = "onebaseplate_migrated_v1";
 const DEFAULT_HOUSEHOLD_KEY = "onebaseplate_default_household_id";
+/** When set, household JSON lives in IndexedDB (localStorage quota exceeded). */
+const HOUSEHOLDS_IDB_META = "onebaseplate_households_in_idb";
+
+const IDB_NAME = "onebaseplate";
+const IDB_VERSION = 1;
+const IDB_STORE = "kv";
+
+let idbPromise: ReturnType<typeof openDb> | null = null;
+/** In-IDB mode only: hydrated household list (localStorage mode reads from localStorage each time). */
+let householdsCache: Household[] | null = null;
+
+function openDb() {
+  return openDB(IDB_NAME, IDB_VERSION, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE);
+      }
+    },
+  });
+}
+
+function getIdb() {
+  return (idbPromise ??= openDb());
+}
+
+async function idbGetHouseholds(): Promise<Household[] | undefined> {
+  const db = await getIdb();
+  return db.get(IDB_STORE, STORAGE_KEY);
+}
+
+async function idbPutHouseholds(households: Household[]): Promise<void> {
+  const db = await getIdb();
+  await db.put(IDB_STORE, households, STORAGE_KEY);
+}
+
+export function isHouseholdsInIndexedDB(): boolean {
+  return localStorage.getItem(HOUSEHOLDS_IDB_META) === "1";
+}
+
+/** Call once at app startup before reading households (loads IDB when migrated). */
+export async function initStorage(): Promise<void> {
+  if (!isHouseholdsInIndexedDB()) return;
+  householdsCache = (await idbGetHouseholds()) ?? [];
+}
 
 export function seedIfNeeded(): void {
   if (localStorage.getItem(SEEDED_KEY)) return;
-  if (localStorage.getItem(STORAGE_KEY)) return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(seedData));
+  if (loadHouseholds().length > 0) return;
+  if (isHouseholdsInIndexedDB()) {
+    householdsCache = seedData as unknown as Household[];
+    void idbPutHouseholds(householdsCache);
+  } else {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seedData));
+  }
   localStorage.setItem(SEEDED_KEY, "1");
 }
 
 export function loadHouseholds(): Household[] {
+  if (isHouseholdsInIndexedDB()) {
+    return householdsCache ?? [];
+  }
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
   return JSON.parse(raw) as Household[];
 }
 
+/** Persists the full household list; awaits IndexedDB when that backend is active or after quota migration. */
+export async function persistHouseholdsNow(households: Household[]): Promise<void> {
+  if (isHouseholdsInIndexedDB()) {
+    householdsCache = households;
+    await idbPutHouseholds(households);
+    return;
+  }
+  const json = JSON.stringify(households);
+  try {
+    localStorage.setItem(STORAGE_KEY, json);
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "QuotaExceededError") {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.setItem(HOUSEHOLDS_IDB_META, "1");
+      householdsCache = households;
+      await idbPutHouseholds(households);
+      return;
+    }
+    throw e;
+  }
+}
+
 export function saveHouseholds(households: Household[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(households));
+  void persistHouseholdsNow(households).catch((err) => {
+    console.error("Failed to persist households:", err);
+  });
+}
+
+export async function saveHouseholdAsync(household: Household): Promise<void> {
+  const households = loadHouseholds();
+  const index = households.findIndex((h) => h.id === household.id);
+  if (index >= 0) {
+    households[index] = household;
+  } else {
+    households.push(household);
+  }
+  await persistHouseholdsNow(households);
 }
 
 export function loadHousehold(id: string): Household | undefined {
@@ -58,6 +146,22 @@ export function clearDefaultHouseholdId(): void {
 export function clearAllHouseholdsAndDefault(): void {
   saveHouseholds([]);
   clearDefaultHouseholdId();
+}
+
+/** Clears base meals, weekly plans, pinned meals, and meal outcomes for one household. Ingredients and members are unchanged. */
+export function clearHouseholdMealsAndPlans(householdId: string): void {
+  const households = loadHouseholds();
+  const idx = households.findIndex((h) => h.id === householdId);
+  if (idx < 0) return;
+  const h = households[idx]!;
+  households[idx] = {
+    ...h,
+    baseMeals: [],
+    weeklyPlans: [],
+    pinnedMealIds: [],
+    mealOutcomes: [],
+  };
+  saveHouseholds(households);
 }
 
 export function exportHouseholdsJSON(householdIds?: string[]): string {

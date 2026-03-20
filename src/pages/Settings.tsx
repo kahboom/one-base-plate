@@ -4,6 +4,7 @@ import { PageHeader, Card, Button, ConfirmDialog, useConfirm } from "../componen
 import {
   clearAllHouseholdsAndDefault,
   clearDefaultHouseholdId,
+  clearHouseholdMealsAndPlans,
   exportHouseholdsJSON,
   importHouseholdsJSON,
   loadDefaultHouseholdId,
@@ -16,6 +17,12 @@ export default function Settings() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
+  const {
+    pending: pendingMeals,
+    requestConfirm: requestConfirmMeals,
+    confirm: confirmMeals,
+    cancel: cancelMeals,
+  } = useConfirm();
 
   function handleExport() {
     const json = exportHouseholdsJSON();
@@ -64,6 +71,14 @@ export default function Settings() {
     });
   }
 
+  function handleClearMealsClick() {
+    if (!householdId) return;
+    requestConfirmMeals("", () => {
+      clearHouseholdMealsAndPlans(householdId);
+      clearImportSession();
+    });
+  }
+
   return (
     <>
       <PageHeader title="Settings" />
@@ -72,7 +87,8 @@ export default function Settings() {
         <h2 className="mb-3 text-sm font-semibold text-text-primary">Data</h2>
         <p className="mb-4 text-sm text-text-secondary">
           Export or import all households (members, ingredients, base meals, weekly plans). Import merges with
-          existing data by household id.
+          existing data by household id. You can also remove only this household&apos;s meals and plans while
+          keeping members and ingredients.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button data-testid="settings-export-btn" onClick={handleExport}>
@@ -89,6 +105,9 @@ export default function Settings() {
             onChange={handleImportFile}
             data-testid="settings-import-file-input"
           />
+          <Button variant="danger" data-testid="settings-clear-meals-btn" onClick={handleClearMealsClick}>
+            Remove all meals
+          </Button>
           <Button variant="danger" data-testid="settings-clear-all-btn" onClick={handleClearClick}>
             Clear all data
           </Button>
@@ -112,6 +131,14 @@ export default function Settings() {
         confirmLabel="Clear all"
         onConfirm={confirm}
         onCancel={cancel}
+      />
+      <ConfirmDialog
+        open={!!pendingMeals}
+        title="Remove all meals"
+        message="This removes all base meals, weekly plans, pinned meals, and meal history for this household. Members and ingredients are kept. In-progress Paprika imports are also cleared. This cannot be undone."
+        confirmLabel="Remove meals"
+        onConfirm={confirmMeals}
+        onCancel={cancelMeals}
       />
     </>
   );

@@ -54,6 +54,36 @@ export interface PaprikaImportSession {
 
 const SESSION_KEY = "onebaseplate_paprika_session";
 
+const MAX_PREP_CHARS = 120_000;
+const MAX_NOTES_CHARS = 32_000;
+const MAX_IMPORT_MAPPING_LINE_CHARS = 4_000;
+
+/** Paprika often stores HTML; strip tags to shrink persisted JSON and avoid duplicate giant blobs. */
+export function stripHtmlToPlainText(html: string): string {
+  if (!html) return "";
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function truncate(s: string, max: number): string {
+  if (s.length <= max) return s;
+  return s.slice(0, max) + "…";
+}
+
+function compactMappingsForStorage(mappings: ImportMapping[]): ImportMapping[] {
+  return mappings.map((m) => ({
+    ...m,
+    originalLine:
+      m.originalLine.length > MAX_IMPORT_MAPPING_LINE_CHARS
+        ? truncate(m.originalLine, MAX_IMPORT_MAPPING_LINE_CHARS)
+        : m.originalLine,
+  }));
+}
+
 function toSessionRecipeSnapshot(recipe: ParsedPaprikaRecipe): ParsedPaprikaRecipe {
   // Keep only fields needed to resume select/review/import flows.
   const raw: PaprikaRecipe = {
@@ -448,23 +478,30 @@ export function buildDraftMeal(
     recipeLinks.push({ label: recipe.source || recipe.source_url, url: recipe.source_url });
   }
 
+  const prepText = truncate(stripHtmlToPlainText(recipe.directions), MAX_PREP_CHARS);
+  const notesPlain = stripHtmlToPlainText(recipe.notes);
+  const notesOut =
+    notesPlain && notesPlain !== prepText
+      ? truncate(notesPlain, MAX_NOTES_CHARS)
+      : undefined;
+
   const meal: BaseMeal = {
     id: crypto.randomUUID(),
     name: recipe.name,
     components,
-    defaultPrep: "",
+    defaultPrep: prepText,
     estimatedTimeMinutes: totalTime || (prepTime + cookTime) || 30,
     difficulty: mapDifficulty(recipe.difficulty),
     rescueEligible: false,
     wasteReuseHints: [],
     recipeLinks: recipeLinks.length > 0 ? recipeLinks : undefined,
-    notes: recipe.notes || undefined,
+    notes: notesOut,
     imageUrl: recipe.image_url || undefined,
     provenance,
     prepTimeMinutes: prepTime || undefined,
     cookTimeMinutes: cookTime || undefined,
     servings: recipe.servings || undefined,
-    importMappings: mappings,
+    importMappings: compactMappingsForStorage(mappings),
   };
 
   return { meal, newIngredients };

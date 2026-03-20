@@ -129,6 +129,41 @@ describe("F048 - Paprika parser engine", () => {
       const matched = lines.find((l) => l.status === "matched");
       expect(matched?.action).toBe("use");
     });
+
+    it("maps Paprika-style skinless, boneless chicken to chicken breast", () => {
+      const h = makeHousehold();
+      const recipe = makePaprikaRecipe({
+        ingredients: "3 skinless, boneless chicken breasts",
+      });
+      const lines = parseRecipeIngredients(recipe, h.ingredients);
+
+      expect(lines).toHaveLength(1);
+      expect(lines[0]!.name).toBe("chicken breast");
+      expect(lines[0]!.status).toBe("matched");
+      expect(lines[0]!.matchedIngredient?.id).toBe("ing-chicken");
+      expect(lines[0]!.prepNotes).toContain("skinless");
+    });
+
+    it("maps pita to household pittas", () => {
+      const h = makeHousehold();
+      h.ingredients.push({
+        id: "ing-pittas",
+        name: "pittas",
+        category: "carb",
+        tags: [],
+        shelfLifeHint: "",
+        freezerFriendly: false,
+        babySafeWithAdaptation: true,
+        source: "manual",
+      });
+      const recipe = makePaprikaRecipe({ ingredients: "2 pita" });
+      const lines = parseRecipeIngredients(recipe, h.ingredients);
+
+      expect(lines).toHaveLength(1);
+      expect(lines[0]!.name).toBe("pittas");
+      expect(lines[0]!.status).toBe("matched");
+      expect(lines[0]!.matchedIngredient?.id).toBe("ing-pittas");
+    });
   });
 
   describe("detectDuplicateMeal", () => {

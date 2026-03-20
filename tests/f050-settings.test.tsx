@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
-import type { Household } from "../src/types";
+import type { BaseMeal, Household } from "../src/types";
 import {
   loadHouseholds,
   saveHousehold,
@@ -46,6 +46,7 @@ describe("F050 — Settings page", () => {
 
     expect(screen.getByTestId("settings-export-btn")).toBeInTheDocument();
     expect(screen.getByTestId("settings-import-btn")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-clear-meals-btn")).toBeInTheDocument();
     expect(screen.getByTestId("settings-clear-all-btn")).toBeInTheDocument();
     expect(screen.getByTestId("import-paprika-btn")).toBeInTheDocument();
   });
@@ -69,5 +70,48 @@ describe("F050 — Settings page", () => {
     expect(loadDefaultHouseholdId()).toBeNull();
     expect(loadImportSession("h-settings")).toBeNull();
     expect(screen.getByTestId("households-page")).toBeInTheDocument();
+  });
+
+  it("clears only base meals and plans for this household after confirm", async () => {
+    const meal: BaseMeal = {
+      id: "m1",
+      name: "Test meal",
+      components: [],
+      defaultPrep: "",
+      estimatedTimeMinutes: 30,
+      difficulty: "easy",
+      rescueEligible: true,
+      wasteReuseHints: [],
+    };
+    saveHousehold(
+      makeHousehold({
+        ingredients: [{ id: "i1", name: "salt", category: "pantry", tags: [], shelfLifeHint: "", freezerFriendly: false, babySafeWithAdaptation: true }],
+        baseMeals: [meal],
+        weeklyPlans: [
+          {
+            id: "wp1",
+            days: [{ day: "Mon", baseMealId: "m1", variants: [] }],
+            selectedBaseMeals: ["m1"],
+            generatedGroceryList: [],
+            notes: "",
+          },
+        ],
+        pinnedMealIds: ["m1"],
+        mealOutcomes: [{ id: "o1", baseMealId: "m1", day: "Mon", outcome: "success", notes: "", date: "2025-01-01" }],
+      }),
+    );
+
+    renderSettings();
+
+    await userEvent.click(screen.getByTestId("settings-clear-meals-btn"));
+    await userEvent.click(screen.getByRole("button", { name: "Remove meals" }));
+
+    const h = loadHouseholds()[0]!;
+    expect(h.baseMeals).toEqual([]);
+    expect(h.weeklyPlans).toEqual([]);
+    expect(h.pinnedMealIds).toEqual([]);
+    expect(h.mealOutcomes).toEqual([]);
+    expect(h.ingredients).toHaveLength(1);
+    expect(h.ingredients[0]!.name).toBe("salt");
   });
 });

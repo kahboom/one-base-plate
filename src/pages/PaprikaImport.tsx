@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Ingredient, BaseMeal, IngredientCategory } from "../types";
-import { loadHousehold, saveHousehold } from "../storage";
+import { loadHousehold, saveHouseholdAsync } from "../storage";
 import {
   parsePaprikaFile,
   parsePaprikaRecipes,
@@ -233,10 +233,11 @@ export default function PaprikaImport() {
     persistSession(parsedRecipes, "review");
   }
 
-  function handleSaveAll() {
+  async function handleSaveAll() {
     if (!householdId) return;
     const household = loadHousehold(householdId);
     if (!household) return;
+    setError("");
 
     let allNewIngredients: Ingredient[] = [];
     const newMeals: BaseMeal[] = [];
@@ -267,11 +268,17 @@ export default function PaprikaImport() {
 
     household.ingredients = [...household.ingredients, ...allNewIngredients];
     household.baseMeals = [...household.baseMeals, ...newMeals];
-    saveHousehold(household);
-    clearImportSession();
 
-    setImportedCount(selectedRecipes.length);
-    setStep("done");
+    try {
+      await saveHouseholdAsync(household);
+      clearImportSession();
+      setImportedCount(selectedRecipes.length);
+      setStep("done");
+    } catch {
+      setError(
+        "Could not save imported recipes. Your browser storage quota was exceeded or data could not be written. Try exporting a backup, removing old households or meals, then importing again.",
+      );
+    }
   }
 
   if (!loaded) return null;
@@ -418,6 +425,11 @@ export default function PaprikaImport() {
 
       {step === "review" && (
         <div data-testid="paprika-review-step">
+          {error && (
+            <Card className="mb-4 border-danger bg-danger/5">
+              <p className="text-sm text-danger" data-testid="paprika-error">{error}</p>
+            </Card>
+          )}
           <Section title="Bulk ingredient review">
             <div className="mb-4 flex flex-wrap gap-2" data-testid="bulk-summary">
               <Chip variant="success">{bulkSummary.matched.length} exact matches</Chip>
