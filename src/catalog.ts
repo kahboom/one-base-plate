@@ -106,6 +106,18 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c("cat-flour", "Flour", "pantry", ["staple"], false, false),
   c("cat-baked-beans", "Baked beans", "pantry", ["quick", "rescue", "staple"], false, true),
   c("cat-pesto", "Pesto", "pantry", ["quick"], false, false),
+  c("cat-garlic-powder", "Garlic powder", "pantry", ["staple"], false, false),
+  c("cat-onion-powder", "Onion powder", "pantry", ["staple"], false, false),
+  c("cat-parmesan-cheese", "Parmesan cheese", "dairy", ["quick", "staple"], true, true),
+  c("cat-monterey-jack-cheese", "Monterey Jack cheese", "dairy", ["quick"], true, true),
+  c("cat-cheddar-cheese", "Cheddar cheese", "dairy", ["quick", "staple"], true, true),
+  c("cat-worcestershire-sauce", "Worcestershire sauce", "pantry", ["staple"], false, false),
+  c("cat-breadcrumbs", "Breadcrumbs", "pantry", ["staple"], false, false),
+  c("cat-green-onion", "Green onion", "veg", ["quick"], false, false),
+  c("cat-red-onion", "Red onion", "veg", ["staple"], false, false),
+  c("cat-kosher-salt", "Kosher salt", "pantry", ["staple"], false, false),
+  c("cat-black-pepper", "Black pepper", "pantry", ["staple"], false, false),
+  c("cat-french-onion-soup", "French onion soup", "pantry", ["staple"], false, true),
 ];
 
 export function searchCatalog(query: string): CatalogIngredient[] {

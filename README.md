@@ -20,6 +20,22 @@ This script will:
 
 ---
 
+## Top suggestions & overlap
+
+On the **household home** screen, **Top suggestions** lists up to **three** meals from your base meal library. They are **ranked** by a combined score:
+
+1. **Overlap** — For each meal, we count how many **human** household members can eat it **without an ingredient conflict** (they may still need small adaptations, e.g. sauce on the side). **Pets are not included** in this count. The card shows this as `score/total overlap` (for example, `4/4` means all counted members are conflict-free).
+
+2. **Past outcomes** — If you’ve logged how meals went, each meal gets a score from that history: successes and partials help; failures count against it.
+
+3. **Learned patterns** — After you’ve logged some outcomes, the app also nudges rankings based on which ingredients and meal patterns have tended to work or not work for your household.
+
+**Pinned** meals appear in their own section; pinning does **not** change how the top-three list is ordered.
+
+**Weekly Planner** and other screens may rank meals differently (for example, avoiding repeats already on the plan). The above applies specifically to **Top suggestions** on the home screen.
+
+---
+
 ## Manual Commands
 
 | Command | Description |

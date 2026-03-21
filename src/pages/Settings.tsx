@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader, Card, Button, ConfirmDialog, useConfirm } from "../components/ui";
 import {
   clearAllHouseholdsAndDefault,
@@ -16,6 +16,7 @@ export default function Settings() {
   const { householdId } = useParams<{ householdId: string }>();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dataImportMessage, setDataImportMessage] = useState<"success" | null>(null);
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
   const {
     pending: pendingMeals,
@@ -42,6 +43,7 @@ export default function Settings() {
   function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setDataImportMessage(null);
     const reader = new FileReader();
     reader.onload = () => {
       try {
@@ -55,6 +57,7 @@ export default function Settings() {
             clearDefaultHouseholdId();
           }
         }
+        setDataImportMessage("success");
       } catch {
         alert("Invalid JSON file. Please check the file format.");
       }
@@ -97,6 +100,11 @@ export default function Settings() {
           <Button data-testid="settings-import-btn" onClick={handleImportClick}>
             Import data
           </Button>
+          {dataImportMessage === "success" && (
+            <p className="w-full text-sm text-success-text" data-testid="settings-import-success">
+              Data imported and merged successfully.
+            </p>
+          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -119,9 +127,14 @@ export default function Settings() {
         <p className="mb-4 text-sm text-text-secondary">
           Import recipes from a Paprika .paprikarecipes export as draft base meals.
         </p>
-        <Link to={`/household/${householdId}/import-paprika`}>
-          <Button data-testid="import-paprika-btn">Import Paprika</Button>
-        </Link>
+        <Button
+          type="button"
+          variant="primary"
+          data-testid="import-paprika-btn"
+          onClick={() => householdId && navigate(`/household/${householdId}/import-paprika`)}
+        >
+          Import Paprika
+        </Button>
       </Card>
 
       <ConfirmDialog

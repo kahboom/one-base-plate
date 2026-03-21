@@ -108,6 +108,7 @@ const btnVariants: Record<ButtonVariant, string> = {
 export function Button({
   variant = "default",
   small = false,
+  type = "button",
   className = "",
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -116,7 +117,8 @@ export function Button({
 }) {
   return (
     <button
-      className={`${btnBase} ${small ? "px-3 py-1.5 text-xs min-h-[36px]" : "px-4 py-2"} ${btnVariants[variant]} ${className}`}
+      type={type}
+      className={`${btnBase} ${small ? "px-3 py-1.5 text-xs min-h-[36px]" : "px-4 py-2"} ${btnVariants[variant]} disabled:cursor-not-allowed disabled:opacity-45 disabled:pointer-events-none ${className}`}
       {...props}
     />
   );

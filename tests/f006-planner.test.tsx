@@ -260,6 +260,19 @@ describe("F006: Planner page selects meal and shows variants", () => {
     expect(within(mealPlan).getByText(/Broccoli \(veg/i)).toBeInTheDocument();
   });
 
+  it("shows how to make tonight and primary actions when a meal is selected", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderPlanner("h-planner");
+    await user.click(screen.getByTestId("selectable-meal-pasta"));
+    const mealPlan = screen.getByTestId("meal-plan");
+    expect(within(mealPlan).getByTestId("how-to-make-tonight")).toBeInTheDocument();
+    expect(within(mealPlan).getByTestId("planner-primary-actions")).toBeInTheDocument();
+    expect(within(mealPlan).getByTestId("use-tonight-btn")).toBeInTheDocument();
+    expect(within(mealPlan).getByTestId("add-to-week-btn")).toBeInTheDocument();
+    expect(within(mealPlan).getByTestId("edit-meal-btn")).toBeInTheDocument();
+  });
+
   it("shows empty state when no meals exist", () => {
     const household: Household = {
       id: "h-empty",

@@ -1,5 +1,23 @@
 import { openDB } from "idb";
 import type { Household, Ingredient } from "./types";
+
+/** Assign stable ids to meal components when missing; idempotent. */
+export function ensureHouseholdComponentIds(household: Household): Household {
+  let changed = false;
+  const baseMeals = household.baseMeals.map((meal) => {
+    let mealChanged = false;
+    const components = meal.components.map((c) => {
+      if (c.id) return c;
+      mealChanged = true;
+      return { ...c, id: crypto.randomUUID() };
+    });
+    if (!mealChanged) return meal;
+    changed = true;
+    return { ...meal, components };
+  });
+  if (!changed) return household;
+  return { ...household, baseMeals };
+}
 import seedData from "./seed-data.json";
 
 export const STORAGE_KEY = "onebaseplate_households";
@@ -101,27 +119,38 @@ export function saveHouseholds(households: Household[]): void {
 }
 
 export async function saveHouseholdAsync(household: Household): Promise<void> {
+  const normalized = ensureHouseholdComponentIds(household);
   const households = loadHouseholds();
-  const index = households.findIndex((h) => h.id === household.id);
+  const index = households.findIndex((h) => h.id === normalized.id);
   if (index >= 0) {
-    households[index] = household;
+    households[index] = normalized;
   } else {
-    households.push(household);
+    households.push(normalized);
   }
   await persistHouseholdsNow(households);
 }
 
 export function loadHousehold(id: string): Household | undefined {
-  return loadHouseholds().find((h) => h.id === id);
+  const households = loadHouseholds();
+  const index = households.findIndex((h) => h.id === id);
+  if (index < 0) return undefined;
+  const raw = households[index]!;
+  const normalized = ensureHouseholdComponentIds(raw);
+  if (normalized !== raw) {
+    households[index] = normalized;
+    saveHouseholds(households);
+  }
+  return normalized;
 }
 
 export function saveHousehold(household: Household): void {
+  const normalized = ensureHouseholdComponentIds(household);
   const households = loadHouseholds();
-  const index = households.findIndex((h) => h.id === household.id);
+  const index = households.findIndex((h) => h.id === normalized.id);
   if (index >= 0) {
-    households[index] = household;
+    households[index] = normalized;
   } else {
-    households.push(household);
+    households.push(normalized);
   }
   saveHouseholds(households);
 }
@@ -209,6 +238,11 @@ export function normalizeIngredientName(name: string): string {
     .trim()
     .replace(/\s+/g, " ")
     .replace(/[.,;:!?]+$/, "");
+}
+
+/** For import grouping: same as normalizeIngredientName, then hyphens become spaces (all-purpose ≈ all purpose). */
+export function normalizeIngredientGroupKey(name: string): string {
+  return normalizeIngredientName(name).replace(/-/g, " ").replace(/\s+/g, " ").trim();
 }
 
 /** Pick the most complete ingredient record as the survivor */

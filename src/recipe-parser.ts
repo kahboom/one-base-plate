@@ -20,9 +20,6 @@ export interface RecipeImportResult {
   sourceText: string;
 }
 
-// Matches leading quantities: integers, decimals (1.5), fractions (1/2), unicode fractions, ranges (1-2)
-const QUANTITY_PATTERN = /^([\d¼½¾⅓⅔⅛⅜⅝⅞.,/\s-]+)\s*(g\b|kg\b|ml\b|oz\b|lb\b|lbs\b|cups?\b|tbsp\b|tsp\b|tablespoons?\b|teaspoons?\b|pinch(?:es)?\b|bunch(?:es)?\b|cloves?\b|pieces?\b|slices?\b|cans?\b|tins?\b|packets?\b|packs?\b|handfuls?\b|large\b|medium\b|small\b|x\b|liters?\b|litres?\b|quarts?\b|pints?\b|sticks?\b|heads?\b|stalks?\b|sprigs?\b|dashes?\b|drops?\b)?\s*/i;
-
 // Imperative verbs that suggest an instruction line, not an ingredient
 const IMPERATIVE_VERBS = /^(preheat|heat|cook|bake|roast|saut[eé]|boil|simmer|blend|mix|stir|whisk|fold|drain|rinse|combine|serve|garnish|let|place|remove|set|pour|add|season|toss|arrange|slice|dice|chop|mince|grill|fry|broil|marinate|reduce|reserve|note|optional|tip|see)\b/i;
 const PREP_DESCRIPTORS = new Set([
@@ -41,46 +38,353 @@ const QUALIFIER_PREFIXES = [
   "light",
 ];
 
-function parseQuantityValue(rawQuantity: string): number | undefined {
-  const trimmed = rawQuantity.trim();
-  if (!trimmed) return undefined;
-  const unicodeFractions: Record<string, number> = {
-    "¼": 0.25,
-    "½": 0.5,
-    "¾": 0.75,
-    "⅓": 1 / 3,
-    "⅔": 2 / 3,
-    "⅛": 0.125,
-    "⅜": 0.375,
-    "⅝": 0.625,
-    "⅞": 0.875,
-  };
-  const unicodeOnly = trimmed.replace(/\s+/g, "");
-  if (unicodeFractions[unicodeOnly] !== undefined) return unicodeFractions[unicodeOnly];
+const LEADING_MARKER_RE = /^[-+•*–—]/;
 
-  const mixedMatch = trimmed.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+/** Units / measures — longest match wins (includes packaging used as measure). */
+const UNIT_PHRASES_ORDERED: string[] = [
+  "fluid ounces",
+  "fluid ounce",
+  "fl. oz.",
+  "fl oz",
+  "tablespoons",
+  "tablespoon",
+  "teaspoons",
+  "teaspoon",
+  "pounds",
+  "pound",
+  "ounces",
+  "ounce",
+  "packages",
+  "package",
+  "containers",
+  "container",
+  "bottles",
+  "bottle",
+  "jars",
+  "jar",
+  "boxes",
+  "box",
+  "bags",
+  "bag",
+  "loaves",
+  "loaf",
+  "fillets",
+  "fillet",
+  "handfuls",
+  "handful",
+  "packets",
+  "packet",
+  "cans",
+  "can",
+  "tins",
+  "tin",
+  "cups",
+  "cup",
+  "tbsp",
+  "tsp",
+  "pinches",
+  "pinch",
+  "bunches",
+  "bunch",
+  "cloves",
+  "clove",
+  "slices",
+  "slice",
+  "pieces",
+  "piece",
+  "sticks",
+  "stick",
+  "heads",
+  "head",
+  "stalks",
+  "stalk",
+  "sprigs",
+  "sprig",
+  "dashes",
+  "dash",
+  "drops",
+  "drop",
+  "litres",
+  "liters",
+  "litre",
+  "liter",
+  "quarts",
+  "quart",
+  "pints",
+  "pint",
+  "ml",
+  "kg",
+  "lbs",
+  "lb",
+  "oz",
+  "g",
+];
+
+/** When used as unit but no ingredient name follows, the measure word is the ingredient (e.g. "5 cloves"). */
+const MEASURE_WORD_AS_INGREDIENT = new Set([
+  "clove", "cloves", "pinch", "pinches", "dash", "dashes", "drop", "drops",
+  "bunch", "bunches", "head", "heads", "stalk", "stalks", "sprig", "sprigs",
+  "slice", "slices", "piece", "pieces", "stick", "sticks", "fillet", "fillets",
+]);
+
+/** Section / subrecipe labels — not ingredients. */
+const SECTION_HEADING_ONE_WORD = new RegExp(
+  "^(?:marinade|salsa|sauce|salad|dressing|vegetables|veggies|dip|spread|topping|toppings|garnish|garnishes|filling|frosting|gravy|glaze|stock|broth|relish|vinaigrette|pesto|chutney|puree|medley|mix|blend|crust|dough|batter|layers|equipment|notes|instructions|method|directions|soup|salads|vegetable|veggie)\\s*:?\\s*$",
+  "i",
+);
+
+const PACKAGING_LEAD_STRIP = new RegExp(
+  "^(?:packages?|containers?|jars?|bottles?|boxes?|bags?|cans?|tins?)\\s+",
+  "i",
+);
+
+/** After ". N ", first token starts a measure → list marker / whole number, not "0.N". */
+const MEASURE_HEAD_AFTER_DOT_SPACE = new RegExp(
+  "^(?:cups?|tbsp|tsp|tablespoons?|teaspoons?|oz\\.?|ounces?|lbs?\\.?|pounds?|ml|kg|pinch(?:es)?|fluid|fl\\.?|packages?|containers?|jars?|bottles?|boxes?|bags?|cans?|tins?|loaves?|loaf|fillets?|fillet|handfuls?|packets?|sticks?|cloves?|slices?|pieces?|bunches?|dashes?|drops?|liters?|litres?|quarts?|pints?|grams?|mg)\\b",
+  "i",
+);
+
+/** Paprika / HTML list noise: bullets, + additions, metric conversion in brackets, label prefixes. */
+export function stripLeadingIngredientNoise(line: string): string {
+  let s = line.trim();
+  let progress = true;
+  while (progress) {
+    progress = false;
+    s = s.trim();
+    while (LEADING_MARKER_RE.test(s)) {
+      s = s.slice(1);
+      if (!/^[\d¼½¾⅓⅔⅛⅜⅝⅞.]/.test(s)) {
+        s = s.replace(/^\s+/, "");
+      }
+      progress = true;
+    }
+    const bracket = s.match(
+      /^(?:\[|［)\s*[\d.,]+\s*(?:kg|g|oz|lbs?|ml)\s*(?:\]|］)\s*/i,
+    );
+    if (bracket) {
+      s = s.slice(bracket[0]!.length).trim();
+      progress = true;
+      continue;
+    }
+    const label = s.match(/^(?:accompaniment|garnish|optional|notes?):\s*/i);
+    if (label) {
+      s = s.slice(label[0]!.length).trim();
+      progress = true;
+    }
+  }
+  if (/^lbs?\s+of\s+/i.test(s)) {
+    s = `1 ${s}`;
+  }
+  return s.trim();
+}
+
+const UNICODE_FRACTIONS: Record<string, number> = {
+  "¼": 0.25,
+  "½": 0.5,
+  "¾": 0.75,
+  "⅓": 1 / 3,
+  "⅔": 2 / 3,
+  "⅛": 0.125,
+  "⅜": 0.375,
+  "⅝": 0.625,
+  "⅞": 0.875,
+};
+
+/** Parse a single numeric value (no ranges). */
+function parseSingleNumericValue(s: string): number | undefined {
+  const t = s.trim();
+  if (!t) return undefined;
+  if (UNICODE_FRACTIONS[t] !== undefined) return UNICODE_FRACTIONS[t];
+
+  const mixedMatch = t.match(/^(\d+)\s+(\d+)\/(\d+)$/);
   if (mixedMatch) {
     const whole = parseInt(mixedMatch[1]!, 10);
     const num = parseInt(mixedMatch[2]!, 10);
     const den = parseInt(mixedMatch[3]!, 10);
-    if (den !== 0) return whole + (num / den);
+    if (den !== 0) return whole + num / den;
   }
 
-  const fracMatch = trimmed.match(/^(\d+)\/(\d+)$/);
+  const fracMatch = t.match(/^(\d+)\/(\d+)$/);
   if (fracMatch) {
     const num = parseInt(fracMatch[1]!, 10);
     const den = parseInt(fracMatch[2]!, 10);
     if (den !== 0) return num / den;
   }
 
-  const rangeMatch = trimmed.match(/^(\d+(?:[.,]\d+)?)-(\d+(?:[.,]\d+)?)$/);
+  const normalized = t.replace(",", ".");
+  if (/^\d*\.?\d+$/.test(normalized)) {
+    return parseFloat(normalized);
+  }
+  return undefined;
+}
+
+function parseQuantityValue(rawQuantity: string): number | undefined {
+  const trimmed = rawQuantity.trim();
+  if (!trimmed) return undefined;
+
+  const single = parseSingleNumericValue(trimmed);
+  if (single !== undefined) return single;
+
+  const rangeMatch = trimmed.match(/^(.+?)\s*[-–—]\s*(.+)$/);
   if (rangeMatch) {
-    return parseFloat(rangeMatch[1]!.replace(",", "."));
+    const left = parseSingleNumericValue(rangeMatch[1]!.trim());
+    const right = parseSingleNumericValue(rangeMatch[2]!.trim());
+    if (left !== undefined && right !== undefined) return left;
   }
 
-  const normalized = trimmed.replace(",", ".");
-  const asNumber = parseFloat(normalized);
-  return Number.isFinite(asNumber) ? asNumber : undefined;
+  return undefined;
+}
+
+const RANGE_SEP = "\\s*[-–—]\\s*";
+
+/** Any single numeric token: decimal, fraction, integer, or unicode fraction. */
+const NUM_ATOM = `(?:\\d+\\.\\d+|\\.\\d+|\\d+\\/\\d+|\\d+|[¼½¾⅓⅔⅛⅜⅝⅞])`;
+
+/** Leading quantity cluster: ranges first, then 1 3/4, 1/2, 1.5, etc. — order matters. */
+function parseLeadingNumberCluster(s: string): { raw: string; end: number } | null {
+  const rangeFirst = s.match(
+    new RegExp(`^(${NUM_ATOM}${RANGE_SEP}${NUM_ATOM})(?=\\s|$)`),
+  );
+  if (rangeFirst) {
+    return { raw: rangeFirst[1]!, end: rangeFirst[0]!.length };
+  }
+
+  const re =
+    /^(\d+\.\d+|\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\s+\d+\/\d+)?|\.\d+|\d+|¼|½|¾|⅓|⅔|⅛|⅜|⅝|⅞)/;
+  const m = s.match(re);
+  if (!m) return null;
+  let raw = m[1]!;
+  let end = m[0]!.length;
+  const tail = s.slice(end).match(/^\s+(\d+\/\d+)/);
+  if (tail && /^\d+$/.test(raw.trim()) && !raw.includes("/")) {
+    raw += tail[0]!;
+    end += tail[0]!.length;
+  }
+  return { raw, end };
+}
+
+function consumeOptionalParentheticals(
+  s: string,
+  start: number,
+  prepNotes: string[],
+): number {
+  let i = start;
+  while (true) {
+    const sub = s.slice(i);
+    const sp = sub.match(/^\s*\(([^)]*)\)/);
+    if (!sp) break;
+    if (sp[1]!.trim()) prepNotes.push(sp[1]!.trim().toLowerCase());
+    i += sp[0]!.length;
+  }
+  return i;
+}
+
+function matchUnitAt(s: string, start: number): { unit: string; end: number } | null {
+  const sub = s.slice(start);
+  const ws = sub.match(/^\s+/);
+  const i0 = ws ? ws[0]!.length : 0;
+  const from = sub.slice(i0);
+  const lower = from.toLowerCase();
+
+  for (const phrase of UNIT_PHRASES_ORDERED) {
+    const pl = phrase.toLowerCase();
+    if (!lower.startsWith(pl)) continue;
+    const after = from[phrase.length];
+    if (after !== undefined && /[a-z]/i.test(after)) {
+      if (phrase.length === 1 && after && /[a-z]/i.test(after)) {
+        continue;
+      }
+      if (phrase.length >= 2 && /[a-z]/i.test(after)) {
+        continue;
+      }
+    }
+    const consumed = i0 + phrase.length;
+    let total = start + consumed;
+    if (from[phrase.length] === ".") total += 1;
+    return { unit: from.slice(0, phrase.length + (from[phrase.length] === "." ? 1 : 0)), end: total };
+  }
+  return null;
+}
+
+export interface ParsedQuantityPrefix {
+  quantityRaw: string;
+  quantityValue: number | undefined;
+  unitRaw: string;
+  consumed: number;
+  parenPrepNotes: string[];
+}
+
+/** Parse leading quantity + unit; returns null if no numeric prefix. */
+export function parseLeadingQuantityPrefix(
+  cleaned: string,
+  prepNotes: string[],
+): ParsedQuantityPrefix | null {
+  const num = parseLeadingNumberCluster(cleaned);
+  if (!num) return null;
+
+  let pos = num.end;
+  pos = consumeOptionalParentheticals(cleaned, pos, prepNotes);
+
+  const unitMatch = matchUnitAt(cleaned, pos);
+  if (!unitMatch) {
+    const qv = parseQuantityValue(num.raw.trim());
+    return {
+      quantityRaw: num.raw.trim(),
+      quantityValue: qv,
+      unitRaw: "",
+      consumed: pos,
+      parenPrepNotes: [],
+    };
+  }
+
+  const quantityRaw = cleaned.slice(0, unitMatch.end).trim();
+  const qv = parseQuantityValue(num.raw.trim());
+
+  return {
+    quantityRaw,
+    quantityValue: qv,
+    unitRaw: unitMatch.unit.replace(/\.$/, "").trim(),
+    consumed: unitMatch.end,
+    parenPrepNotes: [],
+  };
+}
+
+function stripRedundantPackagingLead(name: string, unitLower: string): string {
+  let n = name.trim();
+  if (!n) return n;
+  const u = unitLower;
+  const packagingUnit =
+    /^(packages?|containers?|jars?|bottles?|boxes?|bags?|cans?|tins?|loaves?|loaf|fillets?|fillet)\b/i.test(u);
+  if (packagingUnit && PACKAGING_LEAD_STRIP.test(n)) {
+    n = n.replace(PACKAGING_LEAD_STRIP, "").trim();
+  }
+  return n;
+}
+
+function startsWithQuantityLike(stripped: string): boolean {
+  const c = stripLeadingIngredientNoise(stripped).trim();
+  return /^[\d¼½¾⅓⅔⅛⅜⅝⅞.]/.test(c);
+}
+
+function isAllCapsSectionLabel(stripped: string): boolean {
+  const t = stripped.replace(/:\s*$/, "").trim();
+  if (t.length < 2 || t.length > 90) return false;
+  if (/^\d/.test(t)) return false;
+  if (!/^[A-Z0-9\s\-'']+$/.test(t)) return false;
+  const words = t.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return false;
+  return words.every((w) => w === w.toUpperCase() && /[A-Z]/.test(w));
+}
+
+function isTitleColonLabel(stripped: string): boolean {
+  const t = stripped.trim();
+  if (!/:\s*$/.test(t)) return false;
+  if (t.length < 3 || t.length > 90) return false;
+  if (/^\d/.test(t)) return false;
+  const body = t.replace(/:\s*$/, "").trim();
+  if (body.split(/\s+/).length < 2) return false;
+  if (/[.!?]\s/.test(body)) return false;
+  return true;
 }
 
 function stripLeadingPrepDescriptors(name: string, notes: string[]): string {
@@ -137,6 +441,36 @@ export function applyIngredientMatchSynonyms(name: string): string {
   return out.replace(/\s+/g, " ").trim();
 }
 
+/** Phrase aliases applied only during matching (does not change parsed display name on the line). */
+function applyMatchAliases(name: string): string {
+  let out = name.trim().replace(/\s+/g, " ");
+  if (!out) return out;
+
+  const phraseAliases: Array<[RegExp, string]> = [
+    [/\bgarlic\s+powder\b/gi, "garlic powder"],
+    [/\bonion\s+powder\b/gi, "onion powder"],
+    [/\bworcestershire\s+sauce\b/gi, "worcestershire sauce"],
+    [/\b(?:green\s+)?onions?\s*\(\s*scallions?\s*\)/gi, "green onion"],
+    [/\bscallions?\b/gi, "green onion"],
+    [/\bgreen\s+onions?\b/gi, "green onion"],
+    [/\bred\s+onions?\b/gi, "red onion"],
+    [/\bkosher\s+salt\b/gi, "kosher salt"],
+    [/\b(?:ground\s+)?black\s+pepper\b/gi, "black pepper"],
+    [/\b(?:dry\s+)?bread\s*crumbs?\b/gi, "breadcrumbs"],
+    [/\bbreadcrumbs?\b/gi, "breadcrumbs"],
+    [/\bmonterey\s+jack(?:\s+cheese)?\b/gi, "monterey jack cheese"],
+    [/\bparmesan(?:\s+cheese)?\b/gi, "parmesan cheese"],
+    [/\bcheddar(?:\s+cheese)?\b/gi, "cheddar cheese"],
+    [/\bcream\s+cheese\b/gi, "cream cheese"],
+    [/\bcondensed\s+french\s+onion\s+soup\b/gi, "french onion soup"],
+    [/\bfrench\s+onion\s+soup\b/gi, "french onion soup"],
+  ];
+  for (const [re, replacement] of phraseAliases) {
+    out = out.replace(re, replacement);
+  }
+  return out.replace(/\s+/g, " ").trim();
+}
+
 function stripTrailingPrepPhrases(name: string, notes: string[]): string {
   let out = name.trim();
   const trailingPatterns = [
@@ -157,26 +491,108 @@ export function isInstructionLine(line: string): boolean {
   const trimmed = line.trim();
   if (!trimmed) return false;
 
-  // Lines starting with * or ** that look like notes/instructions
+  const stripped = stripLeadingIngredientNoise(trimmed);
+  if (!stripped) return true;
+
   if (/^\*{1,2}\s/.test(trimmed)) return true;
-  if (/^(?:#+|>{1,2})\s*(?:note|tip|optional|see|for\s+)/i.test(trimmed)) return true;
+  if (/^(?:#+|>{1,2})\s*(?:note|tip|optional|see|for\s+)/i.test(stripped)) return true;
 
-  // Unusually long lines are likely instructions or notes (> 80 chars)
-  if (trimmed.length > 80) return true;
+  if (isAllCapsSectionLabel(stripped)) return true;
+  if (SECTION_HEADING_ONE_WORD.test(stripped.trim())) return true;
+  if (isTitleColonLabel(stripped)) return true;
 
-  // Remove bullet/number prefix for verb check
-  const cleaned = trimmed
-    .replace(/^[-•*–—]\s*/, "")
-    .replace(/^\d+[.)]\s*/, "")
-    .trim();
+  if (stripped.length > 120) return true;
+  if (stripped.length > 80 && !startsWithQuantityLike(trimmed)) return true;
 
-  // Starts with an imperative verb
-  if (IMPERATIVE_VERBS.test(cleaned)) return true;
+  if (/^(?:adding|for\s+the)\b.*:\s*$/i.test(stripped)) return true;
 
-  // Lines that are full sentences ending with periods (and no quantity)
-  if (cleaned.endsWith(".") && !QUANTITY_PATTERN.test(cleaned) && cleaned.split(/\s+/).length > 5) return true;
+  if (IMPERATIVE_VERBS.test(stripped)) return true;
+
+  if (stripped.endsWith(".") && !startsWithQuantityLike(trimmed) && stripped.split(/\s+/).length > 5) {
+    return true;
+  }
 
   return false;
+}
+
+function finalizeCanonicalName(
+  namePart: string,
+  unitRaw: string,
+  prepNotes: string[],
+): string {
+  let namePart2 = namePart.replace(/^of\s+/i, "").trim();
+
+  namePart2 = namePart2.replace(/\(([^)]*)\)/g, (_, note: string) => {
+    if (note.trim()) prepNotes.push(note.trim().toLowerCase());
+    return " ";
+  });
+  namePart2 = peelLeadingCommaDescriptorClauses(namePart2, prepNotes);
+  const commaParts = namePart2.split(",").map((part) => part.trim()).filter(Boolean);
+  let canonical = commaParts.shift() ?? "";
+  if (commaParts.length > 0) {
+    prepNotes.push(...commaParts.map((part) => part.toLowerCase()));
+  }
+
+  canonical = stripLeadingQualifiers(canonical, prepNotes);
+  canonical = stripLeadingPrepDescriptors(canonical, prepNotes);
+  canonical = stripTrailingPrepPhrases(canonical, prepNotes);
+  canonical = canonical.replace(/\s+/g, " ").trim();
+  canonical = stripRedundantPackagingLead(canonical, unitRaw.toLowerCase());
+  canonical = applyIngredientMatchSynonyms(canonical);
+
+  const u = unitRaw.toLowerCase().replace(/\.$/, "").trim();
+  if (!canonical && u && MEASURE_WORD_AS_INGREDIENT.has(u)) {
+    canonical = u;
+  }
+
+  return canonical;
+}
+
+const WORD_QTY_RE = /^(a\s+few|a\s+couple(?:\s+of)?|several|some|few)\b\s*/i;
+const ARTICLE_QTY_RE = /^(an?)\b\s+/i;
+const PRE_UNIT_MOD_RE = /^(good|large|small|big|generous|scant|heaping)\s+/i;
+
+function tryParseWordQuantity(
+  cleaned: string,
+  prepNotes: string[],
+): { quantity: string; unit: string; quantityValue?: number; name: string; prepNotes: string[] } | null {
+  let qtyStr: string;
+  let qtyValue: number | undefined;
+  let rest: string;
+
+  const wqm = cleaned.match(WORD_QTY_RE);
+  if (wqm) {
+    qtyStr = wqm[1]!.replace(/\s+/g, " ").toLowerCase();
+    qtyValue = qtyStr === "a couple" || qtyStr === "a couple of" ? 2 : undefined;
+    rest = cleaned.slice(wqm[0]!.length);
+  } else {
+    const am = cleaned.match(ARTICLE_QTY_RE);
+    if (!am) return null;
+    qtyStr = "1";
+    qtyValue = 1;
+    rest = cleaned.slice(am[0]!.length);
+  }
+
+  const modM = rest.match(PRE_UNIT_MOD_RE);
+  if (modM) {
+    const afterMod = rest.slice(modM[0]!.length);
+    if (matchUnitAt(afterMod, 0)) {
+      prepNotes.push(modM[1]!.toLowerCase());
+      rest = afterMod;
+    }
+  }
+
+  let unitRaw = "";
+  const unitM = matchUnitAt(rest, 0);
+  if (unitM) {
+    unitRaw = unitM.unit.replace(/\.$/, "").trim();
+    rest = rest.slice(unitM.end).trim();
+  }
+
+  const canonical = finalizeCanonicalName(rest.trim(), unitRaw, prepNotes);
+  if (!canonical) return null;
+
+  return { quantity: qtyStr, unit: unitRaw, quantityValue: qtyValue, name: canonical, prepNotes };
 }
 
 export function parseIngredientLine(
@@ -185,49 +601,79 @@ export function parseIngredientLine(
   const trimmed = line.trim();
   if (!trimmed) return { quantity: "", unit: "", quantityValue: undefined, name: "", prepNotes: [] };
 
-  // Detect instruction lines
   if (isInstructionLine(trimmed)) return { quantity: "", unit: "", quantityValue: undefined, name: "", prepNotes: [] };
 
-  // Remove leading bullet points, dashes, asterisks, numbers with dots/parens (but not decimals like 1.5)
-  let cleaned = trimmed
-    .replace(/^[-•*–—]\s*/, "")
+  let cleaned = stripLeadingIngredientNoise(trimmed);
+  if (!cleaned) return { quantity: "", unit: "", quantityValue: undefined, name: "", prepNotes: [] };
+
+  cleaned = cleaned
+    // ". 5 large …" → ".5 …" when the next word is not a measure (Word/list spacing before decimals)
+    .replace(/^\.\s+([2-9])(?=\s+)/, (full, digit: string, offset: number, str: string) => {
+      const after = str.slice(offset + full.length).trimStart();
+      const head = (after.match(/^[^\s]+/) ?? [""])[0] ?? "";
+      if (MEASURE_HEAD_AFTER_DOT_SPACE.test(head)) return full;
+      return `.${digit}`;
+    })
+    .replace(/^\.\s+(\d+\.\d+)(?=\s|$)/, ".$1")
+    .replace(/^\.\s+/, "")
     .replace(/^\d+[.)]\s+/, "")
     .trim();
 
-  const match = cleaned.match(QUANTITY_PATTERN);
   const prepNotes: string[] = [];
-  if (match && match[1]?.trim()) {
-    const quantityPart = match[0].trim();
-    const quantityValue = parseQuantityValue(match[1]!.trim());
-    const rawUnit = (match[2] ?? "").trim();
-    let namePart = cleaned.slice(match[0].length).trim();
 
-    if (namePart) {
-      // Handle "of" phrasing: "1 cup of flour" → name is "flour"
-      namePart = namePart.replace(/^of\s+/i, "");
+  const approxRe = /^(?:about|approximately|approx\.?|roughly|around)\s+(?=[\d¼½¾⅓⅔⅛⅜⅝⅞.]|a\s)/i;
+  if (approxRe.test(cleaned)) {
+    cleaned = cleaned.replace(approxRe, "");
+    prepNotes.push("approximately");
+  }
 
-      namePart = namePart.replace(/\(([^)]*)\)/g, (_, note: string) => {
-        if (note.trim()) prepNotes.push(note.trim().toLowerCase());
-        return " ";
-      });
-      namePart = peelLeadingCommaDescriptorClauses(namePart, prepNotes);
-      const commaParts = namePart.split(",").map((part) => part.trim()).filter(Boolean);
-      let canonical = commaParts.shift() ?? "";
-      if (commaParts.length > 0) {
-        prepNotes.push(...commaParts.map((part) => part.toLowerCase()));
+  const pq = parseLeadingQuantityPrefix(cleaned, prepNotes);
+
+  if (pq && pq.quantityRaw) {
+    let namePart = cleaned.slice(pq.consumed).trim();
+    namePart = namePart.replace(/^\.\s+/, "").trim();
+
+    let unitRaw = pq.unitRaw;
+    const dimRe = /^-?\s*(?:inch(?:es)?|cm|centimete?rs?|mm|millimete?rs?)\b\s*/i;
+    if (!unitRaw && dimRe.test(namePart)) {
+      const dimMatch = namePart.match(dimRe)!;
+      const dimWord = dimMatch[0]!.replace(/^-?\s*/, "").trim();
+      prepNotes.push(`${pq.quantityRaw.trim()}-${dimWord}`);
+      namePart = namePart.slice(dimMatch[0]!.length).trim();
+      const reUnit = matchUnitAt(namePart, 0);
+      if (reUnit) {
+        unitRaw = reUnit.unit.replace(/\.$/, "").trim();
+        namePart = namePart.slice(reUnit.end).trim();
       }
+    }
 
-      canonical = stripLeadingQualifiers(canonical, prepNotes);
-      canonical = stripLeadingPrepDescriptors(canonical, prepNotes);
-      canonical = stripTrailingPrepPhrases(canonical, prepNotes);
-      canonical = canonical.replace(/\s+/g, " ").trim();
-      canonical = applyIngredientMatchSynonyms(canonical);
+    const sizeUnitRe = /^(\d+[-–]?\s*(?:ounces?|oz\.?|pounds?|lbs?\.?|grams?|g|ml|fl\.?\s*oz\.?))\s+/i;
+    if (!unitRaw && sizeUnitRe.test(namePart)) {
+      const sizeMatch = namePart.match(sizeUnitRe)!;
+      const afterSize = namePart.slice(sizeMatch[0]!.length);
+      const reUnit = matchUnitAt(afterSize, 0);
+      if (reUnit) {
+        prepNotes.push(sizeMatch[1]!.trim());
+        unitRaw = reUnit.unit.replace(/\.$/, "").trim();
+        namePart = afterSize.slice(reUnit.end).trim();
+      }
+    }
 
-      return { quantity: quantityPart, unit: rawUnit, quantityValue, name: canonical, prepNotes };
+    if (namePart || unitRaw) {
+      const canonical = finalizeCanonicalName(namePart, unitRaw, prepNotes);
+      return {
+        quantity: pq.quantityRaw.trim(),
+        unit: unitRaw,
+        quantityValue: pq.quantityValue,
+        name: canonical,
+        prepNotes,
+      };
     }
   }
 
-  // No quantity found - still strip parenthetical and prep suffixes from name
+  const wordResult = tryParseWordQuantity(cleaned, prepNotes);
+  if (wordResult) return wordResult;
+
   cleaned = cleaned.replace(/\(([^)]*)\)/g, (_, note: string) => {
     if (note.trim()) prepNotes.push(note.trim().toLowerCase());
     return " ";
@@ -238,6 +684,7 @@ export function parseIngredientLine(
   if (commaParts.length > 0) {
     prepNotes.push(...commaParts.map((part) => part.toLowerCase()));
   }
+  canonical = canonical.replace(/^\.\s+/, "").trim();
   canonical = stripLeadingQualifiers(canonical, prepNotes);
   canonical = stripLeadingPrepDescriptors(canonical, prepNotes);
   canonical = stripTrailingPrepPhrases(canonical, prepNotes);
@@ -248,63 +695,229 @@ export function parseIngredientLine(
 }
 
 function normalizeForMatch(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
+  return s
+    .toLowerCase()
+    .replace(/-/g, " ")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function matchScore(a: string, b: string): number {
+function tokenize(s: string): string[] {
+  return normalizeForMatch(s)
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+const STOPWORDS = new Set([
+  "of", "the", "a", "an", "and", "or", "for", "with", "to", "in", "on", "at", "any", "some",
+]);
+
+/** Query tokens that must appear in the candidate for a catalog match when present in the query. */
+const REQUIRED_MODIFIER_TOKENS = new Set([
+  "powder", "condensed", "worcestershire", "parmesan", "monterey", "cheddar", "jack", "french",
+  "breadcrumbs", "breadcrumb", "crumbs", "crumb", "kosher", "scallion", "scallions",
+  "soup",
+  "green",
+  "red",
+  "ground",
+  "black",
+  "brown",
+  "sea",
+  "smoked",
+  "dried",
+  "dry",
+  "panko",
+  "italian",
+  "seasoned",
+]);
+
+const GENERIC_HEADS = new Set(["cheese", "onion", "garlic", "bread", "cream", "pepper", "salt"]);
+
+const COMPOUND_WHERE_FIRST_TOKEN_ALONE_IS_WRONG = new Set([
+  "cream cheese",
+  "ice cream",
+  "sour cream",
+  "french onion soup",
+  "cream of chicken soup",
+  "cream of mushroom soup",
+]);
+
+export function matchScore(a: string, b: string): number {
   const na = normalizeForMatch(a);
   const nb = normalizeForMatch(b);
   if (!na || !nb) return 0;
   if (na === nb) return 1;
-  if (na.includes(nb) || nb.includes(na)) return 0.7;
-  // Check individual words
-  const wordsA = na.split(/\s+/);
-  const wordsB = nb.split(/\s+/);
-  const sharedWords = wordsA.filter((w) => wordsB.some((wb) => wb.includes(w) || w.includes(wb)));
+  const ta = tokenize(a);
+  const tb = tokenize(b);
+  const sa = new Set(ta.filter((t) => !STOPWORDS.has(t)));
+  const sb = new Set(tb.filter((t) => !STOPWORDS.has(t)));
+  if (sa.size === 0 || sb.size === 0) return 0;
+  let inter = 0;
+  for (const t of sa) {
+    if (sb.has(t)) inter += 1;
+  }
+  const union = sa.size + sb.size - inter;
+  const jaccard = union > 0 ? inter / union : 0;
+  if (jaccard >= 0.99) return 1;
+  if (jaccard >= 0.66) return 0.72 + jaccard * 0.2;
+  if (jaccard >= 0.4) return 0.45 + jaccard * 0.35;
+  if (na.includes(nb) || nb.includes(na)) {
+    const shorter = na.length <= nb.length ? na : nb;
+    const longer = na.length > nb.length ? na : nb;
+    if (longer === shorter) return 1;
+    const extra = longer.slice(shorter.length).trim();
+    if (extra.length > 0 && !longer.startsWith(shorter + " ")) {
+      return jaccard > 0 ? 0.35 + jaccard * 0.2 : 0.35;
+    }
+    return 0.68;
+  }
+  const wordsA = ta.filter((w) => !STOPWORDS.has(w));
+  const wordsB = tb.filter((w) => !STOPWORDS.has(w));
+  const sharedWords = wordsA.filter((w) => wordsB.some((wb) => wb === w || (w.length > 3 && (wb.includes(w) || w.includes(wb)))));
   if (sharedWords.length > 0) {
-    return 0.3 + (sharedWords.length / Math.max(wordsA.length, wordsB.length)) * 0.3;
+    return 0.28 + (sharedWords.length / Math.max(wordsA.length, wordsB.length)) * 0.35;
   }
   return 0;
+}
+
+function candidateContainsToken(candidateNorm: string, token: string): boolean {
+  if (!token || token.length < 2) return true;
+  const c = ` ${candidateNorm} `;
+  const t = token.toLowerCase();
+  return c.includes(` ${t} `) || candidateNorm.startsWith(t + " ") || candidateNorm.endsWith(" " + t) || candidateNorm === t;
+}
+
+function catalogMatchVeto(queryNorm: string, queryTokens: string[], candidateName: string): boolean {
+  const cn = normalizeForMatch(candidateName);
+  const ctoks = tokenize(candidateName);
+
+  for (const t of queryTokens) {
+    if (STOPWORDS.has(t) || t.length < 3) continue;
+    if (!REQUIRED_MODIFIER_TOKENS.has(t)) continue;
+    if (!candidateContainsToken(cn, t)) return true;
+  }
+
+  const qNonStop = queryTokens.filter((t) => !STOPWORDS.has(t) && t.length > 0);
+  const cNonStop = ctoks.filter((t) => !STOPWORDS.has(t));
+
+  if (cNonStop.length === 1 && qNonStop.length > 1) {
+    const head = cNonStop[0]!;
+    if (GENERIC_HEADS.has(head)) {
+      for (const t of qNonStop) {
+        if (t !== head && !candidateContainsToken(cn, t)) return true;
+      }
+    }
+  }
+
+  const candLower = candidateName.toLowerCase().trim();
+  for (const compound of COMPOUND_WHERE_FIRST_TOKEN_ALONE_IS_WRONG) {
+    if (candLower === compound || candLower.endsWith(compound)) {
+      const q = queryNorm.trim();
+      if (q === compound) break;
+      if (compound.startsWith(q + " ") || (q.length < compound.length && compound.startsWith(q) && q.split(/\s+/).length === 1)) {
+        return true;
+      }
+    }
+  }
+
+  if (cn.includes("onion") && queryNorm.includes("soup") && !cn.includes("soup")) return true;
+  if (queryNorm.includes("crumb") && !cn.includes("crumb") && !cn.includes("breadcrumbs")) return true;
+
+  return false;
+}
+
+function householdMatchVeto(queryNorm: string, queryTokens: string[], candidateName: string): boolean {
+  const cn = normalizeForMatch(candidateName);
+  if (cn.includes("onion") && queryNorm.includes("soup") && !cn.includes("soup")) return true;
+  if (queryNorm.includes("crumb") && !cn.includes("crumb") && !cn.includes("bread")) return true;
+  return catalogMatchVeto(queryNorm, queryTokens, candidateName);
+}
+
+const HOUSEHOLD_MIN = 0.56;
+const CATALOG_MIN = 0.86;
+
+/** Bands for matches that meet the minimum fuzzy threshold. */
+export type MatchConfidenceBand = "exact" | "strong" | "low";
+
+export function confidenceBandFromScore(score: number): MatchConfidenceBand {
+  if (score >= 0.95 || score === 1) return "exact";
+  if (score >= 0.75) return "strong";
+  return "low";
 }
 
 export function matchIngredient(
   name: string,
   householdIngredients: Ingredient[],
   catalog: CatalogIngredient[] = MASTER_CATALOG,
-): { ingredient: Ingredient | null; catalogItem: CatalogIngredient | null; status: ParsedIngredientLine["status"] } {
-  if (!name.trim()) return { ingredient: null, catalogItem: null, status: "unmatched" };
+): {
+  ingredient: Ingredient | null;
+  catalogItem: CatalogIngredient | null;
+  status: ParsedIngredientLine["status"];
+  matchScore: number;
+  confidenceBand: MatchConfidenceBand;
+} {
+  if (!name.trim()) {
+    return {
+      ingredient: null,
+      catalogItem: null,
+      status: "unmatched",
+      matchScore: 0,
+      confidenceBand: "low",
+    };
+  }
 
-  const matchName = applyIngredientMatchSynonyms(name.trim());
+  const matchName = applyMatchAliases(applyIngredientMatchSynonyms(name.trim()));
+  const queryNorm = normalizeForMatch(matchName);
+  const queryTokens = tokenize(matchName);
 
-  // Try household ingredients first
   let bestHousehold: Ingredient | null = null;
   let bestHouseholdScore = 0;
   for (const ing of householdIngredients) {
+    if (householdMatchVeto(queryNorm, queryTokens, ing.name)) continue;
     const score = matchScore(matchName, ing.name);
-    if (score > bestHouseholdScore && score >= 0.5) {
+    if (score > bestHouseholdScore && score >= HOUSEHOLD_MIN) {
       bestHouseholdScore = score;
       bestHousehold = ing;
     }
   }
   if (bestHousehold) {
-    return { ingredient: bestHousehold, catalogItem: null, status: "matched" };
+    return {
+      ingredient: bestHousehold,
+      catalogItem: null,
+      status: "matched",
+      matchScore: bestHouseholdScore,
+      confidenceBand: confidenceBandFromScore(bestHouseholdScore),
+    };
   }
 
-  // Try catalog
   let bestCatalog: CatalogIngredient | null = null;
   let bestCatalogScore = 0;
   for (const ci of catalog) {
+    if (catalogMatchVeto(queryNorm, queryTokens, ci.name)) continue;
     const score = matchScore(matchName, ci.name);
-    if (score > bestCatalogScore && score >= 0.5) {
+    if (score > bestCatalogScore && score >= CATALOG_MIN) {
       bestCatalogScore = score;
       bestCatalog = ci;
     }
   }
   if (bestCatalog) {
-    return { ingredient: null, catalogItem: bestCatalog, status: "catalog" };
+    return {
+      ingredient: null,
+      catalogItem: bestCatalog,
+      status: "catalog",
+      matchScore: bestCatalogScore,
+      confidenceBand: confidenceBandFromScore(bestCatalogScore),
+    };
   }
 
-  return { ingredient: null, catalogItem: null, status: "unmatched" };
+  return {
+    ingredient: null,
+    catalogItem: null,
+    status: "unmatched",
+    matchScore: 0,
+    confidenceBand: "low",
+  };
 }
 
 export function parseRecipeText(

@@ -1496,7 +1496,7 @@
         "Apply duplicate-prevention safeguards: when a likely existing household or catalog match is available, do not silently create a new noisy duplicate ingredient entry.",
         "Validate that final import save creates draft base meals only after grouped unresolved items are handled or intentionally ignored, while preserving provenance and import mapping auditability."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F049"
       ],
@@ -1606,6 +1606,56 @@
       "acceptanceRefs": [
         "S003"
       ]
+    },
+    {
+      "id": "F055",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "Meal Planner choose/build/use: selected meal panel with cooking-first how-to, component recipe refs, plan-time overrides, and primary actions",
+      "steps": [
+        "Selecting a meal from the tray or browse opens a useful selected-meal state with shared structure, component groups, per-member assembly, trade-offs, and primary actions (Use tonight, Add to week, Edit meal).",
+        "Support optional ComponentRecipeRef on each meal component (internal base meal, imported recipe, URL, note) while keeping BaseMeal.recipeLinks backwards-compatible.",
+        "Show a scannable How to make tonight section grouped by component with default vs tonight-only overrides; do not overwrite base meal defaults unless the user explicitly saves defaults.",
+        "Persist plan-specific overrides on DayPlan; Use tonight assigns the meal to today in the latest weekly plan with overrides attached.",
+        "Base Meal Editor: compact attach/change/remove recipe flow searching household meals first.",
+        "Add automated tests for selection UX, how-to section, overrides, and multi-meal tray caps."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F005",
+        "F006",
+        "F054"
+      ],
+      "acceptanceRefs": [
+        "S002",
+        "S004",
+        "S007"
+      ]
+    },
+    {
+      "id": "F056",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "Weekly theme anchors: soft weekday themes, household editor, weak ranking boost, non-blocking UI",
+      "steps": [
+        "Household can optionally define weekly anchors (weekday, label, tags, structure types, optional meal ids, enabled).",
+        "Weekly Planner shows theme context on day cards; suggested meals can show a subtle matches-theme signal when ranking uses that day’s anchor.",
+        "Theme match is a late tie-breaker in rankWeeklySuggestedMeals so poor-fit theme meals never beat clearly better household fits.",
+        "Meal Planner accepts optional ?day= for theme microcopy and ranking context.",
+        "Add tests for anchor persistence, ranking boost behavior, and non-blocking assignment."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F010",
+        "F054",
+        "F055"
+      ],
+      "acceptanceRefs": [
+        "S003",
+        "S005"
+      ]
     }
   ],
   "milestones": [
@@ -1690,7 +1740,9 @@
         "F051",
         "F052",
         "F053",
-        "F054"
+        "F054",
+        "F055",
+        "F056"
       ]
     }
   ],
@@ -1767,6 +1819,8 @@
     "F052",
     "F053",
     "F054",
+    "F055",
+    "F056",
     "F020",
     "F037",
     "F038",
@@ -2101,7 +2155,8 @@
       "F025",
       "F032",
       "F033",
-      "F037"
+      "F037",
+      "F055"
     ],
     "S003": [
       "F010",
@@ -2116,18 +2171,22 @@
       "F038",
       "F042",
       "F053",
-      "F054"
+      "F054",
+      "F055",
+      "F056"
     ],
     "S004": [
       "F006",
       "F028",
       "F029",
-      "F037"
+      "F037",
+      "F055"
     ],
     "S005": [
       "F012",
       "F036",
-      "F053"
+      "F053",
+      "F056"
     ],
     "S006": [
       "F002",
@@ -2155,7 +2214,8 @@
       "F048",
       "F049",
       "F050",
-      "F051"
+      "F051",
+      "F055"
     ],
     "S008": [
       "F011",

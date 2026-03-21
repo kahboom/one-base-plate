@@ -23,6 +23,8 @@ export interface MealCardProps {
   showActionsWhenCompact?: boolean;
   draggable?: boolean;
   selected?: boolean;
+  /** When this meal matches the active weekly theme anchor (weak signal). */
+  themeMatch?: boolean;
 }
 
 const compatVariant: Record<string, "success" | "warning" | "danger"> = {
@@ -36,6 +38,10 @@ const roleLabels: Record<string, string> = {
   toddler: "Toddler",
   baby: "Baby",
 };
+
+/** Native tooltip (hover) for the overlap line on meal cards. */
+const OVERLAP_TOOLTIP =
+  "How many household members can eat this meal without an ingredient conflict. Adaptations may still be needed. Pets are not counted.";
 
 export default function MealCard({
   meal,
@@ -54,6 +60,7 @@ export default function MealCard({
   showActionsWhenCompact = false,
   draggable: isDraggable = false,
   selected = false,
+  themeMatch = false,
 }: MealCardProps) {
   const overlap = overlapProp ?? computeMealOverlap(meal, members, ingredients);
   const shortReason = generateShortReason(meal, members, ingredients, outcomes, patterns);
@@ -98,7 +105,13 @@ export default function MealCard({
       >
         <span data-testid="prep-time">{meal.estimatedTimeMinutes} min</span>
         <span data-testid="effort-level">{meal.difficulty}</span>
-        <span data-testid="overlap-score">{overlap.score}/{overlap.total} overlap</span>
+        <span
+          data-testid="overlap-score"
+          title={OVERLAP_TOOLTIP}
+          className="cursor-help border-b border-dotted border-current/30"
+        >
+          {overlap.score}/{overlap.total} overlap
+        </span>
       </div>
 
       <div
@@ -144,6 +157,11 @@ export default function MealCard({
         {isHighOverlap && <Chip variant="info">High overlap</Chip>}
         {needsExtraPrep && <Chip variant="warning">Needs extra prep</Chip>}
         {meal.rescueEligible && <Chip variant="neutral">Rescue eligible</Chip>}
+        {themeMatch && (
+          <Chip variant="info" data-testid="theme-match-chip">
+            Matches theme
+          </Chip>
+        )}
       </div>
 
       {(!compact || showActionsWhenCompact) && (

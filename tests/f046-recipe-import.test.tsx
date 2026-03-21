@@ -4,7 +4,14 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import App from "../src/App";
 import { saveHousehold, loadHousehold } from "../src/storage";
-import { parseIngredientLine, matchIngredient, parseRecipeText, guessComponentRole } from "../src/recipe-parser";
+import {
+  parseIngredientLine,
+  matchIngredient,
+  parseRecipeText,
+  guessComponentRole,
+  isInstructionLine,
+  stripLeadingIngredientNoise,
+} from "../src/recipe-parser";
 import type { Household, Ingredient } from "../src/types";
 
 function makeHousehold(): Household {
@@ -95,6 +102,34 @@ describe("parseIngredientLine", () => {
     expect(result.quantity).toBe("1 cup");
   });
 
+  it("strips period-space list markers (Word / some exports)", () => {
+    expect(parseIngredientLine(". cilantro").name).toBe("cilantro");
+    const withQty = parseIngredientLine(". 1 cup rice");
+    expect(withQty.quantity).toBe("1 cup");
+    expect(withQty.name).toBe("rice");
+  });
+
+  it("does not strip decimal quantities like .5 tbsp", () => {
+    const result = parseIngredientLine(".5 tbsp olive oil");
+    expect(result.quantity).toBe(".5 tbsp");
+    expect(result.name).toBe("olive oil");
+  });
+
+  it("stays after abbreviated units with a period (Paprika / US style)", () => {
+    // Word boundary after oz leaves the period before the ingredient name
+    const toasted = parseIngredientLine("12 oz. cheese ravioli");
+    expect(toasted.quantity).toMatch(/^12\s+oz/i);
+    expect(toasted.name).toBe("cheese ravioli");
+
+    const thai = parseIngredientLine("3 tbsp. cilantro, chopped (optional)");
+    expect(thai.quantity).toMatch(/^3\s+tbsp/i);
+    expect(thai.name).toBe("cilantro");
+
+    const mashed = parseIngredientLine("100 ml. (4 oz.) cream");
+    expect(mashed.quantity).toMatch(/^100\s+ml/i);
+    expect(mashed.name).toBe("cream");
+  });
+
   it("handles numbered lists", () => {
     const result = parseIngredientLine("3. 2 tbsp soy sauce");
     expect(result.name).toBe("soy sauce");
@@ -103,6 +138,51 @@ describe("parseIngredientLine", () => {
   it("returns empty for blank lines", () => {
     const result = parseIngredientLine("  ");
     expect(result.name).toBe("");
+  });
+
+  it("strips leading + and glued en-dash before quantities (Paprika)", () => {
+    const plus = parseIngredientLine("+1 cup rice");
+    expect(plus.quantity).toMatch(/^1\s+cup/i);
+    expect(plus.name).toBe("rice");
+
+    const enDash = parseIngredientLine("–3 tablespoons vegetable oil");
+    expect(enDash.quantity).toMatch(/^3\s+tablespoons/i);
+    expect(enDash.name).toBe("vegetable oil");
+  });
+
+  it("strips metric bracket prefix and normalizes lb of … to 1 lb", () => {
+    const r = parseIngredientLine("[0.23 kg] lb of ñame");
+    expect(r.quantity.toLowerCase()).toMatch(/^1\s+lb/);
+    expect(r.name.toLowerCase()).toContain("ñame");
+  });
+
+  it("strips fullwidth metric brackets (some exports)", () => {
+    const r = parseIngredientLine("［0.23 kg］ lb of yuca");
+    expect(r.name.toLowerCase()).toContain("yuca");
+    expect(r.quantity.toLowerCase()).toMatch(/^1\s+lb/);
+  });
+
+  it("strips Accompaniment: label prefix", () => {
+    const r = parseIngredientLine("Accompaniment:Pineapple-Avocado Salsa");
+    expect(r.name.toLowerCase()).toContain("pineapple");
+    expect(r.name.toLowerCase()).toContain("salsa");
+  });
+});
+
+describe("isInstructionLine (Paprika noise)", () => {
+  it("treats +Add… as instruction after stripping +", () => {
+    expect(isInstructionLine("+Add all ingredients to list")).toBe(true);
+  });
+
+  it("treats subsection titles as instructions", () => {
+    expect(isInstructionLine("Adding mushrooms and spinach:")).toBe(true);
+    expect(isInstructionLine("For the sauce:")).toBe(true);
+  });
+});
+
+describe("stripLeadingIngredientNoise", () => {
+  it("removes markers and bracket prefix", () => {
+    expect(stripLeadingIngredientNoise("+ – [1.5 kg] lb of yuca")).toMatch(/^1 lb of yuca/i);
   });
 });
 

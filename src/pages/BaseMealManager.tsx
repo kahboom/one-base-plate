@@ -1,34 +1,118 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import type { BaseMeal, MealComponent, Ingredient, RecipeLink, IngredientCategory } from "../types";
-import { loadHousehold, saveHousehold, toSentenceCase, normalizeIngredientName } from "../storage";
-import { PageHeader, Card, Button, Input, Select, FieldLabel, EmptyState, Chip, ConfirmDialog, useConfirm } from "../components/ui";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import type {
+  BaseMeal,
+  MealComponent,
+  Ingredient,
+  RecipeLink,
+  IngredientCategory,
+  ComponentRecipeRef,
+} from "../types";
+import {
+  loadHousehold,
+  saveHousehold,
+  toSentenceCase,
+  normalizeIngredientName,
+} from "../storage";
+import {
+  PageHeader,
+  Card,
+  Button,
+  Input,
+  Select,
+  FieldLabel,
+  EmptyState,
+  Chip,
+  ConfirmDialog,
+  useConfirm,
+} from "../components/ui";
 import AppModal from "../components/AppModal";
 import MealImageSlot from "../components/MealImageSlot";
 import { useIncrementalList } from "../hooks/useIncrementalList";
-import { sortBaseMeals, type BaseMealSortKey, type SortDir } from "../lib/listSort";
+import {
+  sortBaseMeals,
+  type BaseMealSortKey,
+  type SortDir,
+} from "../lib/listSort";
+import ComponentRecipePicker from "../components/meals/ComponentRecipePicker";
+import {
+  getDefaultRecipeRef,
+  summarizeRecipeRef,
+  createComponentRecipeRef,
+} from "../lib/componentRecipes";
 
-const MEAL_SORT_OPTIONS: { value: string; label: string; key: BaseMealSortKey; dir: SortDir }[] = [
+const MEAL_SORT_OPTIONS: {
+  value: string;
+  label: string;
+  key: BaseMealSortKey;
+  dir: SortDir;
+}[] = [
   { value: "name-asc", label: "Name (A–Z)", key: "name", dir: "asc" },
   { value: "name-desc", label: "Name (Z–A)", key: "name", dir: "desc" },
-  { value: "time-asc", label: "Time (short → long)", key: "estimatedTimeMinutes", dir: "asc" },
-  { value: "time-desc", label: "Time (long → short)", key: "estimatedTimeMinutes", dir: "desc" },
-  { value: "difficulty-asc", label: "Difficulty (easy → hard)", key: "difficulty", dir: "asc" },
-  { value: "difficulty-desc", label: "Difficulty (hard → easy)", key: "difficulty", dir: "desc" },
-  { value: "components-asc", label: "Components (few → many)", key: "componentCount", dir: "asc" },
-  { value: "components-desc", label: "Components (many → few)", key: "componentCount", dir: "desc" },
+  {
+    value: "time-asc",
+    label: "Time (short → long)",
+    key: "estimatedTimeMinutes",
+    dir: "asc",
+  },
+  {
+    value: "time-desc",
+    label: "Time (long → short)",
+    key: "estimatedTimeMinutes",
+    dir: "desc",
+  },
+  {
+    value: "difficulty-asc",
+    label: "Difficulty (easy → hard)",
+    key: "difficulty",
+    dir: "asc",
+  },
+  {
+    value: "difficulty-desc",
+    label: "Difficulty (hard → easy)",
+    key: "difficulty",
+    dir: "desc",
+  },
+  {
+    value: "components-asc",
+    label: "Components (few → many)",
+    key: "componentCount",
+    dir: "asc",
+  },
+  {
+    value: "components-desc",
+    label: "Components (many → few)",
+    key: "componentCount",
+    dir: "desc",
+  },
 ];
 
 type ComponentRole = MealComponent["role"];
-const COMPONENT_ROLES: ComponentRole[] = ["protein", "carb", "veg", "sauce", "topping"];
+const COMPONENT_ROLES: ComponentRole[] = [
+  "protein",
+  "carb",
+  "veg",
+  "sauce",
+  "topping",
+];
 const DIFFICULTY_OPTIONS: BaseMeal["difficulty"][] = ["easy", "medium", "hard"];
-const DIFFICULTY_CHIP_VARIANT: Record<BaseMeal["difficulty"], "success" | "warning" | "danger"> = {
+const DIFFICULTY_CHIP_VARIANT: Record<
+  BaseMeal["difficulty"],
+  "success" | "warning" | "danger"
+> = {
   easy: "success",
   medium: "warning",
   hard: "danger",
 };
 const CATEGORY_OPTIONS: IngredientCategory[] = [
-  "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
+  "protein",
+  "carb",
+  "veg",
+  "fruit",
+  "dairy",
+  "snack",
+  "freezer",
+  "pantry",
 ];
 
 function createEmptyMeal(): BaseMeal {
@@ -72,8 +156,13 @@ function InlineIngredientForm({
   }
 
   return (
-    <div data-testid="inline-ingredient-form" className="mt-2 rounded-sm border border-brand bg-bg p-3 space-y-3">
-      <span className="block text-xs font-semibold text-brand">New ingredient</span>
+    <div
+      data-testid="inline-ingredient-form"
+      className="mt-2 rounded-sm border border-brand bg-bg p-3 space-y-3"
+    >
+      <span className="block text-xs font-semibold text-brand">
+        New ingredient
+      </span>
       <FieldLabel label="Name">
         <Input
           type="text"
@@ -90,13 +179,24 @@ function InlineIngredientForm({
           data-testid="inline-ingredient-category"
         >
           {CATEGORY_OPTIONS.map((c) => (
-            <option key={c} value={c}>{c}</option>
+            <option key={c} value={c}>
+              {c}
+            </option>
           ))}
         </Select>
       </FieldLabel>
       <div className="flex gap-2">
-        <Button small variant="primary" onClick={handleAdd} data-testid="inline-ingredient-save">Add ingredient</Button>
-        <Button small onClick={onCancel}>Cancel</Button>
+        <Button
+          small
+          variant="primary"
+          onClick={handleAdd}
+          data-testid="inline-ingredient-save"
+        >
+          Add ingredient
+        </Button>
+        <Button small onClick={onCancel}>
+          Cancel
+        </Button>
       </div>
     </div>
   );
@@ -110,6 +210,8 @@ function ComponentForm({
   onChange,
   onRemove,
   onAddIngredient,
+  allMeals,
+  currentMealId,
 }: {
   component: MealComponent;
   ingredients: Ingredient[];
@@ -118,6 +220,8 @@ function ComponentForm({
   onChange: (updated: MealComponent) => void;
   onRemove: () => void;
   onAddIngredient: (ingredient: Ingredient) => void;
+  allMeals: BaseMeal[];
+  currentMealId: string;
 }) {
   const alternatives = component.alternativeIngredientIds ?? [];
   const usedIds = new Set([component.ingredientId, ...alternatives]);
@@ -126,28 +230,38 @@ function ComponentForm({
   const [showAlternativePicker, setShowAlternativePicker] = useState(false);
   const [alternativeSearch, setAlternativeSearch] = useState("");
   const [selectedAlternativeId, setSelectedAlternativeId] = useState("");
+  const [recipePickerOpen, setRecipePickerOpen] = useState(false);
 
-  const primaryIngredient = ingredients.find((item) => item.id === component.ingredientId);
+  const primaryIngredient = ingredients.find(
+    (item) => item.id === component.ingredientId,
+  );
   const alternativeIngredients = alternatives
     .map((altId) => ingredients.find((item) => item.id === altId))
     .filter((item): item is Ingredient => !!item);
 
   function addAlternative(ingredientId: string) {
     if (!ingredientId || usedIds.has(ingredientId)) return;
-    onChange({ ...component, alternativeIngredientIds: [...alternatives, ingredientId] });
+    onChange({
+      ...component,
+      alternativeIngredientIds: [...alternatives, ingredientId],
+    });
   }
 
   function removeAlternative(ingredientId: string) {
     onChange({
       ...component,
-      alternativeIngredientIds: alternatives.filter((id) => id !== ingredientId),
+      alternativeIngredientIds: alternatives.filter(
+        (id) => id !== ingredientId,
+      ),
     });
   }
 
   const filteredAlternativeOptions = ingredients.filter((ing) => {
     if (usedIds.has(ing.id)) return false;
     if (!alternativeSearch.trim()) return true;
-    return ing.name.toLowerCase().includes(alternativeSearch.trim().toLowerCase());
+    return ing.name
+      .toLowerCase()
+      .includes(alternativeSearch.trim().toLowerCase());
   });
 
   function handleAddSelectedAlternative() {
@@ -158,10 +272,17 @@ function ComponentForm({
   }
 
   const summaryParts = [
-    primaryIngredient ? toSentenceCase(primaryIngredient.name) : "Choose ingredient",
+    primaryIngredient
+      ? toSentenceCase(primaryIngredient.name)
+      : "Choose ingredient",
     component.role,
     component.quantity?.trim() ? component.quantity : "No quantity",
   ];
+
+  const defaultRef = getDefaultRecipeRef(component);
+  const linkedName = defaultRef?.linkedBaseMealId
+    ? allMeals.find((m) => m.id === defaultRef.linkedBaseMealId)?.name
+    : undefined;
 
   return (
     <div
@@ -180,7 +301,18 @@ function ComponentForm({
             {summaryParts.join(" · ")}
           </span>
           <span className="mt-1 block text-xs text-text-muted">
-            {alternatives.length > 0 ? `${alternatives.length} alternatives` : "No alternatives"}
+            {alternatives.length > 0
+              ? `${alternatives.length} alternatives`
+              : "No alternatives"}
+            {defaultRef && (
+              <span
+                className="mt-0.5 block text-text-secondary"
+                data-testid={`component-recipe-summary-${index}`}
+              >
+                Recipe:{" "}
+                {summarizeRecipeRef(defaultRef, { linkedMealName: linkedName })}
+              </span>
+            )}
           </span>
         </span>
         <Chip variant="neutral">{expanded ? "Collapse" : "Edit"}</Chip>
@@ -191,7 +323,9 @@ function ComponentForm({
           <FieldLabel label="Default ingredient">
             <Select
               value={component.ingredientId}
-              onChange={(e) => onChange({ ...component, ingredientId: e.target.value })}
+              onChange={(e) =>
+                onChange({ ...component, ingredientId: e.target.value })
+              }
             >
               <option value="">Select ingredient</option>
               {ingredients.map((ing) => (
@@ -212,20 +346,31 @@ function ComponentForm({
               onCancel={() => setShowInlineForm(false)}
             />
           ) : (
-            <Button variant="ghost" small onClick={() => setShowInlineForm(true)} data-testid="add-ingredient-inline">
+            <Button
+              variant="ghost"
+              small
+              onClick={() => setShowInlineForm(true)}
+              data-testid="add-ingredient-inline"
+            >
               + Add new ingredient
             </Button>
           )}
 
           <div data-testid={`default-ingredient-${index}`}>
-            <span className="mb-1 block text-xs font-medium text-text-secondary">Default ingredient</span>
+            <span className="mb-1 block text-xs font-medium text-text-secondary">
+              Default ingredient
+            </span>
             <Chip variant="success">
-              {primaryIngredient ? toSentenceCase(primaryIngredient.name) : "No default ingredient selected"}
+              {primaryIngredient
+                ? toSentenceCase(primaryIngredient.name)
+                : "No default ingredient selected"}
             </Chip>
           </div>
 
           <div data-testid={`alternatives-list-${index}`}>
-            <span className="mb-1 block text-xs font-medium text-text-secondary">Alternatives</span>
+            <span className="mb-1 block text-xs font-medium text-text-secondary">
+              Alternatives
+            </span>
             {alternativeIngredients.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {alternativeIngredients.map((ing) => (
@@ -244,12 +389,17 @@ function ComponentForm({
                 ))}
               </div>
             ) : (
-              <span className="text-xs text-text-muted">No alternatives added yet.</span>
+              <span className="text-xs text-text-muted">
+                No alternatives added yet.
+              </span>
             )}
           </div>
 
           {showAlternativePicker ? (
-            <div className="rounded-sm border border-border-light bg-surface p-3 space-y-3" data-testid={`alternative-picker-${index}`}>
+            <div
+              className="rounded-sm border border-border-light bg-surface p-3 space-y-3"
+              data-testid={`alternative-picker-${index}`}
+            >
               <Input
                 type="search"
                 value={alternativeSearch}
@@ -270,7 +420,11 @@ function ComponentForm({
                 ))}
               </Select>
               <div className="flex items-center gap-2">
-                <Button small onClick={handleAddSelectedAlternative} disabled={!selectedAlternativeId}>
+                <Button
+                  small
+                  onClick={handleAddSelectedAlternative}
+                  disabled={!selectedAlternativeId}
+                >
                   Add alternative
                 </Button>
                 <Button small onClick={() => setShowAlternativePicker(false)}>
@@ -279,16 +433,25 @@ function ComponentForm({
               </div>
             </div>
           ) : (
-            <Button small onClick={() => setShowAlternativePicker(true)}>Add alternative</Button>
+            <Button small onClick={() => setShowAlternativePicker(true)}>
+              Add alternative
+            </Button>
           )}
 
           <FieldLabel label="Role">
             <Select
               value={component.role}
-              onChange={(e) => onChange({ ...component, role: e.target.value as ComponentRole })}
+              onChange={(e) =>
+                onChange({
+                  ...component,
+                  role: e.target.value as ComponentRole,
+                })
+              }
             >
               {COMPONENT_ROLES.map((r) => (
-                <option key={r} value={r}>{r}</option>
+                <option key={r} value={r}>
+                  {r}
+                </option>
               ))}
             </Select>
           </FieldLabel>
@@ -297,7 +460,9 @@ function ComponentForm({
             <Input
               type="text"
               value={component.quantity}
-              onChange={(e) => onChange({ ...component, quantity: e.target.value })}
+              onChange={(e) =>
+                onChange({ ...component, quantity: e.target.value })
+              }
               placeholder="e.g. 200g"
               className="max-w-[220px]"
             />
@@ -307,10 +472,45 @@ function ComponentForm({
             <Input
               type="text"
               value={component.prepNote ?? ""}
-              onChange={(e) => onChange({ ...component, prepNote: e.target.value || undefined })}
+              onChange={(e) =>
+                onChange({
+                  ...component,
+                  prepNote: e.target.value || undefined,
+                })
+              }
               placeholder="e.g. keep separate, blend, roast longer"
             />
           </FieldLabel>
+
+          <div
+            className="rounded-sm border border-border-light bg-bg p-3 space-y-2"
+            data-testid={`component-recipe-actions-${index}`}
+          >
+            <span className="text-xs font-semibold text-text-secondary">
+              How to make this component
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                small
+                onClick={() => setRecipePickerOpen(true)}
+                data-testid={`attach-recipe-${index}`}
+              >
+                {defaultRef ? "Change recipe" : "Attach recipe"}
+              </Button>
+              {defaultRef && (
+                <Button
+                  type="button"
+                  small
+                  variant="ghost"
+                  data-testid={`remove-recipe-${index}`}
+                  onClick={() => onChange({ ...component, recipeRefs: [] })}
+                >
+                  Remove recipe
+                </Button>
+              )}
+            </div>
+          </div>
 
           <Button
             variant="ghost"
@@ -321,6 +521,34 @@ function ComponentForm({
             Remove component
           </Button>
         </div>
+      )}
+
+      {recipePickerOpen && component.id && (
+        <ComponentRecipePicker
+          open
+          onClose={() => setRecipePickerOpen(false)}
+          component={component}
+          excludeMealId={currentMealId}
+          baseMeals={allMeals}
+          onSave={(ref: ComponentRecipeRef) => {
+            const withId = createComponentRecipeRef({
+              ...ref,
+              componentId: component.id!,
+              isDefault: true,
+            });
+            const rest = (component.recipeRefs ?? [])
+              .filter((r) => r.id !== withId.id)
+              .map((r) => ({
+                ...r,
+                isDefault: false,
+              }));
+            onChange({
+              ...component,
+              recipeRefs: [withId, ...rest],
+            });
+            setRecipePickerOpen(false);
+          }}
+        />
       )}
     </div>
   );
@@ -357,7 +585,11 @@ function RecipeLinksEditor({
       {links.length > 0 && (
         <div className="mb-3 space-y-2">
           {links.map((link, i) => (
-            <div key={i} className="flex items-center gap-2" data-testid={`recipe-link-${i}`}>
+            <div
+              key={i}
+              className="flex items-center gap-2"
+              data-testid={`recipe-link-${i}`}
+            >
               <a
                 href={link.url}
                 target="_blank"
@@ -367,10 +599,14 @@ function RecipeLinksEditor({
               >
                 <span className="flex min-w-0 items-center gap-2 rounded-sm border border-border-light bg-bg px-2 py-1.5 transition-colors hover:bg-surface-card">
                   <Chip variant="info">{link.label}</Chip>
-                  <span className="truncate text-xs text-text-muted">{link.url}</span>
+                  <span className="truncate text-xs text-text-muted">
+                    {link.url}
+                  </span>
                 </span>
               </a>
-              <Button variant="ghost" small onClick={() => removeLink(i)}>x</Button>
+              <Button variant="ghost" small onClick={() => removeLink(i)}>
+                x
+              </Button>
             </div>
           ))}
         </div>
@@ -391,7 +627,9 @@ function RecipeLinksEditor({
           placeholder="URL"
           data-testid="recipe-link-url"
         />
-        <Button small onClick={addLink}>Add link</Button>
+        <Button small onClick={addLink}>
+          Add link
+        </Button>
       </div>
     </div>
   );
@@ -400,6 +638,7 @@ function RecipeLinksEditor({
 function MealModal({
   meal,
   ingredients,
+  allMeals,
   onChange,
   onClose,
   onRemove,
@@ -407,15 +646,19 @@ function MealModal({
 }: {
   meal: BaseMeal;
   ingredients: Ingredient[];
+  allMeals: BaseMeal[];
   onChange: (updated: BaseMeal) => void;
   onClose: () => void;
   onRemove: () => void;
   onAddIngredient: (ingredient: Ingredient) => void;
 }) {
-  const [openComponentIndexes, setOpenComponentIndexes] = useState<number[]>([]);
+  const [openComponentIndexes, setOpenComponentIndexes] = useState<number[]>(
+    [],
+  );
 
   function addComponent() {
     const newComponent: MealComponent = {
+      id: crypto.randomUUID(),
       ingredientId: "",
       role: "protein",
       quantity: "",
@@ -450,222 +693,270 @@ function MealModal({
       className="flex max-h-[92vh] min-h-0 w-full max-w-4xl flex-col overflow-hidden p-0"
       panelTestId="meal-modal"
     >
-        <div className="shrink-0 border-b border-border-light bg-surface px-4 py-3 sm:px-6">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-1 items-start gap-3">
-              <MealImageSlot
-                variant="modalHeader"
-                imageUrl={meal.imageUrl}
-                alt=""
-                imageTestId="meal-modal-header-image"
-                placeholderTestId="meal-modal-header-image-placeholder"
-              />
-              <div className="min-w-0">
-                <h2 className="truncate text-xl font-bold text-text-primary">
-                  {toSentenceCase(meal.name) || "New meal"}
-                </h2>
-                <span className="text-xs text-text-muted">
-                  Build one shared meal structure with clear component choices
-                </span>
-              </div>
+      <div className="shrink-0 border-b border-border-light bg-surface px-4 py-3 sm:px-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <MealImageSlot
+              variant="modalHeader"
+              imageUrl={meal.imageUrl}
+              alt=""
+              imageTestId="meal-modal-header-image"
+              placeholderTestId="meal-modal-header-image-placeholder"
+            />
+            <div className="min-w-0">
+              <h2 className="truncate text-xl font-bold text-text-primary">
+                {toSentenceCase(meal.name) || "New meal"}
+              </h2>
+              <span className="text-xs text-text-muted">
+                Build one shared meal structure with clear component choices
+              </span>
             </div>
-            <Button variant="ghost" onClick={onClose} aria-label="Close modal">Close</Button>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2" data-testid="meal-summary-chips">
-            <Chip variant="info">{meal.estimatedTimeMinutes} min</Chip>
-            <Chip variant={DIFFICULTY_CHIP_VARIANT[meal.difficulty]}>{meal.difficulty}</Chip>
-            <Chip variant={meal.rescueEligible ? "success" : "neutral"}>
-              {meal.rescueEligible ? "Rescue eligible" : "Not rescue"}
-            </Chip>
-          </div>
+          <Button variant="ghost" onClick={onClose} aria-label="Close modal">
+            Close
+          </Button>
         </div>
+        <div
+          className="mt-3 flex flex-wrap gap-2"
+          data-testid="meal-summary-chips"
+        >
+          <Chip variant="info">{meal.estimatedTimeMinutes} min</Chip>
+          <Chip variant={DIFFICULTY_CHIP_VARIANT[meal.difficulty]}>
+            {meal.difficulty}
+          </Chip>
+          <Chip variant={meal.rescueEligible ? "success" : "neutral"}>
+            {meal.rescueEligible ? "Rescue eligible" : "Not rescue"}
+          </Chip>
+        </div>
+      </div>
 
-        <div className="flex-1 min-h-0 space-y-6 overflow-y-auto px-4 py-5 sm:px-6">
-          <section data-testid="meal-identity-section" className="space-y-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">1. Meal identity</h3>
-            <FieldLabel label="Meal name">
+      <div className="flex-1 min-h-0 space-y-6 overflow-y-auto px-4 py-5 sm:px-6">
+        <section data-testid="meal-identity-section" className="space-y-3">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
+            1. Meal identity
+          </h3>
+          <FieldLabel label="Meal name">
+            <Input
+              type="text"
+              value={meal.name}
+              onChange={(e) => onChange({ ...meal, name: e.target.value })}
+              placeholder="Meal name"
+              required
+              data-testid="modal-meal-name"
+            />
+          </FieldLabel>
+        </section>
+
+        <section data-testid="meal-structure-section" className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
+              2. Structure and components
+            </h3>
+            <Button small onClick={addComponent}>
+              Add component
+            </Button>
+          </div>
+          {meal.components.length === 0 ? (
+            <div className="rounded-sm border border-dashed border-border-default bg-bg p-3 text-sm text-text-muted">
+              No components yet. Add protein, carb, veg, sauce, or topping
+              components to define this meal.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {meal.components.map((comp, i) => (
+                <ComponentForm
+                  key={comp.id ?? i}
+                  index={i}
+                  defaultExpanded={openComponentIndexes.includes(i)}
+                  component={comp}
+                  ingredients={ingredients}
+                  onChange={(updated) => updateComponent(i, updated)}
+                  onRemove={() => removeComponent(i)}
+                  onAddIngredient={onAddIngredient}
+                  allMeals={allMeals}
+                  currentMealId={meal.id}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section data-testid="meal-planning-section" className="space-y-3">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
+            3. Planning metadata
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FieldLabel label="Default prep">
               <Input
                 type="text"
-                value={meal.name}
-                onChange={(e) => onChange({ ...meal, name: e.target.value })}
-                placeholder="Meal name"
-                required
-                data-testid="modal-meal-name"
+                value={meal.defaultPrep}
+                onChange={(e) =>
+                  onChange({ ...meal, defaultPrep: e.target.value })
+                }
+                placeholder="e.g. stir-fry, roast"
               />
             </FieldLabel>
-          </section>
-
-          <section data-testid="meal-structure-section" className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
-                2. Structure and components
-              </h3>
-              <Button small onClick={addComponent}>Add component</Button>
-            </div>
-            {meal.components.length === 0 ? (
-              <div className="rounded-sm border border-dashed border-border-default bg-bg p-3 text-sm text-text-muted">
-                No components yet. Add protein, carb, veg, sauce, or topping components to define this meal.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {meal.components.map((comp, i) => (
-                  <ComponentForm
-                    key={i}
-                    index={i}
-                    defaultExpanded={openComponentIndexes.includes(i)}
-                    component={comp}
-                    ingredients={ingredients}
-                    onChange={(updated) => updateComponent(i, updated)}
-                    onRemove={() => removeComponent(i)}
-                    onAddIngredient={onAddIngredient}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section data-testid="meal-planning-section" className="space-y-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">3. Planning metadata</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <FieldLabel label="Default prep">
-                <Input
-                  type="text"
-                  value={meal.defaultPrep}
-                  onChange={(e) => onChange({ ...meal, defaultPrep: e.target.value })}
-                  placeholder="e.g. stir-fry, roast"
-                />
-              </FieldLabel>
-              <FieldLabel label="Time (minutes)">
-                <Input
-                  type="number"
-                  value={meal.estimatedTimeMinutes}
-                  onChange={(e) =>
-                    onChange({ ...meal, estimatedTimeMinutes: parseInt(e.target.value, 10) || 0 })
-                  }
-                  min={0}
-                  className="max-w-[180px]"
-                />
-              </FieldLabel>
-              <FieldLabel label="Difficulty">
-                <Select
-                  value={meal.difficulty}
-                  onChange={(e) =>
-                    onChange({ ...meal, difficulty: e.target.value as BaseMeal["difficulty"] })
-                  }
-                >
-                  {DIFFICULTY_OPTIONS.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </Select>
-              </FieldLabel>
-              <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 accent-brand"
-                  checked={meal.rescueEligible}
-                  onChange={(e) => onChange({ ...meal, rescueEligible: e.target.checked })}
-                />
-                Rescue eligible
-              </label>
-            </div>
-          </section>
-
-          <section data-testid="meal-secondary-section" className="space-y-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">4. References and notes</h3>
-
-            <details data-testid="recipe-links-section" className="rounded-sm border border-border-light bg-surface-card p-3">
-              <summary className="cursor-pointer text-sm font-medium text-text-primary">Recipe links</summary>
-              <RecipeLinksEditor
-                links={meal.recipeLinks ?? []}
-                onChange={(recipeLinks) => onChange({ ...meal, recipeLinks })}
+            <FieldLabel label="Time (minutes)">
+              <Input
+                type="number"
+                value={meal.estimatedTimeMinutes}
+                onChange={(e) =>
+                  onChange({
+                    ...meal,
+                    estimatedTimeMinutes: parseInt(e.target.value, 10) || 0,
+                  })
+                }
+                min={0}
+                className="max-w-[180px]"
               />
-            </details>
-
-            <details data-testid="notes-section" className="rounded-sm border border-border-light bg-surface-card p-3">
-              <summary className="cursor-pointer text-sm font-medium text-text-primary">Notes</summary>
-              <FieldLabel label="Notes" className="mt-3">
-                <textarea
-                  className="w-full rounded-lg border border-border-light bg-surface p-3 text-sm text-text-primary placeholder-text-muted focus:border-brand focus:outline-none"
-                  rows={3}
-                  value={meal.notes ?? ""}
-                  onChange={(e) => onChange({ ...meal, notes: e.target.value })}
-                  placeholder="e.g. Gousto version works well, blend toddler sauce"
-                  data-testid="meal-notes"
-                />
-              </FieldLabel>
-            </details>
-
-            <details data-testid="image-section" className="rounded-sm border border-border-light bg-surface-card p-3">
-              <summary className="cursor-pointer text-sm font-medium text-text-primary">Image</summary>
-              <FieldLabel label="Image" className="mt-3">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <Input
-                    type="url"
-                    value={meal.imageUrl ?? ""}
-                    onChange={(e) => onChange({ ...meal, imageUrl: e.target.value || undefined })}
-                    placeholder="Image URL"
-                    data-testid="meal-image-url"
-                  />
-                  <label className="inline-flex cursor-pointer items-center">
-                    <span className="inline-flex items-center justify-center rounded-sm border border-border-default bg-surface px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:bg-bg hover:shadow-card min-h-[36px]">
-                      Upload
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      data-testid="meal-image-upload"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          onChange({ ...meal, imageUrl: reader.result as string });
-                        };
-                        reader.readAsDataURL(file);
-                      }}
-                    />
-                  </label>
-                </div>
-                {meal.imageUrl && (
-                  <MealImageSlot
-                    variant="editorPreview"
-                    imageUrl={meal.imageUrl}
-                    alt={meal.name || "Meal"}
-                    imageTestId="meal-image-preview"
-                    placeholderTestId="meal-image-preview-placeholder"
-                  />
-                )}
-              </FieldLabel>
-            </details>
-          </section>
-        </div>
-
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border-light bg-surface px-4 py-3 sm:px-6">
-          <Button
-            variant="ghost"
-            small
-            className="text-danger hover:text-danger"
-            onClick={onRemove}
-          >
-            Remove meal
-          </Button>
-          <div className="flex items-center gap-3">
-            <span className="hidden text-xs text-text-muted sm:block">Changes auto-save as you edit</span>
-            <Button variant="primary" onClick={onClose}>Save meal</Button>
+            </FieldLabel>
+            <FieldLabel label="Difficulty">
+              <Select
+                value={meal.difficulty}
+                onChange={(e) =>
+                  onChange({
+                    ...meal,
+                    difficulty: e.target.value as BaseMeal["difficulty"],
+                  })
+                }
+              >
+                {DIFFICULTY_OPTIONS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </Select>
+            </FieldLabel>
+            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+              <input
+                type="checkbox"
+                className="h-5 w-5 accent-brand"
+                checked={meal.rescueEligible}
+                onChange={(e) =>
+                  onChange({ ...meal, rescueEligible: e.target.checked })
+                }
+              />
+              Rescue eligible
+            </label>
           </div>
+        </section>
+
+        <section data-testid="meal-secondary-section" className="space-y-3">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
+            4. References and notes
+          </h3>
+
+          <details
+            data-testid="recipe-links-section"
+            className="rounded-sm border border-border-light bg-surface-card p-3"
+          >
+            <summary className="cursor-pointer text-sm font-medium text-text-primary">
+              Recipe links
+            </summary>
+            <RecipeLinksEditor
+              links={meal.recipeLinks ?? []}
+              onChange={(recipeLinks) => onChange({ ...meal, recipeLinks })}
+            />
+          </details>
+
+          <details
+            data-testid="notes-section"
+            className="rounded-sm border border-border-light bg-surface-card p-3"
+          >
+            <summary className="cursor-pointer text-sm font-medium text-text-primary">
+              Notes
+            </summary>
+            <FieldLabel label="Notes" className="mt-3">
+              <textarea
+                className="w-full rounded-lg border border-border-light bg-surface p-3 text-sm text-text-primary placeholder-text-muted focus:border-brand focus:outline-none"
+                rows={3}
+                value={meal.notes ?? ""}
+                onChange={(e) => onChange({ ...meal, notes: e.target.value })}
+                placeholder="e.g. Gousto version works well, blend toddler sauce"
+                data-testid="meal-notes"
+              />
+            </FieldLabel>
+          </details>
+
+          <details
+            data-testid="image-section"
+            className="rounded-sm border border-border-light bg-surface-card p-3"
+          >
+            <summary className="cursor-pointer text-sm font-medium text-text-primary">
+              Image
+            </summary>
+            <FieldLabel label="Image" className="mt-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Input
+                  type="url"
+                  value={meal.imageUrl ?? ""}
+                  onChange={(e) =>
+                    onChange({ ...meal, imageUrl: e.target.value || undefined })
+                  }
+                  placeholder="Image URL"
+                  data-testid="meal-image-url"
+                />
+                <label className="inline-flex cursor-pointer items-center">
+                  <span className="inline-flex items-center justify-center rounded-sm border border-border-default bg-surface px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:bg-bg hover:shadow-card min-h-[36px]">
+                    Upload
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    data-testid="meal-image-upload"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        onChange({
+                          ...meal,
+                          imageUrl: reader.result as string,
+                        });
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </label>
+              </div>
+              {meal.imageUrl && (
+                <MealImageSlot
+                  variant="editorPreview"
+                  imageUrl={meal.imageUrl}
+                  alt={meal.name || "Meal"}
+                  imageTestId="meal-image-preview"
+                  placeholderTestId="meal-image-preview-placeholder"
+                />
+              )}
+            </FieldLabel>
+          </details>
+        </section>
+      </div>
+
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border-light bg-surface px-4 py-3 sm:px-6">
+        <Button
+          variant="ghost"
+          small
+          className="text-danger hover:text-danger"
+          onClick={onRemove}
+        >
+          Remove meal
+        </Button>
+        <div className="flex items-center gap-3">
+          <span className="hidden text-xs text-text-muted sm:block">
+            Changes auto-save as you edit
+          </span>
+          <Button variant="primary" onClick={onClose}>
+            Save meal
+          </Button>
         </div>
+      </div>
     </AppModal>
   );
 }
 
-function MealRow({
-  meal,
-  onClick,
-}: {
-  meal: BaseMeal;
-  onClick: () => void;
-}) {
+function MealRow({ meal, onClick }: { meal: BaseMeal; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -683,18 +974,29 @@ function MealRow({
       />
       <span className="flex-1 min-w-0">
         <span className="block text-sm font-medium text-text-primary truncate">
-          {meal.name ? toSentenceCase(meal.name) : <span className="italic text-text-muted">Unnamed</span>}
+          {meal.name ? (
+            toSentenceCase(meal.name)
+          ) : (
+            <span className="italic text-text-muted">Unnamed</span>
+          )}
         </span>
         <span className="block text-xs text-text-muted truncate">
-          {meal.defaultPrep ? toSentenceCase(meal.defaultPrep) : "No prep set"} · {meal.estimatedTimeMinutes} min · {meal.components.length} components
+          {meal.defaultPrep ? toSentenceCase(meal.defaultPrep) : "No prep set"}{" "}
+          · {meal.estimatedTimeMinutes} min · {meal.components.length}{" "}
+          components
         </span>
       </span>
       <span className="flex flex-shrink-0 items-center gap-1.5">
-        <Chip variant={DIFFICULTY_CHIP_VARIANT[meal.difficulty]} className="text-[10px]">
+        <Chip
+          variant={DIFFICULTY_CHIP_VARIANT[meal.difficulty]}
+          className="text-[10px]"
+        >
           {meal.difficulty}
         </Chip>
         {meal.rescueEligible && (
-          <Chip variant="info" className="text-[10px]">rescue</Chip>
+          <Chip variant="info" className="text-[10px]">
+            rescue
+          </Chip>
         )}
       </span>
     </button>
@@ -703,6 +1005,8 @@ function MealRow({
 
 export default function BaseMealManager() {
   const { householdId } = useParams<{ householdId: string }>();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [meals, setMeals] = useState<BaseMeal[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -725,6 +1029,22 @@ export default function BaseMealManager() {
   }, [householdId]);
 
   useEffect(() => {
+    const edit = searchParams.get("edit") || searchParams.get("meal");
+    if (!edit || meals.length === 0) return;
+    if (!meals.some((m) => m.id === edit)) return;
+    setEditingId(edit);
+    setSearchParams(
+      (p) => {
+        const next = new URLSearchParams(p);
+        next.delete("edit");
+        next.delete("meal");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [searchParams, meals, setSearchParams]);
+
+  useEffect(() => {
     if (!loaded || !householdId) return;
     const household = loadHousehold(householdId);
     if (!household) return;
@@ -740,11 +1060,16 @@ export default function BaseMealManager() {
   }, [meals, searchQuery]);
 
   const sortedMeals = useMemo(() => {
-    const opt = MEAL_SORT_OPTIONS.find((o) => o.value === mealSort) ?? MEAL_SORT_OPTIONS[0]!;
+    const opt =
+      MEAL_SORT_OPTIONS.find((o) => o.value === mealSort) ??
+      MEAL_SORT_OPTIONS[0]!;
     return sortBaseMeals(filteredMeals, opt.key, opt.dir);
   }, [filteredMeals, mealSort]);
 
-  const resetDeps = useMemo(() => [searchQuery, mealSort] as const, [searchQuery, mealSort]);
+  const resetDeps = useMemo(
+    () => [searchQuery, mealSort] as const,
+    [searchQuery, mealSort],
+  );
   const {
     visibleItems: visibleMeals,
     hasMore: mealListHasMore,
@@ -753,7 +1078,7 @@ export default function BaseMealManager() {
   } = useIncrementalList(sortedMeals, { resetDeps: [...resetDeps] });
 
   const editingMeal = editingId
-    ? meals.find((meal) => meal.id === editingId) ?? null
+    ? (meals.find((meal) => meal.id === editingId) ?? null)
     : null;
 
   function addMeal() {
@@ -802,7 +1127,7 @@ export default function BaseMealManager() {
               data-testid="meal-search"
             />
           </div>
-          <FieldLabel label="Sort" className="sm:w-56 shrink-0">
+          <div className="sm:w-56 shrink-0">
             <Select
               value={mealSort}
               onChange={(e) => setMealSort(e.target.value)}
@@ -814,15 +1139,24 @@ export default function BaseMealManager() {
                 </option>
               ))}
             </Select>
-          </FieldLabel>
+          </div>
           <Button onClick={addMeal}>Add meal</Button>
-          <Link to={`/household/${householdId}/import-recipe`}>
-            <Button data-testid="import-recipe-btn">Import recipe</Button>
-          </Link>
+          <Button
+            type="button"
+            data-testid="import-recipe-btn"
+            onClick={() =>
+              householdId && navigate(`/household/${householdId}/import-recipe`)
+            }
+          >
+            Import recipe
+          </Button>
         </div>
       </Card>
 
-      <h2 className="mb-3 text-sm font-medium text-text-secondary" data-testid="meal-list-summary">
+      <h2
+        className="mb-3 text-sm font-medium text-text-secondary"
+        data-testid="meal-list-summary"
+      >
         <span>Meals ({meals.length})</span>
         {filteredMeals.length !== meals.length && (
           <span>{` · ${filteredMeals.length} match${filteredMeals.length !== 1 ? "es" : ""}`}</span>
@@ -848,7 +1182,12 @@ export default function BaseMealManager() {
           <div ref={mealListSentinelRef} className="h-px w-full" aria-hidden />
           {mealListHasMore && (
             <div className="flex justify-center pt-2">
-              <Button type="button" variant="default" onClick={loadMoreMeals} data-testid="meal-list-load-more">
+              <Button
+                type="button"
+                variant="default"
+                onClick={loadMoreMeals}
+                data-testid="meal-list-load-more"
+              >
                 Load more meals
               </Button>
             </div>
@@ -860,6 +1199,7 @@ export default function BaseMealManager() {
         <MealModal
           meal={editingMeal}
           ingredients={ingredients}
+          allMeals={meals}
           onChange={updateMeal}
           onClose={() => setEditingId(null)}
           onRemove={() => removeMeal(editingMeal.id)}

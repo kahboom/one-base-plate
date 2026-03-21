@@ -1,6 +1,15 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
-import type { Household, WeeklyPlan, DayPlan, BaseMeal, MealOutcome, MealOutcomeResult } from "../types";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
+import type {
+  Household,
+  WeeklyPlan,
+  DayPlan,
+  BaseMeal,
+  MealOutcome,
+  MealOutcomeResult,
+  ComponentRecipeRef,
+  WeeklyAnchor,
+} from "../types";
 import { loadHousehold, saveHousehold } from "../storage";
 import {
   generateWeeklyPlan,
@@ -17,11 +26,15 @@ import MealCard from "../components/MealCard";
 import BrowseMealsModal from "../components/planner/BrowseMealsModal";
 import { useSuggestedTrayCap } from "../hooks/useSuggestedTrayCap";
 import { PageHeader, Button, Select, Section, EmptyState, Chip, Input } from "../components/ui";
+import { getWeeklyAnchorForWeekday } from "../lib/weeklyPlanOps";
+import WeeklyThemeNightsCollapsible from "../components/WeeklyThemeNightsCollapsible";
 
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function WeeklyPlanner() {
   const { householdId } = useParams<{ householdId: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [household, setHousehold] = useState<Household | null>(null);
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [numDays, setNumDays] = useState(7);
@@ -30,6 +43,8 @@ export default function WeeklyPlanner() {
   const [sharing, setSharing] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
   const [browseMealsOpen, setBrowseMealsOpen] = useState(false);
+  const [themeContextDay, setThemeContextDay] = useState(DAY_LABELS[0]!);
+  const processedNavState = useRef(false);
   const trayCap = useSuggestedTrayCap();
 
   async function handleShare() {
@@ -84,6 +99,27 @@ export default function WeeklyPlanner() {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    processedNavState.current = false;
+  }, [householdId]);
+
+  useEffect(() => {
+    if (!household || processedNavState.current) return;
+    const st = location.state as {
+      preselectAssignMealId?: string;
+      assignComponentOverrides?: ComponentRecipeRef[];
+      assignTargetDay?: string;
+    } | null;
+    if (!st?.preselectAssignMealId || !st.assignTargetDay) return;
+    processedNavState.current = true;
+    assignMealToDay(
+      st.preselectAssignMealId,
+      st.assignTargetDay,
+      st.assignComponentOverrides,
+    );
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [household, location.state, location.pathname, navigate]);
+
   function handleGenerate() {
     if (!household) return;
 
@@ -113,13 +149,24 @@ export default function WeeklyPlanner() {
     setPlan({ ...plan, days: updatedDays });
   }
 
-  function assignMealToDay(mealId: string, dayLabel: string) {
+  function assignMealToDay(
+    mealId: string,
+    dayLabel: string,
+    componentRecipeOverrides?: ComponentRecipeRef[],
+  ) {
     if (!household) return;
     const meal = household.baseMeals.find((m) => m.id === mealId);
     if (!meal) return;
 
     const variants = generateAssemblyVariants(meal, household.members, household.ingredients);
-    const newDayPlan: DayPlan = { day: dayLabel, baseMealId: mealId, variants };
+    const newDayPlan: DayPlan = {
+      day: dayLabel,
+      baseMealId: mealId,
+      variants,
+      ...(componentRecipeOverrides?.length
+        ? { componentRecipeOverrides }
+        : {}),
+    };
 
     setPlan((prev) => {
       const existingDays = prev?.days ?? [];
@@ -144,6 +191,13 @@ export default function WeeklyPlanner() {
       ? current.filter((id) => id !== mealId)
       : [...current, mealId];
     const updatedHousehold = { ...household, pinnedMealIds: updated };
+    saveHousehold(updatedHousehold);
+    setHousehold(updatedHousehold);
+  }
+
+  function persistWeeklyAnchors(anchors: WeeklyAnchor[]) {
+    if (!household) return;
+    const updatedHousehold = { ...household, weeklyAnchors: anchors };
     saveHousehold(updatedHousehold);
     setHousehold(updatedHousehold);
   }
@@ -202,6 +256,11 @@ export default function WeeklyPlanner() {
     return `${overlap.score}/${overlap.total}`;
   }
 
+  const themeAnchor = useMemo(() => {
+    if (!household) return null;
+    return getWeeklyAnchorForWeekday(household, themeContextDay) ?? null;
+  }, [household, themeContextDay]);
+
   const suggestionRows = useMemo(() => {
     if (!household || household.baseMeals.length === 0) return [];
     return rankWeeklySuggestedMeals(
@@ -211,8 +270,9 @@ export default function WeeklyPlanner() {
       household.mealOutcomes ?? [],
       household.pinnedMealIds ?? [],
       plan?.days ?? [],
+      themeAnchor,
     );
-  }, [household, plan?.days]);
+  }, [household, plan?.days, themeAnchor]);
 
   const learnedPatterns: LearnedPatterns | undefined = useMemo(() => {
     if (!household) return undefined;
@@ -335,11 +395,13 @@ export default function WeeklyPlanner() {
           const dayIndex = plan?.days.findIndex((d) => d.day === dayLabel) ?? -1;
           const dayPlan = dayIndex >= 0 ? plan!.days[dayIndex]! : null;
           const suggested = !dayPlan ? getSuggestedMeal(dayLabel) : null;
+          const dayTheme = getWeeklyAnchorForWeekday(household, dayLabel);
 
           return (
             <DayCard
               key={dayLabel}
               dayLabel={dayLabel}
+              dayTheme={dayTheme}
               dayPlan={dayPlan}
               dayIndex={dayIndex}
               suggestedMeal={suggested}
@@ -414,6 +476,24 @@ export default function WeeklyPlanner() {
                 <p className="mt-1 text-sm text-text-secondary" data-testid="suggested-tray-summary" aria-live="polite">
                   Top {trayRows.length} of {household.baseMeals.length} meal{household.baseMeals.length !== 1 ? "s" : ""} for this week
                 </p>
+                <label className="mt-3 block max-w-xs text-sm text-text-secondary">
+                  Theme for suggestions
+                  <select
+                    className="mt-1 block w-full rounded-md border border-border-light bg-bg px-3 py-2 text-sm text-text-primary"
+                    value={themeContextDay}
+                    onChange={(e) => setThemeContextDay(e.target.value)}
+                    data-testid="weekly-theme-context-day"
+                  >
+                    {DAY_LABELS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="mt-1 block text-xs text-text-muted">
+                    Soft boost for meals that match this day&apos;s anchor (after household fit).
+                  </span>
+                </label>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Button
@@ -435,7 +515,7 @@ export default function WeeklyPlanner() {
               data-testid="suggested-tray-default"
               className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch] sm:grid sm:snap-none sm:overflow-visible sm:pb-0 sm:grid-cols-3 lg:grid-cols-4"
             >
-              {trayRows.map(({ meal, overlap }) => (
+              {trayRows.map(({ meal, overlap, themeMatch }) => (
                 <div
                   key={meal.id}
                   className="flex h-full min-h-0 min-w-[min(260px,85vw)] max-w-[min(260px,85vw)] shrink-0 snap-start flex-col sm:min-w-0 sm:max-w-none"
@@ -455,6 +535,7 @@ export default function WeeklyPlanner() {
                     pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
                     onAssign={() => setSelectedMealId(selectedMealId === meal.id ? null : meal.id)}
                     onPin={() => handleTogglePin(meal.id)}
+                    themeMatch={themeMatch}
                   />
                 </div>
               ))}
@@ -468,7 +549,7 @@ export default function WeeklyPlanner() {
           open={browseMealsOpen}
           onClose={() => setBrowseMealsOpen(false)}
           rows={suggestionRows}
-          renderMealCard={({ meal, overlap }) => (
+          renderMealCard={({ meal, overlap, themeMatch }) => (
             <MealCard
               meal={meal}
               members={household.members}
@@ -484,10 +565,18 @@ export default function WeeklyPlanner() {
               pinned={(household.pinnedMealIds ?? []).includes(meal.id)}
               onAssign={() => setSelectedMealId(selectedMealId === meal.id ? null : meal.id)}
               onPin={() => handleTogglePin(meal.id)}
+              themeMatch={themeMatch}
             />
           )}
         />
       )}
+
+      <div className="mt-6">
+        <WeeklyThemeNightsCollapsible
+          weeklyAnchors={household.weeklyAnchors ?? []}
+          onPersist={persistWeeklyAnchors}
+        />
+      </div>
     </>
   );
 }
@@ -518,6 +607,7 @@ const effortChipVariant: Record<string, "success" | "warning" | "danger"> = {
 
 function DayCard({
   dayLabel,
+  dayTheme,
   dayPlan,
   suggestedMeal,
   mealName,
@@ -532,6 +622,7 @@ function DayCard({
   onTapAssign,
 }: {
   dayLabel: string;
+  dayTheme?: WeeklyAnchor;
   dayPlan: DayPlan | null;
   dayIndex: number;
   suggestedMeal: BaseMeal | null;
@@ -609,6 +700,15 @@ function DayCard({
       }`}
     >
       <strong className="text-base font-semibold text-text-primary">{dayLabel}</strong>
+      {dayTheme && dayTheme.enabled !== false && (
+        <p
+          className="mt-1 text-xs text-text-muted"
+          data-testid={`day-theme-line-${dayLabel}`}
+        >
+          {dayLabel} theme: {dayTheme.icon ? `${dayTheme.icon} ` : ""}
+          {dayTheme.label}
+        </p>
+      )}
 
       {showConfirmation && (
         <div

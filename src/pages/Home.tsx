@@ -151,11 +151,7 @@ export default function Home() {
   return (
     <>
       <GuidedTour />
-      <PageHeader
-        title="What should we eat tonight?"
-        subtitle={household.name}
-        subtitleTo={`/households?edit=${householdId}`}
-      />
+      <PageHeader title="What should we eat tonight?" />
 
       {household.members.length > 0 && (
         <Section>

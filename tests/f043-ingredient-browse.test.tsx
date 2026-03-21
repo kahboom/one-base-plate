@@ -319,6 +319,7 @@ describe("F043: Auto-populated catalog", () => {
     ];
     seedWithIngredients(ingredients);
     renderPage();
+    loadAllIngredientListRows();
 
     const total = expectedTotal(ingredients);
     expect(screen.getByText(`Items (${total})`)).toBeInTheDocument();

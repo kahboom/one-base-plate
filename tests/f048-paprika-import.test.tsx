@@ -236,11 +236,11 @@ describe("F048 - Paprika parser engine", () => {
   describe("buildDraftMeal", () => {
     it("creates a draft meal with provenance", () => {
       const h = makeHousehold();
-      const recipe = makePaprikaRecipe();
+      const recipe = makePaprikaRecipe({ ingredients: "200g chicken breast\n1 cup rice" });
       const lines = parseRecipeIngredients(recipe, h.ingredients);
       const reviewLines = lines as PaprikaReviewLine[];
 
-      const { meal } = buildDraftMeal(recipe, reviewLines);
+      const { meal } = buildDraftMeal(recipe, reviewLines, h.ingredients);
 
       expect(meal.name).toBe("Test Chicken Rice");
       expect(meal.provenance).toBeDefined();
@@ -251,67 +251,81 @@ describe("F048 - Paprika parser engine", () => {
     });
 
     it("maps Paprika total time to estimatedTimeMinutes", () => {
-      const recipe = makePaprikaRecipe({ total_time: "45 min" });
-      const lines = parseRecipeIngredients(recipe, []);
-      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[]);
+      const h = makeHousehold();
+      const recipe = makePaprikaRecipe({
+        total_time: "45 min",
+        ingredients: "200g chicken breast",
+      });
+      const lines = parseRecipeIngredients(recipe, h.ingredients);
+      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[], h.ingredients);
       expect(meal.estimatedTimeMinutes).toBe(45);
     });
 
     it("preserves separate prep and cook times", () => {
+      const h = makeHousehold();
       const recipe = makePaprikaRecipe({
         prep_time: "15 min",
         cook_time: "25 min",
         total_time: "40 min",
+        ingredients: "200g chicken breast",
       });
-      const lines = parseRecipeIngredients(recipe, []);
-      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[]);
+      const lines = parseRecipeIngredients(recipe, h.ingredients);
+      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[], h.ingredients);
       expect(meal.prepTimeMinutes).toBe(15);
       expect(meal.cookTimeMinutes).toBe(25);
       expect(meal.estimatedTimeMinutes).toBe(40);
     });
 
     it("maps difficulty level", () => {
-      const recipe = makePaprikaRecipe({ difficulty: "Hard" });
-      const lines = parseRecipeIngredients(recipe, []);
-      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[]);
+      const h = makeHousehold();
+      const recipe = makePaprikaRecipe({ difficulty: "Hard", ingredients: "200g chicken breast" });
+      const lines = parseRecipeIngredients(recipe, h.ingredients);
+      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[], h.ingredients);
       expect(meal.difficulty).toBe("hard");
     });
 
     it("preserves servings", () => {
-      const recipe = makePaprikaRecipe({ servings: "6" });
-      const lines = parseRecipeIngredients(recipe, []);
-      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[]);
+      const h = makeHousehold();
+      const recipe = makePaprikaRecipe({ servings: "6", ingredients: "200g chicken breast" });
+      const lines = parseRecipeIngredients(recipe, h.ingredients);
+      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[], h.ingredients);
       expect(meal.servings).toBe("6");
     });
 
     it("creates recipe links from source URL", () => {
+      const h = makeHousehold();
       const recipe = makePaprikaRecipe({
         source: "Gousto",
         source_url: "https://gousto.co.uk/recipe/123",
+        ingredients: "200g chicken breast",
       });
-      const lines = parseRecipeIngredients(recipe, []);
-      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[]);
+      const lines = parseRecipeIngredients(recipe, h.ingredients);
+      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[], h.ingredients);
       expect(meal.recipeLinks).toHaveLength(1);
       expect(meal.recipeLinks![0]!.label).toBe("Gousto");
       expect(meal.recipeLinks![0]!.url).toBe("https://gousto.co.uk/recipe/123");
     });
 
     it("preserves notes", () => {
-      const recipe = makePaprikaRecipe({ notes: "Blend toddler sauce smooth" });
-      const lines = parseRecipeIngredients(recipe, []);
-      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[]);
+      const h = makeHousehold();
+      const recipe = makePaprikaRecipe({
+        notes: "Blend toddler sauce smooth",
+        ingredients: "200g chicken breast",
+      });
+      const lines = parseRecipeIngredients(recipe, h.ingredients);
+      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[], h.ingredients);
       expect(meal.notes).toBe("Blend toddler sauce smooth");
     });
 
     it("stores import mappings for each ingredient line", () => {
       const h = makeHousehold();
-      const recipe = makePaprikaRecipe();
+      const recipe = makePaprikaRecipe({ ingredients: "200g chicken breast\n1 cup rice" });
       const lines = parseRecipeIngredients(recipe, h.ingredients);
 
-      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[]);
+      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[], h.ingredients);
 
       expect(meal.importMappings).toBeDefined();
-      expect(meal.importMappings!.length).toBe(3);
+      expect(meal.importMappings!.length).toBe(2);
       const usedMapping = meal.importMappings!.find((m) => m.action === "use");
       expect(usedMapping).toBeTruthy();
       expect(usedMapping!.originalLine).toBeTruthy();
@@ -323,7 +337,7 @@ describe("F048 - Paprika parser engine", () => {
       const recipe = makePaprikaRecipe({ ingredients: "200g chicken breast" });
       const lines = parseRecipeIngredients(recipe, h.ingredients);
 
-      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[]);
+      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[], h.ingredients);
 
       expect(meal.components.length).toBe(1);
       expect(meal.components[0]!.originalSourceLine).toBe("200g chicken breast");
@@ -339,9 +353,10 @@ describe("F048 - Paprika parser engine", () => {
         ...l,
         action: l.status === "catalog" ? ("create" as const) : l.action,
         newCategory: l.matchedCatalog?.category ?? ("pantry" as const),
+        resolutionStatus: "resolved" as const,
       })) as PaprikaReviewLine[];
 
-      const { meal, newIngredients } = buildDraftMeal(recipe, reviewLines);
+      const { meal, newIngredients } = buildDraftMeal(recipe, reviewLines, []);
 
       if (reviewLines[0]!.status === "catalog") {
         expect(newIngredients.length).toBe(1);
@@ -357,14 +372,15 @@ describe("F048 - Paprika parser engine", () => {
         cook_time: "",
       });
       const lines = parseRecipeIngredients(recipe, []);
-      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[]);
+      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[], []);
       expect(meal.estimatedTimeMinutes).toBe(30);
     });
 
     it("parses time with hours", () => {
-      const recipe = makePaprikaRecipe({ total_time: "1h 30m" });
-      const lines = parseRecipeIngredients(recipe, []);
-      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[]);
+      const h = makeHousehold();
+      const recipe = makePaprikaRecipe({ total_time: "1h 30m", ingredients: "200g chicken breast" });
+      const lines = parseRecipeIngredients(recipe, h.ingredients);
+      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[], h.ingredients);
       expect(meal.estimatedTimeMinutes).toBe(90);
     });
   });

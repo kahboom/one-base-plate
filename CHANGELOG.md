@@ -1,3 +1,15 @@
+### 2026-03-20 — Paprika bulk import exception-first grouped review (F050)
+- Requestor: product owner
+- Reason: Large Paprika imports need grouped resolution, explicit pending/low-confidence gates, searchable match/create flows, duplicate safeguards, and richer import audit without abandoning the existing session + provenance model.
+- Scope: `matchIngredient` confidence bands; `PaprikaReviewLine` resolution state + `buildDraftMeal(..., householdIngredients)`; `applyGroupResolution` / `canFinalizePaprikaImport` / `migrateLegacyPaprikaRecipes`; grouped review UI with filters, modals, blocked Import; extended `ImportMapping`; Meal Detail mapping audit rows; `tests/f050-paprika-grouped-resolution.test.tsx`; F048/F049 test updates.
+- Files changed: `src/recipe-parser.ts`, `src/paprika-parser.ts`, `src/types.ts`, `src/pages/PaprikaImport.tsx`, `src/pages/MealDetail.tsx`, `src/pages/Settings.tsx` (TS anchor form typing), `src/components/PaprikaIngredientPicker.tsx`, `tests/f048-paprika-import.test.tsx`, `tests/f049-bulk-paprika-review.test.tsx`, `tests/f050-paprika-grouped-resolution.test.tsx`, `tests/f056-theme-anchors.test.tsx`, `PRD.json`, `CHANGELOG.md`, `agent-progress.md`
+
+### 2026-03-20 — Meal Planner choose/build/use + weekly theme anchors (F055, F056)
+- Requestor: product owner
+- Reason: Meal Planner needed a cooking-first selected-meal flow with component-level recipe refs and plan-time overrides; households need optional soft weekly theme anchors for suggestion ranking and day context.
+- Scope: `ComponentRecipeRef`, stable `MealComponent.id` migration, `DayPlan.componentRecipeOverrides`, `Household.weeklyAnchors`, `src/lib/componentRecipes.ts`, `src/lib/weeklyPlanOps.ts`, theme tie-breaker in `rankWeeklySuggestedMeals`, Planner CTAs + How to make tonight + session overrides, Base Meal Editor recipe picker modal, Settings weekly anchors editor, Weekly Planner theme labels and match chips, tests.
+- Files changed: `PRD.json`, `CHANGELOG.md`, `src/types.ts`, `src/storage.ts`, `src/main.tsx`, `src/planner.ts`, `src/lib/componentRecipes.ts`, `src/lib/weeklyPlanOps.ts`, `src/components/meals/ComponentRecipePicker.tsx`, `src/pages/Planner.tsx`, `src/pages/BaseMealManager.tsx`, `src/pages/WeeklyPlanner.tsx`, `src/pages/Settings.tsx`, `src/components/MealCard.tsx`, tests.
+
 ### 2026-03-20 — Browse-first Meal + Weekly planner (4/6/8 caps, shared modal, ranking tweak)
 - Requestor: product owner
 - Reason: align tray caps with mobile/tablet/desktop spec; avoid rendering full libraries on Meal Planner; pinned meals should not sit in failure-only deprioritization tier.

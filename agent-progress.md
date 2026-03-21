@@ -837,5 +837,14 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Tests: `tests/householdLayoutRoutes.tsx` for MemoryRouter parity with App; broad test route updates; `tests/household-nav-config.test.ts`; expanded `tests/f036-navigation.test.tsx` for F053 acceptance.
 - Verification: `npx vitest run` (796 tests), `tests/household-nav-config.test.ts` passes.
 
+### F050 — Paprika bulk import exception-first grouped review (2026-03-20)
+- **PRD:** F050; screens S007/S010 Paprika import path.
+- Confidence bands + scores on `matchIngredient`; `PaprikaReviewLine` gains `resolutionStatus`, `groupKey`, `manualIngredientId`, `createDraft`, `parserSuggested*` ids, etc.
+- `parseRecipeIngredients` sets pending for unmatched/low-confidence matches; `canFinalizePaprikaImport` gates save; `buildDraftMeal` takes `householdIngredients` for manual match resolution; `ImportMapping` extended for audit fields.
+- `applyGroupResolution` + `migrateLegacyPaprikaRecipes`; grouped review UI (filters, group actions, modals, duplicate dialog, per-line overrides); Import disabled until finalized.
+- `MealDetail` shows raw / parsed / result for import mappings when present.
+- Tests: `tests/f050-paprika-grouped-resolution.test.tsx`; updates to F048/F049 Paprika tests; Settings anchor form typing fix for `tsc`.
+- Verification: `npx tsc --noEmit`, `npx vitest run` (836 passed).
+
 ## Next Task
-- `F049` remains the immediate next incomplete feature in PRD order (`passes=false`, dependency `F048` satisfied), with `F050` queued directly after it to keep implementation focused on bulk import cleanup and resolution UX.
+- Continue PRD `implementationOrder` for the next feature with `passes=false` after F050.

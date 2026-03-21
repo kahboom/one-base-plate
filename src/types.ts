@@ -42,13 +42,36 @@ export interface Ingredient {
   source?: "manual" | "catalog";
 }
 
+export type ComponentRecipeSourceType =
+  | "internal-meal"
+  | "imported-recipe"
+  | "external-url"
+  | "note";
+
+/** Optional per-component “how to make this” source; backwards-compatible when absent. */
+export interface ComponentRecipeRef {
+  id: string;
+  componentId: string;
+  sourceType: ComponentRecipeSourceType;
+  linkedBaseMealId?: string;
+  /** When the source is an imported/stored recipe row; may match linkedBaseMealId. */
+  importedRecipeSourceId?: string;
+  label: string;
+  url?: string;
+  notes?: string;
+  isDefault?: boolean;
+}
+
 export interface MealComponent {
+  /** Stable id for overrides and recipe refs; assigned on load/save if missing. */
+  id?: string;
   ingredientId: string;
   alternativeIngredientIds?: string[];
   role: "protein" | "carb" | "veg" | "sauce" | "topping";
   quantity: string;
   unit?: string;
   prepNote?: string;
+  recipeRefs?: ComponentRecipeRef[];
   originalSourceLine?: string;
   matchType?: "existing" | "new" | "ignored";
   confidence?: number;
@@ -70,6 +93,8 @@ export interface RecipeLink {
 export interface BaseMeal {
   id: string;
   name: string;
+  /** Optional tags for theme matching and organization (e.g. taco, pizza). */
+  tags?: string[];
   components: MealComponent[];
   defaultPrep: string;
   estimatedTimeMinutes: number;
@@ -98,6 +123,15 @@ export interface ImportMapping {
   ingredientId?: string;
   finalMatchedIngredientId?: string;
   matchType?: "existing" | "new" | "ignored";
+  /** Paprika / import audit */
+  matchScore?: number;
+  confidenceBand?: "exact" | "strong" | "low";
+  parserSuggestedIngredientId?: string;
+  parserSuggestedCatalogId?: string;
+  /** User-edited canonical name when creating a new ingredient from import */
+  finalCanonicalName?: string;
+  importAliasRetained?: boolean;
+  explicitIgnore?: boolean;
 }
 
 export interface AssemblyVariant {
@@ -113,6 +147,8 @@ export interface DayPlan {
   day: string;
   baseMealId: string;
   variants: AssemblyVariant[];
+  /** Plan-night only; does not change BaseMeal defaults. */
+  componentRecipeOverrides?: ComponentRecipeRef[];
 }
 
 export interface GroceryItem {
@@ -142,6 +178,19 @@ export interface MealOutcome {
   date: string;
 }
 
+/** Soft weekly theme (e.g. Taco night); optional and non-blocking. */
+export interface WeeklyAnchor {
+  id: string;
+  weekday: string;
+  label: string;
+  matchTags: string[];
+  matchStructureTypes: string[];
+  matchMealIds?: string[];
+  enabled: boolean;
+  notes?: string;
+  icon?: string;
+}
+
 export interface Household {
   id: string;
   name: string;
@@ -151,4 +200,5 @@ export interface Household {
   weeklyPlans: WeeklyPlan[];
   pinnedMealIds?: string[];
   mealOutcomes?: MealOutcome[];
+  weeklyAnchors?: WeeklyAnchor[];
 }

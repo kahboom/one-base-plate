@@ -16,6 +16,7 @@
     "db:migrate-ingredients": "npx tsx scripts/db-migrate-ingredients.ts"
   },
   "dependencies": {
+    "emoji-picker-react": "^4.18.0",
     "html2canvas": "^1.4.1",
     "idb": "^8.0.3",
     "jszip": "^3.10.1",

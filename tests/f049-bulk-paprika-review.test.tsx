@@ -13,6 +13,8 @@ import {
   loadImportSession,
   clearImportSession,
   parsePaprikaRecipes,
+  applyGroupResolution,
+  groupKeyForParsedName,
 } from "../src/paprika-parser";
 import type { PaprikaRecipe } from "../src/paprika-parser";
 import { parseIngredientLine, isInstructionLine } from "../src/recipe-parser";
@@ -357,7 +359,7 @@ describe("Bulk-reviewed import compatibility", () => {
     updated = applyBulkAction(updated, "create-all-new");
 
     for (const recipe of updated.filter((r) => r.selected)) {
-      const { meal, newIngredients } = buildDraftMeal(recipe.raw, recipe.parsedLines);
+      const { meal, newIngredients } = buildDraftMeal(recipe.raw, recipe.parsedLines, hh.ingredients);
       expect(meal.name).toBeTruthy();
       expect(meal.provenance?.sourceSystem).toBe("paprika");
       expect(meal.importMappings).toBeDefined();
@@ -381,7 +383,7 @@ describe("Bulk-reviewed import compatibility", () => {
     const recipe = makePaprikaRecipe({ name: "Imported Meal", ingredients: "200g chicken breast\n1 cup rice" });
     const parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
     const updated = applyBulkAction(parsed, "approve-matched");
-    const { meal } = buildDraftMeal(updated[0]!.raw, updated[0]!.parsedLines);
+    const { meal } = buildDraftMeal(updated[0]!.raw, updated[0]!.parsedLines, hh.ingredients);
 
     // Meal has proper structure for planner
     expect(meal.components.length).toBe(2);
@@ -401,8 +403,9 @@ describe("Bulk-reviewed import compatibility", () => {
       ingredients: "200g chicken breast\n1 cup rice\n1 pinch of salt",
     });
     const parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
-    const updated = applyBulkAction(parsed, "approve-matched");
-    const { meal, newIngredients } = buildDraftMeal(updated[0]!.raw, updated[0]!.parsedLines);
+    let updated = applyBulkAction(parsed, "approve-matched");
+    updated = applyBulkAction(updated, "create-all-new");
+    const { meal, newIngredients } = buildDraftMeal(updated[0]!.raw, updated[0]!.parsedLines, hh.ingredients);
 
     const combinedIngredients = [...hh.ingredients, ...newIngredients];
     for (const component of meal.components) {
@@ -431,7 +434,7 @@ describe("PaprikaImport bulk review UI", () => {
     renderAt("/household/h-bulk/import-paprika");
     expect(screen.getByTestId("paprika-review-step")).toBeInTheDocument();
     expect(screen.getByTestId("bulk-summary")).toBeInTheDocument();
-    expect(screen.getByText(/exact matches/)).toBeInTheDocument();
+    expect(screen.getByTestId("bulk-summary")).toHaveTextContent(/matched/);
   });
 
   it("shows bulk action buttons in review step", async () => {
@@ -481,7 +484,7 @@ describe("PaprikaImport bulk review UI", () => {
     });
 
     renderAt("/household/h-bulk/import-paprika");
-    expect(screen.getByText("Thai Curry")).toBeInTheDocument();
+    expect((await screen.findAllByText(/Thai Curry/)).length).toBeGreaterThan(0);
   });
 
   it("has pause/resume button that saves session", async () => {
@@ -544,7 +547,84 @@ describe("PaprikaImport bulk review UI", () => {
     expect(saved.baseMeals[0]!.name).toBe("Import Me");
   });
 
-  it("shows all lines across multiple recipes in bulk review", () => {
+  it("hides per-line action select when a group has only one occurrence (use group buttons)", async () => {
+    const hh = makeHousehold();
+    saveHousehold(hh);
+    const recipe = makePaprikaRecipe({ name: "Solo", ingredients: "200g chicken breast" });
+    const parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
+    saveImportSession({
+      householdId: "h-bulk",
+      parsedRecipes: parsed,
+      step: "review",
+      savedAt: new Date().toISOString(),
+    });
+
+    renderAt("/household/h-bulk/import-paprika");
+    expect(screen.getByTestId("group-match-0")).toBeInTheDocument();
+    expect(screen.queryByTestId("review-action-0-0")).toBeNull();
+  });
+
+  it("shows resolved household ingredient as the final name after Match household", () => {
+    const hh = makeHousehold();
+    const passataIng = {
+      id: "ing-passata",
+      name: "passata",
+      category: "pantry" as const,
+      tags: [] as string[],
+      shelfLifeHint: "",
+      freezerFriendly: false,
+      babySafeWithAdaptation: true,
+      source: "manual" as const,
+    };
+    hh.ingredients = [...hh.ingredients, passataIng];
+    saveHousehold(hh);
+
+    const recipe = makePaprikaRecipe({
+      name: "Vegetable Curry",
+      ingredients: "680g jar tomato passata",
+    });
+    let parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
+    const line0 = parsed[0]!.parsedLines[0]!;
+    const gk = line0.groupKey ?? groupKeyForParsedName(line0.name);
+    expect(gk).toBeTruthy();
+    parsed = applyGroupResolution(parsed, gk!, {
+      kind: "use",
+      ingredientId: passataIng.id,
+      ingredient: passataIng,
+    });
+
+    saveImportSession({
+      householdId: "h-bulk",
+      parsedRecipes: parsed,
+      step: "review",
+      savedAt: new Date().toISOString(),
+    });
+
+    renderAt("/household/h-bulk/import-paprika");
+    expect(screen.getByTestId("review-group-use-preview-0")).toBeInTheDocument();
+    expect(screen.getByTestId("review-group-use-name-0")).toHaveTextContent(/passata/i);
+    expect(screen.queryByText(/Suggested:/)).not.toBeInTheDocument();
+  });
+
+  it("shows per-line action selects when the same parsed name appears in multiple lines", async () => {
+    const hh = makeHousehold();
+    saveHousehold(hh);
+    const recipe1 = makePaprikaRecipe({ name: "R1", ingredients: "1 cup rice" });
+    const recipe2 = makePaprikaRecipe({ name: "R2", ingredients: "1 cup rice" });
+    const parsed = parsePaprikaRecipes([recipe1, recipe2], hh.ingredients, []);
+    saveImportSession({
+      householdId: "h-bulk",
+      parsedRecipes: parsed,
+      step: "review",
+      savedAt: new Date().toISOString(),
+    });
+
+    renderAt("/household/h-bulk/import-paprika");
+    expect(screen.getByTestId("review-action-0-0")).toBeInTheDocument();
+    expect(screen.getByTestId("review-action-0-1")).toBeInTheDocument();
+  });
+
+  it("shows all lines across multiple recipes in bulk review", async () => {
     const hh = makeHousehold();
     saveHousehold(hh);
     const recipe1 = makePaprikaRecipe({ name: "R1", ingredients: "200g chicken breast" });
@@ -558,11 +638,10 @@ describe("PaprikaImport bulk review UI", () => {
     });
 
     renderAt("/household/h-bulk/import-paprika");
-    // Both recipes' lines should be visible
-    expect(screen.getByText("R1")).toBeInTheDocument();
-    expect(screen.getByText("R2")).toBeInTheDocument();
-    const reviewLines = screen.getAllByTestId(/review-line-\d+/);
-    expect(reviewLines.length).toBe(2);
+    // Both recipes' lines should be visible (grouped view)
+    expect((await screen.findAllByText(/R1/)).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/R2/).length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId(/review-group-\d+/)).toHaveLength(2);
   });
 
   it("shows visible saved-state status in review flow", () => {
@@ -579,6 +658,22 @@ describe("PaprikaImport bulk review UI", () => {
 
     renderAt("/household/h-bulk/import-paprika");
     expect(screen.getAllByTestId("import-session-status")[0]!.textContent).toMatch(/Saved to draft/);
+  });
+});
+
+describe("parseRecipeIngredients: period after abbreviated units", () => {
+  it("produces clean names for Paprika-style lines (oz., tbsp., ml.)", () => {
+    const hh = makeHousehold();
+    const recipe = makePaprikaRecipe({
+      name: "Toasted Ravioli with Hot Tomato Oil",
+      ingredients:
+        "12 oz. cheese ravioli\n3 tbsp. cilantro, chopped (optional)\n100 ml. (4 oz.) cream",
+    });
+    const lines = parseRecipeIngredients(recipe, hh.ingredients, 0);
+    expect(lines).toHaveLength(3);
+    expect(lines[0]!.name).toBe("cheese ravioli");
+    expect(lines[1]!.name).toBe("cilantro");
+    expect(lines[2]!.name).toBe("cream");
   });
 });
 
@@ -617,7 +712,7 @@ describe("Review data preserved for auditing", () => {
     });
     const parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
     const updated = applyBulkAction(parsed, "approve-matched");
-    const { meal } = buildDraftMeal(updated[0]!.raw, updated[0]!.parsedLines);
+    const { meal } = buildDraftMeal(updated[0]!.raw, updated[0]!.parsedLines, hh.ingredients);
 
     expect(meal.importMappings).toBeDefined();
     expect(meal.importMappings!.length).toBe(3);

@@ -8,6 +8,7 @@ import type {
   IngredientCategory,
   MealComponent,
   MealOutcome,
+  WeeklyAnchor,
 } from "./types";
 
 function isHumanMember(member: HouseholdMember): boolean {
@@ -661,11 +662,43 @@ export interface WeeklySuggestedMealRow {
   patternScore: number;
   ingredientReuse: number;
   pinned: boolean;
+  /** True when an optional weekly theme anchor matches; used only as a late tie-breaker. */
+  themeMatch: boolean;
+}
+
+/** Values used when matching weekly theme anchors to meals (see deriveMealStructureTypes). */
+export const MEAL_STRUCTURE_TYPE_OPTIONS = ["single-protein", "multi-protein"] as const;
+
+/** For soft theme matching on weekday anchors (multi-protein vs single, etc.). */
+export function deriveMealStructureTypes(meal: BaseMeal): string[] {
+  const proteinCount = meal.components.filter((c) => c.role === "protein").length;
+  return [proteinCount > 1 ? "multi-protein" : "single-protein"];
+}
+
+/**
+ * Whether a meal matches a household’s weekly theme anchor. Disabled anchors never match.
+ */
+export function mealMatchesWeeklyAnchor(
+  meal: BaseMeal,
+  anchor: WeeklyAnchor | null | undefined,
+): boolean {
+  if (!anchor || anchor.enabled === false) return false;
+  if (anchor.matchMealIds?.includes(meal.id)) return true;
+  const tags = meal.tags ?? [];
+  for (const t of anchor.matchTags) {
+    if (tags.includes(t)) return true;
+  }
+  const structures = deriveMealStructureTypes(meal);
+  for (const s of anchor.matchStructureTypes) {
+    if (structures.includes(s)) return true;
+  }
+  return false;
 }
 
 /**
  * Rank meals for the Weekly Planner suggestion tray: household fit first, then learned
- * outcome/pattern signals, ingredient reuse vs the current plan, pins, then time/effort.
+ * outcome/pattern signals, ingredient reuse vs the current plan, pins, optional weak theme
+ * tie-breaker, then time/effort.
  */
 export function rankWeeklySuggestedMeals(
   meals: BaseMeal[],
@@ -674,6 +707,7 @@ export function rankWeeklySuggestedMeals(
   outcomes: MealOutcome[],
   pinnedMealIds: string[],
   planDays: DayPlan[],
+  themeAnchor?: WeeklyAnchor | null,
 ): WeeklySuggestedMealRow[] {
   if (meals.length === 0) return [];
 
@@ -704,6 +738,8 @@ export function rankWeeklySuggestedMeals(
       tier = 1;
     }
 
+    const themeMatch = mealMatchesWeeklyAnchor(meal, themeAnchor);
+
     return {
       meal,
       overlap,
@@ -712,6 +748,7 @@ export function rankWeeklySuggestedMeals(
       patternScore,
       ingredientReuse,
       pinned,
+      themeMatch,
       _time: meal.estimatedTimeMinutes,
       _difficulty: difficultySortKey(meal.difficulty),
     };
@@ -727,6 +764,9 @@ export function rankWeeklySuggestedMeals(
     const pa = a.pinned ? 1 : 0;
     const pb = b.pinned ? 1 : 0;
     if (pa !== pb) return pb - pa;
+    const ta = a.themeMatch ? 1 : 0;
+    const tb = b.themeMatch ? 1 : 0;
+    if (ta !== tb) return tb - ta;
     if (a._time !== b._time) return a._time - b._time;
     return a._difficulty - b._difficulty;
   });

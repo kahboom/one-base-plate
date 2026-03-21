@@ -191,8 +191,8 @@ describe("E2E: Weekly plan generation flow", () => {
 
     await user.click(screen.getByText("Generate plan"));
 
-    expect(screen.getByText("Monday")).toBeInTheDocument();
-    expect(screen.getByText("Sunday")).toBeInTheDocument();
+    expect(screen.getByTestId("day-monday")).toBeInTheDocument();
+    expect(screen.getByTestId("day-sunday")).toBeInTheDocument();
   });
 
   it("generated plan can be saved and reloaded", async () => {

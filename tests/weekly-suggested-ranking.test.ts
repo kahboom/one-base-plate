@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import type { BaseMeal, DayPlan, HouseholdMember, Ingredient, MealOutcome } from "../src/types";
+import type {
+  BaseMeal,
+  DayPlan,
+  HouseholdMember,
+  Ingredient,
+  MealOutcome,
+  WeeklyAnchor,
+} from "../src/types";
 import { rankWeeklySuggestedMeals } from "../src/planner";
 
 const ingredients: Ingredient[] = [
@@ -196,5 +203,53 @@ describe("rankWeeklySuggestedMeals", () => {
     const b = meal("b", "B", ["ing-a"], { estimatedTimeMinutes: 20, difficulty: "easy" });
     const ranked = rankWeeklySuggestedMeals([a, b], members, ingredients, [], [], []);
     expect(ranked[0]!.meal.id).toBe("b");
+  });
+
+  it("theme anchor tie-break: matching tag ranks higher when other signals match", () => {
+    const plain = meal("plain", "Plain", ["ing-a"]);
+    const themed = { ...meal("themed", "Themed", ["ing-a"]), tags: ["taco"] };
+    const anchor: WeeklyAnchor = {
+      id: "anch",
+      weekday: "Tuesday",
+      label: "Taco night",
+      matchTags: ["taco"],
+      matchStructureTypes: [],
+      enabled: true,
+    };
+    const ranked = rankWeeklySuggestedMeals(
+      [plain, themed],
+      members,
+      ingredients,
+      [],
+      [],
+      [],
+      anchor,
+    );
+    expect(ranked[0]!.meal.id).toBe("themed");
+    expect(ranked[0]!.themeMatch).toBe(true);
+    expect(ranked[1]!.themeMatch).toBe(false);
+  });
+
+  it("theme does not outrank a clearly better-overlap meal", () => {
+    const better = meal("better", "Better fit", ["ing-a", "ing-b"]);
+    const worseThemed = { ...meal("worse", "Worse fit", ["ing-c"]), tags: ["taco"] };
+    const anchor: WeeklyAnchor = {
+      id: "anch",
+      weekday: "Tuesday",
+      label: "Taco night",
+      matchTags: ["taco"],
+      matchStructureTypes: [],
+      enabled: true,
+    };
+    const ranked = rankWeeklySuggestedMeals(
+      [worseThemed, better],
+      members,
+      ingredients,
+      [],
+      [],
+      [],
+      anchor,
+    );
+    expect(ranked[0]!.meal.id).toBe("better");
   });
 });

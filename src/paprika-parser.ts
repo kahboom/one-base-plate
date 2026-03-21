@@ -2,8 +2,10 @@ import JSZip from "jszip";
 import type { Ingredient, IngredientCategory, MealComponent, RecipeProvenance, ImportMapping, BaseMeal, RecipeLink } from "./types";
 import { matchIngredient, parseIngredientLine, guessComponentRole, isInstructionLine } from "./recipe-parser";
 import type { ParsedIngredientLine } from "./recipe-parser";
+import type { MatchConfidenceBand } from "./recipe-parser";
 import { catalogIngredientToHousehold } from "./catalog";
-import { normalizeIngredientName } from "./storage";
+import type { CatalogIngredient } from "./catalog";
+import { normalizeIngredientName, normalizeIngredientGroupKey } from "./storage";
 
 export interface PaprikaRecipe {
   name: string;
@@ -31,11 +33,32 @@ export interface ParsedPaprikaRecipe {
   selected: boolean;
 }
 
+export interface PaprikaCreateDraft {
+  canonicalName: string;
+  category: IngredientCategory;
+  tags: string[];
+  retainImportAlias: boolean;
+}
+
 export interface PaprikaReviewLine extends ParsedIngredientLine {
-  action: "use" | "create" | "ignore";
+  action: "use" | "create" | "ignore" | "pending";
   newCategory: IngredientCategory;
   recipeIndex: number;
   recipeName: string;
+  matchScore?: number;
+  confidenceBand?: MatchConfidenceBand;
+  resolutionStatus: "pending" | "resolved";
+  lowConfidenceAccepted?: boolean;
+  /** User override when choosing a different household ingredient than the parser suggestion */
+  manualIngredientId?: string;
+  createDraft?: PaprikaCreateDraft;
+  perLineOverride?: boolean;
+  /** normalizeIngredientGroupKey(parsed name) for grouping */
+  groupKey?: string;
+  /** Group ignore action explicitly chosen */
+  explicitIgnore?: boolean;
+  parserSuggestedIngredientId?: string;
+  parserSuggestedCatalogId?: string;
 }
 
 export interface BulkReviewSummary {
@@ -50,9 +73,14 @@ export interface PaprikaImportSession {
   parsedRecipes: ParsedPaprikaRecipe[];
   step: "upload" | "select" | "review" | "done";
   savedAt: string;
+  /** Bump when ingredient line parsing changes; stale sessions re-parse from each line’s `raw`. */
+  importParserVersion?: number;
 }
 
 const SESSION_KEY = "onebaseplate_paprika_session";
+
+/** Increment when Paprika line parsing / matching rules change so saved sessions refresh from `raw`. */
+export const PAPRIKA_INGREDIENT_PARSER_VERSION = 6;
 
 const MAX_PREP_CHARS = 120_000;
 const MAX_NOTES_CHARS = 32_000;
@@ -114,6 +142,7 @@ export function saveImportSession(session: PaprikaImportSession): void {
   try {
     const compactSession: PaprikaImportSession = {
       ...session,
+      importParserVersion: PAPRIKA_INGREDIENT_PARSER_VERSION,
       parsedRecipes: session.parsedRecipes.map(toSessionRecipeSnapshot),
     };
     localStorage.setItem(SESSION_KEY, JSON.stringify(compactSession));
@@ -151,7 +180,7 @@ export function computeBulkSummary(recipes: ParsedPaprikaRecipe[]): BulkReviewSu
   for (const recipe of recipes) {
     if (!recipe.selected) continue;
     for (const line of recipe.parsedLines) {
-      if (line.status === "unmatched" && line.name && line.action !== "create") {
+      if (line.resolutionStatus === "pending") {
         ambiguous.push(line);
       } else if (line.action === "ignore") {
         ignored.push(line);
@@ -159,6 +188,8 @@ export function computeBulkSummary(recipes: ParsedPaprikaRecipe[]): BulkReviewSu
         createNew.push(line);
       } else if (line.action === "use" && line.status === "matched") {
         matched.push(line);
+      } else if (line.action === "pending") {
+        ambiguous.push(line);
       } else {
         ignored.push(line);
       }
@@ -166,6 +197,23 @@ export function computeBulkSummary(recipes: ParsedPaprikaRecipe[]): BulkReviewSu
   }
 
   return { matched, ambiguous, createNew, ignored };
+}
+
+export function countLowConfidencePending(recipes: ParsedPaprikaRecipe[]): number {
+  let n = 0;
+  for (const recipe of recipes) {
+    if (!recipe.selected) continue;
+    for (const line of recipe.parsedLines) {
+      if (
+        line.resolutionStatus === "pending" &&
+        line.confidenceBand === "low" &&
+        (line.status === "matched" || line.status === "catalog")
+      ) {
+        n += 1;
+      }
+    }
+  }
+  return n;
 }
 
 export function applyBulkAction(
@@ -176,18 +224,195 @@ export function applyBulkAction(
     if (!recipe.selected) return recipe;
     const updatedLines = recipe.parsedLines.map((line) => {
       if (action === "approve-matched" && line.status === "matched") {
-        return { ...line, action: "use" as const };
+        return {
+          ...line,
+          action: "use" as const,
+          resolutionStatus: "resolved" as const,
+          lowConfidenceAccepted: line.confidenceBand === "low" ? true : line.lowConfidenceAccepted,
+        };
+      }
+      if (action === "approve-matched" && line.status === "catalog" && line.confidenceBand === "low") {
+        return {
+          ...line,
+          resolutionStatus: "resolved" as const,
+          lowConfidenceAccepted: true,
+        };
       }
       if (action === "create-all-new" && line.status === "unmatched" && line.name) {
-        return { ...line, action: "create" as const };
+        return {
+          ...line,
+          action: "create" as const,
+          resolutionStatus: "resolved" as const,
+          matchedIngredient: null,
+          matchedCatalog: null,
+          status: "unmatched" as const,
+        };
       }
       if (action === "ignore-instructions" && !line.name) {
-        return { ...line, action: "ignore" as const };
+        return { ...line, action: "ignore" as const, resolutionStatus: "resolved" as const };
       }
       return line;
     });
     return { ...recipe, parsedLines: updatedLines };
   });
+}
+
+export interface PaprikaLineRef {
+  line: PaprikaReviewLine;
+  globalRecipeIdx: number;
+  lineIdx: number;
+}
+
+export interface PaprikaIngredientGroup {
+  groupKey: string;
+  parsedName: string;
+  lines: PaprikaLineRef[];
+}
+
+export function groupKeyForParsedName(name: string): string | undefined {
+  if (!name.trim()) return undefined;
+  return normalizeIngredientGroupKey(name);
+}
+
+export function groupReviewLinesByNormalizedName(
+  recipes: ParsedPaprikaRecipe[],
+): PaprikaIngredientGroup[] {
+  const map = new Map<string, PaprikaLineRef[]>();
+  for (let ri = 0; ri < recipes.length; ri++) {
+    const recipe = recipes[ri]!;
+    if (!recipe.selected) continue;
+    recipe.parsedLines.forEach((line, lineIdx) => {
+      const key = line.groupKey ?? groupKeyForParsedName(line.name);
+      if (!key) return;
+      const arr = map.get(key) ?? [];
+      arr.push({ line, globalRecipeIdx: ri, lineIdx });
+      map.set(key, arr);
+    });
+  }
+  const out: PaprikaIngredientGroup[] = [];
+  for (const [groupKey, lines] of map) {
+    const first = lines[0]!.line;
+    out.push({
+      groupKey,
+      parsedName: first.name,
+      lines,
+    });
+  }
+  out.sort((a, b) => a.parsedName.localeCompare(b.parsedName, undefined, { sensitivity: "base" }));
+  return out;
+}
+
+export type PaprikaGroupResolution =
+  | { kind: "use"; ingredientId: string; ingredient: Ingredient }
+  | { kind: "catalog"; catalogItem: CatalogIngredient }
+  | { kind: "create"; draft: PaprikaCreateDraft }
+  | { kind: "ignore" };
+
+export function applyGroupResolution(
+  recipes: ParsedPaprikaRecipe[],
+  groupKey: string,
+  resolution: PaprikaGroupResolution,
+): ParsedPaprikaRecipe[] {
+  return recipes.map((recipe) => {
+    if (!recipe.selected) return recipe;
+    const updatedLines = recipe.parsedLines.map((line) => {
+      const key = line.groupKey ?? groupKeyForParsedName(line.name);
+      if (key !== groupKey || line.perLineOverride) return line;
+
+      if (resolution.kind === "ignore") {
+        return {
+          ...line,
+          action: "ignore" as const,
+          resolutionStatus: "resolved" as const,
+          explicitIgnore: true,
+        };
+      }
+      if (resolution.kind === "use") {
+        return {
+          ...line,
+          action: "use" as const,
+          status: "matched" as const,
+          matchedIngredient: resolution.ingredient,
+          matchedCatalog: null,
+          manualIngredientId: resolution.ingredientId,
+          resolutionStatus: "resolved" as const,
+          lowConfidenceAccepted: true,
+        };
+      }
+      if (resolution.kind === "catalog") {
+        return {
+          ...line,
+          action: "create" as const,
+          status: "catalog" as const,
+          matchedCatalog: resolution.catalogItem,
+          matchedIngredient: null,
+          manualIngredientId: undefined,
+          newCategory: resolution.catalogItem.category,
+          resolutionStatus: "resolved" as const,
+          lowConfidenceAccepted: true,
+        };
+      }
+      const draft = resolution.draft;
+      return {
+        ...line,
+        action: "create" as const,
+        status: "unmatched" as const,
+        matchedIngredient: null,
+        matchedCatalog: null,
+        manualIngredientId: undefined,
+        newCategory: draft.category,
+        createDraft: draft,
+        resolutionStatus: "resolved" as const,
+      };
+    });
+    return { ...recipe, parsedLines: updatedLines };
+  });
+}
+
+export function canFinalizePaprikaImport(recipes: ParsedPaprikaRecipe[]): boolean {
+  for (const recipe of recipes) {
+    if (!recipe.selected) continue;
+    for (const line of recipe.parsedLines) {
+      if (line.resolutionStatus === "pending") return false;
+    }
+  }
+  return true;
+}
+
+/** Migrate sessions saved before F050 resolution fields. */
+export function migrateLegacyPaprikaRecipes(recipes: ParsedPaprikaRecipe[]): ParsedPaprikaRecipe[] {
+  return recipes.map((recipe) => ({
+    ...recipe,
+    parsedLines: recipe.parsedLines.map(migrateLegacyPaprikaLine),
+  }));
+}
+
+function migrateLegacyPaprikaLine(line: PaprikaReviewLine): PaprikaReviewLine {
+  if (line.resolutionStatus) {
+    return {
+      ...line,
+      groupKey: line.groupKey ?? (line.name ? groupKeyForParsedName(line.name) : undefined),
+    };
+  }
+  const gk = line.name ? groupKeyForParsedName(line.name) : undefined;
+  if (!line.name) {
+    return { ...line, resolutionStatus: "resolved", groupKey: gk };
+  }
+  if (line.status === "unmatched" && line.action === "ignore") {
+    return {
+      ...line,
+      action: "pending",
+      resolutionStatus: "pending",
+      groupKey: gk,
+    };
+  }
+  if (line.action === "use" && line.status === "matched") {
+    return { ...line, resolutionStatus: "resolved", groupKey: gk };
+  }
+  if (line.action === "create") {
+    return { ...line, resolutionStatus: "resolved", groupKey: gk };
+  }
+  return { ...line, resolutionStatus: "resolved", groupKey: gk };
 }
 
 function parseTimeToMinutes(timeStr: string): number {
@@ -276,6 +501,167 @@ export async function parsePaprikaFile(file: File): Promise<PaprikaRecipe[]> {
   return recipes;
 }
 
+/** Parse a single ingredient line (same rules as a full Paprika recipe import). */
+export function parsePaprikaLineFromRaw(
+  raw: string,
+  recipeName: string,
+  recipeIndex: number,
+  householdIngredients: Ingredient[],
+): PaprikaReviewLine {
+  if (isInstructionLine(raw)) {
+    return {
+      raw,
+      quantity: "",
+      unit: "",
+      name: "",
+      prepNotes: [],
+      matchedIngredient: null,
+      matchedCatalog: null,
+      status: "unmatched" as const,
+      action: "ignore" as const,
+      newCategory: "pantry" as IngredientCategory,
+      recipeIndex,
+      recipeName,
+      resolutionStatus: "resolved" as const,
+    };
+  }
+
+  const { quantity, unit, quantityValue, name, prepNotes } = parseIngredientLine(raw);
+  if (!name) {
+    return {
+      raw,
+      quantity: "",
+      unit: "",
+      quantityValue: undefined,
+      name: "",
+      prepNotes: [],
+      matchedIngredient: null,
+      matchedCatalog: null,
+      status: "unmatched" as const,
+      action: "ignore" as const,
+      newCategory: "pantry" as IngredientCategory,
+      recipeIndex,
+      recipeName,
+      resolutionStatus: "resolved" as const,
+    };
+  }
+  const { ingredient, catalogItem, status, matchScore, confidenceBand } = matchIngredient(
+    name,
+    householdIngredients,
+  );
+  const gk = groupKeyForParsedName(name);
+  let action: PaprikaReviewLine["action"];
+  let resolutionStatus: "pending" | "resolved";
+  if (status === "matched") {
+    action = "use";
+    resolutionStatus = confidenceBand === "low" ? "pending" : "resolved";
+  } else if (status === "catalog") {
+    action = "create";
+    resolutionStatus = confidenceBand === "low" ? "pending" : "resolved";
+  } else {
+    action = "pending";
+    resolutionStatus = "pending";
+  }
+  return {
+    raw,
+    quantity,
+    unit,
+    quantityValue,
+    name,
+    prepNotes,
+    matchedIngredient: ingredient,
+    matchedCatalog: catalogItem,
+    status,
+    matchScore,
+    confidenceBand,
+    action,
+    newCategory: (catalogItem?.category ?? "pantry") as IngredientCategory,
+    recipeIndex,
+    recipeName,
+    resolutionStatus,
+    groupKey: gk,
+    parserSuggestedIngredientId: ingredient?.id,
+    parserSuggestedCatalogId: catalogItem?.id,
+  };
+}
+
+function mergePaprikaLinePreserveResolution(
+  previous: PaprikaReviewLine,
+  fresh: PaprikaReviewLine,
+): PaprikaReviewLine {
+  if (previous.resolutionStatus !== "resolved") {
+    return fresh;
+  }
+  if (previous.action === "ignore") {
+    return {
+      ...fresh,
+      resolutionStatus: "resolved",
+      action: "ignore",
+      explicitIgnore: previous.explicitIgnore,
+      matchedIngredient: null,
+      matchedCatalog: null,
+      status: "unmatched",
+      matchScore: previous.matchScore,
+      confidenceBand: previous.confidenceBand,
+    };
+  }
+  if (previous.action === "use") {
+    return {
+      ...fresh,
+      resolutionStatus: "resolved",
+      action: "use",
+      manualIngredientId: previous.manualIngredientId,
+      matchedIngredient: previous.matchedIngredient ?? fresh.matchedIngredient,
+      matchedCatalog: null,
+      status: "matched",
+      matchScore: previous.matchScore ?? fresh.matchScore,
+      confidenceBand: previous.confidenceBand ?? fresh.confidenceBand,
+      lowConfidenceAccepted: previous.lowConfidenceAccepted,
+      perLineOverride: previous.perLineOverride,
+      parserSuggestedIngredientId: previous.parserSuggestedIngredientId ?? fresh.parserSuggestedIngredientId,
+      parserSuggestedCatalogId: previous.parserSuggestedCatalogId ?? fresh.parserSuggestedCatalogId,
+    };
+  }
+  if (previous.action === "create") {
+    return {
+      ...fresh,
+      resolutionStatus: "resolved",
+      action: "create",
+      createDraft: previous.createDraft,
+      matchedCatalog: previous.matchedCatalog ?? fresh.matchedCatalog,
+      matchedIngredient: previous.matchedIngredient ?? null,
+      status: previous.matchedCatalog ? "catalog" : fresh.status,
+      matchScore: previous.matchScore ?? fresh.matchScore,
+      confidenceBand: previous.confidenceBand ?? fresh.confidenceBand,
+      lowConfidenceAccepted: previous.lowConfidenceAccepted,
+      perLineOverride: previous.perLineOverride,
+      newCategory: previous.createDraft?.category ?? fresh.newCategory,
+      parserSuggestedIngredientId: previous.parserSuggestedIngredientId ?? fresh.parserSuggestedIngredientId,
+      parserSuggestedCatalogId: previous.parserSuggestedCatalogId ?? fresh.parserSuggestedCatalogId,
+    };
+  }
+  return fresh;
+}
+
+/** Re-run parsing from each line’s `raw` (session snapshots drop full `recipe.ingredients`). Preserves resolved choices. */
+export function refreshPaprikaSessionParsedLines(
+  recipes: ParsedPaprikaRecipe[],
+  householdIngredients: Ingredient[],
+): ParsedPaprikaRecipe[] {
+  return recipes.map((recipe) => ({
+    ...recipe,
+    parsedLines: recipe.parsedLines.map((line) => {
+      const fresh = parsePaprikaLineFromRaw(
+        line.raw,
+        line.recipeName,
+        line.recipeIndex,
+        householdIngredients,
+      );
+      return mergePaprikaLinePreserveResolution(line, fresh);
+    }),
+  }));
+}
+
 export function parseRecipeIngredients(
   recipe: PaprikaRecipe,
   householdIngredients: Ingredient[],
@@ -287,59 +673,9 @@ export function parseRecipeIngredients(
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
 
-  return lines.map((raw) => {
-    // Check if line is an instruction before parsing
-    if (isInstructionLine(raw)) {
-      return {
-        raw,
-        quantity: "",
-        unit: "",
-        name: "",
-        matchedIngredient: null,
-        matchedCatalog: null,
-        status: "unmatched" as const,
-        action: "ignore" as const,
-        newCategory: "pantry" as IngredientCategory,
-        recipeIndex,
-        recipeName: recipe.name,
-      };
-    }
-
-    const { quantity, unit, quantityValue, name, prepNotes } = parseIngredientLine(raw);
-    if (!name) {
-      return {
-        raw,
-        quantity: "",
-        unit: "",
-        quantityValue: undefined,
-        name: "",
-        prepNotes: [],
-        matchedIngredient: null,
-        matchedCatalog: null,
-        status: "unmatched" as const,
-        action: "ignore" as const,
-        newCategory: "pantry" as IngredientCategory,
-        recipeIndex,
-        recipeName: recipe.name,
-      };
-    }
-    const { ingredient, catalogItem, status } = matchIngredient(name, householdIngredients);
-    return {
-      raw,
-      quantity,
-      unit,
-      quantityValue,
-      name,
-      prepNotes,
-      matchedIngredient: ingredient,
-      matchedCatalog: catalogItem,
-      status,
-      action: status === "unmatched" ? ("ignore" as const) : status === "catalog" ? ("create" as const) : ("use" as const),
-      newCategory: (catalogItem?.category ?? "pantry") as IngredientCategory,
-      recipeIndex,
-      recipeName: recipe.name,
-    };
-  });
+  return lines.map((raw) =>
+    parsePaprikaLineFromRaw(raw, recipe.name, recipeIndex, householdIngredients),
+  );
 }
 
 export function detectDuplicateMeal(
@@ -376,12 +712,16 @@ export function parsePaprikaRecipes(
 export function buildDraftMeal(
   recipe: PaprikaRecipe,
   reviewLines: PaprikaReviewLine[],
+  householdIngredients: Ingredient[],
 ): { meal: BaseMeal; newIngredients: Ingredient[] } {
   const newIngredients: Ingredient[] = [];
   const components: MealComponent[] = [];
   const mappings: ImportMapping[] = [];
 
   for (const line of reviewLines) {
+    if (line.action === "pending") {
+      throw new Error("Cannot build draft meal: unresolved Paprika ingredient lines remain.");
+    }
     if (line.action === "ignore") {
       mappings.push({
         originalLine: line.raw,
@@ -393,19 +733,30 @@ export function buildDraftMeal(
         action: "ignore",
         chosenAction: "ignore",
         matchType: "ignored",
+        explicitIgnore: line.explicitIgnore,
+        matchScore: line.matchScore,
+        confidenceBand: line.confidenceBand,
+        parserSuggestedIngredientId: line.parserSuggestedIngredientId,
+        parserSuggestedCatalogId: line.parserSuggestedCatalogId,
       });
       continue;
     }
 
-    if (line.action === "use" && line.matchedIngredient) {
+    if (line.action === "use") {
+      const useId = line.manualIngredientId ?? line.matchedIngredient?.id;
+      const resolvedIng = householdIngredients.find((i) => i.id === useId);
+      if (!resolvedIng) {
+        throw new Error(`Missing household ingredient ${useId} for imported line.`);
+      }
       components.push({
-        ingredientId: line.matchedIngredient.id,
-        role: guessComponentRole(line.matchedIngredient.category),
+        ingredientId: resolvedIng.id,
+        role: guessComponentRole(resolvedIng.category),
         quantity: line.quantity,
         unit: line.unit || undefined,
         prepNote: line.prepNotes?.join(", ") || undefined,
         originalSourceLine: line.raw,
         matchType: "existing",
+        confidence: line.matchScore,
       });
       mappings.push({
         originalLine: line.raw,
@@ -416,20 +767,43 @@ export function buildDraftMeal(
         prepNotes: line.prepNotes,
         action: "use",
         chosenAction: "use",
-        ingredientId: line.matchedIngredient.id,
-        finalMatchedIngredientId: line.matchedIngredient.id,
+        ingredientId: resolvedIng.id,
+        finalMatchedIngredientId: resolvedIng.id,
         matchType: "existing",
+        matchScore: line.matchScore,
+        confidenceBand: line.confidenceBand,
+        parserSuggestedIngredientId: line.parserSuggestedIngredientId,
+        parserSuggestedCatalogId: line.parserSuggestedCatalogId,
       });
     } else if (line.action === "create") {
       let ing: Ingredient;
       if (line.matchedCatalog) {
-        ing = catalogIngredientToHousehold(line.matchedCatalog);
+        const draft = line.createDraft;
+        const nameFromDraft = draft?.canonicalName
+          ? normalizeIngredientName(draft.canonicalName)
+          : normalizeIngredientName(line.matchedCatalog.name);
+        const tagSet = new Set<string>([
+          ...line.matchedCatalog.tags,
+          ...(draft?.tags ?? []),
+        ]);
+        if (draft?.retainImportAlias) {
+          tagSet.add(`import-alias:${normalizeIngredientName(line.raw)}`);
+        }
+        ing = catalogIngredientToHousehold(line.matchedCatalog, {
+          name: nameFromDraft,
+          tags: [...tagSet],
+        });
       } else {
+        const draft = line.createDraft;
+        const tags = [...(draft?.tags ?? [])];
+        if (draft?.retainImportAlias) {
+          tags.push(`import-alias:${normalizeIngredientName(line.raw)}`);
+        }
         ing = {
           id: crypto.randomUUID(),
-          name: normalizeIngredientName(line.name),
-          category: line.newCategory,
-          tags: [],
+          name: normalizeIngredientName(draft?.canonicalName ?? line.name),
+          category: draft?.category ?? line.newCategory,
+          tags,
           shelfLifeHint: "",
           freezerFriendly: false,
           babySafeWithAdaptation: false,
@@ -445,6 +819,7 @@ export function buildDraftMeal(
         prepNote: line.prepNotes?.join(", ") || undefined,
         originalSourceLine: line.raw,
         matchType: "new",
+        confidence: line.matchScore,
       });
       mappings.push({
         originalLine: line.raw,
@@ -458,6 +833,12 @@ export function buildDraftMeal(
         ingredientId: ing.id,
         finalMatchedIngredientId: ing.id,
         matchType: "new",
+        finalCanonicalName: ing.name,
+        importAliasRetained: line.createDraft?.retainImportAlias,
+        matchScore: line.matchScore,
+        confidenceBand: line.confidenceBand,
+        parserSuggestedIngredientId: line.parserSuggestedIngredientId,
+        parserSuggestedCatalogId: line.parserSuggestedCatalogId,
       });
     }
   }

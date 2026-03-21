@@ -198,21 +198,51 @@ export function MealDetailContent({
       {meal.importMappings && meal.importMappings.length > 0 && (
         <Section title="Original recipe lines">
           <div className="space-y-1" data-testid="import-mappings">
-            {meal.importMappings.map((mapping, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm">
-                <Chip
-                  variant={
-                    mapping.action === "use" ? "success"
-                    : mapping.action === "create" ? "warning"
-                    : "neutral"
-                  }
-                  className="text-[10px]"
-                >
-                  {mapping.action}
-                </Chip>
-                <span className="text-text-secondary">{mapping.originalLine}</span>
-              </div>
-            ))}
+            {meal.importMappings.map((mapping, i) => {
+              const finalName =
+                mapping.finalCanonicalName ??
+                (mapping.finalMatchedIngredientId
+                  ? household.ingredients.find((i) => i.id === mapping.finalMatchedIngredientId)?.name
+                  : undefined);
+              return (
+                <div key={i} className="flex flex-col gap-0.5 border-b border-border-light/60 py-2 last:border-0 sm:flex-row sm:flex-wrap sm:items-start sm:gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Chip
+                      variant={
+                        mapping.action === "use" ? "success"
+                        : mapping.action === "create" ? "warning"
+                        : "neutral"
+                      }
+                      className="text-[10px]"
+                    >
+                      {mapping.chosenAction ?? mapping.action}
+                    </Chip>
+                    {mapping.confidenceBand && (
+                      <Chip variant="neutral" className="text-[10px]">
+                        {mapping.confidenceBand}
+                      </Chip>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 text-sm">
+                    <p className="text-text-muted">
+                      <span className="font-medium text-text-secondary">Raw</span> {mapping.originalLine}
+                    </p>
+                    {mapping.parsedName && (
+                      <p className="text-text-muted">
+                        <span className="font-medium text-text-secondary">Parsed</span>{" "}
+                        {toSentenceCase(mapping.parsedName)}
+                      </p>
+                    )}
+                    {finalName && (
+                      <p className="text-text-primary">
+                        <span className="font-medium text-text-secondary">Result</span>{" "}
+                        {toSentenceCase(finalName)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
           {meal.provenance && onPersistMeal && (
             <ImportMappingAdjust meal={meal} household={household} onPersist={onPersistMeal} />

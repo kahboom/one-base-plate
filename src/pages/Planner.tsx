@@ -1,6 +1,18 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
-import type { BaseMeal, AssemblyVariant, Household } from "../types";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
+import type {
+  BaseMeal,
+  AssemblyVariant,
+  Household,
+  MealComponent,
+  ComponentRecipeRef,
+} from "../types";
 import { loadHousehold, saveHousehold, toSentenceCase } from "../storage";
 import {
   generateAssemblyVariants,
@@ -14,15 +26,54 @@ import MealCard from "../components/MealCard";
 import BrowseMealsModal from "../components/planner/BrowseMealsModal";
 import { useSuggestedTrayCap } from "../hooks/useSuggestedTrayCap";
 import { PageHeader, Card, Chip, Section, EmptyState, Button } from "../components/ui";
+import MealImageSlot from "../components/MealImageSlot";
+import AppModal from "../components/AppModal";
+import ComponentRecipePicker from "../components/meals/ComponentRecipePicker";
+import {
+  resolveComponentEffectiveRef,
+  summarizeRecipeRef,
+  applySessionOverridesToMeal,
+  getDefaultRecipeRef,
+} from "../lib/componentRecipes";
+import {
+  assignMealToLatestWeekPlan,
+  getWeeklyAnchorForWeekday,
+  getTodayWeekdayLabel,
+  WEEKDAY_LABELS_MONDAY_FIRST,
+} from "../lib/weeklyPlanOps";
+
+const VALID_WEEKDAYS = new Set<string>(WEEKDAY_LABELS_MONDAY_FIRST);
+
+function normalizeWeekdayParam(s: string | null): string | null {
+  if (!s) return null;
+  const t = s.trim();
+  const cap = t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+  return VALID_WEEKDAYS.has(cap) ? cap : null;
+}
+
+const ROLE_ORDER = ["protein", "carb", "veg", "sauce", "topping"] as const;
 
 export default function Planner() {
   const { householdId } = useParams<{ householdId: string }>();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [household, setHousehold] = useState<Household | null>(null);
   const [selectedMealId, setSelectedMealId] = useState<string>("");
   const [variants, setVariants] = useState<AssemblyVariant[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [browseMealsOpen, setBrowseMealsOpen] = useState(false);
+  const [addWeekOpen, setAddWeekOpen] = useState(false);
+  const [addWeekDay, setAddWeekDay] = useState<string>(WEEKDAY_LABELS_MONDAY_FIRST[0]!);
+  const [sessionOverrides, setSessionOverrides] = useState<
+    Map<string, ComponentRecipeRef>
+  >(new Map());
+  const [pickerComponent, setPickerComponent] = useState<MealComponent | null>(
+    null,
+  );
+  const mealPlanRef = useRef<HTMLDivElement>(null);
   const trayCap = useSuggestedTrayCap();
+
+  const dayParam = normalizeWeekdayParam(searchParams.get("day"));
 
   const regenerateVariants = useCallback(
     (h: Household, mealId: string) => {
@@ -50,8 +101,17 @@ export default function Planner() {
     setLoaded(true);
   }, [householdId, regenerateVariants, selectedMealId]);
 
+  useEffect(() => {
+    if (!selectedMealId || !mealPlanRef.current) return;
+    const el = mealPlanRef.current;
+    if (typeof el.scrollIntoView === "function") {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [selectedMealId]);
+
   function handleSelectMeal(mealId: string) {
     setSelectedMealId(mealId);
+    setSessionOverrides(new Map());
     if (!household) return;
     regenerateVariants(household, mealId);
   }
@@ -59,6 +119,17 @@ export default function Planner() {
   const selectedMeal: BaseMeal | undefined = household?.baseMeals.find(
     (m) => m.id === selectedMealId,
   );
+
+  const latestPlanDays = useMemo(
+    () =>
+      household?.weeklyPlans[household.weeklyPlans.length - 1]?.days ?? [],
+    [household?.weeklyPlans],
+  );
+
+  const themeAnchor = useMemo(() => {
+    if (!household || !dayParam) return null;
+    return getWeeklyAnchorForWeekday(household, dayParam) ?? null;
+  }, [household, dayParam]);
 
   const suggestionRows = useMemo(() => {
     if (!household || household.baseMeals.length === 0) return [];
@@ -68,9 +139,10 @@ export default function Planner() {
       household.ingredients,
       household.mealOutcomes ?? [],
       household.pinnedMealIds ?? [],
-      [],
+      latestPlanDays,
+      themeAnchor,
     );
-  }, [household]);
+  }, [household, latestPlanDays, themeAnchor]);
 
   const trayRows = useMemo(
     () => suggestionRows.slice(0, trayCap),
@@ -81,7 +153,12 @@ export default function Planner() {
     if (!household) return undefined;
     const outcomes = household.mealOutcomes ?? [];
     if (outcomes.length === 0) return undefined;
-    return learnCompatibilityPatterns(outcomes, household.baseMeals, household.members, household.ingredients);
+    return learnCompatibilityPatterns(
+      outcomes,
+      household.baseMeals,
+      household.members,
+      household.ingredients,
+    );
   }, [household]);
 
   const selectedOverlap = useMemo(() => {
@@ -103,7 +180,8 @@ export default function Planner() {
           patterns,
         )
       : undefined,
-  [selectedMeal, household, patterns]);
+    [selectedMeal, household, patterns],
+  );
 
   function handleTogglePin(mealId: string) {
     if (!household) return;
@@ -114,6 +192,53 @@ export default function Planner() {
     const updatedHousehold = { ...household, pinnedMealIds: updated };
     saveHousehold(updatedHousehold);
     setHousehold(updatedHousehold);
+  }
+
+  function handleUseTonight() {
+    if (!household || !selectedMealId) return;
+    const list = [...sessionOverrides.values()];
+    const next = assignMealToLatestWeekPlan(
+      household,
+      selectedMealId,
+      getTodayWeekdayLabel(),
+      list.length ? list : undefined,
+    );
+    saveHousehold(next);
+    setHousehold(loadHousehold(household.id)!);
+  }
+
+  function handleSaveDefaultsFromSession() {
+    if (!household || !selectedMeal) return;
+    if (sessionOverrides.size === 0) return;
+    const updatedMeal = applySessionOverridesToMeal(selectedMeal, sessionOverrides);
+    const nextHousehold: Household = {
+      ...household,
+      baseMeals: household.baseMeals.map((m) =>
+        m.id === updatedMeal.id ? updatedMeal : m,
+      ),
+    };
+    saveHousehold(nextHousehold);
+    setHousehold(loadHousehold(household.id)!);
+    setSessionOverrides(new Map());
+  }
+
+  function handleAddToWeekConfirm() {
+    if (!householdId || !selectedMealId) return;
+    const overrides = [...sessionOverrides.values()];
+    navigate(`/household/${householdId}/weekly`, {
+      state: {
+        preselectAssignMealId: selectedMealId,
+        assignComponentOverrides:
+          overrides.length > 0 ? overrides : undefined,
+        assignTargetDay: addWeekDay,
+      },
+    });
+    setAddWeekOpen(false);
+  }
+
+  function linkedMealName(mealId: string | undefined): string | undefined {
+    if (!mealId || !household) return undefined;
+    return household.baseMeals.find((m) => m.id === mealId)?.name;
   }
 
   if (!loaded) return null;
@@ -132,12 +257,32 @@ export default function Planner() {
         subtitleTo={`/households?edit=${householdId}`}
       />
 
+      {dayParam && themeAnchor && (
+        <p
+          className="mb-3 text-sm text-text-secondary"
+          data-testid="planner-theme-context"
+        >
+          Planning for {dayParam}: {themeAnchor.icon ? `${themeAnchor.icon} ` : ""}
+          {themeAnchor.label}
+        </p>
+      )}
+
       {totalMeals === 0 ? (
         <EmptyState>
           No base meals available.{" "}
-          <Link to={`/household/${householdId}/ingredients`} className="font-medium text-brand hover:underline">Add ingredients</Link>{" "}
+          <Link
+            to={`/household/${householdId}/ingredients`}
+            className="font-medium text-brand hover:underline"
+          >
+            Add ingredients
+          </Link>{" "}
           and{" "}
-          <Link to={`/household/${householdId}/meals`} className="font-medium text-brand hover:underline">add base meals</Link>{" "}
+          <Link
+            to={`/household/${householdId}/meals`}
+            className="font-medium text-brand hover:underline"
+          >
+            add base meals
+          </Link>{" "}
           to get started.
         </EmptyState>
       ) : (
@@ -145,9 +290,16 @@ export default function Planner() {
           <div data-testid="meal-planner-suggested" className="mt-2">
             <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-text-primary">Suggested meals</h2>
-                <p className="mt-1 text-sm text-text-secondary" data-testid="meal-planner-tray-summary" aria-live="polite">
-                  Top {trayRows.length} of {totalMeals} meal{totalMeals !== 1 ? "s" : ""}
+                <h2 className="text-xl font-semibold text-text-primary">
+                  Suggested meals
+                </h2>
+                <p
+                  className="mt-1 text-sm text-text-secondary"
+                  data-testid="meal-planner-tray-summary"
+                  aria-live="polite"
+                >
+                  Top {trayRows.length} of {totalMeals} meal
+                  {totalMeals !== 1 ? "s" : ""}
                 </p>
               </div>
               <Button
@@ -162,7 +314,7 @@ export default function Planner() {
               data-testid="meal-card-grid"
               className="mb-6 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch] sm:grid sm:snap-none sm:overflow-visible sm:pb-0 sm:grid-cols-3 lg:grid-cols-4"
             >
-              {trayRows.map(({ meal, overlap }) => {
+              {trayRows.map(({ meal, overlap, themeMatch }) => {
                 const isSelected = meal.id === selectedMealId;
                 return (
                   <div
@@ -187,6 +339,7 @@ export default function Planner() {
                       compact
                       showActionsWhenCompact
                       selected={isSelected}
+                      themeMatch={themeMatch}
                     />
                   </div>
                 );
@@ -201,7 +354,7 @@ export default function Planner() {
           open={browseMealsOpen}
           onClose={() => setBrowseMealsOpen(false)}
           rows={suggestionRows}
-          renderMealCard={({ meal, overlap }) => {
+          renderMealCard={({ meal, overlap, themeMatch }) => {
             const isSelected = meal.id === selectedMealId;
             return (
               <div
@@ -225,6 +378,7 @@ export default function Planner() {
                   compact
                   showActionsWhenCompact
                   selected={isSelected}
+                  themeMatch={themeMatch}
                 />
               </div>
             );
@@ -233,23 +387,80 @@ export default function Planner() {
       )}
 
       {selectedMeal && (
-        <Card data-testid="meal-plan" className="mb-6">
-          <h2 className="mb-2 text-xl font-semibold text-text-primary">{selectedMeal.name}</h2>
-          <p className="mb-4 text-sm text-text-secondary">
-            Prep: {selectedMeal.defaultPrep} | Time: {selectedMeal.estimatedTimeMinutes} min | Difficulty: {selectedMeal.difficulty}
-          </p>
+        <div ref={mealPlanRef} data-testid="meal-plan" className="mb-6 scroll-mt-4">
+        <Card className="mb-0">
+          <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start">
+            <div className="w-full shrink-0 sm:w-40">
+              <MealImageSlot
+                variant="card"
+                imageUrl={selectedMeal.imageUrl}
+                alt=""
+                imageTestId="selected-meal-hero-image"
+                placeholderTestId="selected-meal-hero-placeholder"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="mb-2 text-xl font-semibold text-text-primary">
+                {selectedMeal.name}
+              </h2>
+              <p className="mb-3 text-sm text-text-secondary">
+                Prep: {selectedMeal.defaultPrep} | Time:{" "}
+                {selectedMeal.estimatedTimeMinutes} min | Difficulty:{" "}
+                {selectedMeal.difficulty}
+              </p>
+              <div
+                className="flex flex-wrap gap-2"
+                data-testid="planner-primary-actions"
+              >
+                <Button
+                  type="button"
+                  variant="primary"
+                  data-testid="use-tonight-btn"
+                  onClick={handleUseTonight}
+                >
+                  Use tonight
+                </Button>
+                <Button
+                  type="button"
+                  data-testid="add-to-week-btn"
+                  onClick={() => setAddWeekOpen(true)}
+                >
+                  Add to week
+                </Button>
+                <Link to={`/household/${householdId}/meals?edit=${selectedMeal.id}`}>
+                  <Button type="button" variant="ghost" data-testid="edit-meal-btn">
+                    Edit meal
+                  </Button>
+                </Link>
+                {sessionOverrides.size > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    small
+                    data-testid="save-defaults-btn"
+                    onClick={handleSaveDefaultsFromSession}
+                  >
+                    Save overrides as defaults
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
 
           {selectedOverlap && (
             <div data-testid="overlap-summary" className="mb-4">
               <p className="mb-2 text-sm font-medium text-text-primary">
-                Overlap: {selectedOverlap.score}/{selectedOverlap.total} members compatible
+                Overlap: {selectedOverlap.score}/{selectedOverlap.total} members
+                compatible
               </p>
               <div data-testid="overlap-indicators" className="flex flex-wrap gap-1">
                 {selectedOverlap.memberDetails.map((d) => {
                   const variant =
-                    d.compatibility === "direct" ? "success"
-                    : d.compatibility === "with-adaptation" ? "warning"
-                    : "danger";
+                    d.compatibility === "direct"
+                      ? "success"
+                      : d.compatibility === "with-adaptation"
+                        ? "warning"
+                        : "danger";
                   return (
                     <Chip
                       key={d.memberId}
@@ -263,7 +474,8 @@ export default function Planner() {
                             : "Compatible"
                       }
                     >
-                      {d.memberName}: {d.compatibility === "direct"
+                      {d.memberName}:{" "}
+                      {d.compatibility === "direct"
                         ? "compatible"
                         : d.compatibility === "with-adaptation"
                           ? "needs adaptation"
@@ -277,14 +489,23 @@ export default function Planner() {
 
           {selectedExplanation && (
             <div data-testid="meal-explanation" className="mb-4">
-              <h3 className="mb-1 text-base font-semibold text-text-primary">Why this meal?</h3>
-              <p className="mb-2 text-sm text-text-secondary">{selectedExplanation.summary}</p>
+              <h3 className="mb-1 text-base font-semibold text-text-primary">
+                Why this meal?
+              </h3>
+              <p className="mb-2 text-sm text-text-secondary">
+                {selectedExplanation.summary}
+              </p>
               {selectedExplanation.tradeOffs.length > 0 && (
                 <div data-testid="trade-offs">
-                  <h4 className="mb-1 text-sm font-semibold text-text-primary">Trade-offs</h4>
+                  <h4 className="mb-1 text-sm font-semibold text-text-primary">
+                    Trade-offs
+                  </h4>
                   <div className="flex flex-wrap gap-1">
                     {selectedExplanation.tradeOffs.map((t, i) => {
-                      const isConflict = t.includes("conflict") || t.includes("(hard-no") || t.includes("(not baby");
+                      const isConflict =
+                        t.includes("conflict") ||
+                        t.includes("(hard-no") ||
+                        t.includes("(not baby");
                       const isExtraPrep = t.includes("Extra prep");
                       const isSafeFood = t.includes("no safe food");
                       let variant: "danger" | "warning" | "neutral" = "neutral";
@@ -309,7 +530,7 @@ export default function Planner() {
                   (ing) => ing.id === c.ingredientId,
                 );
                 return (
-                  <li key={i}>
+                  <li key={c.id ?? i}>
                     {ing ? toSentenceCase(ing.name) : c.ingredientId} ({c.role}
                     {c.quantity ? `, ${c.quantity}` : ""})
                   </li>
@@ -317,6 +538,116 @@ export default function Planner() {
               })}
             </ul>
           </Section>
+
+          <section
+            className="mb-6"
+            data-testid="how-to-make-tonight"
+            aria-label="How to make tonight"
+          >
+            <h3 className="mb-2 text-base font-semibold text-text-primary">
+              How to make tonight
+            </h3>
+            <p className="mb-3 text-xs text-text-muted">
+              Defaults come from your base meal. “Tonight” overrides are only for this
+              session until you add the meal to the week or save as defaults.
+            </p>
+            <ul className="space-y-3">
+              {[...selectedMeal.components]
+                .sort(
+                  (a, b) =>
+                    ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role),
+                )
+                .map((c, idx) => {
+                  const ing = household.ingredients.find(
+                    (x) => x.id === c.ingredientId,
+                  );
+                  const ingName = ing
+                    ? toSentenceCase(ing.name)
+                    : c.ingredientId;
+                  const { effective, source } = resolveComponentEffectiveRef(c, {
+                    sessionOverrides,
+                  });
+                  const defaultRef = getDefaultRecipeRef(c);
+                  const defaultLine = defaultRef
+                    ? summarizeRecipeRef(defaultRef, {
+                        linkedMealName: linkedMealName(defaultRef.linkedBaseMealId),
+                      })
+                    : c.prepNote || "—";
+                  const tonightLine = effective
+                    ? summarizeRecipeRef(effective, {
+                        linkedMealName: linkedMealName(effective.linkedBaseMealId),
+                      })
+                    : "—";
+                  const showTonight = source === "session";
+                  return (
+                    <li
+                      key={c.id ?? idx}
+                      className="rounded-md border border-border-light bg-surface-card p-3 text-sm"
+                      data-testid={`how-to-row-${c.role}-${idx}`}
+                    >
+                      <div className="font-medium text-text-primary capitalize">
+                        {c.role}: {ingName}
+                      </div>
+                      <div className="mt-1 text-text-secondary">
+                        <span className="text-text-muted">Default: </span>
+                        {defaultLine}
+                      </div>
+                      <div className="mt-1 text-text-secondary">
+                        <span className="text-text-muted">Tonight: </span>
+                        {showTonight ? tonightLine : defaultLine}
+                        {showTonight && (
+                          <Chip variant="info" className="ml-2">
+                            override
+                          </Chip>
+                        )}
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          small
+                          data-testid={`tonight-override-${c.id ?? idx}`}
+                          onClick={() => setPickerComponent(c)}
+                        >
+                          {showTonight ? "Change tonight" : "Set tonight"}
+                        </Button>
+                        {showTonight && c.id && (
+                          <Button
+                            type="button"
+                            small
+                            variant="ghost"
+                            onClick={() => {
+                              setSessionOverrides((prev) => {
+                                const next = new Map(prev);
+                                next.delete(c.id!);
+                                return next;
+                              });
+                            }}
+                          >
+                            Clear tonight
+                          </Button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+            </ul>
+            {selectedMeal.recipeLinks && selectedMeal.recipeLinks.length > 0 && (
+              <div className="mt-4 text-sm text-text-secondary">
+                <span className="font-medium text-text-primary">Whole meal: </span>
+                {selectedMeal.recipeLinks.map((l, i) => (
+                  <a
+                    key={i}
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mr-2 text-brand underline"
+                  >
+                    {l.label}
+                  </a>
+                ))}
+              </div>
+            )}
+          </section>
 
           <Section title="Per-person assembly">
             {variants.map((variant) => {
@@ -333,7 +664,9 @@ export default function Planner() {
                   <h4 className="mb-1 text-sm font-semibold text-text-primary">
                     {member.name} ({member.role})
                     {variant.requiresExtraPrep && (
-                      <Chip variant="warning" className="ml-2">extra prep needed</Chip>
+                      <Chip variant="warning" className="ml-2">
+                        extra prep needed
+                      </Chip>
                     )}
                   </h4>
                   {variant.safeFoodIncluded && (
@@ -355,7 +688,68 @@ export default function Planner() {
             })}
           </Section>
         </Card>
+        </div>
       )}
+
+      {pickerComponent && selectedMeal && householdId && (
+        <ComponentRecipePicker
+          open
+          onClose={() => setPickerComponent(null)}
+          component={pickerComponent}
+          excludeMealId={selectedMeal.id}
+          baseMeals={household.baseMeals}
+          mode="tonight"
+          onSave={(ref) => {
+            if (!pickerComponent.id) return;
+            setSessionOverrides((prev) => {
+              const next = new Map(prev);
+              next.set(pickerComponent.id!, {
+                ...ref,
+                componentId: pickerComponent.id!,
+              });
+              return next;
+            });
+            setPickerComponent(null);
+          }}
+        />
+      )}
+
+      <AppModal
+        open={addWeekOpen}
+        onClose={() => setAddWeekOpen(false)}
+        ariaLabel="Choose day"
+        className="flex max-w-md flex-col gap-4 p-6"
+        panelTestId="add-to-week-modal"
+      >
+        <h3 className="text-lg font-semibold text-text-primary">Add to week</h3>
+        <p className="text-sm text-text-secondary">
+          Pick a day. You can assign the meal by tapping the day card after you land on
+          Weekly Planner.
+        </p>
+        <label className="text-sm font-medium text-text-primary">
+          Day
+          <select
+            className="mt-1 block w-full rounded-md border border-border-light bg-bg px-3 py-2"
+            value={addWeekDay}
+            onChange={(e) => setAddWeekDay(e.target.value)}
+            data-testid="add-to-week-day-select"
+          >
+            {WEEKDAY_LABELS_MONDAY_FIRST.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex gap-2">
+          <Button variant="primary" onClick={handleAddToWeekConfirm} data-testid="add-to-week-confirm">
+            Go to Weekly Planner
+          </Button>
+          <Button variant="ghost" onClick={() => setAddWeekOpen(false)}>
+            Cancel
+          </Button>
+        </div>
+      </AppModal>
     </>
   );
 }

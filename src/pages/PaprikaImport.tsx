@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Ingredient, BaseMeal, IngredientCategory } from "../types";
-import { loadHousehold, saveHouseholdAsync } from "../storage";
+import { loadHousehold, saveHouseholdAsync, toSentenceCase, normalizeIngredientName } from "../storage";
 import {
   parsePaprikaFile,
   parsePaprikaRecipes,
@@ -11,8 +11,24 @@ import {
   saveImportSession,
   loadImportSession,
   clearImportSession,
+  migrateLegacyPaprikaRecipes,
+  canFinalizePaprikaImport,
+  applyGroupResolution,
+  groupKeyForParsedName,
+  countLowConfidencePending,
+  refreshPaprikaSessionParsedLines,
+  PAPRIKA_INGREDIENT_PARSER_VERSION,
 } from "../paprika-parser";
-import type { ParsedPaprikaRecipe, PaprikaReviewLine } from "../paprika-parser";
+import type {
+  ParsedPaprikaRecipe,
+  PaprikaReviewLine,
+  PaprikaGroupResolution,
+  PaprikaCreateDraft,
+} from "../paprika-parser";
+import { findNearDuplicates, searchCatalog } from "../catalog";
+import PaprikaIngredientPicker from "../components/PaprikaIngredientPicker";
+import TagSuggestInput from "../components/TagSuggestInput";
+import AppModal from "../components/AppModal";
 import {
   PageHeader,
   Card,
@@ -23,6 +39,7 @@ import {
   FieldLabel,
   EmptyState,
   Section,
+  Input,
 } from "../components/ui";
 
 type Step = "upload" | "select" | "review" | "done";
@@ -30,6 +47,30 @@ type Step = "upload" | "select" | "review" | "done";
 const CATEGORY_OPTIONS: IngredientCategory[] = [
   "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
 ];
+
+/** Page size for Paprika import recipe list and bulk ingredient review list */
+const PAPRIKA_IMPORT_PAGE_SIZE = 10;
+
+type ReviewFilter =
+  | "all"
+  | "exceptions"
+  | "ambiguous"
+  | "ignored"
+  | "matched"
+  | "low-confidence";
+
+function lineMatchesReviewFilter(line: PaprikaReviewLine, filter: ReviewFilter): boolean {
+  if (filter === "all") return true;
+  if (filter === "ambiguous" || filter === "exceptions") {
+    return line.resolutionStatus === "pending";
+  }
+  if (filter === "ignored") return line.action === "ignore";
+  if (filter === "matched") return line.action === "use" && line.status === "matched";
+  if (filter === "low-confidence") {
+    return line.confidenceBand === "low" && line.resolutionStatus === "pending";
+  }
+  return true;
+}
 
 export default function PaprikaImport() {
   const { householdId } = useParams<{ householdId: string }>();
@@ -44,8 +85,35 @@ export default function PaprikaImport() {
   const [parsedRecipes, setParsedRecipes] = useState<ParsedPaprikaRecipe[]>([]);
   const [importedCount, setImportedCount] = useState(0);
   const [error, setError] = useState("");
-  const [reviewFilter, setReviewFilter] = useState<"all" | "ambiguous">("all");
+  const [reviewFilter, setReviewFilter] = useState<ReviewFilter>("all");
   const [sessionSavedAt, setSessionSavedAt] = useState<string | null>(null);
+  const [selectPage, setSelectPage] = useState(0);
+  const [reviewPage, setReviewPage] = useState(0);
+  const [matchPickerGroupKey, setMatchPickerGroupKey] = useState<string | null>(null);
+  const [catalogPickerGroupKey, setCatalogPickerGroupKey] = useState<string | null>(null);
+  const [createGroupKey, setCreateGroupKey] = useState<string | null>(null);
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [createForm, setCreateForm] = useState<{
+    canonicalName: string;
+    category: IngredientCategory;
+    tags: string;
+    retainImportAlias: boolean;
+  }>({ canonicalName: "", category: "pantry", tags: "", retainImportAlias: false });
+  const [duplicateDialog, setDuplicateDialog] = useState<{
+    draft: PaprikaCreateDraft;
+    groupKey: string;
+    existing: Ingredient;
+  } | null>(null);
+
+  const existingTagSuggestions = useMemo(() => {
+    const set = new Set<string>();
+    for (const ing of ingredients) {
+      for (const t of ing.tags) {
+        set.add(t);
+      }
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [ingredients]);
 
   useEffect(() => {
     if (!householdId) return;
@@ -56,10 +124,15 @@ export default function PaprikaImport() {
       setHouseholdName(household.name);
     }
 
-    // Restore saved session if available
+    // Restore saved session if available (re-parse lines from `raw` when parser version bumps — full
+    // recipe text is stripped from snapshots, so names would otherwise stay stale forever).
     const session = loadImportSession(householdId);
     if (session && session.step !== "done") {
-      setParsedRecipes(session.parsedRecipes);
+      let recipes = migrateLegacyPaprikaRecipes(session.parsedRecipes);
+      if ((session.importParserVersion ?? 0) < PAPRIKA_INGREDIENT_PARSER_VERSION) {
+        recipes = refreshPaprikaSessionParsedLines(recipes, household?.ingredients ?? []);
+      }
+      setParsedRecipes(recipes);
       setStep(session.step);
       setSessionSavedAt(session.savedAt);
     }
@@ -67,16 +140,23 @@ export default function PaprikaImport() {
     setLoaded(true);
   }, [householdId]);
 
-  const persistSession = useCallback((recipes: ParsedPaprikaRecipe[], currentStep: Step) => {
-    if (!householdId || currentStep === "done" || currentStep === "upload") return;
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(parsedRecipes.length / PAPRIKA_IMPORT_PAGE_SIZE) - 1);
+    setSelectPage((p) => Math.min(p, maxPage));
+  }, [parsedRecipes.length]);
+
+  /** Persist draft after state updates (never call setState from inside another setState updater — React 19). */
+  useEffect(() => {
+    if (!loaded || !householdId) return;
+    if (step === "done" || step === "upload") return;
     saveImportSession({
       householdId,
-      parsedRecipes: recipes,
-      step: currentStep,
+      parsedRecipes,
+      step,
       savedAt: new Date().toISOString(),
     });
     setSessionSavedAt(new Date().toISOString());
-  }, [householdId]);
+  }, [loaded, householdId, step, parsedRecipes]);
 
   const sessionSaveLabel = useMemo(() => {
     if (!sessionSavedAt) return "Not saved yet";
@@ -99,7 +179,6 @@ export default function PaprikaImport() {
       const parsed = parsePaprikaRecipes(recipes, ingredients, meals);
       setParsedRecipes(parsed);
       setStep("select");
-      persistSession(parsed, "select");
     } catch {
       setError("Failed to parse file. Make sure it is a valid .paprikarecipes export.");
     }
@@ -143,19 +222,86 @@ export default function PaprikaImport() {
   }, [parsedRecipes]);
 
   const filteredReviewLines = useMemo(() => {
-    if (reviewFilter === "ambiguous") {
-      return allReviewLines.filter(
-        ({ line }) => line.status === "unmatched" && line.action !== "create" && Boolean(line.name),
-      );
-    }
-    return allReviewLines;
+    return allReviewLines.filter(({ line }) => lineMatchesReviewFilter(line, reviewFilter));
   }, [allReviewLines, reviewFilter]);
+
+  const reviewGroups = useMemo(() => {
+    const gm = new Map<
+      string,
+      { line: PaprikaReviewLine; globalRecipeIdx: number; lineIdx: number }[]
+    >();
+    for (const ref of filteredReviewLines) {
+      const key = ref.line.groupKey ?? groupKeyForParsedName(ref.line.name);
+      if (!key) continue;
+      const arr = gm.get(key) ?? [];
+      arr.push(ref);
+      gm.set(key, arr);
+    }
+    return [...gm.entries()]
+      .map(([groupKey, lines]) => ({
+        groupKey,
+        parsedName: lines[0]!.line.name,
+        lines,
+      }))
+      .sort((a, b) =>
+        a.parsedName.localeCompare(b.parsedName, undefined, { sensitivity: "base" }),
+      );
+  }, [filteredReviewLines]);
+
+  const pendingCount = useMemo(
+    () =>
+      allReviewLines.filter(({ line }) => line.resolutionStatus === "pending").length,
+    [allReviewLines],
+  );
+
+  const lowConfidenceCount = useMemo(
+    () => countLowConfidencePending(parsedRecipes),
+    [parsedRecipes],
+  );
+
+  const selectPaging = useMemo(() => {
+    const total = parsedRecipes.length;
+    const pageCount = total === 0 ? 0 : Math.ceil(total / PAPRIKA_IMPORT_PAGE_SIZE);
+    const start = selectPage * PAPRIKA_IMPORT_PAGE_SIZE;
+    const end = Math.min(start + PAPRIKA_IMPORT_PAGE_SIZE, total);
+    return {
+      total,
+      pageCount,
+      start,
+      end,
+      showPager: total > PAPRIKA_IMPORT_PAGE_SIZE,
+      from1: total === 0 ? 0 : start + 1,
+    };
+  }, [parsedRecipes.length, selectPage]);
+
+  useEffect(() => {
+    setReviewPage(0);
+  }, [reviewFilter]);
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(reviewGroups.length / PAPRIKA_IMPORT_PAGE_SIZE) - 1);
+    setReviewPage((p) => Math.min(p, maxPage));
+  }, [reviewGroups.length]);
+
+  const reviewPaging = useMemo(() => {
+    const total = reviewGroups.length;
+    const pageCount = total === 0 ? 0 : Math.ceil(total / PAPRIKA_IMPORT_PAGE_SIZE);
+    const start = reviewPage * PAPRIKA_IMPORT_PAGE_SIZE;
+    const end = Math.min(start + PAPRIKA_IMPORT_PAGE_SIZE, total);
+    return {
+      total,
+      pageCount,
+      start,
+      end,
+      showPager: total > PAPRIKA_IMPORT_PAGE_SIZE,
+      from1: total === 0 ? 0 : start + 1,
+    };
+  }, [reviewGroups, reviewPage]);
 
   function toggleRecipe(index: number) {
     setParsedRecipes((prev) => {
       const next = [...prev];
       next[index] = { ...next[index]!, selected: !next[index]!.selected };
-      persistSession(next, step);
       return next;
     });
   }
@@ -163,7 +309,6 @@ export default function PaprikaImport() {
   function selectAll() {
     setParsedRecipes((prev) => {
       const next = prev.map((r) => ({ ...r, selected: true }));
-      persistSession(next, step);
       return next;
     });
   }
@@ -171,7 +316,6 @@ export default function PaprikaImport() {
   function selectNone() {
     setParsedRecipes((prev) => {
       const next = prev.map((r) => ({ ...r, selected: false }));
-      persistSession(next, step);
       return next;
     });
   }
@@ -182,7 +326,6 @@ export default function PaprikaImport() {
         ...r,
         selected: r.raw.categories.includes(cat),
       }));
-      persistSession(next, step);
       return next;
     });
   }
@@ -201,7 +344,6 @@ export default function PaprikaImport() {
         }
       }
       next[index] = recipe;
-      persistSession(next, step);
       return next;
     });
   }
@@ -211,33 +353,79 @@ export default function PaprikaImport() {
       const next = [...prev];
       const recipe = { ...next[recipeIdx]! };
       const lines = [...recipe.parsedLines];
-      lines[lineIdx] = { ...lines[lineIdx]!, ...updates };
+      const prevLine = lines[lineIdx]!;
+      let merged: PaprikaReviewLine = { ...prevLine, ...updates };
+      if (updates.action === "ignore") {
+        merged = { ...merged, resolutionStatus: "resolved", explicitIgnore: true };
+      } else if (updates.action === "use" || updates.action === "create") {
+        merged = { ...merged, resolutionStatus: "resolved", lowConfidenceAccepted: true };
+      }
+      if (updates.action !== undefined && updates.action !== prevLine.action) {
+        merged = { ...merged, perLineOverride: true };
+      }
+      lines[lineIdx] = merged;
       recipe.parsedLines = lines;
       next[recipeIdx] = recipe;
-      persistSession(next, "review");
       return next;
     });
   }
 
-  function handleBulkAction(action: "approve-matched" | "create-all-new" | "ignore-instructions") {
-    setParsedRecipes((prev) => {
-      const next = applyBulkAction(prev, action);
-      persistSession(next, "review");
-      return next;
+  const applyResolutionToGroup = useCallback(
+    (groupKey: string, resolution: PaprikaGroupResolution) => {
+      setParsedRecipes((prev) => applyGroupResolution(prev, groupKey, resolution));
+    },
+    [],
+  );
+
+  const openCreateModalForGroup = useCallback((groupKey: string) => {
+    const line = parsedRecipes
+      .flatMap((r) => r.parsedLines)
+      .find((l) => (l.groupKey ?? groupKeyForParsedName(l.name)) === groupKey);
+    if (!line) return;
+    const draft = line.createDraft;
+    setCreateForm({
+      canonicalName: draft?.canonicalName ?? line.name,
+      category: draft?.category ?? line.newCategory,
+      tags: draft?.tags?.join(", ") ?? "",
+      retainImportAlias: draft?.retainImportAlias ?? false,
     });
+    setCreateGroupKey(groupKey);
+  }, [parsedRecipes]);
+
+  const editingCreateDraft = useMemo(() => {
+    if (!createGroupKey) return false;
+    return parsedRecipes.some((r) =>
+      r.parsedLines.some(
+        (l) =>
+          (l.groupKey ?? groupKeyForParsedName(l.name)) === createGroupKey && !!l.createDraft,
+      ),
+    );
+  }, [createGroupKey, parsedRecipes]);
+
+  function handleBulkAction(action: "approve-matched" | "create-all-new" | "ignore-instructions") {
+    setParsedRecipes((prev) => applyBulkAction(prev, action));
   }
 
   function handleStartReview() {
     if (selectedRecipes.length === 0) return;
     setStep("review");
-    persistSession(parsedRecipes, "review");
   }
 
   async function handleSaveAll() {
     if (!householdId) return;
     const household = loadHousehold(householdId);
-    if (!household) return;
+    if (!household) {
+      setError("Could not load this household. Return to the household list and try again.");
+      return;
+    }
     setError("");
+
+    if (!canFinalizePaprikaImport(parsedRecipes)) {
+      setError(
+        "Resolve or intentionally ignore every pending ingredient line (including low-confidence matches) before importing.",
+      );
+      return;
+    }
 
     let allNewIngredients: Ingredient[] = [];
     const newMeals: BaseMeal[] = [];
@@ -247,6 +435,7 @@ export default function PaprikaImport() {
       const { meal, newIngredients } = buildDraftMeal(
         parsed.raw,
         parsed.parsedLines,
+        currentIngredients,
       );
 
       // Handle merge: replace existing meal
@@ -350,55 +539,96 @@ export default function PaprikaImport() {
             )}
           </div>
 
-          <div className="space-y-2" data-testid="recipe-list">
-            {parsedRecipes.map((recipe, i) => (
-              <Card
-                key={i}
-                data-testid={`recipe-item-${i}`}
-                className={!recipe.selected ? "opacity-60" : ""}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={recipe.selected}
-                    onChange={() => toggleRecipe(i)}
-                    className="h-5 w-5 rounded"
-                    data-testid={`recipe-checkbox-${i}`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate">
-                      {recipe.raw.name}
-                    </p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {recipe.raw.total_time && (
-                        <Chip variant="neutral">{recipe.raw.total_time}</Chip>
-                      )}
-                      {recipe.raw.categories.map((c) => (
-                        <Chip key={c} variant="info">{c}</Chip>
-                      ))}
-                      {recipe.parsedLines.length > 0 && (
-                        <Chip variant="neutral">{recipe.parsedLines.length} ingredients</Chip>
-                      )}
+          {selectPaging.showPager && (
+            <div
+              className="mb-2 flex flex-wrap items-center justify-between gap-2"
+              data-testid="recipe-select-pagination"
+            >
+              <span className="text-xs text-text-muted">
+                Showing {selectPaging.from1}–{selectPaging.end} of {selectPaging.total}
+                {" · "}
+                Page {selectPage + 1} of {selectPaging.pageCount}
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  small
+                  disabled={selectPage <= 0}
+                  onClick={() => setSelectPage((p) => Math.max(0, p - 1))}
+                  data-testid="recipe-select-prev"
+                >
+                  Previous
+                </Button>
+                <Button
+                  small
+                  disabled={selectPage >= selectPaging.pageCount - 1}
+                  onClick={() =>
+                    setSelectPage((p) => Math.min(selectPaging.pageCount - 1, p + 1))
+                  }
+                  data-testid="recipe-select-next"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-1" data-testid="recipe-list">
+            {parsedRecipes.slice(selectPaging.start, selectPaging.end).map((recipe, localIdx) => {
+              const i = selectPaging.start + localIdx;
+              const cats = recipe.raw.categories;
+              return (
+                <Card
+                  key={i}
+                  data-testid={`recipe-item-${i}`}
+                  className={`!p-2.5 shadow-none ${!recipe.selected ? "opacity-60" : ""}`}
+                >
+                  <div className="flex items-start gap-2 sm:items-center">
+                    <input
+                      type="checkbox"
+                      checked={recipe.selected}
+                      onChange={() => toggleRecipe(i)}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded sm:mt-0"
+                      data-testid={`recipe-checkbox-${i}`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <p className="min-w-0 flex-1 truncate text-sm font-medium leading-tight text-text-primary">
+                          {recipe.raw.name}
+                        </p>
+                        {recipe.isDuplicate && (
+                          <div className="flex shrink-0 flex-wrap items-center gap-1">
+                            <Chip variant="warning" className="text-[10px]">Duplicate</Chip>
+                            <Select
+                              onChange={(e) =>
+                                handleDuplicateAction(i, e.target.value as "skip" | "merge" | "keep-both")
+                              }
+                              className="max-w-[11rem] py-1 text-xs"
+                              data-testid={`duplicate-action-${i}`}
+                            >
+                              <option value="skip">Skip</option>
+                              <option value="merge">Merge</option>
+                              <option value="keep-both">Keep both</option>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] leading-snug text-text-muted">
+                        {recipe.raw.total_time && <span>{recipe.raw.total_time}</span>}
+                        {recipe.parsedLines.length > 0 && (
+                          <span>{recipe.parsedLines.length} ing.</span>
+                        )}
+                        {cats.slice(0, 2).map((c) => (
+                          <span key={c} className="truncate text-text-secondary">{c}</span>
+                        ))}
+                        {cats.length > 2 && (
+                          <span className="text-text-muted">+{cats.length - 2}</span>
+                        )}
+                      </p>
                     </div>
                   </div>
-
-                  {recipe.isDuplicate && (
-                    <div className="flex items-center gap-1">
-                      <Chip variant="warning">Duplicate</Chip>
-                      <Select
-                        onChange={(e) => handleDuplicateAction(i, e.target.value as "skip" | "merge" | "keep-both")}
-                        className="w-auto text-xs"
-                        data-testid={`duplicate-action-${i}`}
-                      >
-                        <option value="skip">Skip</option>
-                        <option value="merge">Merge</option>
-                        <option value="keep-both">Keep both</option>
-                      </Select>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
 
           {parsedRecipes.length === 0 && (
@@ -432,40 +662,56 @@ export default function PaprikaImport() {
           )}
           <Section title="Bulk ingredient review">
             <div className="mb-4 flex flex-wrap gap-2" data-testid="bulk-summary">
-              <Chip variant="success">{bulkSummary.matched.length} exact matches</Chip>
-              <Chip variant="warning">{bulkSummary.ambiguous.length} ambiguous</Chip>
+              <Chip variant="success">{bulkSummary.matched.length} matched</Chip>
+              <Chip variant="warning">{bulkSummary.ambiguous.length} need attention</Chip>
+              <Chip variant="danger">{pendingCount} pending</Chip>
               <Chip variant="info">{bulkSummary.createNew.length} create new</Chip>
               <Chip variant="neutral">{bulkSummary.ignored.length} ignored</Chip>
+              <Chip variant="warning">{lowConfidenceCount} low-confidence</Chip>
             </div>
             <p className="mb-3 text-xs text-text-muted" data-testid="import-session-status">
               {sessionSaveLabel}
+              {pendingCount > 0 && (
+                <span className="ml-2 text-[color:var(--color-warning-text)]">
+                  {pendingCount} line{pendingCount !== 1 ? "s" : ""} still need a decision.
+                </span>
+              )}
             </p>
 
             <div className="mb-4 flex flex-wrap gap-2" data-testid="bulk-actions">
               <Button
                 small
-                onClick={() => handleBulkAction("approve-matched")}
+                onClick={() => {
+                  setError("");
+                  handleBulkAction("approve-matched");
+                }}
                 data-testid="bulk-approve-matched"
               >
                 Approve all matches
               </Button>
               <Button
                 small
-                onClick={() => handleBulkAction("create-all-new")}
+                onClick={() => {
+                  setError("");
+                  handleBulkAction("create-all-new");
+                }}
                 data-testid="bulk-create-new"
               >
                 Create all new
               </Button>
               <Button
                 small
-                onClick={() => handleBulkAction("ignore-instructions")}
+                onClick={() => {
+                  setError("");
+                  handleBulkAction("ignore-instructions");
+                }}
                 data-testid="bulk-ignore-instructions"
               >
                 Ignore all instructions
               </Button>
             </div>
 
-            <div className="mb-4 flex items-center gap-2">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
               <span className="text-sm text-text-secondary">Show:</span>
               <Button
                 small
@@ -477,109 +723,536 @@ export default function PaprikaImport() {
               </Button>
               <Button
                 small
-                variant={reviewFilter === "ambiguous" ? "primary" : "default"}
+                variant={reviewFilter === "ambiguous" || reviewFilter === "exceptions" ? "primary" : "default"}
                 onClick={() => setReviewFilter("ambiguous")}
                 data-testid="filter-ambiguous"
               >
-                Ambiguous only ({allReviewLines.filter(({ line }) => line.status === "unmatched" && line.action !== "create" && line.name).length})
+                Exceptions ({pendingCount})
+              </Button>
+              <Button
+                small
+                variant={reviewFilter === "ignored" ? "primary" : "default"}
+                onClick={() => setReviewFilter("ignored")}
+                data-testid="filter-ignored"
+              >
+                Ignored
+              </Button>
+              <Button
+                small
+                variant={reviewFilter === "matched" ? "primary" : "default"}
+                onClick={() => setReviewFilter("matched")}
+                data-testid="filter-matched"
+              >
+                Matched
+              </Button>
+              <Button
+                small
+                variant={reviewFilter === "low-confidence" ? "primary" : "default"}
+                onClick={() => setReviewFilter("low-confidence")}
+                data-testid="filter-low-confidence"
+              >
+                Low-confidence
               </Button>
             </div>
           </Section>
 
-          <div className="space-y-2" data-testid="review-lines">
-            {filteredReviewLines.map(({ line, globalRecipeIdx, lineIdx }, i) => (
-              <Card
-                key={`${globalRecipeIdx}-${lineIdx}`}
-                data-testid={`review-line-${i}`}
-                className={line.action === "ignore" ? "opacity-50" : ""}
-              >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-text-muted mb-0.5" data-testid={`review-line-recipe-${i}`}>
-                      {line.recipeName}
-                    </p>
-                    <p className="text-sm font-medium text-text-primary truncate">
-                      {line.raw}
-                    </p>
-                    <p className="text-xs text-text-muted">
-                      {line.quantity && <span>Qty: {line.quantity}{line.unit ? ` ${line.unit}` : ""} · </span>}
-                      Parsed: {line.name || <em>instruction/note</em>}
-                    </p>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {line.action === "ignore" && <Chip variant="neutral" className="text-[10px]">Ignored</Chip>}
-                      {line.status === "unmatched" && line.action !== "create" && line.name && (
-                        <Chip variant="warning" className="text-[10px]">Unresolved</Chip>
+          {reviewPaging.showPager && (
+            <div
+              className="mb-2 flex flex-wrap items-center justify-between gap-2"
+              data-testid="review-lines-pagination"
+            >
+              <span className="text-xs text-text-muted">
+                Showing {reviewPaging.from1}–{reviewPaging.end} of {reviewPaging.total}
+                {" · "}
+                Page {reviewPage + 1} of {reviewPaging.pageCount}
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  small
+                  disabled={reviewPage <= 0}
+                  onClick={() => setReviewPage((p) => Math.max(0, p - 1))}
+                  data-testid="review-lines-prev"
+                >
+                  Previous
+                </Button>
+                <Button
+                  small
+                  disabled={reviewPage >= reviewPaging.pageCount - 1}
+                  onClick={() =>
+                    setReviewPage((p) => Math.min(reviewPaging.pageCount - 1, p + 1))
+                  }
+                  data-testid="review-lines-next"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-1" data-testid="review-lines">
+            {reviewGroups.slice(reviewPaging.start, reviewPaging.end).map((group, pageIdx) => {
+              const i = reviewPaging.start + pageIdx;
+              const recipeNames = Array.from(new Set(group.lines.map((r) => r.line.recipeName)));
+              const sample = group.lines[0]!.line;
+              const band = sample.confidenceBand;
+              const resolvedHouseholdName =
+                sample.action === "use" && sample.resolutionStatus === "resolved"
+                  ? sample.matchedIngredient?.name ??
+                    ingredients.find((ing) => ing.id === sample.manualIngredientId)?.name
+                  : undefined;
+              return (
+                <Card
+                  key={group.groupKey}
+                  data-testid={`review-group-${i}`}
+                  className="!p-3 shadow-none"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <p className="text-sm font-semibold text-text-primary">
+                        {toSentenceCase(group.parsedName)}
+                      </p>
+                      <p className="text-[11px] text-text-muted">
+                        {group.lines.length} occurrence{group.lines.length !== 1 ? "s" : ""} ·{" "}
+                        {recipeNames.length} recipe{recipeNames.length !== 1 ? "s" : ""}
+                        {sample.resolutionStatus === "pending" && (
+                          <Chip variant="warning" className="ml-2 text-[10px]">
+                            Pending
+                          </Chip>
+                        )}
+                        {band && (
+                          <Chip variant="neutral" className="ml-1 text-[10px]">
+                            {band} confidence
+                          </Chip>
+                        )}
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {resolvedHouseholdName && (
+                            <div
+                              className="w-full rounded-md border border-brand/25 bg-brand/5 px-2.5 py-2"
+                              data-testid={`review-group-use-preview-${i}`}
+                            >
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                                Will use household ingredient
+                              </p>
+                              <p
+                                className="text-sm font-medium text-text-primary"
+                                data-testid={`review-group-use-name-${i}`}
+                              >
+                                {toSentenceCase(resolvedHouseholdName)}
+                              </p>
+                              <p className="mt-0.5 text-[11px] text-text-muted">
+                                This is the name stored on the ingredient and used in meals and groceries.
+                              </p>
+                            </div>
+                          )}
+                        {sample.resolutionStatus === "pending" && sample.matchedIngredient && (
+                          <Chip variant="success" className="max-w-full truncate text-[10px]">
+                            Suggested: {sample.matchedIngredient.name}
+                          </Chip>
+                        )}
+                        {sample.resolutionStatus === "pending" && sample.matchedCatalog && (
+                          <Chip variant="info" className="max-w-full truncate text-[10px]">
+                            Catalog: {sample.matchedCatalog.name}
+                          </Chip>
+                        )}
+                      </div>
+                      {sample.action === "create" && sample.createDraft && (
+                        <div
+                          className="rounded-md border border-brand/25 bg-brand/5 px-2.5 py-2"
+                          data-testid={`review-group-create-preview-${i}`}
+                        >
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                            Will create as
+                          </p>
+                          <p
+                            className="text-sm font-medium text-text-primary"
+                            data-testid={`review-group-create-canonical-${i}`}
+                          >
+                            {toSentenceCase(
+                              normalizeIngredientName(sample.createDraft.canonicalName),
+                            )}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-text-muted">
+                            {sample.createDraft.category}
+                            {(sample.createDraft.tags?.length ?? 0) > 0 &&
+                              ` · ${(sample.createDraft.tags ?? []).join(", ")}`}
+                            {sample.createDraft.retainImportAlias && " · alias from import kept"}
+                          </p>
+                          <Button
+                            small
+                            className="mt-2"
+                            onClick={() => openCreateModalForGroup(group.groupKey)}
+                            data-testid={`group-edit-create-${i}`}
+                          >
+                            Edit name &amp; details
+                          </Button>
+                        </div>
                       )}
-                      {line.action === "create" && <Chip variant="info" className="text-[10px]">Create new</Chip>}
                     </div>
-                    {line.matchedIngredient && (
-                      <Chip variant="success" className="mt-1 text-[10px]">
-                        Matched: {line.matchedIngredient.name}
-                      </Chip>
-                    )}
-                    {line.matchedCatalog && !line.matchedIngredient && (
-                      <Chip variant="info" className="mt-1 text-[10px]">
-                        Catalog: {line.matchedCatalog.name}
-                      </Chip>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Select
-                      value={line.action}
-                      onChange={(e) =>
-                        updateReviewLine(globalRecipeIdx, lineIdx, {
-                          action: e.target.value as PaprikaReviewLine["action"],
-                        })
-                      }
-                      className="w-28"
-                      data-testid={`review-action-${i}`}
-                    >
-                      {line.matchedIngredient && <option value="use">Use match</option>}
-                      <option value="create">{line.matchedCatalog ? "Create from catalog" : "Create new"}</option>
-                      <option value="ignore">Ignore</option>
-                    </Select>
-
-                    {line.action === "create" && !line.matchedCatalog && (
-                      <Select
-                        value={line.newCategory}
-                        onChange={(e) =>
-                          updateReviewLine(globalRecipeIdx, lineIdx, {
-                            newCategory: e.target.value as IngredientCategory,
-                          })
-                        }
-                        className="w-28"
-                        data-testid={`review-category-${i}`}
+                    <div className="flex shrink-0 flex-wrap gap-1">
+                      <Button
+                        small
+                        variant="primary"
+                        onClick={() => setMatchPickerGroupKey(group.groupKey)}
+                        data-testid={`group-match-${i}`}
                       >
-                        {CATEGORY_OPTIONS.map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </Select>
-                    )}
+                        Match household
+                      </Button>
+                      <Button
+                        small
+                        onClick={() => {
+                          setCatalogSearch("");
+                          setCatalogPickerGroupKey(group.groupKey);
+                        }}
+                        data-testid={`group-catalog-${i}`}
+                      >
+                        Pick from catalog
+                      </Button>
+                      <Button
+                        small
+                        onClick={() => openCreateModalForGroup(group.groupKey)}
+                        data-testid={`group-create-${i}`}
+                      >
+                        {sample.createDraft ? "Edit create" : "Create new"}
+                      </Button>
+                      <Button
+                        small
+                        onClick={() => applyResolutionToGroup(group.groupKey, { kind: "ignore" })}
+                        data-testid={`group-ignore-${i}`}
+                      >
+                        Ignore all
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+
+                  <div className="mt-3 space-y-2 border-t border-border-light pt-2">
+                    <p className="text-[10px] font-medium uppercase text-text-muted">
+                      {group.lines.length > 1 ? "Per-line override" : "Source line"}
+                    </p>
+                    {group.lines.length === 1 && (
+                      <p className="text-[11px] text-text-muted">
+                        Resolve this ingredient using the buttons above; per-line actions appear when the same
+                        name appears in more than one recipe line.
+                      </p>
+                    )}
+                    {group.lines.map((ref, j) => {
+                      const line = ref.line;
+                      const globalRecipeIdx = ref.globalRecipeIdx;
+                      const lineIdx = ref.lineIdx;
+                      const lineKey = `${globalRecipeIdx}-${lineIdx}-${j}`;
+                      return (
+                        <div
+                          key={lineKey}
+                          data-testid={`review-line-${i}-${j}`}
+                          className="rounded border border-border-light/60 bg-bg/40 p-2"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="min-w-0 flex-1 truncate text-[11px] text-text-secondary">
+                              {line.recipeName}: {line.raw}
+                            </span>
+                            {group.lines.length > 1 && (
+                              <Select
+                                value={line.action}
+                                onChange={(e) => {
+                                  const v = e.target.value as PaprikaReviewLine["action"];
+                                  const patch: Partial<PaprikaReviewLine> = { action: v };
+                                  if (v === "use" && line.matchedIngredient) {
+                                    patch.manualIngredientId = line.matchedIngredient.id;
+                                  }
+                                  if (v === "create" && line.status === "unmatched" && !line.matchedCatalog) {
+                                    patch.matchedIngredient = null;
+                                    patch.matchedCatalog = null;
+                                  }
+                                  updateReviewLine(globalRecipeIdx, lineIdx, patch);
+                                }}
+                                className="w-[min(100%,10rem)] py-1 text-xs"
+                                data-testid={`review-action-${i}-${j}`}
+                              >
+                                {line.action === "pending" && (
+                                  <option value="pending">Needs resolution</option>
+                                )}
+                                {(line.matchedIngredient || line.manualIngredientId) && (
+                                  <option value="use">Use household match</option>
+                                )}
+                                <option value="create">
+                                  {line.matchedCatalog ? "Create from catalog" : "Create new"}
+                                </option>
+                                <option value="ignore">Ignore</option>
+                              </Select>
+                            )}
+                            {line.action === "create" && !line.matchedCatalog && (
+                              <Select
+                                value={line.newCategory}
+                                onChange={(e) =>
+                                  updateReviewLine(globalRecipeIdx, lineIdx, {
+                                    newCategory: e.target.value as IngredientCategory,
+                                  })
+                                }
+                                className="w-[min(100%,7.5rem)] py-1 text-xs"
+                                data-testid={`review-category-${i}-${j}`}
+                              >
+                                {CATEGORY_OPTIONS.map((c) => (
+                                  <option key={c} value={c}>{c}</option>
+                                ))}
+                              </Select>
+                            )}
+                          </div>
+                          {line.createDraft && (
+                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border-light/50 pt-2">
+                              <p className="text-[11px] text-text-secondary">
+                                <span className="text-text-muted">Will create as </span>
+                                <span
+                                  className="font-medium text-text-primary"
+                                  data-testid={`review-line-create-canonical-${i}-${j}`}
+                                >
+                                  {toSentenceCase(
+                                    normalizeIngredientName(line.createDraft.canonicalName),
+                                  )}
+                                </span>
+                              </p>
+                              <Button
+                                type="button"
+                                small
+                                onClick={() => openCreateModalForGroup(group.groupKey)}
+                                data-testid={`review-line-edit-create-${i}-${j}`}
+                              >
+                                Edit
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
 
-          {filteredReviewLines.length === 0 && reviewFilter === "ambiguous" && (
-            <EmptyState>No ambiguous lines to review. All ingredients are resolved.</EmptyState>
+          {reviewGroups.length === 0 && (reviewFilter === "ambiguous" || reviewFilter === "exceptions") && (
+            <EmptyState>No exceptions to review. All ingredients are resolved.</EmptyState>
           )}
+
+          <AppModal
+            open={matchPickerGroupKey !== null}
+            onClose={() => setMatchPickerGroupKey(null)}
+            ariaLabel="Match household ingredient"
+            className="max-w-md p-4"
+            panelTestId="paprika-match-modal"
+          >
+            <h3 className="mb-2 text-base font-semibold text-text-primary">Match household ingredient</h3>
+            <p className="mb-3 text-xs text-text-muted">
+              Search and pick the household ingredient for this group (apply to all occurrences).
+            </p>
+            <PaprikaIngredientPicker
+              ingredients={ingredients}
+              onSelect={(ing) => {
+                if (matchPickerGroupKey) {
+                  applyResolutionToGroup(matchPickerGroupKey, {
+                    kind: "use",
+                    ingredientId: ing.id,
+                    ingredient: ing,
+                  });
+                }
+                setMatchPickerGroupKey(null);
+              }}
+            />
+          </AppModal>
+
+          <AppModal
+            open={catalogPickerGroupKey !== null}
+            onClose={() => setCatalogPickerGroupKey(null)}
+            ariaLabel="Add from catalog"
+            className="max-w-md p-4"
+            panelTestId="paprika-catalog-modal"
+          >
+            <h3 className="mb-2 text-base font-semibold text-text-primary">Add from catalog</h3>
+            <Input
+              value={catalogSearch}
+              onChange={(e) => setCatalogSearch(e.target.value)}
+              placeholder="Search catalog…"
+              className="mb-2"
+            />
+            <ul className="max-h-52 space-y-1 overflow-y-auto rounded border border-border-light bg-bg p-1 text-sm">
+              {(catalogSearch ? searchCatalog(catalogSearch) : []).slice(0, 40).map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    className="w-full rounded px-2 py-1.5 text-left hover:bg-bg-elevated"
+                    onClick={() => {
+                      if (catalogPickerGroupKey) {
+                        applyResolutionToGroup(catalogPickerGroupKey, { kind: "catalog", catalogItem: item });
+                      }
+                      setCatalogPickerGroupKey(null);
+                    }}
+                  >
+                    {item.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </AppModal>
+
+          <AppModal
+            open={createGroupKey !== null}
+            onClose={() => setCreateGroupKey(null)}
+            ariaLabel="Create new ingredient"
+            className="max-w-md p-4"
+            panelTestId="paprika-create-modal"
+          >
+            <h3 className="mb-1 text-base font-semibold text-text-primary">
+              {editingCreateDraft ? "Edit new ingredient" : "Create new ingredient"}
+            </h3>
+            <p className="mb-3 text-xs text-text-muted">
+              This name appears on the review card after you apply (sentence case in the UI; stored in
+              lowercase).
+            </p>
+            <div className="space-y-2">
+              <FieldLabel label="Canonical name">
+                <Input
+                  value={createForm.canonicalName}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, canonicalName: e.target.value }))}
+                  data-testid="paprika-create-canonical"
+                />
+              </FieldLabel>
+              <FieldLabel label="Category">
+                <Select
+                  value={createForm.category}
+                  onChange={(e) =>
+                    setCreateForm((f) => ({
+                      ...f,
+                      category: e.target.value as IngredientCategory,
+                    }))
+                  }
+                  className="w-full"
+                >
+                  {CATEGORY_OPTIONS.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </Select>
+              </FieldLabel>
+              <FieldLabel label="Tags (comma-separated)">
+                <TagSuggestInput
+                  mode="comma"
+                  value={createForm.tags}
+                  onChange={(tags) => setCreateForm((f) => ({ ...f, tags }))}
+                  suggestions={existingTagSuggestions}
+                  inputTestId="paprika-create-tags"
+                />
+              </FieldLabel>
+              <label className="flex items-center gap-2 text-sm text-text-secondary">
+                <input
+                  type="checkbox"
+                  checked={createForm.retainImportAlias}
+                  onChange={(e) =>
+                    setCreateForm((f) => ({ ...f, retainImportAlias: e.target.checked }))
+                  }
+                  data-testid="paprika-create-alias"
+                />
+                Keep imported wording as import alias tag
+              </label>
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    if (!createGroupKey) return;
+                    const draft: PaprikaCreateDraft = {
+                      canonicalName: createForm.canonicalName,
+                      category: createForm.category,
+                      tags: createForm.tags.split(",").map((s) => s.trim()).filter(Boolean),
+                      retainImportAlias: createForm.retainImportAlias,
+                    };
+                    const norm = normalizeIngredientName(draft.canonicalName);
+                    const dups = findNearDuplicates(norm, ingredients);
+                    if (dups.length > 0) {
+                      setDuplicateDialog({ draft, groupKey: createGroupKey, existing: dups[0]! });
+                      return;
+                    }
+                    const sample = parsedRecipes
+                      .flatMap((r) => r.parsedLines)
+                      .find((l) => (l.groupKey ?? groupKeyForParsedName(l.name)) === createGroupKey);
+                    if (
+                      sample?.matchedCatalog &&
+                      (sample.confidenceBand === "exact" || sample.confidenceBand === "strong")
+                    ) {
+                      const ok = window.confirm(
+                        `A strong catalog match (${sample.matchedCatalog.name}) exists. Create a new ingredient anyway?`,
+                      );
+                      if (!ok) return;
+                    }
+                    applyResolutionToGroup(createGroupKey, { kind: "create", draft });
+                    setCreateGroupKey(null);
+                  }}
+                  data-testid="paprika-create-submit"
+                >
+                  {editingCreateDraft ? "Save changes" : "Apply to group"}
+                </Button>
+                <Button onClick={() => setCreateGroupKey(null)}>Cancel</Button>
+              </div>
+            </div>
+          </AppModal>
+
+          <AppModal
+            open={duplicateDialog !== null}
+            onClose={() => setDuplicateDialog(null)}
+            ariaLabel="Possible duplicate ingredient"
+            className="max-w-sm p-4"
+            panelTestId="paprika-duplicate-modal"
+          >
+            <h3 className="mb-2 text-base font-semibold text-text-primary">Ingredient may already exist</h3>
+            <p className="mb-3 text-sm text-text-secondary">
+              &quot;{duplicateDialog?.draft.canonicalName}&quot; matches existing household ingredient &quot;
+              {duplicateDialog?.existing.name}&quot;.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  if (!duplicateDialog) return;
+                  applyResolutionToGroup(duplicateDialog.groupKey, {
+                    kind: "use",
+                    ingredientId: duplicateDialog.existing.id,
+                    ingredient: duplicateDialog.existing,
+                  });
+                  setDuplicateDialog(null);
+                  setCreateGroupKey(null);
+                }}
+                data-testid="paprika-dup-use-existing"
+              >
+                Use existing
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!duplicateDialog) return;
+                  applyResolutionToGroup(duplicateDialog.groupKey, {
+                    kind: "create",
+                    draft: duplicateDialog.draft,
+                  });
+                  setDuplicateDialog(null);
+                  setCreateGroupKey(null);
+                }}
+                data-testid="paprika-dup-create-anyway"
+              >
+                Create new anyway
+              </Button>
+            </div>
+          </AppModal>
 
           <div className="mt-4">
             <ActionGroup>
               <Button
                 variant="primary"
                 onClick={handleSaveAll}
+                disabled={!canFinalizePaprikaImport(parsedRecipes)}
                 data-testid="import-save-all-btn"
               >
                 Import {selectedRecipes.length} recipe{selectedRecipes.length !== 1 ? "s" : ""}
               </Button>
-              <Button onClick={() => { setStep("select"); persistSession(parsedRecipes, "select"); }}>
+              <Button onClick={() => { setStep("select"); }}>
                 Back to selection
               </Button>
               <Button
-                onClick={() => { persistSession(parsedRecipes, "review"); navigate(`/household/${householdId}/home`); }}
+                onClick={() => { navigate(`/household/${householdId}/home`); }}
                 data-testid="pause-import-btn"
               >
                 Save &amp; resume later

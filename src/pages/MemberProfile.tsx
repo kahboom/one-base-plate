@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import type { HouseholdMember, PreparationRule } from "../types";
-import { loadHousehold, saveHousehold } from "../storage";
+import type { HouseholdMember, Ingredient, PreparationRule } from "../types";
+import { loadHousehold, normalizeIngredientName, saveHousehold } from "../storage";
 import { PageHeader, Card, Button, Input, Section, FormRow, Chip, ConfirmDialog, useConfirm } from "../components/ui";
+import IngredientCombobox, { type IngredientComboboxHandle } from "../components/IngredientCombobox";
+
+function norm(s: string): string {
+  return normalizeIngredientName(s);
+}
 
 export default function MemberProfile() {
   const { householdId, memberId } = useParams<{
@@ -10,6 +15,7 @@ export default function MemberProfile() {
     memberId: string;
   }>();
   const [member, setMember] = useState<HouseholdMember | null>(null);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [householdName, setHouseholdName] = useState("");
   const [loaded, setLoaded] = useState(false);
 
@@ -17,6 +23,9 @@ export default function MemberProfile() {
   const [hardNoInput, setHardNoInput] = useState("");
   const [ruleIngredient, setRuleIngredient] = useState("");
   const [ruleText, setRuleText] = useState("");
+
+  const safeCombRef = useRef<IngredientComboboxHandle>(null);
+  const hardCombRef = useRef<IngredientComboboxHandle>(null);
 
   useEffect(() => {
     if (!householdId || !memberId) return;
@@ -26,6 +35,7 @@ export default function MemberProfile() {
     const found = household.members.find((m) => m.id === memberId);
     if (found) {
       setMember({ ...found });
+      setIngredients([...household.ingredients]);
       setLoaded(true);
     }
   }, [householdId, memberId]);
@@ -38,14 +48,32 @@ export default function MemberProfile() {
     const index = household.members.findIndex((m) => m.id === member.id);
     if (index < 0) return;
     household.members[index] = member;
+    household.ingredients = ingredients;
     saveHousehold(household);
-  }, [householdId, loaded, member]);
+  }, [householdId, loaded, member, ingredients]);
 
-  function addSafeFood() {
-    const trimmed = safeFoodInput.trim();
-    if (!trimmed || !member) return;
-    if (member.safeFoods.includes(trimmed)) return;
+  function commitSafePlain(trimmed: string) {
+    if (!member) return;
+    const n = norm(trimmed);
+    if (member.safeFoods.some((f) => norm(f) === n)) return;
     setMember({ ...member, safeFoods: [...member.safeFoods, trimmed] });
+    setSafeFoodInput("");
+  }
+
+  function commitSafeFromIngredient(ing: Ingredient) {
+    if (!member) return;
+    const n = norm(ing.name);
+    if (member.safeFoods.some((f) => norm(f) === n)) return;
+    setMember({ ...member, safeFoods: [...member.safeFoods, ing.name] });
+    setSafeFoodInput("");
+  }
+
+  function commitSafeCreate(ing: Ingredient) {
+    if (!member) return;
+    const n = norm(ing.name);
+    if (member.safeFoods.some((f) => norm(f) === n)) return;
+    setIngredients((prev) => [...prev, ing]);
+    setMember({ ...member, safeFoods: [...member.safeFoods, ing.name] });
     setSafeFoodInput("");
   }
 
@@ -57,11 +85,28 @@ export default function MemberProfile() {
     });
   }
 
-  function addHardNo() {
-    const trimmed = hardNoInput.trim();
-    if (!trimmed || !member) return;
-    if (member.hardNoFoods.includes(trimmed)) return;
+  function commitHardPlain(trimmed: string) {
+    if (!member) return;
+    const n = norm(trimmed);
+    if (member.hardNoFoods.some((f) => norm(f) === n)) return;
     setMember({ ...member, hardNoFoods: [...member.hardNoFoods, trimmed] });
+    setHardNoInput("");
+  }
+
+  function commitHardFromIngredient(ing: Ingredient) {
+    if (!member) return;
+    const n = norm(ing.name);
+    if (member.hardNoFoods.some((f) => norm(f) === n)) return;
+    setMember({ ...member, hardNoFoods: [...member.hardNoFoods, ing.name] });
+    setHardNoInput("");
+  }
+
+  function commitHardCreate(ing: Ingredient) {
+    if (!member) return;
+    const n = norm(ing.name);
+    if (member.hardNoFoods.some((f) => norm(f) === n)) return;
+    setIngredients((prev) => [...prev, ing]);
+    setMember({ ...member, hardNoFoods: [...member.hardNoFoods, ing.name] });
     setHardNoInput("");
   }
 
@@ -71,6 +116,19 @@ export default function MemberProfile() {
       ...member,
       hardNoFoods: member.hardNoFoods.filter((f) => f !== food),
     });
+  }
+
+  function commitRuleIngredientPlain(trimmed: string) {
+    setRuleIngredient(trimmed);
+  }
+
+  function commitRuleIngredientFromIngredient(ing: Ingredient) {
+    setRuleIngredient(ing.name);
+  }
+
+  function commitRuleIngredientCreate(ing: Ingredient) {
+    setIngredients((prev) => [...prev, ing]);
+    setRuleIngredient(ing.name);
   }
 
   function addPreparationRule() {
@@ -131,19 +189,18 @@ export default function MemberProfile() {
             </ul>
           )}
           <FormRow>
-            <Input
-              type="text"
+            <IngredientCombobox
+              ref={safeCombRef}
               value={safeFoodInput}
-              onChange={(e) => setSafeFoodInput(e.target.value)}
+              onChange={setSafeFoodInput}
               placeholder="Add safe food"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addSafeFood();
-                }
-              }}
+              ingredients={ingredients}
+              isBlocked={(n) => member.safeFoods.some((f) => norm(f) === n)}
+              onCommitPlain={commitSafePlain}
+              onCommitFromIngredient={commitSafeFromIngredient}
+              onCreateIngredientAndCommit={commitSafeCreate}
             />
-            <Button onClick={addSafeFood}>Add safe food</Button>
+            <Button onClick={() => safeCombRef.current?.submitPlain()}>Add safe food</Button>
           </FormRow>
         </Card>
       </Section>
@@ -175,19 +232,18 @@ export default function MemberProfile() {
             </ul>
           )}
           <FormRow>
-            <Input
-              type="text"
+            <IngredientCombobox
+              ref={hardCombRef}
               value={hardNoInput}
-              onChange={(e) => setHardNoInput(e.target.value)}
+              onChange={setHardNoInput}
               placeholder="Add hard-no food"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addHardNo();
-                }
-              }}
+              ingredients={ingredients}
+              isBlocked={(n) => member.hardNoFoods.some((f) => norm(f) === n)}
+              onCommitPlain={commitHardPlain}
+              onCommitFromIngredient={commitHardFromIngredient}
+              onCreateIngredientAndCommit={commitHardCreate}
             />
-            <Button onClick={addHardNo}>Add hard-no food</Button>
+            <Button onClick={() => hardCombRef.current?.submitPlain()}>Add hard-no food</Button>
           </FormRow>
         </Card>
       </Section>
@@ -216,11 +272,15 @@ export default function MemberProfile() {
             </ul>
           )}
           <FormRow>
-            <Input
-              type="text"
+            <IngredientCombobox
               value={ruleIngredient}
-              onChange={(e) => setRuleIngredient(e.target.value)}
+              onChange={setRuleIngredient}
               placeholder="Ingredient"
+              ingredients={ingredients}
+              isBlocked={() => false}
+              onCommitPlain={commitRuleIngredientPlain}
+              onCommitFromIngredient={commitRuleIngredientFromIngredient}
+              onCreateIngredientAndCommit={commitRuleIngredientCreate}
             />
             <Input
               type="text"

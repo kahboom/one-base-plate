@@ -16,6 +16,7 @@ import {
   useConfirm,
 } from "../components/ui";
 import AppModal from "../components/AppModal";
+import TagSuggestInput from "../components/TagSuggestInput";
 import { useIncrementalList } from "../hooks/useIncrementalList";
 import { sortIngredients, type IngredientSortKey, type SortDir } from "../lib/listSort";
 
@@ -119,6 +120,15 @@ function IngredientModal({
   onDuplicateFound: (newIng: Ingredient, existing: Ingredient) => void;
 }) {
   const [tagInput, setTagInput] = useState("");
+  const tagSuggestions = useMemo(() => {
+    const set = new Set<string>();
+    for (const ing of allIngredients) {
+      for (const t of ing.tags) {
+        set.add(t);
+      }
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [allIngredients]);
   const duplicates = useMemo(
     () => findNearDuplicates(ingredient.name, allIngredients, ingredient.id),
     [ingredient.name, allIngredients, ingredient.id],
@@ -271,18 +281,16 @@ function IngredientModal({
               ))}
             </div>
             <div className="mt-2 flex gap-2">
-              <Input
-                type="text"
+              <TagSuggestInput
+                mode="single"
                 value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
+                onChange={setTagInput}
+                suggestions={tagSuggestions}
+                exclude={new Set(ingredient.tags)}
                 placeholder="Custom tag"
                 className="max-w-[200px]"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addTag(tagInput);
-                  }
-                }}
+                onPick={(tag) => addTag(tag)}
+                onSubmitPlain={() => addTag(tagInput)}
               />
               <Button small onClick={() => addTag(tagInput)}>Add tag</Button>
             </div>
@@ -503,7 +511,7 @@ export default function IngredientManager() {
               ))}
             </Select>
           )}
-          <FieldLabel label="Sort" className="sm:w-48 shrink-0">
+          <div className="sm:w-48 shrink-0">
             <Select
               value={ingredientSort}
               onChange={(e) => setIngredientSort(e.target.value)}
@@ -515,7 +523,7 @@ export default function IngredientManager() {
                 </option>
               ))}
             </Select>
-          </FieldLabel>
+          </div>
           <Button onClick={addIngredient}>Add ingredient</Button>
         </div>
       </Card>
