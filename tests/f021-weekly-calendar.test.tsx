@@ -166,6 +166,37 @@ describe("F021: Weekly Planner always shows day cards", () => {
     expect(within(emptyState).getByText(/Suggested:/)).toBeInTheDocument();
   });
 
+  it("opens meal details modal when suggested recipe link is clicked", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderWeeklyPlanner("h-cal");
+    await dismissTourIfPresent(user);
+
+    const link = screen.getByTestId("suggested-meal-details-monday");
+    const mealName = link.textContent;
+    expect(mealName).toBeTruthy();
+    await user.click(link);
+
+    const modal = screen.getByTestId("meal-details-modal");
+    expect(modal).toBeInTheDocument();
+    expect(
+      within(modal).getByRole("heading", { level: 2, name: mealName! }),
+    ).toBeInTheDocument();
+  });
+
+  it("adds suggested meal to the day when + is clicked", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderWeeklyPlanner("h-cal");
+    await dismissTourIfPresent(user);
+
+    await user.click(screen.getByTestId("suggested-meal-add-monday"));
+
+    const monday = screen.getByTestId("day-monday");
+    expect(within(monday).queryByTestId("empty-monday")).not.toBeInTheDocument();
+    expect(within(monday).getByTestId("toggle-monday")).toBeInTheDocument();
+  });
+
   it("shows 5 day cards when 5 days selected", async () => {
     seedHousehold();
     const user = userEvent.setup();

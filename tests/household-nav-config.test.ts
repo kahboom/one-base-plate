@@ -32,6 +32,12 @@ describe("householdNavConfig", () => {
     expect(isSecondaryNavItemActive(prefix, hid, "/households")).toBe(true);
   });
 
+  it("secondary: Recipes active on library and detail", () => {
+    expect(isSecondaryNavItemActive(`${prefix}/recipes`, hid, "/recipes")).toBe(true);
+    expect(isSecondaryNavItemActive(`${prefix}/recipes/r1`, hid, "/recipes")).toBe(true);
+    expect(isSecondaryNavItemActive(`${prefix}/meals`, hid, "/recipes")).toBe(false);
+  });
+
   it("secondary: Base meals active on list and meal detail", () => {
     expect(isSecondaryNavItemActive(`${prefix}/meals`, hid, "/meals")).toBe(true);
     expect(isSecondaryNavItemActive(`${prefix}/meal/abc`, hid, "/meals")).toBe(true);

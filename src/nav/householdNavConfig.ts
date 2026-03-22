@@ -17,6 +17,7 @@ export type GlobalNavPath = (typeof GLOBAL_NAV_ITEMS)[number]["path"];
 export const SECONDARY_NAV_ITEMS = [
   { label: "All households", path: "/households" },
   { label: "Ingredients", path: "/ingredients" },
+  { label: "Recipes", path: "/recipes" },
   { label: "Base meals", path: "/meals" },
   { label: "Settings", path: "/settings" },
 ] as const;
@@ -68,6 +69,9 @@ export function isSecondaryNavItemActive(
   const prefix = `/household/${householdId}`;
   if (itemPath === "/ingredients") {
     return currentPath.startsWith(`${prefix}/ingredients`);
+  }
+  if (itemPath === "/recipes") {
+    return currentPath.startsWith(`${prefix}/recipes`);
   }
   if (itemPath === "/meals") {
     return (

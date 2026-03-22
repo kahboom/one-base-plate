@@ -1,6 +1,6 @@
 {
   "id": "H004",
-  "name": "McGeever family",
+  "name": "McG family",
   "members": [
     {
       "id": "M- Aaron",
@@ -72,6 +72,7 @@
     { "id": "ing-tomato-sauce", "name": "tomato sauce", "category": "pantry", "tags": ["staple"], "shelfLifeHint": "long", "freezerFriendly": false, "babySafeWithAdaptation": true },
     { "id": "ing-bread", "name": "bread", "category": "carb", "tags": ["rescue"], "shelfLifeHint": "3 days", "freezerFriendly": true, "babySafeWithAdaptation": true }
   ],
+  "recipes": [],
   "baseMeals": [
     {
       "id": "bm-pasta-chicken",

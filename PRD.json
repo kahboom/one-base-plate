@@ -106,6 +106,8 @@
     "overlapScore": "A score showing how many household members can eat a given ingredient or base meal with acceptable modifications.",
     "multiProteinBaseMeal": "A base meal with one shared structure and multiple selectable protein paths so household members can receive different proteins without splitting the meal into separate dinners.",
     "recipeLink": "An optional external or internal link attached to a base meal to support repeatable preparation, shortcuts, or meal-kit references.",
+    "componentRecipeRef": "Optional per-component preparation pointer (internal base meal, imported recipe row, external URL, or freeform note). Stored on MealComponent.recipeRefs for defaults and copied or overridden per night on DayPlan.componentRecipeOverrides.",
+    "weeklyThemeAnchor": "Optional soft weekday theme (label, tags, structure hints, optional meal ids) on Household.weeklyAnchors; ranking uses it only as a late tie-breaker so themes never override strong household fit signals.",
     "rescueMode": "A planning mode for nights when time, energy, or household tolerance is low, prioritizing the fastest acceptable dinner using staples first."
   },
   "dataModel": {
@@ -139,8 +141,8 @@
           "sauceRole",
           "linkableRecipes[]",
           "notes",
-          "source (manual|catalog|recipe-imported)",
-          "catalogItemId (optional)"
+          "source (manual|catalog|pending-import) (optional)",
+          "catalogId (optional)"
         ]
       },
       {
@@ -164,6 +166,8 @@
         "fields": [
           "id",
           "name",
+          "tags[] (optional)",
+          "sourceRecipeId (optional)",
           "components[]",
           "defaultPrep",
           "estimatedTimeMinutes",
@@ -180,7 +184,11 @@
           "optionalSauces[]",
           "flavorUpgrades[]",
           "recipeLinks[]",
-          "importedRecipeSource (optional)",
+          "provenance (RecipeProvenance, optional)",
+          "prepTimeMinutes (optional)",
+          "cookTimeMinutes (optional)",
+          "servings (optional)",
+          "importMappings[] (optional)",
           "imageUrl (optional)",
           "notes",
           "visualTags[]",
@@ -197,84 +205,176 @@
           "instructions[]",
           "requiresExtraPrep",
           "safeFoodIncluded",
-          "selectedProteinOptionId",
-          "selectedCarbOptionId",
-          "selectedSauceOptionId",
-          "variantLabel",
-          "notes",
-          "fallbackSafeFoodIds[]",
-          "confidence"
+          "selectedProteinOptionId (optional legacy persist)",
+          "selectedCarbOptionId (optional legacy persist)",
+          "selectedSauceOptionId (optional legacy persist)",
+          "variantLabel (optional legacy persist)",
+          "notes (optional legacy persist)",
+          "fallbackSafeFoodIds[] (optional legacy persist)",
+          "confidence (optional legacy persist)"
         ]
       },
       {
         "name": "WeeklyPlan",
         "fields": [
           "id",
-          "days[]",
+          "days[] (DayPlan)",
           "selectedBaseMeals[]",
-          "generatedGroceryList[]",
+          "generatedGroceryList[] (GroceryItem)",
           "notes",
-          "weekStartDate",
-          "dayAssignments[]",
-          "calendarViewState",
-          "draftSuggestions[]"
+          "weekStartDate (optional legacy persist)",
+          "dayAssignments[] (optional legacy persist)",
+          "calendarViewState (optional legacy persist)",
+          "draftSuggestions[] (optional legacy persist)"
         ]
       },
-      [
-        {
-          "name": "MealComponent",
-          "fields": [
-            "id",
-            "ingredientId",
-            "role (protein|carb|veg|fruit|sauce|topping|other)",
-            "quantityValue (optional)",
-            "quantityUnit (optional)",
-            "optional",
-            "defaultIncluded",
-            "prepNote (optional)",
-            "sourceLine (optional)",
-            "importMatchType (exact|alias|fuzzy|manual|unmatched|ignored)",
-            "importConfidence (optional)",
-            "alternativeIngredientIds[] (optional)"
-          ]
-        },
-        {
-          "name": "ImportedRecipeSource",
-          "fields": [
-            "id",
-            "sourceSystem (paprika|manual-url|pasted-text|other)",
-            "externalRecipeId (optional)",
-            "title",
-            "sourceUrl (optional)",
-            "importedAt",
-            "lastSyncedAt (optional)",
-            "prepTimeMinutes (optional)",
-            "cookTimeMinutes (optional)",
-            "totalTimeMinutes (optional)",
-            "servingsText (optional)",
-            "difficulty (optional)",
-            "categories[] (optional)",
-            "imageUrl (optional)",
-            "notes (optional)"
-          ]
-        },
-        {
-          "name": "ImportedIngredientMatch",
-          "fields": [
-            "id",
-            "sourceSystem (paprika|manual-url|pasted-text|other)",
-            "rawLine",
-            "parsedName",
-            "parsedQuantityValue (optional)",
-            "parsedQuantityUnit (optional)",
-            "matchedIngredientId (optional)",
-            "matchedCatalogId (optional)",
-            "action (use-match|create-new|ignore)",
-            "matchType (exact|alias|fuzzy|manual|unmatched)",
-            "confidence (optional)"
-          ]
-        }
-      ]
+      {
+        "name": "DayPlan",
+        "fields": [
+          "day",
+          "baseMealId",
+          "variants[] (AssemblyVariant)",
+          "componentRecipeOverrides[] (ComponentRecipeRef, optional; plan-night only, does not mutate BaseMeal defaults)"
+        ]
+      },
+      {
+        "name": "ComponentRecipeRef",
+        "fields": [
+          "id",
+          "componentId",
+          "sourceType (internal-meal|imported-recipe|external-url|note)",
+          "linkedBaseMealId (optional)",
+          "importedRecipeSourceId (optional)",
+          "label",
+          "url (optional)",
+          "notes (optional)",
+          "isDefault (optional)"
+        ]
+      },
+      {
+        "name": "WeeklyAnchor",
+        "fields": [
+          "id",
+          "weekday",
+          "label",
+          "matchTags[]",
+          "matchStructureTypes[]",
+          "matchMealIds[] (optional)",
+          "enabled",
+          "notes (optional)",
+          "icon (optional)"
+        ]
+      },
+      {
+        "name": "Household",
+        "fields": [
+          "id",
+          "name",
+          "members[] (HouseholdMember)",
+          "ingredients[] (Ingredient)",
+          "recipes[] (Recipe library rows, optional until normalized)",
+          "baseMeals[] (BaseMeal)",
+          "weeklyPlans[] (WeeklyPlan)",
+          "pinnedMealIds[] (optional)",
+          "mealOutcomes[] (optional)",
+          "weeklyAnchors[] (optional)"
+        ]
+      },
+      {
+        "name": "Recipe",
+        "fields": [
+          "id",
+          "name",
+          "components[] (MealComponent)",
+          "ingredientsText (optional)",
+          "defaultPrep (optional)",
+          "notes (optional)",
+          "recipeLinks[] (optional)",
+          "imageUrl (optional)",
+          "provenance (RecipeProvenance, optional)",
+          "prepTimeMinutes (optional)",
+          "cookTimeMinutes (optional)",
+          "servings (optional)",
+          "importMappings[] (optional)"
+        ]
+      },
+      {
+        "name": "GroceryItem",
+        "fields": [
+          "ingredientId",
+          "name",
+          "category (IngredientCategory)",
+          "quantity",
+          "owned"
+        ]
+      },
+      {
+        "name": "MealOutcome",
+        "fields": [
+          "id",
+          "baseMealId",
+          "day",
+          "outcome (success|partial|failure)",
+          "notes",
+          "date"
+        ]
+      },
+      {
+        "name": "RecipeProvenance",
+        "fields": [
+          "sourceSystem",
+          "externalId (optional)",
+          "sourceUrl (optional)",
+          "importTimestamp",
+          "syncTimestamp (optional)"
+        ]
+      },
+      {
+        "name": "RecipeLink",
+        "fields": [
+          "label",
+          "url"
+        ]
+      },
+      {
+        "name": "MealComponent",
+        "fields": [
+          "id (optional; stable; assigned on load/save if missing)",
+          "ingredientId",
+          "alternativeIngredientIds[] (optional)",
+          "role (protein|carb|veg|sauce|topping)",
+          "quantity (string)",
+          "unit (optional)",
+          "prepNote (optional)",
+          "recipeRefs[] (ComponentRecipeRef, optional)",
+          "originalSourceLine (optional)",
+          "matchType (existing|new|ignored) (optional)",
+          "confidence (optional)"
+        ]
+      },
+      {
+        "name": "ImportMapping",
+        "fields": [
+          "originalLine",
+          "parsedName",
+          "cleanedIngredientName (optional)",
+          "parsedQuantityValue (optional)",
+          "parsedQuantityUnit (optional)",
+          "prepNotes[] (optional)",
+          "action (use|create|ignore)",
+          "chosenAction (use|create|ignore) (optional)",
+          "ingredientId (optional)",
+          "finalMatchedIngredientId (optional)",
+          "matchType (existing|new|ignored) (optional)",
+          "matchScore (optional)",
+          "confidenceBand (exact|strong|low) (optional)",
+          "parserSuggestedIngredientId (optional)",
+          "parserSuggestedCatalogId (optional)",
+          "finalCanonicalName (optional)",
+          "importAliasRetained (optional)",
+          "explicitIgnore (optional)"
+        ]
+      }
     ],
     "normalizationRules": {
       "ingredientNamingStandard": {
@@ -1467,7 +1567,7 @@
         "Produce suggested matches with explicit confidence levels (for example exact/strong/low-confidence) so low-confidence matches can be reviewed before save.",
         "Preserve raw ingredient lines, parsed quantity value, parsed quantity unit, cleaned ingredient name, prep notes, match type, confidence level, chosen action, and final matched ingredient id for later auditing and re-editing.",
         "Prevent creating draft meals from the import batch until unresolved ingredient lines are either resolved to an explicit action or intentionally ignored.",
-        "Verify the improved flow still preserves MealComponent and ImportedIngredientMatch-compatible metadata, respects duplicate handling and canonical lowercase storage, and remains compatible with planner, grocery list, and local-first storage."
+        "Verify the improved flow still preserves MealComponent and ImportMapping-compatible metadata, respects duplicate handling and canonical lowercase storage, and remains compatible with planner, grocery list, and local-first storage."
       ],
       "passes": true,
       "dependencies": [
@@ -1522,7 +1622,7 @@
         "Clarify save behavior with a clear primary save action label and use sticky header/footer treatment (or equivalent) so long editor sessions remain easy to navigate on desktop and mobile.",
         "Preserve routes, local-first storage behavior, planner compatibility, and existing saved meal data semantics throughout the refactor."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F038",
         "F035",

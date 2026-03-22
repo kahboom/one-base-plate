@@ -32,7 +32,7 @@ const out = {
     uid: r.raw.uid,
     selected: r.selected,
     isDuplicate: r.isDuplicate,
-    existingMealId: r.existingMealId,
+    existingRecipeId: r.existingRecipeId,
     rawIngredients: r.raw.ingredients,
     parsedLines: r.parsedLines.map((l) => ({
       raw: l.raw,

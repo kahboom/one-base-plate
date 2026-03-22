@@ -443,6 +443,8 @@ export default function WeeklyPlanner() {
               onTapAssign={() => {
                 if (selectedMealId) assignMealToDay(selectedMealId, dayLabel);
               }}
+              onOpenSuggestedMealDetails={(mealId) => setMealDetailModalId(mealId)}
+              onAddSuggestedMeal={(mealId) => assignMealToDay(mealId, dayLabel)}
             />
           );
         })}
@@ -676,6 +678,8 @@ function DayCard({
   onDrop,
   isAssignTarget,
   onTapAssign,
+  onOpenSuggestedMealDetails,
+  onAddSuggestedMeal,
 }: {
   dayLabel: string;
   dayTheme?: WeeklyAnchor;
@@ -692,6 +696,8 @@ function DayCard({
   onDrop?: (mealId: string) => void;
   isAssignTarget?: boolean;
   onTapAssign?: () => void;
+  onOpenSuggestedMealDetails?: (mealId: string) => void;
+  onAddSuggestedMeal?: (mealId: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -911,8 +917,33 @@ function DayCard({
         <div data-testid={`empty-${dayLabel.toLowerCase()}`}>
           {suggestedMeal ? (
             <>
-              <p className="mt-1 text-sm italic text-text-muted">
-                Suggested: {suggestedMeal.name}
+              <p className="mt-1 flex w-full min-w-0 items-center gap-x-1.5 text-sm italic text-text-muted">
+                <span className="shrink-0">Suggested:</span>
+                <button
+                  type="button"
+                  className="min-w-0 flex-1 truncate text-left font-medium text-brand not-italic underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-sm"
+                  data-testid={`suggested-meal-details-${dayLabel.toLowerCase()}`}
+                  aria-label={`View recipe details: ${suggestedMeal.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenSuggestedMealDetails?.(suggestedMeal.id);
+                  }}
+                >
+                  {suggestedMeal.name}
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border border-brand text-xs font-semibold leading-none text-brand hover:bg-brand/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  data-testid={`suggested-meal-add-${dayLabel.toLowerCase()}`}
+                  aria-label={`Add ${suggestedMeal.name} to ${dayLabel}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddSuggestedMeal?.(suggestedMeal.id);
+                    triggerAssignFeedback();
+                  }}
+                >
+                  +
+                </button>
               </p>
               <small className="text-xs text-text-muted">
                 {suggestedMeal.estimatedTimeMinutes} min | {suggestedMeal.difficulty}

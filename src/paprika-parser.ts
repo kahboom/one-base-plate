@@ -1,5 +1,15 @@
 import JSZip from "jszip";
-import type { Ingredient, IngredientCategory, MealComponent, RecipeProvenance, ImportMapping, BaseMeal, RecipeLink } from "./types";
+import type {
+  Ingredient,
+  IngredientCategory,
+  MealComponent,
+  RecipeProvenance,
+  ImportMapping,
+  BaseMeal,
+  RecipeLink,
+  Recipe,
+} from "./types";
+import { promoteRecipeToBaseMeal } from "./lib/promoteRecipe";
 import { matchIngredient, parseIngredientLine, guessComponentRole, isInstructionLine } from "./recipe-parser";
 import type { ParsedIngredientLine } from "./recipe-parser";
 import type { MatchConfidenceBand } from "./recipe-parser";
@@ -29,7 +39,7 @@ export interface ParsedPaprikaRecipe {
   raw: PaprikaRecipe;
   parsedLines: PaprikaReviewLine[];
   isDuplicate: boolean;
-  existingMealId?: string;
+  existingRecipeId?: string;
   selected: boolean;
 }
 
@@ -379,12 +389,17 @@ export function canFinalizePaprikaImport(recipes: ParsedPaprikaRecipe[]): boolea
   return true;
 }
 
-/** Migrate sessions saved before F050 resolution fields. */
+/** Migrate sessions saved before F050 resolution fields; maps legacy `existingMealId` to `existingRecipeId`. */
 export function migrateLegacyPaprikaRecipes(recipes: ParsedPaprikaRecipe[]): ParsedPaprikaRecipe[] {
-  return recipes.map((recipe) => ({
-    ...recipe,
-    parsedLines: recipe.parsedLines.map(migrateLegacyPaprikaLine),
-  }));
+  return recipes.map((recipe) => {
+    const legacy = recipe as ParsedPaprikaRecipe & { existingMealId?: string };
+    const { existingMealId, ...rest } = legacy;
+    return {
+      ...rest,
+      existingRecipeId: recipe.existingRecipeId ?? existingMealId,
+      parsedLines: recipe.parsedLines.map(migrateLegacyPaprikaLine),
+    };
+  });
 }
 
 function migrateLegacyPaprikaLine(line: PaprikaReviewLine): PaprikaReviewLine {
@@ -678,6 +693,20 @@ export function parseRecipeIngredients(
   );
 }
 
+export function detectDuplicateRecipe(
+  recipeName: string,
+  existingRecipes: Recipe[],
+): { isDuplicate: boolean; existingRecipeId?: string } {
+  const normalized = recipeName.toLowerCase().trim();
+  for (const r of existingRecipes) {
+    if (r.name.toLowerCase().trim() === normalized) {
+      return { isDuplicate: true, existingRecipeId: r.id };
+    }
+  }
+  return { isDuplicate: false };
+}
+
+/** @deprecated Use detectDuplicateRecipe against the recipe library. */
 export function detectDuplicateMeal(
   recipeName: string,
   existingMeals: BaseMeal[],
@@ -694,26 +723,26 @@ export function detectDuplicateMeal(
 export function parsePaprikaRecipes(
   recipes: PaprikaRecipe[],
   householdIngredients: Ingredient[],
-  existingMeals: BaseMeal[],
+  existingRecipes: Recipe[],
 ): ParsedPaprikaRecipe[] {
   return recipes.map((raw, i) => {
     const parsedLines = parseRecipeIngredients(raw, householdIngredients, i);
-    const { isDuplicate, existingMealId } = detectDuplicateMeal(raw.name, existingMeals);
+    const { isDuplicate, existingRecipeId } = detectDuplicateRecipe(raw.name, existingRecipes);
     return {
       raw,
       parsedLines,
       isDuplicate,
-      existingMealId,
+      existingRecipeId,
       selected: !isDuplicate,
     };
   });
 }
 
-export function buildDraftMeal(
-  recipe: PaprikaRecipe,
+export function buildDraftRecipe(
+  paprikaRecipe: PaprikaRecipe,
   reviewLines: PaprikaReviewLine[],
   householdIngredients: Ingredient[],
-): { meal: BaseMeal; newIngredients: Ingredient[] } {
+): { recipe: Recipe; newIngredients: Ingredient[] } {
   const newIngredients: Ingredient[] = [];
   const components: MealComponent[] = [];
   const mappings: ImportMapping[] = [];
@@ -843,47 +872,69 @@ export function buildDraftMeal(
     }
   }
 
-  const totalTime = parseTimeToMinutes(recipe.total_time);
-  const prepTime = parseTimeToMinutes(recipe.prep_time);
-  const cookTime = parseTimeToMinutes(recipe.cook_time);
+  const prepTime = parseTimeToMinutes(paprikaRecipe.prep_time);
+  const cookTime = parseTimeToMinutes(paprikaRecipe.cook_time);
 
   const provenance: RecipeProvenance = {
     sourceSystem: "paprika",
-    externalId: recipe.uid || undefined,
-    sourceUrl: recipe.source_url || undefined,
+    externalId: paprikaRecipe.uid || undefined,
+    sourceUrl: paprikaRecipe.source_url || undefined,
     importTimestamp: new Date().toISOString(),
   };
 
   const recipeLinks: RecipeLink[] = [];
-  if (recipe.source_url) {
-    recipeLinks.push({ label: recipe.source || recipe.source_url, url: recipe.source_url });
+  if (paprikaRecipe.source_url) {
+    recipeLinks.push({
+      label: paprikaRecipe.source || paprikaRecipe.source_url,
+      url: paprikaRecipe.source_url,
+    });
   }
 
-  const prepText = truncate(stripHtmlToPlainText(recipe.directions), MAX_PREP_CHARS);
-  const notesPlain = stripHtmlToPlainText(recipe.notes);
+  const prepText = truncate(stripHtmlToPlainText(paprikaRecipe.directions), MAX_PREP_CHARS);
+  const notesPlain = stripHtmlToPlainText(paprikaRecipe.notes);
   const notesOut =
     notesPlain && notesPlain !== prepText
       ? truncate(notesPlain, MAX_NOTES_CHARS)
       : undefined;
 
-  const meal: BaseMeal = {
+  const ingredientsPlain = stripHtmlToPlainText(paprikaRecipe.ingredients);
+
+  const libraryRecipe: Recipe = {
     id: crypto.randomUUID(),
-    name: recipe.name,
+    name: paprikaRecipe.name,
     components,
+    ingredientsText: ingredientsPlain || paprikaRecipe.ingredients || undefined,
     defaultPrep: prepText,
-    estimatedTimeMinutes: totalTime || (prepTime + cookTime) || 30,
-    difficulty: mapDifficulty(recipe.difficulty),
-    rescueEligible: false,
-    wasteReuseHints: [],
     recipeLinks: recipeLinks.length > 0 ? recipeLinks : undefined,
     notes: notesOut,
-    imageUrl: recipe.image_url || undefined,
+    imageUrl: paprikaRecipe.image_url || undefined,
     provenance,
     prepTimeMinutes: prepTime || undefined,
     cookTimeMinutes: cookTime || undefined,
-    servings: recipe.servings || undefined,
+    servings: paprikaRecipe.servings || undefined,
     importMappings: compactMappingsForStorage(mappings),
   };
 
+  return { recipe: libraryRecipe, newIngredients };
+}
+
+export function buildDraftMeal(
+  paprikaRecipe: PaprikaRecipe,
+  reviewLines: PaprikaReviewLine[],
+  householdIngredients: Ingredient[],
+): { meal: BaseMeal; newIngredients: Ingredient[] } {
+  const { recipe: libraryRecipe, newIngredients } = buildDraftRecipe(
+    paprikaRecipe,
+    reviewLines,
+    householdIngredients,
+  );
+  const totalTime = parseTimeToMinutes(paprikaRecipe.total_time);
+  const prepTime = parseTimeToMinutes(paprikaRecipe.prep_time);
+  const cookTime = parseTimeToMinutes(paprikaRecipe.cook_time);
+  const meal = promoteRecipeToBaseMeal(libraryRecipe, {
+    difficulty: mapDifficulty(paprikaRecipe.difficulty),
+    estimatedTimeMinutes: totalTime || (prepTime + cookTime) || 30,
+    rescueEligible: false,
+  });
   return { meal, newIngredients };
 }

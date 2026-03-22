@@ -846,5 +846,12 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Tests: `tests/f050-paprika-grouped-resolution.test.tsx`; updates to F048/F049 Paprika tests; Settings anchor form typing fix for `tsc`.
 - Verification: `npx tsc --noEmit`, `npx vitest run` (836 passed).
 
+### PRD reconciliation — spec matches shipped F051 + F055/F056 data model (2026-03-22)
+- **Corrected:** `PRD.json` marked **F051** `passes=true` (implementation and tests were already recorded in this log on 2026-03-18; only the PRD flag was stale).
+- **Corrected:** `dataModel.entities` updated to match current `src/types.ts` and shipped behavior: **ComponentRecipeRef**, **DayPlan.componentRecipeOverrides**, **WeeklyAnchor** / **Household.weeklyAnchors**, **Recipe** library rows, **Household** aggregate, **GroceryItem**, **MealOutcome**, **RecipeLink**, **RecipeProvenance**, **ImportMapping**; **MealComponent** / **Ingredient** / **BaseMeal** field lists aligned with code; flattened mistaken nested entity array; **AssemblyVariant** documents canonical app fields first with optional legacy persist keys.
+- **Explicit mismatches resolved:** PRD `passes` for F051 vs codebase; PRD `catalogItemId` vs code `catalogId`; PRD `importedRecipeSource` vs code `provenance`; obsolete PRD-only `ImportedRecipeSource` / `ImportedIngredientMatch` vs code `RecipeProvenance` / `ImportMapping`.
+- **Next truly incomplete PRD feature:** None — every feature entry in `PRD.json` now has `passes=true`. Next engineering work should come from new PRD items, milestones beyond M5, or non-feature hardening (unless a feature is re-opened intentionally).
+- **Verification:** `npx tsc --noEmit` passes; `npx vitest run tests/f005-base-meals.test.tsx tests/f028-multi-protein.test.tsx tests/f029-recipe-links-notes.test.tsx tests/f021-weekly-calendar.test.tsx tests/f056-theme-anchors.test.tsx` — 5 files, 47 tests passed.
+
 ## Next Task
-- Continue PRD `implementationOrder` for the next feature with `passes=false` after F050.
+- No PRD feature remains with `passes=false` after reconciliation. Define the next product slice in `PRD.json` (or reopen a feature with explicit scope) before picking up new implementation work.

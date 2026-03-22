@@ -32,6 +32,7 @@ function makeHousehold(): Household {
         source: "manual",
       },
     ],
+    recipes: [],
     baseMeals: [],
     weeklyPlans: [],
     pinnedMealIds: [],

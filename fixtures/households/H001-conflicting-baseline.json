@@ -68,6 +68,7 @@
     { "id": "ing-fishfingers", "name": "fish fingers", "category": "freezer", "tags": ["rescue"], "shelfLifeHint": "months", "freezerFriendly": true, "babySafeWithAdaptation": true },
     { "id": "ing-beans", "name": "baked beans", "category": "pantry", "tags": ["rescue"], "shelfLifeHint": "long", "freezerFriendly": false, "babySafeWithAdaptation": true }
   ],
+  "recipes": [],
   "baseMeals": [
     {
       "id": "bm-pasta-chicken",

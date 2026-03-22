@@ -1,3 +1,10 @@
+### 2026-03-22 — PRD / spec reconciliation with implemented code (no product behavior change)
+- Requestor: product owner
+- Reason: `PRD.json` had drifted from the repo: F051 (Base Meal Editor UX refactor) was already implemented and tested but still marked `passes=false`; the embedded `dataModel` did not document cooking-first planner concepts already shipped under F055/F056 (`ComponentRecipeRef`, `DayPlan.componentRecipeOverrides`, `Household.weeklyAnchors`, recipe library `Recipe`, etc.).
+- Scope: Updated `PRD.json` feature pass state and expanded/corrected `dataModel.entities` to match `src/types.ts` (flattened the accidental nested entity array; replaced stale import entity names with `ImportMapping` / `RecipeProvenance`; aligned `Ingredient`/`BaseMeal`/`MealComponent` with current fields; added `Household`, `DayPlan`, `WeeklyAnchor`, `ComponentRecipeRef`, `Recipe`, `GroceryItem`, `MealOutcome`, `RecipeLink`). Added `coreConcepts` entries for component recipe refs and weekly theme anchors. Adjusted one F049 acceptance line to reference `ImportMapping`.
+- Files changed: `PRD.json`, `CHANGELOG.md`, `agent-progress.md`
+- Mismatches fixed: F051 pass flag vs codebase; PRD `MealComponent` / `Ingredient` / `BaseMeal` vs `types.ts`; missing planner/household entities; `catalogItemId` vs `catalogId`; `importedRecipeSource` vs `provenance`; removed obsolete `ImportedRecipeSource` / `ImportedIngredientMatch` blocks in favor of shipped shapes (legacy persist notes kept on `AssemblyVariant` where extra keys may exist in old JSON).
+
 ### 2026-03-20 — Paprika bulk import exception-first grouped review (F050)
 - Requestor: product owner
 - Reason: Large Paprika imports need grouped resolution, explicit pending/low-confidence gates, searchable match/create flows, duplicate safeguards, and richer import audit without abandoning the existing session + provenance model.

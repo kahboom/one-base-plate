@@ -1,11 +1,18 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import type { Ingredient, BaseMeal, IngredientCategory } from "../types";
-import { loadHousehold, saveHouseholdAsync, toSentenceCase, normalizeIngredientName } from "../storage";
+import type { Ingredient, IngredientCategory, Recipe } from "../types";
+import {
+  loadHousehold,
+  saveHouseholdAsync,
+  toSentenceCase,
+  normalizeIngredientName,
+  normalizeHousehold,
+  type NormalizedHousehold,
+} from "../storage";
 import {
   parsePaprikaFile,
   parsePaprikaRecipes,
-  buildDraftMeal,
+  buildDraftRecipe,
   computeBulkSummary,
   applyBulkAction,
   saveImportSession,
@@ -78,7 +85,6 @@ export default function PaprikaImport() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [meals, setMeals] = useState<BaseMeal[]>([]);
   const [householdName, setHouseholdName] = useState("");
   const [loaded, setLoaded] = useState(false);
 
@@ -152,7 +158,6 @@ export default function PaprikaImport() {
     const household = loadHousehold(householdId);
     if (household) {
       setIngredients(household.ingredients);
-      setMeals(household.baseMeals);
       setHouseholdName(household.name);
     }
 
@@ -208,7 +213,8 @@ export default function PaprikaImport() {
         setError("No recipes found in this file.");
         return;
       }
-      const parsed = parsePaprikaRecipes(recipes, ingredients, meals);
+      const hh = householdId ? loadHousehold(householdId) : undefined;
+      const parsed = parsePaprikaRecipes(recipes, ingredients, hh?.recipes ?? []);
       setParsedRecipes(parsed);
       setStep("select");
     } catch {
@@ -505,7 +511,7 @@ export default function PaprikaImport() {
         recipe.selected = true;
         if (action === "keep-both") {
           recipe.isDuplicate = false;
-          recipe.existingMealId = undefined;
+          recipe.existingRecipeId = undefined;
         }
       }
       next[index] = recipe;
@@ -591,11 +597,12 @@ export default function PaprikaImport() {
 
   async function handleSaveAll() {
     if (!householdId) return;
-    const household = loadHousehold(householdId);
-    if (!household) {
+    const rawHousehold = loadHousehold(householdId);
+    if (!rawHousehold) {
       setError("Could not load this household. Return to the household list and try again.");
       return;
     }
+    let household: NormalizedHousehold = normalizeHousehold(rawHousehold);
     setError("");
 
     if (!canFinalizePaprikaImport(parsedRecipes)) {
@@ -606,27 +613,26 @@ export default function PaprikaImport() {
     }
 
     let allNewIngredients: Ingredient[] = [];
-    const newMeals: BaseMeal[] = [];
+    const newRecipes: Recipe[] = [];
     let currentIngredients = [...household.ingredients];
 
     for (const parsed of selectedRecipes) {
-      const { meal, newIngredients } = buildDraftMeal(
+      const { recipe: libraryRecipe, newIngredients } = buildDraftRecipe(
         parsed.raw,
         parsed.parsedLines,
         currentIngredients,
       );
 
-      // Handle merge: replace existing meal
-      if (parsed.isDuplicate && parsed.existingMealId) {
-        const existingIdx = household.baseMeals.findIndex((m) => m.id === parsed.existingMealId);
+      if (parsed.isDuplicate && parsed.existingRecipeId) {
+        const existingIdx = household.recipes.findIndex((r) => r.id === parsed.existingRecipeId);
         if (existingIdx >= 0) {
-          meal.id = parsed.existingMealId;
-          household.baseMeals[existingIdx] = meal;
+          libraryRecipe.id = parsed.existingRecipeId;
+          household.recipes[existingIdx] = libraryRecipe;
         } else {
-          newMeals.push(meal);
+          newRecipes.push(libraryRecipe);
         }
       } else {
-        newMeals.push(meal);
+        newRecipes.push(libraryRecipe);
       }
 
       allNewIngredients = [...allNewIngredients, ...newIngredients];
@@ -647,8 +653,8 @@ export default function PaprikaImport() {
       }
     }
     if (idRemap.size > 0) {
-      for (const meal of [...newMeals, ...household.baseMeals]) {
-        for (const comp of meal.components) {
+      for (const row of [...newRecipes, ...household.recipes, ...household.baseMeals]) {
+        for (const comp of row.components) {
           const remapped = idRemap.get(comp.ingredientId);
           if (remapped) comp.ingredientId = remapped;
         }
@@ -656,7 +662,7 @@ export default function PaprikaImport() {
     }
 
     household.ingredients = [...household.ingredients, ...dedupedIngredients];
-    household.baseMeals = [...household.baseMeals, ...newMeals];
+    household.recipes = [...household.recipes, ...newRecipes];
 
     try {
       await saveHouseholdAsync(household);
@@ -1479,10 +1485,10 @@ export default function PaprikaImport() {
           <ActionGroup>
             <Button
               variant="primary"
-              onClick={() => navigate(`/household/${householdId}/meals`)}
-              data-testid="go-to-meals-btn"
+              onClick={() => navigate(`/household/${householdId}/recipes`)}
+              data-testid="go-to-recipes-btn"
             >
-              View meals
+              View recipe library
             </Button>
             <Button onClick={() => navigate(`/household/${householdId}/home`)}>
               Home

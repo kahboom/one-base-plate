@@ -45,6 +45,13 @@ describe("migrateHouseholdIngredients", () => {
           babySafeWithAdaptation: false,
         },
       ],
+      recipes: [
+        {
+          id: "rec-1",
+          name: "Soup",
+          components: [{ ingredientId: "ing-1", role: "veg", quantity: "1" }],
+        },
+      ],
       baseMeals: [
         {
           id: "meal-1",
@@ -97,6 +104,9 @@ describe("migrateHouseholdIngredients", () => {
     const component = migrated.baseMeals[0]!.components[0]!;
     expect(component.ingredientId).toBe("ing-2");
     expect(component.alternativeIngredientIds).toEqual(["ing-3"]);
+
+    const recipeComp = migrated.recipes![0]!.components[0]!;
+    expect(recipeComp.ingredientId).toBe("ing-2");
 
     const groceryItem = migrated.weeklyPlans[0]!.generatedGroceryList[0]!;
     expect(groceryItem.ingredientId).toBe("ing-2");

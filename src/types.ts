@@ -39,7 +39,7 @@ export interface Ingredient {
   babySafeWithAdaptation: boolean;
   imageUrl?: string;
   catalogId?: string;
-  source?: "manual" | "catalog";
+  source?: "manual" | "catalog" | "pending-import";
 }
 
 export type ComponentRecipeSourceType =
@@ -90,8 +90,31 @@ export interface RecipeLink {
   url: string;
 }
 
+/**
+ * Imported or hand-entered recipe in the household library. Not directly scheduled;
+ * promote to a {@link BaseMeal} for planning and groceries.
+ */
+export interface Recipe {
+  id: string;
+  name: string;
+  components: MealComponent[];
+  /** Original ingredients block from import (e.g. Paprika or pasted text). */
+  ingredientsText?: string;
+  defaultPrep?: string;
+  notes?: string;
+  recipeLinks?: RecipeLink[];
+  imageUrl?: string;
+  provenance?: RecipeProvenance;
+  prepTimeMinutes?: number;
+  cookTimeMinutes?: number;
+  servings?: string;
+  importMappings?: ImportMapping[];
+}
+
 export interface BaseMeal {
   id: string;
+  /** When this base meal was created from a library recipe. */
+  sourceRecipeId?: string;
   name: string;
   /** Optional tags for theme matching and organization (e.g. taco, pizza). */
   tags?: string[];
@@ -196,6 +219,8 @@ export interface Household {
   name: string;
   members: HouseholdMember[];
   ingredients: Ingredient[];
+  /** Recipe library (imports, reference). Omitted in raw JSON until loaded; use `normalizeHousehold`. */
+  recipes?: Recipe[];
   baseMeals: BaseMeal[];
   weeklyPlans: WeeklyPlan[];
   pinnedMealIds?: string[];

@@ -1,5 +1,5 @@
 import { openDB } from "idb";
-import type { Household, Ingredient } from "./types";
+import type { Household, Ingredient, MealComponent, Recipe } from "./types";
 
 /** Assign stable ids to meal components when missing; idempotent. */
 export function ensureHouseholdComponentIds(household: Household): Household {
@@ -17,6 +17,33 @@ export function ensureHouseholdComponentIds(household: Household): Household {
   });
   if (!changed) return household;
   return { ...household, baseMeals };
+}
+
+function ensureRecipeComponentIds(household: Household): Household {
+  let changed = false;
+  const recipeList = household.recipes ?? [];
+  const recipes = recipeList.map((recipe) => {
+    let recipeChanged = false;
+    const components = recipe.components.map((c) => {
+      if (c.id) return c;
+      recipeChanged = true;
+      return { ...c, id: crypto.randomUUID() };
+    });
+    if (!recipeChanged) return recipe;
+    changed = true;
+    return { ...recipe, components };
+  });
+  if (!changed && recipeList === household.recipes) return household;
+  return { ...household, recipes };
+}
+
+export type NormalizedHousehold = Household & { recipes: Recipe[] };
+
+/** Default `recipes`, assign component ids; idempotent. */
+export function normalizeHousehold(household: Household): NormalizedHousehold {
+  const base: Household =
+    household.recipes === undefined ? { ...household, recipes: [] } : household;
+  return ensureRecipeComponentIds(ensureHouseholdComponentIds(base)) as NormalizedHousehold;
 }
 import seedData from "./seed-data.json";
 
@@ -119,7 +146,7 @@ export function saveHouseholds(households: Household[]): void {
 }
 
 export async function saveHouseholdAsync(household: Household): Promise<void> {
-  const normalized = ensureHouseholdComponentIds(household);
+  const normalized = normalizeHousehold(household);
   const households = loadHouseholds();
   const index = households.findIndex((h) => h.id === normalized.id);
   if (index >= 0) {
@@ -135,7 +162,7 @@ export function loadHousehold(id: string): Household | undefined {
   const index = households.findIndex((h) => h.id === id);
   if (index < 0) return undefined;
   const raw = households[index]!;
-  const normalized = ensureHouseholdComponentIds(raw);
+  const normalized = normalizeHousehold(raw);
   if (normalized !== raw) {
     households[index] = normalized;
     saveHouseholds(households);
@@ -144,7 +171,7 @@ export function loadHousehold(id: string): Household | undefined {
 }
 
 export function saveHousehold(household: Household): void {
-  const normalized = ensureHouseholdComponentIds(household);
+  const normalized = normalizeHousehold(household);
   const households = loadHouseholds();
   const index = households.findIndex((h) => h.id === normalized.id);
   if (index >= 0) {
@@ -185,6 +212,7 @@ export function clearHouseholdMealsAndPlans(householdId: string): void {
   const h = households[idx]!;
   households[idx] = {
     ...h,
+    recipes: [],
     baseMeals: [],
     weeklyPlans: [],
     pinnedMealIds: [],
@@ -340,31 +368,36 @@ export function migrateHouseholdIngredients(household: Household): MigrationResu
   household.ingredients = household.ingredients.filter((ing) => survivorIds.has(ing.id));
 
   // Step 5: Reassign references in meal components
+  function remapMealComponents(meal: { components: MealComponent[] }) {
+    for (const comp of meal.components) {
+      const newId = idRemap.get(comp.ingredientId);
+      if (newId) {
+        comp.ingredientId = newId;
+        result.referencesUpdated++;
+      }
+      if (comp.alternativeIngredientIds) {
+        comp.alternativeIngredientIds = comp.alternativeIngredientIds.map((altId) => {
+          const mapped = idRemap.get(altId);
+          if (mapped) {
+            result.referencesUpdated++;
+            return mapped;
+          }
+          return altId;
+        });
+        comp.alternativeIngredientIds = [...new Set(comp.alternativeIngredientIds)];
+        comp.alternativeIngredientIds = comp.alternativeIngredientIds.filter(
+          (altId) => altId !== comp.ingredientId,
+        );
+      }
+    }
+  }
+
   if (idRemap.size > 0) {
     for (const meal of household.baseMeals) {
-      for (const comp of meal.components) {
-        const newId = idRemap.get(comp.ingredientId);
-        if (newId) {
-          comp.ingredientId = newId;
-          result.referencesUpdated++;
-        }
-        if (comp.alternativeIngredientIds) {
-          comp.alternativeIngredientIds = comp.alternativeIngredientIds.map((altId) => {
-            const mapped = idRemap.get(altId);
-            if (mapped) {
-              result.referencesUpdated++;
-              return mapped;
-            }
-            return altId;
-          });
-          // Deduplicate alternatives after remapping
-          comp.alternativeIngredientIds = [...new Set(comp.alternativeIngredientIds)];
-          // Remove alternative if it matches primary
-          comp.alternativeIngredientIds = comp.alternativeIngredientIds.filter(
-            (altId) => altId !== comp.ingredientId,
-          );
-        }
-      }
+      remapMealComponents(meal);
+    }
+    for (const recipe of household.recipes ?? []) {
+      remapMealComponents(recipe);
     }
 
     // Reassign grocery list references in weekly plans

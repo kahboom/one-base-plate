@@ -93,9 +93,10 @@ const membersWithoutPet = [adultMember, toddlerMember, babyMember];
 function makeHousehold(members: HouseholdMember[]): Household {
   return {
     id: "H004",
-    name: "McGeever family",
+    name: "McG family",
     members,
     ingredients,
+    recipes: [],
     baseMeals: [testMeal],
     weeklyPlans: [],
     pinnedMealIds: [],
@@ -242,21 +243,21 @@ describe("F040: Seed script and seeding", () => {
     expect(localStorage.getItem("onebaseplate_households")).toBeNull();
   });
 
-  it("seed data contains McGeever family (H004)", () => {
+  it("seed data contains McG family (H004)", () => {
     seedIfNeeded();
     const raw = localStorage.getItem("onebaseplate_households");
     const data = JSON.parse(raw!) as Household[];
-    const mcgeever = data.find((h) => h.id === "H004");
-    expect(mcgeever).toBeDefined();
-    expect(mcgeever!.name).toBe("McGeever family");
+    const mcg = data.find((h) => h.id === "H004");
+    expect(mcg).toBeDefined();
+    expect(mcg!.name).toBe("McG family");
   });
 
-  it("McGeever family includes pet member Lex", () => {
+  it("McG family includes pet member Lex", () => {
     seedIfNeeded();
     const raw = localStorage.getItem("onebaseplate_households");
     const data = JSON.parse(raw!) as Household[];
-    const mcgeever = data.find((h) => h.id === "H004")!;
-    const lex = mcgeever.members.find((m) => m.name === "Lex");
+    const mcg = data.find((h) => h.id === "H004")!;
+    const lex = mcg.members.find((m) => m.name === "Lex");
     expect(lex).toBeDefined();
     expect(lex!.role).toBe("pet");
   });

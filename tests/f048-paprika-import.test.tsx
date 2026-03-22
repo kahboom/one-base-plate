@@ -11,7 +11,7 @@ import {
   buildDraftMeal,
 } from "../src/paprika-parser";
 import type { PaprikaRecipe, PaprikaReviewLine } from "../src/paprika-parser";
-import type { Household, BaseMeal } from "../src/types";
+import type { Household, BaseMeal, Recipe } from "../src/types";
 
 function makeHousehold(): Household {
   return {
@@ -206,15 +206,10 @@ describe("F048 - Paprika parser engine", () => {
   describe("parsePaprikaRecipes", () => {
     it("parses multiple recipes and detects duplicates", () => {
       const h = makeHousehold();
-      const existingMeal: BaseMeal = {
+      const existingRecipe: Recipe = {
         id: "existing-1",
         name: "Test Chicken Rice",
         components: [],
-        defaultPrep: "",
-        estimatedTimeMinutes: 30,
-        difficulty: "easy",
-        rescueEligible: false,
-        wasteReuseHints: [],
       };
 
       const recipes = [
@@ -222,11 +217,11 @@ describe("F048 - Paprika parser engine", () => {
         makePaprikaRecipe({ name: "New Pasta Dish", ingredients: "200g pasta" }),
       ];
 
-      const parsed = parsePaprikaRecipes(recipes, h.ingredients, [existingMeal]);
+      const parsed = parsePaprikaRecipes(recipes, h.ingredients, [existingRecipe]);
 
       expect(parsed.length).toBe(2);
       expect(parsed[0]!.isDuplicate).toBe(true);
-      expect(parsed[0]!.existingMealId).toBe("existing-1");
+      expect(parsed[0]!.existingRecipeId).toBe("existing-1");
       expect(parsed[0]!.selected).toBe(false); // duplicates unselected by default
       expect(parsed[1]!.isDuplicate).toBe(false);
       expect(parsed[1]!.selected).toBe(true);
@@ -243,6 +238,7 @@ describe("F048 - Paprika parser engine", () => {
       const { meal } = buildDraftMeal(recipe, reviewLines, h.ingredients);
 
       expect(meal.name).toBe("Test Chicken Rice");
+      expect(meal.sourceRecipeId).toBeTruthy();
       expect(meal.provenance).toBeDefined();
       expect(meal.provenance!.sourceSystem).toBe("paprika");
       expect(meal.provenance!.externalId).toBe("paprika-uid-001");
@@ -688,17 +684,12 @@ describe("F048 - Compatibility with planner and grocery list", () => {
 });
 
 describe("F048 - Duplicate detection", () => {
-  it("detects duplicate imported meals by normalized name", () => {
-    const meals: BaseMeal[] = [
+  it("detects duplicate imported recipes by normalized name", () => {
+    const library: Recipe[] = [
       {
         id: "m1",
         name: "Chicken Pasta Bake",
         components: [],
-        defaultPrep: "",
-        estimatedTimeMinutes: 30,
-        difficulty: "easy",
-        rescueEligible: false,
-        wasteReuseHints: [],
       },
     ];
 
@@ -707,7 +698,7 @@ describe("F048 - Duplicate detection", () => {
       makePaprikaRecipe({ name: "New Recipe" }),
     ];
 
-    const parsed = parsePaprikaRecipes(recipes, [], meals);
+    const parsed = parsePaprikaRecipes(recipes, [], library);
     expect(parsed[0]!.isDuplicate).toBe(true);
     expect(parsed[0]!.selected).toBe(false);
     expect(parsed[1]!.isDuplicate).toBe(false);

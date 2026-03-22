@@ -14,6 +14,8 @@ import RescueMode from "./pages/RescueMode";
 import MealHistory from "./pages/MealHistory";
 import RecipeImport from "./pages/RecipeImport";
 import PaprikaImport from "./pages/PaprikaImport";
+import RecipeLibrary from "./pages/RecipeLibrary";
+import RecipeIdRedirect from "./pages/RecipeIdRedirect";
 import Settings from "./pages/Settings";
 import { loadHouseholds, loadDefaultHouseholdId } from "./storage";
 
@@ -42,6 +44,8 @@ function App() {
         <Route path="member/:memberId" element={<MemberProfile />} />
         <Route path="ingredients" element={<IngredientManager />} />
         <Route path="meals" element={<BaseMealManager />} />
+        <Route path="recipes" element={<RecipeLibrary />} />
+        <Route path="recipes/:recipeId" element={<RecipeIdRedirect />} />
         <Route path="meal/:mealId" element={<MealDetail />} />
         <Route path="planner" element={<Planner />} />
         <Route path="weekly" element={<WeeklyPlanner />} />

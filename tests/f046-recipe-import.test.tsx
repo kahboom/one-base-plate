@@ -319,7 +319,7 @@ describe("RecipeImport page", () => {
     expect(actionSelect).toHaveValue("create");
   });
 
-  it("builds draft meal with matched components", async () => {
+  it("builds draft with matched components", async () => {
     const user = userEvent.setup();
     saveHousehold(makeHousehold());
     renderAt("/household/h-import/import-recipe");
@@ -334,7 +334,7 @@ describe("RecipeImport page", () => {
     expect(components).toHaveLength(2);
   });
 
-  it("attaches recipe URL to draft meal when provided", async () => {
+  it("attaches recipe URL to draft when provided", async () => {
     const user = userEvent.setup();
     saveHousehold(makeHousehold());
     renderAt("/household/h-import/import-recipe");
@@ -347,7 +347,7 @@ describe("RecipeImport page", () => {
     expect(screen.getByTestId("draft-recipe-link")).toHaveTextContent("https://example.com/recipe");
   });
 
-  it("saves draft meal and new ingredients to storage", async () => {
+  it("saves recipe to library and new ingredients to storage", async () => {
     const user = userEvent.setup();
     saveHousehold(makeHousehold());
     renderAt("/household/h-import/import-recipe");
@@ -364,9 +364,10 @@ describe("RecipeImport page", () => {
     await user.click(screen.getByTestId("import-save-btn"));
 
     const saved = loadHousehold("h-import")!;
-    expect(saved.baseMeals).toHaveLength(1);
-    expect(saved.baseMeals[0]!.name).toBe("Chicken Pasta");
-    expect(saved.baseMeals[0]!.components.length).toBeGreaterThanOrEqual(2);
+    expect(saved.recipes ?? []).toHaveLength(1);
+    expect(saved.baseMeals).toHaveLength(0);
+    expect((saved.recipes ?? [])[0]!.name).toBe("Chicken Pasta");
+    expect((saved.recipes ?? [])[0]!.components.length).toBeGreaterThanOrEqual(2);
   });
 
   it("creates ingredient from catalog match during save", async () => {
@@ -388,6 +389,7 @@ describe("RecipeImport page", () => {
     await user.click(screen.getByTestId("import-save-btn"));
 
     const saved = loadHousehold("h-import")!;
+    expect(saved.recipes).toHaveLength(1);
     const pastaIng = saved.ingredients.find((i) => i.name === "Pasta");
     expect(pastaIng).toBeDefined();
     expect(pastaIng!.source).toBe("catalog");
@@ -408,6 +410,7 @@ describe("RecipeImport page", () => {
 
     // Nothing saved yet
     const saved = loadHousehold("h-import")!;
+    expect(saved.recipes ?? []).toHaveLength(0);
     expect(saved.baseMeals).toHaveLength(0);
   });
 
@@ -451,11 +454,11 @@ describe("Imported ingredients are compatible with local-first storage", () => {
 
     // Reload and verify
     const saved = loadHousehold("h-import")!;
-    expect(saved.baseMeals).toHaveLength(1);
-    const meal = saved.baseMeals[0]!;
-    expect(meal.components.length).toBe(2);
+    expect(saved.recipes).toHaveLength(1);
+    const libraryRecipe = saved.recipes![0]!;
+    expect(libraryRecipe.components.length).toBe(2);
     // All component ingredient IDs should resolve to ingredients in the household
-    for (const comp of meal.components) {
+    for (const comp of libraryRecipe.components) {
       const ing = saved.ingredients.find((i) => i.id === comp.ingredientId);
       expect(ing).toBeDefined();
     }

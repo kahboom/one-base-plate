@@ -22,6 +22,7 @@ function makeHousehold(overrides: Partial<Household> = {}): Household {
     name: "Test Family",
     members: [],
     ingredients: [],
+    recipes: [],
     baseMeals: [],
     weeklyPlans: [],
     ...overrides,

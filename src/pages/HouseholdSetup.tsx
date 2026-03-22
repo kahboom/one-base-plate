@@ -24,6 +24,7 @@ function createEmptyHousehold(): Household {
     name: "",
     members: [],
     ingredients: [],
+    recipes: [],
     baseMeals: [],
     weeklyPlans: [],
     pinnedMealIds: [],

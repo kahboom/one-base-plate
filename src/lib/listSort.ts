@@ -1,4 +1,4 @@
-import type { BaseMeal, Ingredient } from "../types";
+import type { BaseMeal, Ingredient, Recipe } from "../types";
 
 export type SortDir = "asc" | "desc";
 
@@ -46,6 +46,34 @@ export function sortBaseMeals(
       }
       case "componentCount":
         return compareNumbers(a.components.length, b.components.length, dir);
+      default:
+        return 0;
+    }
+  });
+  return copy;
+}
+
+export type RecipeSortKey = "name" | "componentCount" | "totalPrepMinutes";
+
+function recipeTotalPrepMinutes(r: Recipe): number {
+  return (r.prepTimeMinutes ?? 0) + (r.cookTimeMinutes ?? 0);
+}
+
+/** Returns a new sorted array (immutable). */
+export function sortRecipes(
+  recipes: Recipe[],
+  key: RecipeSortKey,
+  dir: SortDir,
+): Recipe[] {
+  const copy = [...recipes];
+  copy.sort((a, b) => {
+    switch (key) {
+      case "name":
+        return compareStrings(a.name, b.name, dir);
+      case "componentCount":
+        return compareNumbers(a.components.length, b.components.length, dir);
+      case "totalPrepMinutes":
+        return compareNumbers(recipeTotalPrepMinutes(a), recipeTotalPrepMinutes(b), dir);
       default:
         return 0;
     }

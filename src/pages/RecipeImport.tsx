@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { Ingredient, BaseMeal, MealComponent, IngredientCategory } from "../types";
+import type { Ingredient, MealComponent, IngredientCategory, Recipe } from "../types";
 import { loadHousehold, saveHousehold, normalizeIngredientName } from "../storage";
 import { catalogIngredientToHousehold } from "../catalog";
 import { parseRecipeText, guessComponentRole } from "../recipe-parser";
@@ -23,7 +23,6 @@ export default function RecipeImport() {
   const navigate = useNavigate();
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [meals, setMeals] = useState<BaseMeal[]>([]);
   const [householdName, setHouseholdName] = useState("");
   const [loaded, setLoaded] = useState(false);
 
@@ -32,10 +31,8 @@ export default function RecipeImport() {
   const [sourceUrl, setSourceUrl] = useState("");
   const [reviewLines, setReviewLines] = useState<ReviewLine[]>([]);
 
-  // Draft meal state
   const [draftName, setDraftName] = useState("");
   const [draftNotes, setDraftNotes] = useState("");
-  const [draftDifficulty, setDraftDifficulty] = useState<BaseMeal["difficulty"]>("medium");
   const [draftTime, setDraftTime] = useState(30);
   const [draftComponents, setDraftComponents] = useState<MealComponent[]>([]);
 
@@ -44,7 +41,6 @@ export default function RecipeImport() {
     const household = loadHousehold(householdId);
     if (household) {
       setIngredients(household.ingredients);
-      setMeals(household.baseMeals);
       setHouseholdName(household.name);
     }
     setLoaded(true);
@@ -117,23 +113,26 @@ export default function RecipeImport() {
     const household = loadHousehold(householdId);
     if (!household) return;
 
-    const newMeal: BaseMeal = {
+    const newRecipe: Recipe = {
       id: crypto.randomUUID(),
       name: draftName,
       components: draftComponents,
+      ingredientsText: recipeText.trim() || undefined,
       defaultPrep: "",
-      estimatedTimeMinutes: draftTime,
-      difficulty: draftDifficulty,
-      rescueEligible: false,
-      wasteReuseHints: [],
-      recipeLinks: sourceUrl.trim() ? [{ label: sourceUrl.trim(), url: sourceUrl.trim() }] : [],
-      notes: draftNotes,
+      recipeLinks: sourceUrl.trim() ? [{ label: sourceUrl.trim(), url: sourceUrl.trim() }] : undefined,
+      notes: draftNotes.trim() || undefined,
+      prepTimeMinutes: draftTime > 0 ? draftTime : undefined,
+      provenance: {
+        sourceSystem: "manual-text",
+        sourceUrl: sourceUrl.trim() || undefined,
+        importTimestamp: new Date().toISOString(),
+      },
     };
 
-    household.baseMeals = [...meals, newMeal];
+    household.recipes = [...(household.recipes ?? []), newRecipe];
     household.ingredients = ingredients;
     saveHousehold(household);
-    navigate(`/household/${householdId}/meals`);
+    navigate(`/household/${householdId}/recipes?recipe=${encodeURIComponent(newRecipe.id)}`);
   }
 
   function updateReviewLine(index: number, updates: Partial<ReviewLine>) {
@@ -188,7 +187,7 @@ export default function RecipeImport() {
             >
               Parse ingredients
             </Button>
-            <Button onClick={() => navigate(`/household/${householdId}/meals`)}>Cancel</Button>
+            <Button onClick={() => navigate(`/household/${householdId}/recipes`)}>Cancel</Button>
           </ActionGroup>
         </div>
       )}
@@ -264,7 +263,7 @@ export default function RecipeImport() {
           <div className="mt-4">
             <ActionGroup>
               <Button variant="primary" onClick={handleBuildDraft} data-testid="import-build-draft-btn">
-                Build meal draft
+                Build recipe draft
               </Button>
               <Button onClick={() => setStep("input")}>Back</Button>
             </ActionGroup>
@@ -275,18 +274,18 @@ export default function RecipeImport() {
       {step === "draft" && (
         <div data-testid="import-draft-step">
           <Card className="mb-4">
-            <FieldLabel label="Meal name">
+            <FieldLabel label="Recipe name">
               <Input
                 type="text"
                 value={draftName}
                 onChange={(e) => setDraftName(e.target.value)}
-                placeholder="Name your meal"
+                placeholder="Name your recipe"
                 required
                 data-testid="draft-meal-name"
               />
             </FieldLabel>
 
-            <FieldLabel label="Time (minutes)" className="mt-4">
+            <FieldLabel label="Prep time (minutes, optional)" className="mt-4">
               <Input
                 type="number"
                 value={draftTime}
@@ -295,18 +294,6 @@ export default function RecipeImport() {
                 className="max-w-[120px]"
                 data-testid="draft-meal-time"
               />
-            </FieldLabel>
-
-            <FieldLabel label="Difficulty" className="mt-4">
-              <Select
-                value={draftDifficulty}
-                onChange={(e) => setDraftDifficulty(e.target.value as BaseMeal["difficulty"])}
-                data-testid="draft-meal-difficulty"
-              >
-                <option value="easy">easy</option>
-                <option value="medium">medium</option>
-                <option value="hard">hard</option>
-              </Select>
             </FieldLabel>
 
             <FieldLabel label="Notes" className="mt-4">
@@ -361,10 +348,10 @@ export default function RecipeImport() {
               disabled={!draftName.trim()}
               data-testid="import-save-btn"
             >
-              Save meal
+              Save to library
             </Button>
             <Button onClick={() => setStep("review")}>Back to review</Button>
-            <Button onClick={() => navigate(`/household/${householdId}/meals`)}>Cancel</Button>
+            <Button onClick={() => navigate(`/household/${householdId}/recipes`)}>Cancel</Button>
           </ActionGroup>
         </div>
       )}

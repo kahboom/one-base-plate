@@ -227,6 +227,7 @@
         "babySafeWithAdaptation": true
       }
     ],
+    "recipes": [],
     "baseMeals": [
       {
         "id": "bm-pasta-chicken",
@@ -377,6 +378,7 @@
       }
     ],
     "ingredients": [],
+    "recipes": [],
     "baseMeals": [],
     "weeklyPlans": [],
     "pinnedMealIds": []
@@ -443,13 +445,14 @@
       }
     ],
     "ingredients": [],
+    "recipes": [],
     "baseMeals": [],
     "weeklyPlans": [],
     "pinnedMealIds": []
   },
   {
     "id": "H004",
-    "name": "McGeever family",
+    "name": "McG family",
     "members": [
       {
         "id": "M- Aaron",
@@ -641,6 +644,7 @@
         "babySafeWithAdaptation": true
       }
     ],
+    "recipes": [],
     "baseMeals": [
       {
         "id": "bm-pasta-chicken",

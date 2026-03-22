@@ -59,6 +59,7 @@ function makeHousehold(): Household {
         source: "manual",
       },
     ],
+    recipes: [],
     baseMeals: [],
     weeklyPlans: [],
     pinnedMealIds: [],
@@ -543,8 +544,9 @@ describe("PaprikaImport bulk review UI", () => {
     expect(loadImportSession("h-bulk")).toBeNull();
 
     const saved = loadHousehold("h-bulk")!;
-    expect(saved.baseMeals).toHaveLength(1);
-    expect(saved.baseMeals[0]!.name).toBe("Import Me");
+    expect(saved.recipes).toHaveLength(1);
+    expect(saved.recipes![0]!.name).toBe("Import Me");
+    expect(saved.baseMeals).toHaveLength(0);
   });
 
   it("hides per-line action select when a group has only one occurrence (use group buttons)", async () => {

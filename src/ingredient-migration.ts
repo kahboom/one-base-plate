@@ -1,4 +1,12 @@
-import type { BaseMeal, GroceryItem, Household, Ingredient, MealComponent, WeeklyPlan } from "./types";
+import type {
+  BaseMeal,
+  GroceryItem,
+  Household,
+  Ingredient,
+  MealComponent,
+  Recipe,
+  WeeklyPlan,
+} from "./types";
 
 const TRAILING_PUNCTUATION_RE = /[.,;:!?]+$/;
 
@@ -133,6 +141,23 @@ function remapBaseMeals(
   return { meals: nextMeals, updates };
 }
 
+function remapRecipes(
+  recipes: Recipe[] | undefined,
+  idRemap: Map<string, string>,
+): { recipes: Recipe[]; updates: number } {
+  const list = recipes ?? [];
+  let updates = 0;
+  const nextRecipes = list.map((recipe) => {
+    const { components, updates: componentUpdates } = remapMealComponents(
+      recipe.components,
+      idRemap,
+    );
+    updates += componentUpdates;
+    return { ...recipe, components };
+  });
+  return { recipes: nextRecipes, updates };
+}
+
 function remapGroceryItems(
   items: GroceryItem[],
   idRemap: Map<string, string>,
@@ -232,6 +257,10 @@ export function migrateHouseholdIngredients(
     household.baseMeals,
     idRemap,
   );
+  const { recipes: remappedRecipes, updates: recipeUpdates } = remapRecipes(
+    household.recipes,
+    idRemap,
+  );
   const { plans: remappedPlans, updates: groceryUpdates } = remapWeeklyPlans(
     household.weeklyPlans,
     idRemap,
@@ -243,6 +272,7 @@ export function migrateHouseholdIngredients(
     ingredients: mergedIngredients,
     baseMeals: remappedMeals,
     weeklyPlans: remappedPlans,
+    recipes: remappedRecipes,
   };
 
   return {
@@ -253,7 +283,7 @@ export function migrateHouseholdIngredients(
       ingredientsAfter: mergedIngredients.length,
       normalizedNameChanges,
       duplicatesMerged,
-      remappedReferences: mealUpdates + groceryUpdates,
+      remappedReferences: mealUpdates + groceryUpdates + recipeUpdates,
     },
   };
 }
