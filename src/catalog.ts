@@ -7,6 +7,8 @@ export interface CatalogIngredient {
   tags: string[];
   freezerFriendly: boolean;
   babySafeWithAdaptation: boolean;
+  /** Alternative names for matching during import / search. */
+  aliases?: string[];
 }
 
 function c(
@@ -16,8 +18,11 @@ function c(
   tags: string[] = [],
   freezerFriendly = false,
   babySafeWithAdaptation = false,
+  aliases?: string[],
 ): CatalogIngredient {
-  return { id, name, category, tags, freezerFriendly, babySafeWithAdaptation };
+  const item: CatalogIngredient = { id, name, category, tags, freezerFriendly, babySafeWithAdaptation };
+  if (aliases) item.aliases = aliases;
+  return item;
 }
 
 export const MASTER_CATALOG: CatalogIngredient[] = [
@@ -42,7 +47,7 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c("cat-pasta", "Pasta", "carb", ["quick", "staple"], false, true),
   c("cat-rice", "Rice", "carb", ["staple", "batch-friendly"], false, true),
   c("cat-bread", "Bread", "carb", ["quick", "staple", "rescue"], true, true),
-  c("cat-wraps", "Wraps / tortillas", "carb", ["quick"], false, false),
+  c("cat-wraps", "Wraps / tortillas", "carb", ["quick"], false, false, ["flour tortillas", "soft tortillas"]),
   c("cat-potatoes", "Potatoes", "carb", ["staple", "batch-friendly", "mashable"], false, true),
   c("cat-sweet-potato", "Sweet potato", "carb", ["batch-friendly", "mashable"], false, true),
   c("cat-couscous", "Couscous", "carb", ["quick"], false, true),
@@ -78,7 +83,7 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   // Dairy
   c("cat-milk", "Milk", "dairy", ["staple"], false, true),
   c("cat-cheese", "Cheese", "dairy", ["quick", "staple", "rescue"], true, true),
-  c("cat-yogurt", "Yogurt", "dairy", ["quick"], false, true),
+  c("cat-yogurt", "Yogurt", "dairy", ["quick"], false, true, ["plain yogurt", "greek yogurt"]),
   c("cat-butter", "Butter", "dairy", ["staple"], true, true),
   c("cat-cream-cheese", "Cream cheese", "dairy", ["quick"], false, true),
 
@@ -97,9 +102,9 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c("cat-ice-cream", "Ice cream", "freezer", [], true, false),
 
   // Pantry
-  c("cat-tinned-tomatoes", "Tinned tomatoes", "pantry", ["staple", "batch-friendly"], false, true),
+  c("cat-tinned-tomatoes", "Tinned tomatoes", "pantry", ["staple", "batch-friendly"], false, true, ["canned tomatoes", "diced tomatoes"]),
   c("cat-coconut-milk", "Coconut milk", "pantry", ["staple"], false, true),
-  c("cat-passata", "Passata", "pantry", ["staple"], false, true),
+  c("cat-passata", "Passata", "pantry", ["staple"], false, true, ["tomato puree", "strained tomatoes"]),
   c("cat-stock-cubes", "Stock cubes", "pantry", ["staple"], false, false),
   c("cat-olive-oil", "Olive oil", "pantry", ["staple"], false, true),
   c("cat-soy-sauce", "Soy sauce", "pantry", ["staple"], false, false),
@@ -118,13 +123,55 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c("cat-kosher-salt", "Kosher salt", "pantry", ["staple"], false, false),
   c("cat-black-pepper", "Black pepper", "pantry", ["staple"], false, false),
   c("cat-french-onion-soup", "French onion soup", "pantry", ["staple"], false, true),
+
+  // Taco ingredients
+  c("cat-black-beans", "Black beans", "protein", ["batch-friendly", "staple"], false, true, ["canned black beans"]),
+  c("cat-corn-tortillas", "Corn tortillas", "carb", ["quick"], false, false, ["taco shells"]),
+  c("cat-cilantro", "Cilantro", "veg", ["quick"], false, false, ["fresh coriander", "coriander leaves"]),
+  c("cat-lime", "Lime", "fruit", ["quick"], false, true),
+  c("cat-jalapeno", "Jalapeño", "veg", ["quick"], false, false, ["jalapeno pepper"]),
+  c("cat-cumin", "Cumin", "pantry", ["staple"], false, false, ["ground cumin"]),
+  c("cat-chili-powder", "Chili powder", "pantry", ["staple"], false, false),
+  c("cat-sour-cream", "Sour cream", "dairy", ["quick"], false, false),
+  c("cat-taco-seasoning", "Taco seasoning", "pantry", ["quick", "staple"], false, false),
+  c("cat-lettuce", "Lettuce", "veg", ["quick"], false, false, ["iceberg lettuce", "romaine"]),
+
+  // Pizza ingredients
+  c("cat-mozzarella", "Mozzarella", "dairy", ["quick"], true, true, ["mozzarella cheese", "fresh mozzarella"]),
+  c("cat-yeast", "Yeast", "pantry", ["staple"], false, false, ["active dry yeast", "instant yeast"]),
+  c("cat-italian-seasoning", "Italian seasoning", "pantry", ["staple"], false, false),
+  c("cat-oregano", "Oregano", "pantry", ["staple"], false, false, ["dried oregano"]),
+  c("cat-basil", "Basil", "veg", ["quick"], false, false, ["fresh basil"]),
+  c("cat-tomato-paste", "Tomato paste", "pantry", ["staple"], false, true, ["tomato concentrate"]),
+  c("cat-sugar", "Sugar", "pantry", ["staple"], false, false, ["granulated sugar", "white sugar"]),
+
+  // Pasta bake ingredients
+  c("cat-ricotta", "Ricotta", "dairy", ["quick"], false, true, ["ricotta cheese"]),
+  c("cat-heavy-cream", "Heavy cream", "dairy", [], false, false, ["double cream", "whipping cream"]),
+
+  // Bowl / rice bowl ingredients
+  c("cat-sesame-oil", "Sesame oil", "pantry", ["staple"], false, false, ["toasted sesame oil"]),
+  c("cat-sriracha", "Sriracha", "pantry", ["staple"], false, false, ["hot sauce"]),
+  c("cat-ginger", "Ginger", "pantry", ["staple"], false, false, ["fresh ginger", "ground ginger"]),
+  c("cat-edamame", "Edamame", "protein", ["quick"], true, true, ["frozen edamame"]),
+  c("cat-sesame-seeds", "Sesame seeds", "pantry", ["staple"], false, false),
+
+  // Sauces and pantry basics
+  c("cat-honey", "Honey", "pantry", ["staple"], false, false),
+  c("cat-paprika", "Paprika", "pantry", ["staple"], false, false, ["smoked paprika"]),
+  c("cat-vinegar", "Vinegar", "pantry", ["staple"], false, false, ["white vinegar", "apple cider vinegar"]),
+  c("cat-mustard", "Mustard", "pantry", ["staple"], false, false, ["dijon mustard", "yellow mustard"]),
+  c("cat-cornstarch", "Cornstarch", "pantry", ["staple"], false, false, ["cornflour"]),
+  c("cat-mayonnaise", "Mayonnaise", "pantry", ["staple"], false, false, ["mayo"]),
 ];
 
 export function searchCatalog(query: string): CatalogIngredient[] {
   const q = query.toLowerCase().trim();
   if (!q) return [];
-  return MASTER_CATALOG.filter((item) =>
-    item.name.toLowerCase().includes(q),
+  return MASTER_CATALOG.filter(
+    (item) =>
+      item.name.toLowerCase().includes(q) ||
+      (item.aliases ?? []).some((a) => a.toLowerCase().includes(q)),
   );
 }
 

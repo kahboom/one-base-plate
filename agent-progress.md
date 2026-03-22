@@ -884,5 +884,16 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Tests: `tests/f058-recipe-attachment-ux.test.ts` — 26 tests covering full resolution chain priority (all 7 levels), backwards-compatible `resolveComponentEffectiveRef`, session override vs saved default, recipe counting (with alt-protein exclusion), batch-prep detection, prep-ahead opportunities, alt-protein convention, and `summarizeRecipeRef`.
 - Verification: `npx tsc --noEmit` clean, `npx vitest run` — 963 passed, 0 failed (63 test files).
 
+### F059 — Expanded seed content: broader catalog, example recipes, and wired base meals (2026-03-22)
+- Added `aliases?: string[]` to `CatalogIngredient` interface and updated `c()` helper and `searchCatalog()` to support alias matching.
+- Added ~30 new `MASTER_CATALOG` entries covering taco ingredients (black beans, corn tortillas, cilantro, lime, jalapeño, cumin, chili powder, sour cream, taco seasoning, lettuce), pizza ingredients (mozzarella, yeast, Italian seasoning, oregano, basil, tomato paste, sugar), pasta bake ingredients (ricotta, heavy cream), bowl ingredients (sesame oil, sriracha, ginger, edamame, sesame seeds), and pantry basics (honey, paprika, vinegar, mustard, cornstarch, mayonnaise).
+- Added aliases to existing catalog entries: "Wraps / tortillas" (flour tortillas, soft tortillas), "Tinned tomatoes" (canned tomatoes, diced tomatoes), "Passata" (tomato puree, strained tomatoes), "Yogurt" (plain yogurt, greek yogurt).
+- Added 26 new household ingredients to H001 seed data and 11 pantry basics to H004.
+- Seeded 10 example recipes in H001: Grilled taco chicken (component), Black bean taco filling (component), Quick yogurt-lime sauce (sauce), Basic pizza dough (component), Quick pizza sauce (sauce), Simple tray pizza (whole-meal), Basic pasta bake sauce (sauce), Roasted broccoli (component), Plain seasoned rice (component), Simple cheese sauce (sauce). Each includes components referencing household ingredients, step-by-step directions, ingredientsText, prep/cook times, servings, and tags.
+- Seeded 5 example base meals in H001: Taco night (with grilled chicken + alt black bean filling + yogurt-lime sauce recipes), Pizza night (with dough + sauce + tray pizza shortcut recipes), Pasta bake (with pasta bake sauce recipe), Rice bowl (with seasoned rice + roasted broccoli recipes + alt tofu), Cheesy pasta rescue (with cheese sauce recipe, rescue-eligible).
+- All base meals use `recipeRefs` (meal-level) and `ComponentRecipeRef` (component-level) wiring to demonstrate the recipe-as-cooking-guidance model.
+- Verified: all ingredient IDs, recipe IDs, and recipeRef wiring internally consistent; no duplicate ingredient names; JSON valid; build clean; tests pass.
+- PRD: added F059 feature entry with 9 steps, dependencies F044/F057, acceptance refs S001/S002/S003/S004/S007/S010. Added to M5, implementationOrder, and screenToFeatureMap.
+
 ## Next Task
-- All PRD features including F058 now have `passes=true`. Define the next product slice in `PRD.json` (or reopen a feature with explicit scope) before picking up new implementation work.
+- All PRD features including F059 now have `passes=true`. Define the next product slice in `PRD.json` (or reopen a feature with explicit scope) before picking up new implementation work.

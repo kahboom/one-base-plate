@@ -1,3 +1,11 @@
+### 2026-03-22 — Expanded seed content: broader catalog, example recipes, and wired base meals (F059)
+- Requestor: product owner
+- Reason: App seed data demonstrated only flat base meals with no recipe references. Needed richer examples that show the planning + cooking model (recipes as components of base meals, one base meal = many plates, alternative proteins, rescue meals).
+- Scope: Added ~30 new ingredients to MASTER_CATALOG (taco, pizza, pasta bake, bowl, sauces, pantry basics). Added optional `aliases` field to `CatalogIngredient` for future import quality; updated `searchCatalog` to match aliases. Added 26 new household ingredients to H001 and 11 to H004. Seeded 10 example recipes (grilled taco chicken, black bean taco filling, yogurt-lime sauce, pizza dough, pizza sauce, tray pizza, pasta bake sauce, roasted broccoli, seasoned rice, cheese sauce). Seeded 5 example base meals (Taco night, Pizza night, Pasta bake, Rice bowl, Cheesy pasta rescue) with `recipeRefs` and component-level `ComponentRecipeRef` wiring. Meals include alternative proteins (black beans, tofu), rescue-eligible examples, and waste-reuse hints.
+- Files changed: `src/catalog.ts`, `src/seed-data.json`, `PRD.json`, `CHANGELOG.md`, `agent-progress.md`
+- New feature IDs: F059
+- Data model changes: `CatalogIngredient.aliases` (optional)
+
 ### 2026-03-22 — First-class Recipe model with RecipeRef, typed categories, and migration (F057)
 - Requestor: product owner
 - Reason: Recipe was a flat library entry with no typed categories, no sub-recipe support, and no way to reference it from BaseMeal or Ingredient. ComponentRecipeRef lacked an explicit FK to Recipe.

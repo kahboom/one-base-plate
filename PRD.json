@@ -1834,6 +1834,37 @@
         "S004",
         "S007"
       ]
+    },
+    {
+      "id": "F059",
+      "phase": 2,
+      "priority": "P1",
+      "category": "content",
+      "description": "Expanded seed content: broader ingredient catalog with aliases, example recipes, and example base meals demonstrating the planning + cooking model",
+      "steps": [
+        "Expand MASTER_CATALOG with taco, pizza, pasta bake, rice bowl, sauce, and pantry-basic ingredients.",
+        "Add optional aliases field to CatalogIngredient for future matching and import quality; update searchCatalog to match aliases.",
+        "Add household-level ingredients to H001 seed data for all ingredients referenced by new recipes and meals.",
+        "Seed 10 example recipes (component, sauce, whole-meal types) covering taco, pizza, pasta bake, rice bowl, and rescue use cases.",
+        "Seed 5 example base meals (Taco night, Pizza night, Pasta bake, Rice bowl, Cheesy pasta rescue) with recipeRefs and component-level ComponentRecipeRefs wired to seeded recipes.",
+        "Include alternative protein options (black beans for taco, tofu for bowl) to demonstrate the one-base-meal-many-plates concept.",
+        "Include a rescue-eligible meal (Cheesy pasta) with pantry staples to demonstrate rescue mode.",
+        "Ensure all ingredient IDs, recipe IDs, and recipeRef wiring is internally consistent with no duplicates.",
+        "Verify seeded data works with planner overlap scoring, grocery list generation, rescue mode, meal detail, and cooking panel."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F044",
+        "F057"
+      ],
+      "acceptanceRefs": [
+        "S001",
+        "S002",
+        "S003",
+        "S004",
+        "S007",
+        "S010"
+      ]
     }
   ],
   "milestones": [
@@ -1922,7 +1953,8 @@
         "F055",
         "F056",
         "F057",
-        "F058"
+        "F058",
+        "F059"
       ]
     }
   ],
@@ -2003,6 +2035,7 @@
     "F056",
     "F057",
     "F058",
+    "F059",
     "F020",
     "F037",
     "F038",
@@ -2326,7 +2359,8 @@
       "F036",
       "F037",
       "F038",
-      "F053"
+      "F053",
+      "F059"
     ],
     "S002": [
       "F006",
@@ -2340,7 +2374,8 @@
       "F037",
       "F055",
       "F057",
-      "F058"
+      "F058",
+      "F059"
     ],
     "S003": [
       "F010",
@@ -2358,7 +2393,8 @@
       "F054",
       "F055",
       "F056",
-      "F058"
+      "F058",
+      "F059"
     ],
     "S004": [
       "F006",
@@ -2367,7 +2403,8 @@
       "F037",
       "F055",
       "F057",
-      "F058"
+      "F058",
+      "F059"
     ],
     "S005": [
       "F012",
@@ -2404,7 +2441,8 @@
       "F051",
       "F055",
       "F057",
-      "F058"
+      "F058",
+      "F059"
     ],
     "S008": [
       "F011",
@@ -2428,7 +2466,8 @@
       "F049",
       "F050",
       "F053",
-      "F057"
+      "F057",
+      "F059"
     ]
   },
   "agentExecutionRules": [
