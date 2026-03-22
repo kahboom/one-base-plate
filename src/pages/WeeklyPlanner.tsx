@@ -28,6 +28,8 @@ import { useSuggestedTrayCap } from "../hooks/useSuggestedTrayCap";
 import { PageHeader, Button, Select, Section, EmptyState, Chip, Input } from "../components/ui";
 import { getWeeklyAnchorForWeekday } from "../lib/weeklyPlanOps";
 import WeeklyThemeNightsCollapsible from "../components/WeeklyThemeNightsCollapsible";
+import AppModal from "../components/AppModal";
+import { MealDetailContent } from "./MealDetail";
 
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -43,6 +45,7 @@ export default function WeeklyPlanner() {
   const [sharing, setSharing] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
   const [browseMealsOpen, setBrowseMealsOpen] = useState(false);
+  const [mealDetailModalId, setMealDetailModalId] = useState<string | null>(null);
   const [themeContextDay, setThemeContextDay] = useState(DAY_LABELS[0]!);
   const processedNavState = useRef(false);
   const trayCap = useSuggestedTrayCap();
@@ -291,6 +294,25 @@ export default function WeeklyPlanner() {
     [suggestionRows, trayCap],
   );
 
+  const mealDetailModalMeal = useMemo(() => {
+    if (!household || !mealDetailModalId) return null;
+    return household.baseMeals.find((m) => m.id === mealDetailModalId) ?? null;
+  }, [household, mealDetailModalId]);
+
+  const mealDetailModalOverlap = useMemo(() => {
+    if (!household || !mealDetailModalMeal) return null;
+    return computeMealOverlap(
+      mealDetailModalMeal,
+      household.members,
+      household.ingredients,
+    );
+  }, [household, mealDetailModalMeal]);
+
+  function handleTogglePinFromDetailModal() {
+    if (!mealDetailModalMeal) return;
+    handleTogglePin(mealDetailModalMeal.id);
+  }
+
   function getSuggestedMeal(dayLabel: string): BaseMeal | null {
     if (suggestionRows.length === 0) return null;
     const index = DAY_LABELS.indexOf(dayLabel) % suggestionRows.length;
@@ -527,7 +549,7 @@ export default function WeeklyPlanner() {
                     overlap={overlap}
                     outcomes={household.mealOutcomes ?? []}
                     patterns={learnedPatterns}
-                    detailUrl={`/household/${householdId}/meal/${meal.id}`}
+                    onDetailClick={() => setMealDetailModalId(meal.id)}
                     compact
                     showActionsWhenCompact
                     draggable
@@ -557,7 +579,10 @@ export default function WeeklyPlanner() {
               overlap={overlap}
               outcomes={household.mealOutcomes ?? []}
               patterns={learnedPatterns}
-              detailUrl={`/household/${householdId}/meal/${meal.id}`}
+              onDetailClick={() => {
+                setMealDetailModalId(meal.id);
+                setBrowseMealsOpen(false);
+              }}
               compact
               showActionsWhenCompact
               draggable
@@ -570,6 +595,37 @@ export default function WeeklyPlanner() {
           )}
         />
       )}
+
+      <AppModal
+        open={Boolean(mealDetailModalMeal)}
+        onClose={() => setMealDetailModalId(null)}
+        ariaLabel="Meal details"
+        className="max-w-4xl max-h-[90vh] overflow-y-auto p-6"
+      >
+        <div data-testid="meal-details-modal">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-text-primary">
+              {mealDetailModalMeal?.name ?? "Meal details"}
+            </h2>
+            <Button
+              variant="ghost"
+              onClick={() => setMealDetailModalId(null)}
+              aria-label="Close modal"
+            >
+              ✕
+            </Button>
+          </div>
+          {mealDetailModalMeal && (
+            <MealDetailContent
+              meal={mealDetailModalMeal}
+              household={household}
+              overlapLabel={`${mealDetailModalOverlap?.score ?? 0}/${mealDetailModalOverlap?.total ?? 0}`}
+              isPinned={(household.pinnedMealIds ?? []).includes(mealDetailModalMeal.id)}
+              onTogglePin={handleTogglePinFromDetailModal}
+            />
+          )}
+        </div>
+      </AppModal>
 
       <div className="mt-6">
         <WeeklyThemeNightsCollapsible

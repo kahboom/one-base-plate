@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import type { Ingredient, BaseMeal, IngredientCategory } from "../types";
 import { loadHousehold, saveHouseholdAsync, toSentenceCase, normalizeIngredientName } from "../storage";
 import {
@@ -75,6 +75,7 @@ function lineMatchesReviewFilter(line: PaprikaReviewLine, filter: ReviewFilter):
 export default function PaprikaImport() {
   const { householdId } = useParams<{ householdId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [meals, setMeals] = useState<BaseMeal[]>([]);
@@ -88,7 +89,8 @@ export default function PaprikaImport() {
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>("all");
   const [sessionSavedAt, setSessionSavedAt] = useState<string | null>(null);
   const [selectPage, setSelectPage] = useState(0);
-  const [reviewPage, setReviewPage] = useState(0);
+  /** Local draft while typing “go to page” (committed on blur / Enter). */
+  const [reviewPageInputDraft, setReviewPageInputDraft] = useState<string | null>(null);
   const [matchPickerGroupKey, setMatchPickerGroupKey] = useState<string | null>(null);
   const [catalogPickerGroupKey, setCatalogPickerGroupKey] = useState<string | null>(null);
   const [createGroupKey, setCreateGroupKey] = useState<string | null>(null);
@@ -114,6 +116,36 @@ export default function PaprikaImport() {
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [ingredients]);
+
+  const pendingCreateIngredients = useMemo(() => {
+    const seen = new Set<string>();
+    const result: Ingredient[] = [];
+    for (const recipe of parsedRecipes) {
+      if (!recipe.selected) continue;
+      for (const line of recipe.parsedLines) {
+        if (line.action !== "create" || !line.createDraft || line.resolutionStatus !== "resolved") continue;
+        const key = line.groupKey ?? groupKeyForParsedName(line.name);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        result.push({
+          id: `pending-create:${key}`,
+          name: normalizeIngredientName(line.createDraft.canonicalName),
+          category: line.createDraft.category,
+          tags: [...(line.createDraft.tags ?? [])],
+          shelfLifeHint: "",
+          freezerFriendly: false,
+          babySafeWithAdaptation: false,
+          source: "pending-import",
+        });
+      }
+    }
+    return result;
+  }, [parsedRecipes]);
+
+  const allPickerIngredients = useMemo(
+    () => [...ingredients, ...pendingCreateIngredients],
+    [ingredients, pendingCreateIngredients],
+  );
 
   useEffect(() => {
     if (!householdId) return;
@@ -274,14 +306,86 @@ export default function PaprikaImport() {
     };
   }, [parsedRecipes.length, selectPage]);
 
-  useEffect(() => {
-    setReviewPage(0);
-  }, [reviewFilter]);
+  const maxReviewPageIdx = useMemo(
+    () => Math.max(0, Math.ceil(reviewGroups.length / PAPRIKA_IMPORT_PAGE_SIZE) - 1),
+    [reviewGroups.length],
+  );
+
+  const reviewPage = useMemo(() => {
+    const raw = searchParams.get("reviewPage");
+    const n = raw ? parseInt(raw, 10) : 1;
+    const oneBased = Number.isFinite(n) && n >= 1 ? n : 1;
+    return Math.min(maxReviewPageIdx, oneBased - 1);
+  }, [searchParams, maxReviewPageIdx]);
 
   useEffect(() => {
-    const maxPage = Math.max(0, Math.ceil(reviewGroups.length / PAPRIKA_IMPORT_PAGE_SIZE) - 1);
-    setReviewPage((p) => Math.min(p, maxPage));
-  }, [reviewGroups.length]);
+    setReviewPageInputDraft(null);
+  }, [reviewPage]);
+
+  const setReviewPageIndex = useCallback(
+    (nextZeroBased: number) => {
+      const clamped = Math.max(0, Math.min(maxReviewPageIdx, nextZeroBased));
+      setSearchParams(
+        (sp) => {
+          const nsp = new URLSearchParams(sp);
+          if (clamped === 0) nsp.delete("reviewPage");
+          else nsp.set("reviewPage", String(clamped + 1));
+          return nsp;
+        },
+        { replace: false },
+      );
+    },
+    [maxReviewPageIdx, setSearchParams],
+  );
+
+  const commitReviewPageInput = useCallback(() => {
+    if (reviewPageInputDraft === null) return;
+    const trimmed = reviewPageInputDraft.trim();
+    setReviewPageInputDraft(null);
+    if (trimmed === "") return;
+    const v = parseInt(trimmed, 10);
+    if (!Number.isFinite(v)) return;
+    setReviewPageIndex(v - 1);
+  }, [reviewPageInputDraft, setReviewPageIndex]);
+
+  const reviewFilterPrevRef = useRef(reviewFilter);
+  useEffect(() => {
+    if (step !== "review") {
+      reviewFilterPrevRef.current = reviewFilter;
+      return;
+    }
+    const changed = reviewFilterPrevRef.current !== reviewFilter;
+    reviewFilterPrevRef.current = reviewFilter;
+    if (!changed) return;
+    setSearchParams(
+      (sp) => {
+        const nsp = new URLSearchParams(sp);
+        nsp.delete("reviewPage");
+        return nsp;
+      },
+      { replace: true },
+    );
+  }, [reviewFilter, step, setSearchParams]);
+
+  useEffect(() => {
+    if (step !== "review") return;
+    const raw = searchParams.get("reviewPage");
+    const n = raw ? parseInt(raw, 10) : NaN;
+    const requestedOneBased = Number.isFinite(n) && n >= 1 ? n : 1;
+    const clampedIdx = Math.min(maxReviewPageIdx, requestedOneBased - 1);
+    const desiredRaw = clampedIdx === 0 ? null : String(clampedIdx + 1);
+    const normalizeRaw = raw === "1" ? null : raw;
+    if (normalizeRaw === desiredRaw) return;
+    setSearchParams(
+      (sp) => {
+        const nsp = new URLSearchParams(sp);
+        if (desiredRaw === null) nsp.delete("reviewPage");
+        else nsp.set("reviewPage", desiredRaw);
+        return nsp;
+      },
+      { replace: true },
+    );
+  }, [step, maxReviewPageIdx, searchParams, setSearchParams]);
 
   const reviewPaging = useMemo(() => {
     const total = reviewGroups.length;
@@ -297,6 +401,67 @@ export default function PaprikaImport() {
       from1: total === 0 ? 0 : start + 1,
     };
   }, [reviewGroups, reviewPage]);
+
+  function renderReviewLinesPager(position: "top" | "bottom") {
+    if (!reviewPaging.showPager) return null;
+    const isTop = position === "top";
+    return (
+      <div
+        className={`flex min-w-0 flex-nowrap items-center justify-between gap-3 overflow-x-auto ${isTop ? "mb-2" : "mt-4"}`}
+        data-testid={isTop ? "review-lines-pagination" : "review-lines-pagination-bottom"}
+      >
+        <span className="min-w-0 shrink truncate text-xs text-text-muted" title={`Showing ${reviewPaging.from1}–${reviewPaging.end} of ${reviewPaging.total}; page ${reviewPage + 1} of ${reviewPaging.pageCount}`}>
+          Showing {reviewPaging.from1}–{reviewPaging.end} of {reviewPaging.total}
+          {" · "}
+          Page {reviewPage + 1} of {reviewPaging.pageCount}
+        </span>
+        <div className="flex shrink-0 flex-nowrap items-center gap-2">
+          <span className="whitespace-nowrap text-xs text-text-muted">Go to</span>
+          <div className="w-14 shrink-0">
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={reviewPaging.pageCount}
+              aria-label="Bulk review page number"
+              value={reviewPageInputDraft ?? String(reviewPage + 1)}
+              onChange={(e) => setReviewPageInputDraft(e.target.value)}
+              onBlur={commitReviewPageInput}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  (e.target as HTMLInputElement).blur();
+                }
+              }}
+              className="h-9 min-h-0 w-full px-2 py-1 text-center text-xs tabular-nums"
+              data-testid={isTop ? "review-lines-page-select" : "review-lines-page-select-bottom"}
+            />
+          </div>
+          <span className="whitespace-nowrap text-xs text-text-muted">
+            / {reviewPaging.pageCount}
+          </span>
+          <Button
+            small
+            disabled={reviewPage <= 0}
+            onClick={() => setReviewPageIndex(reviewPage - 1)}
+            className="shrink-0"
+            data-testid={isTop ? "review-lines-prev" : "review-lines-prev-bottom"}
+          >
+            Previous
+          </Button>
+          <Button
+            small
+            disabled={reviewPage >= reviewPaging.pageCount - 1}
+            onClick={() => setReviewPageIndex(reviewPage + 1)}
+            className="shrink-0"
+            data-testid={isTop ? "review-lines-next" : "review-lines-next-bottom"}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   function toggleRecipe(index: number) {
     setParsedRecipes((prev) => {
@@ -377,6 +542,19 @@ export default function PaprikaImport() {
     [],
   );
 
+  const approveSuggestedHouseholdMatch = useCallback(
+    (groupKey: string, ingredient: Ingredient | null | undefined) => {
+      setError("");
+      if (!ingredient) return;
+      applyResolutionToGroup(groupKey, {
+        kind: "use",
+        ingredientId: ingredient.id,
+        ingredient,
+      });
+    },
+    [applyResolutionToGroup],
+  );
+
   const openCreateModalForGroup = useCallback((groupKey: string) => {
     const line = parsedRecipes
       .flatMap((r) => r.parsedLines)
@@ -455,7 +633,29 @@ export default function PaprikaImport() {
       currentIngredients = [...currentIngredients, ...newIngredients];
     }
 
-    household.ingredients = [...household.ingredients, ...allNewIngredients];
+    const ingredientsByName = new Map<string, Ingredient>();
+    const idRemap = new Map<string, string>();
+    const dedupedIngredients: Ingredient[] = [];
+    for (const ing of allNewIngredients) {
+      const nameKey = ing.name.toLowerCase().trim();
+      const existing = ingredientsByName.get(nameKey);
+      if (existing) {
+        idRemap.set(ing.id, existing.id);
+      } else {
+        ingredientsByName.set(nameKey, ing);
+        dedupedIngredients.push(ing);
+      }
+    }
+    if (idRemap.size > 0) {
+      for (const meal of [...newMeals, ...household.baseMeals]) {
+        for (const comp of meal.components) {
+          const remapped = idRemap.get(comp.ingredientId);
+          if (remapped) comp.ingredientId = remapped;
+        }
+      }
+    }
+
+    household.ingredients = [...household.ingredients, ...dedupedIngredients];
     household.baseMeals = [...household.baseMeals, ...newMeals];
 
     try {
@@ -756,38 +956,7 @@ export default function PaprikaImport() {
             </div>
           </Section>
 
-          {reviewPaging.showPager && (
-            <div
-              className="mb-2 flex flex-wrap items-center justify-between gap-2"
-              data-testid="review-lines-pagination"
-            >
-              <span className="text-xs text-text-muted">
-                Showing {reviewPaging.from1}–{reviewPaging.end} of {reviewPaging.total}
-                {" · "}
-                Page {reviewPage + 1} of {reviewPaging.pageCount}
-              </span>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  small
-                  disabled={reviewPage <= 0}
-                  onClick={() => setReviewPage((p) => Math.max(0, p - 1))}
-                  data-testid="review-lines-prev"
-                >
-                  Previous
-                </Button>
-                <Button
-                  small
-                  disabled={reviewPage >= reviewPaging.pageCount - 1}
-                  onClick={() =>
-                    setReviewPage((p) => Math.min(reviewPaging.pageCount - 1, p + 1))
-                  }
-                  data-testid="review-lines-next"
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+          {renderReviewLinesPager("top")}
 
           <div className="space-y-1" data-testid="review-lines">
             {reviewGroups.slice(reviewPaging.start, reviewPaging.end).map((group, pageIdx) => {
@@ -846,7 +1015,23 @@ export default function PaprikaImport() {
                             </div>
                           )}
                         {sample.resolutionStatus === "pending" && sample.matchedIngredient && (
-                          <Chip variant="success" className="max-w-full truncate text-[10px]">
+                          <Chip
+                            variant="success"
+                            className="max-w-full cursor-pointer truncate text-[10px] hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand"
+                            role="button"
+                            tabIndex={0}
+                            title="Use suggested household match"
+                            aria-label={`Use suggested match: ${sample.matchedIngredient.name}`}
+                            data-testid={`review-group-suggested-${i}`}
+                            onClick={() =>
+                              approveSuggestedHouseholdMatch(group.groupKey, sample.matchedIngredient)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key !== "Enter" && e.key !== " ") return;
+                              e.preventDefault();
+                              approveSuggestedHouseholdMatch(group.groupKey, sample.matchedIngredient);
+                            }}
+                          >
                             Suggested: {sample.matchedIngredient.name}
                           </Chip>
                         )}
@@ -1029,6 +1214,8 @@ export default function PaprikaImport() {
             })}
           </div>
 
+          {renderReviewLinesPager("bottom")}
+
           {reviewGroups.length === 0 && (reviewFilter === "ambiguous" || reviewFilter === "exceptions") && (
             <EmptyState>No exceptions to review. All ingredients are resolved.</EmptyState>
           )}
@@ -1045,14 +1232,31 @@ export default function PaprikaImport() {
               Search and pick the household ingredient for this group (apply to all occurrences).
             </p>
             <PaprikaIngredientPicker
-              ingredients={ingredients}
+              ingredients={allPickerIngredients}
               onSelect={(ing) => {
                 if (matchPickerGroupKey) {
-                  applyResolutionToGroup(matchPickerGroupKey, {
-                    kind: "use",
-                    ingredientId: ing.id,
-                    ingredient: ing,
-                  });
+                  if (ing.id.startsWith("pending-create:")) {
+                    const sourceKey = ing.id.slice("pending-create:".length);
+                    const sourceLine = parsedRecipes
+                      .flatMap((r) => r.parsedLines)
+                      .find(
+                        (l) =>
+                          (l.groupKey ?? groupKeyForParsedName(l.name)) === sourceKey &&
+                          l.createDraft,
+                      );
+                    if (sourceLine?.createDraft) {
+                      applyResolutionToGroup(matchPickerGroupKey, {
+                        kind: "create",
+                        draft: sourceLine.createDraft,
+                      });
+                    }
+                  } else {
+                    applyResolutionToGroup(matchPickerGroupKey, {
+                      kind: "use",
+                      ingredientId: ing.id,
+                      ingredient: ing,
+                    });
+                  }
                 }
                 setMatchPickerGroupKey(null);
               }}

@@ -10,6 +10,7 @@ import {
   saveDefaultHouseholdId,
 } from "../src/storage";
 import { saveImportSession, loadImportSession } from "../src/paprika-parser";
+import { applyThemeToDocument, loadThemePreference } from "../src/theme";
 import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 function makeHousehold(overrides: Partial<Household> = {}): Household {
@@ -26,6 +27,7 @@ function makeHousehold(overrides: Partial<Household> = {}): Household {
 
 beforeEach(() => {
   localStorage.clear();
+  applyThemeToDocument(loadThemePreference());
 });
 
 function renderSettings() {
@@ -40,6 +42,19 @@ function renderSettings() {
 }
 
 describe("F050 — Settings page", () => {
+  it("saves appearance theme to localStorage and document", async () => {
+    saveHousehold(makeHousehold());
+    renderSettings();
+
+    await userEvent.click(screen.getByTestId("settings-theme-dark"));
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(localStorage.getItem("onebaseplate-theme")).toBe("dark");
+
+    await userEvent.click(screen.getByTestId("settings-theme-system"));
+    expect(document.documentElement.dataset.theme).toBe("system");
+    expect(localStorage.getItem("onebaseplate-theme")).toBe("system");
+  });
+
   it("shows data actions and Paprika import", () => {
     saveHousehold(makeHousehold());
     renderSettings();

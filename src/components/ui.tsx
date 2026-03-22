@@ -139,13 +139,16 @@ export function Input({
 
 export function Select({
   className = "",
+  children,
   ...props
 }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       className={`rounded-sm border border-border-default bg-surface px-4 py-2 text-base text-text-primary min-h-[44px] transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light ${className}`}
       {...props}
-    />
+    >
+      {children}
+    </select>
   );
 }
 

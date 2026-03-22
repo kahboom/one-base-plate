@@ -1,6 +1,11 @@
 import { useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { PageHeader, Card, Button, ConfirmDialog, useConfirm } from "../components/ui";
+import { PageHeader, Card, Button, ConfirmDialog, useConfirm, FieldLabel } from "../components/ui";
+import {
+  loadThemePreference,
+  saveThemePreference,
+  type ThemePreference,
+} from "../theme";
 import {
   clearAllHouseholdsAndDefault,
   clearDefaultHouseholdId,
@@ -24,6 +29,12 @@ export default function Settings() {
     confirm: confirmMeals,
     cancel: cancelMeals,
   } = useConfirm();
+  const [themePreference, setThemePreference] = useState<ThemePreference>(() => loadThemePreference());
+
+  function setTheme(pref: ThemePreference) {
+    saveThemePreference(pref);
+    setThemePreference(pref);
+  }
 
   function handleExport() {
     const json = exportHouseholdsJSON();
@@ -85,6 +96,45 @@ export default function Settings() {
   return (
     <>
       <PageHeader title="Settings" />
+
+      <Card className="mb-6">
+        <h2 className="mb-3 text-sm font-semibold text-text-primary">Appearance</h2>
+        <FieldLabel label="Theme">
+          <div
+            className="flex flex-wrap gap-2"
+            role="radiogroup"
+            aria-label="Theme"
+            data-testid="settings-theme-group"
+          >
+            {(
+              [
+                { value: "light" as const, label: "Light" },
+                { value: "dark" as const, label: "Dark" },
+                { value: "system" as const, label: "System" },
+              ] as const
+            ).map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={themePreference === value}
+                data-testid={`settings-theme-${value}`}
+                className={`rounded-sm border px-4 py-2 text-sm font-medium transition-colors min-h-[44px] ${
+                  themePreference === value
+                    ? "border-brand bg-brand-light text-brand"
+                    : "border-border-default bg-surface text-text-primary hover:bg-bg"
+                }`}
+                onClick={() => setTheme(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </FieldLabel>
+        <p className="mt-2 text-xs text-text-muted">
+          System follows your device setting (light or dark).
+        </p>
+      </Card>
 
       <Card className="mb-6">
         <h2 className="mb-3 text-sm font-semibold text-text-primary">Data</h2>

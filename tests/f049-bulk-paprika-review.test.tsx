@@ -606,6 +606,74 @@ describe("PaprikaImport bulk review UI", () => {
     expect(screen.queryByText(/Suggested:/)).not.toBeInTheDocument();
   });
 
+  it("accepts the suggested household match when the Suggested chip is clicked", async () => {
+    const user = userEvent.setup();
+    const hh = makeHousehold();
+    saveHousehold(hh);
+    const recipe = makePaprikaRecipe({
+      name: "Chicken Dish",
+      ingredients: "200g chicken breast",
+    });
+    const chicken = hh.ingredients.find((i) => i.id === "ing-chicken")!;
+    let parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
+    // Strong household matches auto-resolve; low-confidence matches stay pending with a suggestion.
+    const pr = parsed[0]!;
+    parsed = [
+      {
+        ...pr,
+        parsedLines: pr.parsedLines.map((line, idx) =>
+          idx === 0
+            ? {
+                ...line,
+                resolutionStatus: "pending" as const,
+                action: "use" as const,
+                status: "matched" as const,
+                matchedIngredient: chicken,
+                confidenceBand: "low" as const,
+              }
+            : line,
+        ),
+      },
+    ];
+    saveImportSession({
+      householdId: "h-bulk",
+      parsedRecipes: parsed,
+      step: "review",
+      savedAt: new Date().toISOString(),
+    });
+
+    renderAt("/household/h-bulk/import-paprika");
+    expect(screen.getByTestId("review-group-suggested-0")).toBeInTheDocument();
+    await user.click(screen.getByTestId("review-group-suggested-0"));
+    expect(screen.getByTestId("review-group-use-preview-0")).toBeInTheDocument();
+    expect(screen.getByTestId("review-group-use-name-0")).toHaveTextContent(/chicken breast/i);
+    expect(screen.queryByTestId("review-group-suggested-0")).not.toBeInTheDocument();
+  });
+
+  it("opens bulk review page from reviewPage URL query (1-based)", () => {
+    const hh = makeHousehold();
+    saveHousehold(hh);
+    const recipes = Array.from({ length: 11 }, (_, i) =>
+      makePaprikaRecipe({
+        name: `Recipe ${i}`,
+        ingredients: `1 tsp unique herb zzz${i}`,
+      }),
+    );
+    const parsed = parsePaprikaRecipes(recipes, hh.ingredients, []);
+    saveImportSession({
+      householdId: "h-bulk",
+      parsedRecipes: parsed,
+      step: "review",
+      savedAt: new Date().toISOString(),
+    });
+
+    renderAt("/household/h-bulk/import-paprika?reviewPage=2");
+    expect(screen.getByTestId("review-lines-pagination")).toHaveTextContent(/Showing 11/);
+    expect(screen.getByTestId("review-lines-pagination")).toHaveTextContent(/Page 2 of 2/);
+    expect(screen.getByTestId("review-lines-pagination-bottom")).toHaveTextContent(/Showing 11/);
+    expect(screen.getByTestId("review-lines-pagination-bottom")).toHaveTextContent(/Page 2 of 2/);
+  });
+
   it("shows per-line action selects when the same parsed name appears in multiple lines", async () => {
     const hh = makeHousehold();
     saveHousehold(hh);

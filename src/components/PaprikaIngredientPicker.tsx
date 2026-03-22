@@ -47,6 +47,9 @@ export default function PaprikaIngredientPicker({
               data-testid={`${testId}-option-${ing.id}`}
             >
               {ing.name}
+              {ing.id.startsWith("pending-create:") && (
+                <span className="ml-1.5 text-[10px] text-text-muted">(pending import)</span>
+              )}
             </button>
           </li>
         ))}
