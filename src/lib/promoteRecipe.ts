@@ -32,6 +32,7 @@ export function promoteRecipeToBaseMeal(
     rescueEligible: opts.rescueEligible ?? false,
     wasteReuseHints: [],
     recipeLinks: recipe.recipeLinks,
+    recipeRefs: [{ recipeId: recipe.id, role: "primary" as const }],
     notes: recipe.notes,
     imageUrl: recipe.imageUrl,
     provenance: recipe.provenance,

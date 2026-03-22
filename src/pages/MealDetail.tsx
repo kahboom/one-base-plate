@@ -7,6 +7,7 @@ import {
   computeMealOverlap,
   getAllIngredientIds,
 } from "../planner";
+import { summarizeRecipeRef } from "../lib/componentRecipes";
 import { PageHeader, Card, Button, Chip, Section } from "../components/ui";
 import MealImageSlot from "../components/MealImageSlot";
 import ImportMappingAdjust from "../components/ImportMappingAdjust";
@@ -147,7 +148,75 @@ export function MealDetailContent({
       <MealStructure
         componentsByRole={componentsByRole}
         ingredientName={ingredientName}
+        household={household}
       />
+
+      {((meal.recipeRefs ?? []).length > 0 || meal.components.some((c) => (c.recipeRefs ?? []).length > 0)) && (
+        <Section title="Recipes">
+          {(meal.recipeRefs ?? []).length > 0 && (
+            <div data-testid="meal-recipe-refs" className="mb-4">
+              <h4 className="mb-1 text-sm font-semibold text-text-secondary">Whole-meal recipes</h4>
+              <div className="space-y-2">
+                {(meal.recipeRefs ?? []).map((ref, i) => {
+                  const recipe = (household.recipes ?? []).find((r) => r.id === ref.recipeId);
+                  const name = ref.label ?? recipe?.name ?? ref.recipeId;
+                  return (
+                    <div key={ref.recipeId || i} className="flex flex-wrap items-center gap-2 rounded-sm border border-border-light bg-surface-card p-2" data-testid={`meal-ref-card-${i}`}>
+                      <span className="text-sm font-medium text-text-primary">{name}</span>
+                      {ref.role && (
+                        <Chip variant="neutral" className="text-[10px]">{ref.role}</Chip>
+                      )}
+                      {recipe?.recipeType && (
+                        <Chip variant="info" className="text-[10px]">{recipe.recipeType}</Chip>
+                      )}
+                      {ref.notes && (
+                        <span className="text-xs text-text-muted">{ref.notes}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {meal.components.some((c) => (c.recipeRefs ?? []).length > 0) && (
+            <div data-testid="component-recipe-refs">
+              <h4 className="mb-1 text-sm font-semibold text-text-secondary">Component recipes</h4>
+              <div className="space-y-1">
+                {meal.components
+                  .filter((c) => (c.recipeRefs ?? []).length > 0)
+                  .map((c, ci) => {
+                    const ingName = ingredientName(c.ingredientId);
+                    return (c.recipeRefs ?? []).map((cr, ri) => {
+                      const isAlt = cr.notes?.startsWith("alt:");
+                      const altIngId = isAlt ? cr.notes!.slice(4) : null;
+                      const altIngName = altIngId ? ingredientName(altIngId) : null;
+                      return (
+                        <div
+                          key={`${c.id}-${ri}`}
+                          className="flex flex-wrap items-center gap-2 text-sm"
+                          data-testid={`comp-recipe-${ci}-${ri}`}
+                        >
+                          <span className="text-text-muted">{c.role}:</span>
+                          <span className="font-medium text-text-primary">
+                            {isAlt ? `Alt (${altIngName ?? altIngId})` : ingName}
+                          </span>
+                          <span className="text-text-secondary">
+                            {summarizeRecipeRef(cr, {
+                              linkedMealName: household.baseMeals.find((m) => m.id === cr.linkedBaseMealId)?.name,
+                            })}
+                          </span>
+                          {cr.isDefault && (
+                            <Chip variant="success" className="text-[10px]">default</Chip>
+                          )}
+                        </div>
+                      );
+                    });
+                  })}
+              </div>
+            </div>
+          )}
+        </Section>
+      )}
 
       {meal.recipeLinks && meal.recipeLinks.length > 0 && (
         <Section title="Recipe links">
@@ -310,9 +379,11 @@ export function MealDetailContent({
 function MealStructure({
   componentsByRole,
   ingredientName,
+  household,
 }: {
   componentsByRole: Map<string, BaseMeal["components"]>;
   ingredientName: (id: string) => string;
+  household: Household;
 }) {
   const roleLabels: Record<string, string> = {
     protein: "Protein options",
@@ -349,14 +420,40 @@ function MealStructure({
                       {comp.quantity && (
                         <span className="ml-1 text-xs text-text-muted">({comp.quantity})</span>
                       )}
+                      {(comp.recipeRefs ?? []).filter((r) => !r.notes?.startsWith("alt:")).length > 0 && (
+                        <div className="mt-1">
+                          <span className="text-xs text-text-muted">Recipe: </span>
+                          <span className="text-xs text-text-secondary">
+                            {summarizeRecipeRef(
+                              (comp.recipeRefs ?? []).find((r) => !r.notes?.startsWith("alt:") && r.isDefault) ??
+                              (comp.recipeRefs ?? []).find((r) => !r.notes?.startsWith("alt:")),
+                              { linkedMealName: household.baseMeals.find((m) => m.id === (comp.recipeRefs ?? [])[0]?.linkedBaseMealId)?.name },
+                            )}
+                          </span>
+                        </div>
+                      )}
                       {hasAlternatives && (
                         <div className="mt-1" data-testid="protein-alternatives">
                           <span className="text-xs text-text-muted">or: </span>
-                          {comp.alternativeIngredientIds!.map((altId) => (
-                            <Chip key={altId} variant="info" className="mr-1">
-                              {ingredientName(altId)}
-                            </Chip>
-                          ))}
+                          {comp.alternativeIngredientIds!.map((altId) => {
+                            const altRef = (comp.recipeRefs ?? []).find(
+                              (r) => r.notes?.startsWith(`alt:${altId}`),
+                            );
+                            return (
+                              <span key={altId} className="mr-1 inline-flex items-center gap-0.5">
+                                <Chip variant="info">
+                                  {ingredientName(altId)}
+                                </Chip>
+                                {altRef && (
+                                  <span className="text-[10px] text-text-muted">
+                                    ({summarizeRecipeRef(altRef, {
+                                      linkedMealName: household.baseMeals.find((m) => m.id === altRef.linkedBaseMealId)?.name,
+                                    })})
+                                  </span>
+                                )}
+                              </span>
+                            );
+                          })}
                         </div>
                       )}
                     </Card>

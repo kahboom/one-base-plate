@@ -27,6 +27,12 @@ import BrowseMealsModal from "../components/planner/BrowseMealsModal";
 import { useSuggestedTrayCap } from "../hooks/useSuggestedTrayCap";
 import { PageHeader, Button, Select, Section, EmptyState, Chip, Input } from "../components/ui";
 import { getWeeklyAnchorForWeekday } from "../lib/weeklyPlanOps";
+import {
+  countMealRecipes,
+  hasBatchPrepRecipe,
+  hasPrepAheadRecipe,
+  findPrepAheadOpportunities,
+} from "../lib/componentRecipes";
 import WeeklyThemeNightsCollapsible from "../components/WeeklyThemeNightsCollapsible";
 import AppModal from "../components/AppModal";
 import { MealDetailContent } from "./MealDetail";
@@ -408,6 +414,30 @@ export default function WeeklyPlanner() {
                 </div>
               </div>
             )}
+            {(() => {
+              const prepOps = findPrepAheadOpportunities(
+                plan.days,
+                household.baseMeals,
+                household.recipes ?? [],
+                household.ingredients,
+              );
+              if (prepOps.length === 0) return null;
+              return (
+                <div className="mt-3 border-t border-border-light pt-3" data-testid="prep-ahead-opportunities">
+                  <span className="text-sm font-semibold text-text-primary">Prep-ahead opportunities</span>
+                  <div className="mt-1 space-y-1">
+                    {prepOps.map((op) => (
+                      <p key={op.ingredientId} className="text-xs text-text-secondary" data-testid={`prep-ahead-${op.ingredientId}`}>
+                        <span className="font-medium">{op.ingredientName}</span> appears on {op.dayLabels.join(", ")}
+                        {op.recipeName && (
+                          <> &mdash; batch-prep recipe: <span className="text-brand">{op.recipeName}</span></>
+                        )}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         );
       })()}
@@ -801,6 +831,31 @@ function DayCard({
                 </Chip>
               </>
             )}
+            {meal && (() => {
+              const recipeCount = countMealRecipes(meal);
+              const batchPrep = hasBatchPrepRecipe(meal, (household.recipes ?? []));
+              const prepAhead = hasPrepAheadRecipe(meal, (household.recipes ?? []));
+              if (recipeCount === 0 && !batchPrep && !prepAhead) return null;
+              return (
+                <>
+                  {recipeCount > 0 && (
+                    <Chip variant="neutral" className="text-[10px]" data-testid={`recipe-count-${dayLabel.toLowerCase()}`}>
+                      {recipeCount} recipe{recipeCount !== 1 ? "s" : ""}
+                    </Chip>
+                  )}
+                  {prepAhead && (
+                    <Chip variant="info" className="text-[10px]" data-testid={`prep-ahead-chip-${dayLabel.toLowerCase()}`}>
+                      prep-ahead
+                    </Chip>
+                  )}
+                  {batchPrep && (
+                    <Chip variant="info" className="text-[10px]" data-testid={`batch-prep-chip-${dayLabel.toLowerCase()}`}>
+                      batch-friendly
+                    </Chip>
+                  )}
+                </>
+              );
+            })()}
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <Button

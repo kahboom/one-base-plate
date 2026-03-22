@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { BaseMeal, HouseholdMember, Ingredient, MealOutcome } from "../types";
 import type { OverlapResult, LearnedPatterns } from "../planner";
 import { computeMealOverlap, generateShortReason } from "../planner";
+import { countMealRecipes } from "../lib/componentRecipes";
 import { Chip, Button } from "./ui";
 import MealImageSlot from "./MealImageSlot";
 
@@ -70,6 +71,7 @@ export default function MealCard({
   );
   const tightTray = compact && showActionsWhenCompact;
   const cardImageVariant = tightTray ? "card-tight" : compact ? "card-compact" : "card";
+  const recipeCount = countMealRecipes(meal);
 
   function handleDragStart(e: React.DragEvent) {
     e.dataTransfer.setData("application/meal-id", meal.id);
@@ -112,6 +114,11 @@ export default function MealCard({
         >
           {overlap.score}/{overlap.total} overlap
         </span>
+        {recipeCount > 0 && (
+          <span data-testid="recipe-count" className="text-text-muted">
+            {recipeCount} recipe{recipeCount !== 1 ? "s" : ""}
+          </span>
+        )}
       </div>
 
       <div

@@ -53,7 +53,7 @@ export function sortBaseMeals(
   return copy;
 }
 
-export type RecipeSortKey = "name" | "componentCount" | "totalPrepMinutes";
+export type RecipeSortKey = "name" | "componentCount" | "totalPrepMinutes" | "recipeType";
 
 function recipeTotalPrepMinutes(r: Recipe): number {
   return (r.prepTimeMinutes ?? 0) + (r.cookTimeMinutes ?? 0);
@@ -74,6 +74,8 @@ export function sortRecipes(
         return compareNumbers(a.components.length, b.components.length, dir);
       case "totalPrepMinutes":
         return compareNumbers(recipeTotalPrepMinutes(a), recipeTotalPrepMinutes(b), dir);
+      case "recipeType":
+        return compareStrings(a.recipeType ?? "", b.recipeType ?? "", dir);
       default:
         return 0;
     }

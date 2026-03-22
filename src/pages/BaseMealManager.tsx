@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import type { BaseMeal, MealComponent, Ingredient } from "../types";
+import type { BaseMeal, MealComponent, Ingredient, Recipe, RecipeRef } from "../types";
 import { loadHousehold, saveHousehold, toSentenceCase } from "../storage";
 import {
   PageHeader,
@@ -24,6 +24,7 @@ import {
 } from "../lib/listSort";
 import ComponentForm from "../components/meals/ComponentForm";
 import RecipeLinksEditor from "../components/meals/RecipeLinksEditor";
+import ComponentRecipePicker from "../components/meals/ComponentRecipePicker";
 
 const MEAL_SORT_OPTIONS: {
   value: string;
@@ -100,6 +101,7 @@ function MealModal({
   meal,
   ingredients,
   allMeals,
+  recipes,
   onChange,
   onClose,
   onRemove,
@@ -108,6 +110,7 @@ function MealModal({
   meal: BaseMeal;
   ingredients: Ingredient[];
   allMeals: BaseMeal[];
+  recipes: Recipe[];
   onChange: (updated: BaseMeal) => void;
   onClose: () => void;
   onRemove: () => void;
@@ -116,6 +119,7 @@ function MealModal({
   const [openComponentIndexes, setOpenComponentIndexes] = useState<number[]>(
     [],
   );
+  const [mealRecipePickerOpen, setMealRecipePickerOpen] = useState(false);
 
   function addComponent() {
     const newComponent: MealComponent = {
@@ -235,6 +239,7 @@ function MealModal({
                   onRemove={() => removeComponent(i)}
                   onAddIngredient={onAddIngredient}
                   allMeals={allMeals}
+                  recipes={recipes}
                   excludeMealId={meal.id}
                 />
               ))}
@@ -319,6 +324,88 @@ function MealModal({
               onChange={(recipeLinks) => onChange({ ...meal, recipeLinks })}
             />
           </details>
+
+          <details
+            data-testid="whole-meal-recipes-section"
+            className="rounded-sm border border-border-light bg-surface-card p-3"
+          >
+            <summary className="cursor-pointer text-sm font-medium text-text-primary">
+              Whole-meal recipes ({(meal.recipeRefs ?? []).length})
+            </summary>
+            <div className="mt-3 space-y-2">
+              {(meal.recipeRefs ?? []).length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {(meal.recipeRefs ?? []).map((ref, i) => {
+                    const recipeName =
+                      ref.label ??
+                      recipes.find((r) => r.id === ref.recipeId)?.name ??
+                      ref.recipeId;
+                    return (
+                      <span
+                        key={ref.recipeId || i}
+                        className="inline-flex items-center gap-1"
+                        data-testid={`whole-meal-ref-${i}`}
+                      >
+                        <Chip variant="info">{recipeName}</Chip>
+                        {ref.role && (
+                          <Chip variant="neutral" className="text-[10px]">
+                            {ref.role}
+                          </Chip>
+                        )}
+                        <Button
+                          variant="ghost"
+                          small
+                          className="text-text-muted hover:text-danger"
+                          onClick={() => {
+                            const next = (meal.recipeRefs ?? []).filter(
+                              (_, idx) => idx !== i,
+                            );
+                            onChange({ ...meal, recipeRefs: next });
+                          }}
+                          data-testid={`remove-whole-meal-ref-${i}`}
+                        >
+                          Remove
+                        </Button>
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-text-muted">
+                  No whole-meal recipes attached yet.
+                </p>
+              )}
+              <Button
+                small
+                onClick={() => setMealRecipePickerOpen(true)}
+                data-testid="attach-whole-meal-recipe"
+              >
+                Attach recipe
+              </Button>
+            </div>
+          </details>
+
+          {mealRecipePickerOpen && (
+            <ComponentRecipePicker
+              open
+              onClose={() => setMealRecipePickerOpen(false)}
+              excludeMealId={meal.id}
+              baseMeals={allMeals}
+              recipes={recipes}
+              mode="meal"
+              onSave={() => {}}
+              onSaveMealRef={(ref: RecipeRef) => {
+                const existing = meal.recipeRefs ?? [];
+                const alreadyLinked = ref.recipeId && existing.some(
+                  (r) => r.recipeId === ref.recipeId,
+                );
+                if (!alreadyLinked) {
+                  onChange({ ...meal, recipeRefs: [...existing, ref] });
+                }
+                setMealRecipePickerOpen(false);
+              }}
+            />
+          )}
 
           <details
             data-testid="notes-section"
@@ -471,6 +558,7 @@ export default function BaseMealManager() {
 
   const [meals, setMeals] = useState<BaseMeal[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [householdName, setHouseholdName] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -484,6 +572,7 @@ export default function BaseMealManager() {
     if (household) {
       setMeals(household.baseMeals);
       setIngredients(household.ingredients);
+      setRecipes(household.recipes ?? []);
       setHouseholdName(household.name);
     }
     setLoaded(true);
@@ -661,6 +750,7 @@ export default function BaseMealManager() {
           meal={editingMeal}
           ingredients={ingredients}
           allMeals={meals}
+          recipes={recipes}
           onChange={updateMeal}
           onClose={() => setEditingId(null)}
           onRemove={() => removeMeal(editingMeal.id)}

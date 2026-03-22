@@ -29,6 +29,13 @@ export type IngredientCategory =
   | "freezer"
   | "pantry";
 
+export interface RecipeRef {
+  recipeId: string;
+  label?: string;
+  role?: "primary" | "assembly" | "shortcut" | "component" | "sub-recipe" | "batch-prep";
+  notes?: string;
+}
+
 export interface Ingredient {
   id: string;
   name: string;
@@ -40,6 +47,8 @@ export interface Ingredient {
   imageUrl?: string;
   catalogId?: string;
   source?: "manual" | "catalog" | "pending-import";
+  /** Optional fallback recipe refs; not the primary model for recipe resolution. */
+  defaultRecipeRefs?: RecipeRef[];
 }
 
 export type ComponentRecipeSourceType =
@@ -56,6 +65,8 @@ export interface ComponentRecipeRef {
   linkedBaseMealId?: string;
   /** When the source is an imported/stored recipe row; may match linkedBaseMealId. */
   importedRecipeSourceId?: string;
+  /** Explicit FK to a Recipe library entry. */
+  recipeId?: string;
   label: string;
   url?: string;
   notes?: string;
@@ -90,6 +101,13 @@ export interface RecipeLink {
   url: string;
 }
 
+export type RecipeType =
+  | "whole-meal"
+  | "component"
+  | "sauce"
+  | "sub-recipe"
+  | "batch-prep";
+
 /**
  * Imported or hand-entered recipe in the household library. Not directly scheduled;
  * promote to a {@link BaseMeal} for planning and groceries.
@@ -97,9 +115,16 @@ export interface RecipeLink {
 export interface Recipe {
   id: string;
   name: string;
+  recipeType?: RecipeType;
+  /** Parent recipe id for sub-recipe / sauce relationships. */
+  parentRecipeId?: string;
+  /** Optional tags for search/filter (parallels BaseMeal.tags). */
+  tags?: string[];
   components: MealComponent[];
   /** Original ingredients block from import (e.g. Paprika or pasted text). */
   ingredientsText?: string;
+  /** Step-by-step cooking directions. */
+  directions?: string;
   defaultPrep?: string;
   notes?: string;
   recipeLinks?: RecipeLink[];
@@ -125,6 +150,8 @@ export interface BaseMeal {
   rescueEligible: boolean;
   wasteReuseHints: string[];
   recipeLinks?: RecipeLink[];
+  /** Explicit references to Recipe library entries for whole-meal / assembly / shortcut cooking. */
+  recipeRefs?: RecipeRef[];
   notes?: string;
   imageUrl?: string;
   provenance?: RecipeProvenance;

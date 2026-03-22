@@ -853,5 +853,36 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Next truly incomplete PRD feature:** None — every feature entry in `PRD.json` now has `passes=true`. Next engineering work should come from new PRD items, milestones beyond M5, or non-feature hardening (unless a feature is re-opened intentionally).
 - **Verification:** `npx tsc --noEmit` passes; `npx vitest run tests/f005-base-meals.test.tsx tests/f028-multi-protein.test.tsx tests/f029-recipe-links-notes.test.tsx tests/f021-weekly-calendar.test.tsx tests/f056-theme-anchors.test.tsx` — 5 files, 47 tests passed.
 
+### F057 — First-class Recipe model with RecipeRef and typed categories (2026-03-22)
+- **PRD:** F057; screens S002, S004, S007, S010.
+- Added `RecipeType` union (`whole-meal | component | sauce | sub-recipe | batch-prep`) and `RecipeRef` type (`recipeId, label?, role?, notes?`) to `src/types.ts`.
+- Enhanced `Recipe` with optional `recipeType`, `parentRecipeId` (sub-recipe relationships), `directions` (step-by-step cooking instructions carried from Paprika), `tags`.
+- Added `BaseMeal.recipeRefs?: RecipeRef[]` for whole-meal / assembly / shortcut recipe references alongside existing `recipeLinks`.
+- Added `ComponentRecipeRef.recipeId?: string` as explicit FK to Recipe, formalizing the F055 cooking-first flow while keeping `importedRecipeSourceId` and `linkedBaseMealId` for backwards compatibility.
+- Added `Ingredient.defaultRecipeRefs?: RecipeRef[]` as optional fallback (not the primary resolution model).
+- Added v2 storage migration (`migrateHouseholdRecipeRefs` / `runRecipeRefMigrationIfNeeded`): backfills `recipeRefs` from `sourceRecipeId`, copies `importedRecipeSourceId` to `recipeId` on `ComponentRecipeRef`, infers `recipeType` for imported recipes. Gated by `onebaseplate_migrated_v2` flag; idempotent.
+- Updated `promoteRecipeToBaseMeal` to auto-populate `recipeRefs` with a primary `RecipeRef`.
+- Updated Paprika `buildDraftRecipe` to set `recipeType: "whole-meal"` and carry `directions` from raw Paprika data.
+- Added `recipeType` as optional sort key in `sortRecipes`.
+- PRD: added F057 feature entry, RecipeRef entity, updated Recipe/BaseMeal/ComponentRecipeRef/Ingredient entities in `dataModel`, added to M5/implementationOrder/screenToFeatureMap.
+- Tests: `tests/f057-recipe-model.test.ts` — 24 tests covering recipe entity persistence, backward compatibility, migration safety, component recipe refs with recipeId, imported provenance, promoteRecipeToBaseMeal, BaseMeal.recipeRefs, Ingredient.defaultRecipeRefs, recipeType sorting.
+- Verification: `npx tsc --noEmit`, `npx vitest run tests/f057-recipe-model.test.ts` (24 passed).
+
+## F058 — Recipe attachment and suggestion UX (2026-03-22)
+- Extended `ComponentRecipePicker` to accept optional `recipes: Recipe[]` prop; renders results in three groups (household recipes, imported recipes, base meals) with correct search priority. Added `mode="meal"` for whole-meal RecipeRef attachment with `onSaveMealRef` callback.
+- Added whole-meal RecipeRef attachment UI in `BaseMealManager` `MealModal` section 4: `<details>` block with recipe chips, remove buttons, and "Attach recipe" button opening the picker in meal mode.
+- Added per-alternative-protein recipe attachment in `ComponentForm`: each alternative ingredient shows "Attach recipe" link opening the picker; stores refs with `notes: "alt:{ingredientId}"` convention; shows recipe label chip on alternatives list.
+- Threaded `household.recipes` through `BaseMealManager` → `MealModal` → `ComponentForm` → `ComponentRecipePicker` (and in `Planner.tsx` picker).
+- Implemented `resolveFullCookingRef` in `componentRecipes.ts`: full priority chain (session → plan → component → meal → ingredient → prepNote/recipeLinks). Returns `{ effective, source, sourceLabel }`.
+- Updated Planner "How to make tonight": replaced flat sorted list with role-grouped sections (Protein, Carb, Sauce, Veg/toppings, Toppings). Shows whole-meal `recipeRefs` and `recipeLinks` at top. Displays resolution source labels (e.g. "Whole-meal recipe", "Ingredient default") as muted text.
+- Added recipe cue chips on `WeeklyPlanner` `DayCard`: recipe count, prep-ahead, batch-friendly indicators (only shown when non-zero).
+- Implemented `findPrepAheadOpportunities`: scans week plan for ingredients appearing on 2+ days with batch-prep recipes, surfaced below effort-balance bar.
+- Enhanced `MealDetailContent`: added "Recipes" section showing whole-meal `recipeRefs` as cards and component-level recipe refs as summary lines. Updated `MealStructure` to show per-component recipe labels and per-alternative recipe indicators.
+- Added subtle recipe count cue on `MealCard` stats line using `countMealRecipes`.
+- Added helper functions: `countMealRecipes`, `hasBatchPrepRecipe`, `hasPrepAheadRecipe`, `findPrepAheadOpportunities`.
+- PRD: added F058 feature entry with 12 steps, dependencies on F055/F057, acceptance refs S002/S003/S004/S007. Added to M5/implementationOrder/screenToFeatureMap.
+- Tests: `tests/f058-recipe-attachment-ux.test.ts` — 26 tests covering full resolution chain priority (all 7 levels), backwards-compatible `resolveComponentEffectiveRef`, session override vs saved default, recipe counting (with alt-protein exclusion), batch-prep detection, prep-ahead opportunities, alt-protein convention, and `summarizeRecipeRef`.
+- Verification: `npx tsc --noEmit` clean, `npx vitest run` — 963 passed, 0 failed (63 test files).
+
 ## Next Task
-- No PRD feature remains with `passes=false` after reconciliation. Define the next product slice in `PRD.json` (or reopen a feature with explicit scope) before picking up new implementation work.
+- All PRD features including F058 now have `passes=true`. Define the next product slice in `PRD.json` (or reopen a feature with explicit scope) before picking up new implementation work.

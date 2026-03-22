@@ -1,3 +1,12 @@
+### 2026-03-22 — First-class Recipe model with RecipeRef, typed categories, and migration (F057)
+- Requestor: product owner
+- Reason: Recipe was a flat library entry with no typed categories, no sub-recipe support, and no way to reference it from BaseMeal or Ingredient. ComponentRecipeRef lacked an explicit FK to Recipe.
+- Scope: Added `RecipeType` union and `RecipeRef` type to `src/types.ts`. Enhanced `Recipe` with `recipeType`, `parentRecipeId`, `directions`, `tags`. Added `recipeRefs` on `BaseMeal` for whole-meal / assembly / shortcut recipe references. Added `recipeId` on `ComponentRecipeRef` as explicit FK to Recipe. Added `defaultRecipeRefs` on `Ingredient` as optional fallback. Added v2 storage migration (`migrateHouseholdRecipeRefs` / `runRecipeRefMigrationIfNeeded`) to backfill `recipeRefs` from `sourceRecipeId`, copy `importedRecipeSourceId` to `recipeId`, and infer `recipeType` for imported recipes. Updated `promoteRecipeToBaseMeal` to populate `recipeRefs`. Updated Paprika import to set `recipeType` and `directions` on Recipe. Added `recipeType` sort key. Added F057 to PRD.json with data model entities, milestones, implementation order, and screen mappings.
+- Sections changed: types, storage, migration, lib helpers, Paprika parser, PRD, tests
+- New feature IDs: F057
+- Data model changes: RecipeType, RecipeRef, Recipe.recipeType/parentRecipeId/directions/tags, BaseMeal.recipeRefs, ComponentRecipeRef.recipeId, Ingredient.defaultRecipeRefs
+- Files changed: `src/types.ts`, `src/storage.ts`, `src/main.tsx`, `src/lib/promoteRecipe.ts`, `src/lib/listSort.ts`, `src/paprika-parser.ts`, `PRD.json`, `CHANGELOG.md`, `agent-progress.md`, `tests/f057-recipe-model.test.ts`
+
 ### 2026-03-22 — PRD / spec reconciliation with implemented code (no product behavior change)
 - Requestor: product owner
 - Reason: `PRD.json` had drifted from the repo: F051 (Base Meal Editor UX refactor) was already implemented and tested but still marked `passes=false`; the embedded `dataModel` did not document cooking-first planner concepts already shipped under F055/F056 (`ComponentRecipeRef`, `DayPlan.componentRecipeOverrides`, `Household.weeklyAnchors`, recipe library `Recipe`, etc.).

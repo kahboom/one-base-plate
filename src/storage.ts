@@ -1,5 +1,5 @@
 import { openDB } from "idb";
-import type { Household, Ingredient, MealComponent, Recipe } from "./types";
+import type { ComponentRecipeRef, Household, Ingredient, MealComponent, Recipe, RecipeRef } from "./types";
 
 /** Assign stable ids to meal components when missing; idempotent. */
 export function ensureHouseholdComponentIds(household: Household): Household {
@@ -413,6 +413,99 @@ export function migrateHouseholdIngredients(household: Household): MigrationResu
   }
 
   return result;
+}
+
+const RECIPE_REF_MIGRATION_KEY = "onebaseplate_migrated_v2";
+
+export interface RecipeRefMigrationResult {
+  recipeRefsBackfilled: number;
+  componentRecipeIdsSet: number;
+  recipeTypesInferred: number;
+}
+
+/**
+ * Migrate a single household: backfill RecipeRef on BaseMeals from sourceRecipeId,
+ * copy importedRecipeSourceId to recipeId on ComponentRecipeRefs, infer recipeType.
+ */
+export function migrateHouseholdRecipeRefs(household: Household): RecipeRefMigrationResult {
+  const result: RecipeRefMigrationResult = {
+    recipeRefsBackfilled: 0,
+    componentRecipeIdsSet: 0,
+    recipeTypesInferred: 0,
+  };
+
+  const recipeIds = new Set((household.recipes ?? []).map((r) => r.id));
+
+  for (const meal of household.baseMeals) {
+    if (meal.sourceRecipeId && recipeIds.has(meal.sourceRecipeId)) {
+      const existing = meal.recipeRefs ?? [];
+      const alreadyLinked = existing.some((r) => r.recipeId === meal.sourceRecipeId);
+      if (!alreadyLinked) {
+        const ref: RecipeRef = { recipeId: meal.sourceRecipeId, role: "primary" };
+        meal.recipeRefs = [...existing, ref];
+        result.recipeRefsBackfilled++;
+      }
+    }
+
+    for (const comp of meal.components) {
+      if (!comp.recipeRefs) continue;
+      for (const cRef of comp.recipeRefs) {
+        if (!cRef.recipeId && cRef.importedRecipeSourceId) {
+          (cRef as ComponentRecipeRef).recipeId = cRef.importedRecipeSourceId;
+          result.componentRecipeIdsSet++;
+        }
+      }
+    }
+  }
+
+  for (const recipe of household.recipes ?? []) {
+    if (!recipe.recipeType) {
+      if (recipe.provenance) {
+        recipe.recipeType = "whole-meal";
+        result.recipeTypesInferred++;
+      }
+    }
+
+    for (const comp of recipe.components) {
+      if (!comp.recipeRefs) continue;
+      for (const cRef of comp.recipeRefs) {
+        if (!cRef.recipeId && cRef.importedRecipeSourceId) {
+          (cRef as ComponentRecipeRef).recipeId = cRef.importedRecipeSourceId;
+          result.componentRecipeIdsSet++;
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+/** Run recipe-ref migration on all households if not already done */
+export function runRecipeRefMigrationIfNeeded(): RecipeRefMigrationResult {
+  if (localStorage.getItem(RECIPE_REF_MIGRATION_KEY)) {
+    return { recipeRefsBackfilled: 0, componentRecipeIdsSet: 0, recipeTypesInferred: 0 };
+  }
+  const households = loadHouseholds();
+  if (households.length === 0) {
+    localStorage.setItem(RECIPE_REF_MIGRATION_KEY, "1");
+    return { recipeRefsBackfilled: 0, componentRecipeIdsSet: 0, recipeTypesInferred: 0 };
+  }
+
+  const totals: RecipeRefMigrationResult = {
+    recipeRefsBackfilled: 0,
+    componentRecipeIdsSet: 0,
+    recipeTypesInferred: 0,
+  };
+  for (const household of households) {
+    const r = migrateHouseholdRecipeRefs(household);
+    totals.recipeRefsBackfilled += r.recipeRefsBackfilled;
+    totals.componentRecipeIdsSet += r.componentRecipeIdsSet;
+    totals.recipeTypesInferred += r.recipeTypesInferred;
+  }
+
+  saveHouseholds(households);
+  localStorage.setItem(RECIPE_REF_MIGRATION_KEY, "1");
+  return totals;
 }
 
 /** Run migration on all households if not already done */

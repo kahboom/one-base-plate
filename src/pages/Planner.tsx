@@ -30,7 +30,7 @@ import MealImageSlot from "../components/MealImageSlot";
 import AppModal from "../components/AppModal";
 import ComponentRecipePicker from "../components/meals/ComponentRecipePicker";
 import {
-  resolveComponentEffectiveRef,
+  resolveFullCookingRef,
   summarizeRecipeRef,
   applySessionOverridesToMeal,
   getDefaultRecipeRef,
@@ -551,34 +551,59 @@ export default function Planner() {
               Defaults come from your base meal. “Tonight” overrides are only for this
               session until you add the meal to the week or save as defaults.
             </p>
-            <ul className="space-y-3">
-              {[...selectedMeal.components]
-                .sort(
-                  (a, b) =>
-                    ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role),
-                )
-                .map((c, idx) => {
+
+            {(selectedMeal.recipeRefs ?? []).length > 0 && (
+              <div className="mb-4 rounded-md border border-border-light bg-surface-card p-3" data-testid="whole-meal-recipe-refs">
+                <span className="text-sm font-medium text-text-primary">Whole meal</span>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {(selectedMeal.recipeRefs ?? []).map((ref, i) => (
+                    <Chip key={ref.recipeId || i} variant="info" data-testid={`whole-meal-planner-ref-${i}`}>
+                      {ref.label ?? ref.recipeId}
+                      {ref.role && ref.role !== "primary" ? ` (${ref.role})` : ""}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {ROLE_ORDER.map((role) => {
+              const roleComponents = selectedMeal.components.filter((c) => c.role === role);
+              if (roleComponents.length === 0) return null;
+              const roleLabel: Record<string, string> = {
+                protein: "Protein",
+                carb: "Carb",
+                sauce: "Sauce",
+                veg: "Veg / toppings",
+                topping: "Toppings",
+              };
+              return (
+                <div key={role} className="mb-3" data-testid={`how-to-group-${role}`}>
+                  <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                    {roleLabel[role] ?? role}
+                  </h4>
+                  <ul className="space-y-2">
+                    {roleComponents.map((c, idx) => {
                   const ing = household.ingredients.find(
                     (x) => x.id === c.ingredientId,
                   );
                   const ingName = ing
                     ? toSentenceCase(ing.name)
                     : c.ingredientId;
-                  const { effective, source } = resolveComponentEffectiveRef(c, {
-                    sessionOverrides,
-                  });
+                  const resolution = resolveFullCookingRef(
+                    c, selectedMeal, household.ingredients, { sessionOverrides },
+                  );
                   const defaultRef = getDefaultRecipeRef(c);
                   const defaultLine = defaultRef
                     ? summarizeRecipeRef(defaultRef, {
                         linkedMealName: linkedMealName(defaultRef.linkedBaseMealId),
                       })
-                    : c.prepNote || "—";
-                  const tonightLine = effective
-                    ? summarizeRecipeRef(effective, {
-                        linkedMealName: linkedMealName(effective.linkedBaseMealId),
+                    : c.prepNote || "\u2014";
+                  const tonightLine = resolution.effective
+                    ? summarizeRecipeRef(resolution.effective, {
+                        linkedMealName: linkedMealName(resolution.effective.linkedBaseMealId),
                       })
-                    : "—";
-                  const showTonight = source === "session";
+                    : "\u2014";
+                  const showTonight = resolution.source === "session";
                   return (
                     <li
                       key={c.id ?? idx}
@@ -586,7 +611,7 @@ export default function Planner() {
                       data-testid={`how-to-row-${c.role}-${idx}`}
                     >
                       <div className="font-medium text-text-primary capitalize">
-                        {c.role}: {ingName}
+                        {ingName}
                       </div>
                       <div className="mt-1 text-text-secondary">
                         <span className="text-text-muted">Default: </span>
@@ -594,11 +619,16 @@ export default function Planner() {
                       </div>
                       <div className="mt-1 text-text-secondary">
                         <span className="text-text-muted">Tonight: </span>
-                        {showTonight ? tonightLine : defaultLine}
+                        {showTonight ? tonightLine : (resolution.effective ? tonightLine : defaultLine)}
                         {showTonight && (
                           <Chip variant="info" className="ml-2">
                             override
                           </Chip>
+                        )}
+                        {!showTonight && resolution.source !== "none" && resolution.source !== "component" && (
+                          <span className="ml-2 text-[10px] text-text-muted">
+                            ({resolution.sourceLabel})
+                          </span>
                         )}
                       </div>
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -629,11 +659,15 @@ export default function Planner() {
                       </div>
                     </li>
                   );
-                })}
-            </ul>
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+
             {selectedMeal.recipeLinks && selectedMeal.recipeLinks.length > 0 && (
-              <div className="mt-4 text-sm text-text-secondary">
-                <span className="font-medium text-text-primary">Whole meal: </span>
+              <div className="mt-2 text-sm text-text-secondary">
+                <span className="font-medium text-text-primary">Recipe links: </span>
                 {selectedMeal.recipeLinks.map((l, i) => (
                   <a
                     key={i}
@@ -698,6 +732,7 @@ export default function Planner() {
           component={pickerComponent}
           excludeMealId={selectedMeal.id}
           baseMeals={household.baseMeals}
+          recipes={household.recipes ?? []}
           mode="tonight"
           onSave={(ref) => {
             if (!pickerComponent.id) return;

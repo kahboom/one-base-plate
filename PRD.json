@@ -142,7 +142,8 @@
           "linkableRecipes[]",
           "notes",
           "source (manual|catalog|pending-import) (optional)",
-          "catalogId (optional)"
+          "catalogId (optional)",
+          "defaultRecipeRefs[] (RecipeRef, optional; fallback only)"
         ]
       },
       {
@@ -184,6 +185,7 @@
           "optionalSauces[]",
           "flavorUpgrades[]",
           "recipeLinks[]",
+          "recipeRefs[] (RecipeRef, optional; whole-meal / assembly / shortcut recipe references)",
           "provenance (RecipeProvenance, optional)",
           "prepTimeMinutes (optional)",
           "cookTimeMinutes (optional)",
@@ -245,6 +247,7 @@
           "sourceType (internal-meal|imported-recipe|external-url|note)",
           "linkedBaseMealId (optional)",
           "importedRecipeSourceId (optional)",
+          "recipeId (optional; explicit FK to Recipe)",
           "label",
           "url (optional)",
           "notes (optional)",
@@ -285,8 +288,12 @@
         "fields": [
           "id",
           "name",
+          "recipeType (whole-meal|component|sauce|sub-recipe|batch-prep) (optional)",
+          "parentRecipeId (optional; sub-recipe relationship)",
+          "tags[] (optional)",
           "components[] (MealComponent)",
           "ingredientsText (optional)",
+          "directions (optional; step-by-step cooking instructions)",
           "defaultPrep (optional)",
           "notes (optional)",
           "recipeLinks[] (optional)",
@@ -334,6 +341,15 @@
         "fields": [
           "label",
           "url"
+        ]
+      },
+      {
+        "name": "RecipeRef",
+        "fields": [
+          "recipeId",
+          "label (optional)",
+          "role (primary|assembly|shortcut|component|sub-recipe|batch-prep) (optional)",
+          "notes (optional)"
         ]
       },
       {
@@ -1756,6 +1772,68 @@
         "S003",
         "S005"
       ]
+    },
+    {
+      "id": "F057",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "First-class Recipe model: typed recipe categories, RecipeRef pointers on BaseMeal/Ingredient, explicit recipeId on ComponentRecipeRef, migration for existing data",
+      "steps": [
+        "Add RecipeType union (whole-meal, component, sauce, sub-recipe, batch-prep) and optional recipeType, parentRecipeId, directions, tags fields on Recipe.",
+        "Add RecipeRef type (recipeId, label, role, notes) as a lightweight pointer to a Recipe library entry.",
+        "Add recipeRefs on BaseMeal for whole-meal/assembly/shortcut recipe references alongside existing recipeLinks.",
+        "Add recipeId on ComponentRecipeRef for explicit FK to Recipe, formalizing the F055 cooking-first flow.",
+        "Add defaultRecipeRefs on Ingredient as an optional fallback (not the primary resolution model).",
+        "Add v2 storage migration: backfill recipeRefs from sourceRecipeId, copy importedRecipeSourceId to recipeId on ComponentRecipeRef, infer recipeType for imported recipes, carry Paprika directions.",
+        "Update promoteRecipeToBaseMeal to populate recipeRefs on promoted meals.",
+        "Update Paprika import to set recipeType and directions on Recipe.",
+        "Add tests covering recipe persistence, backward compatibility, migration safety, component recipe refs, imported provenance, and planner flow."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F029",
+        "F048",
+        "F055"
+      ],
+      "acceptanceRefs": [
+        "S002",
+        "S004",
+        "S007",
+        "S010"
+      ]
+    },
+    {
+      "id": "F058",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "Recipe attachment and suggestion UX: contextual recipe search, whole-meal recipe refs, alt-protein recipes, full cooking resolution chain, recipe cues on weekly planner, prep-ahead opportunities, and enhanced meal detail",
+      "steps": [
+        "Extend ComponentRecipePicker to accept and search household.recipes with priority: household recipes first, imported recipes second, URL/note fallback last.",
+        "Add whole-meal RecipeRef attachment UI in BaseMealManager MealModal section 4 (attach/remove recipe refs on BaseMeal.recipeRefs).",
+        "Add alternative-protein recipe attachment in ComponentForm per alternative ingredient using alt: prefix convention.",
+        "Thread household.recipes through BaseMealManager, MealModal, ComponentForm, and ComponentRecipePicker.",
+        "Implement resolveFullCookingRef with full priority chain: session override, DayPlan override, component default, whole-meal recipe, ingredient default, prepNote/recipeLinks fallback.",
+        "Update Planner How to make tonight section: group by component role, show whole-meal recipe refs, display resolution source labels.",
+        "Add subtle recipe cue chips on WeeklyPlanner DayCard: recipe count, prep-ahead, batch-friendly indicators.",
+        "Implement findPrepAheadOpportunities to detect repeated ingredients across week days with batch-prep recipes, surface in Weekly Planner effort bar.",
+        "Enhance MealDetailContent to show whole-meal recipeRefs, component-level recipes, and alternative-protein recipe indicators.",
+        "Add subtle recipe count cue on MealCard stats line.",
+        "Recipe suggestions appear only at: component editing in Base Meal Editor, meal selection in Planner, assigned meal details in Weekly Planner, repeated-component prep-ahead detection.",
+        "Add tests covering resolution chain priority, recipe attachment flows, tonight override vs saved default, alt-protein handling, recipe counting, batch-prep detection, and prep-ahead opportunities."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F055",
+        "F057"
+      ],
+      "acceptanceRefs": [
+        "S002",
+        "S003",
+        "S004",
+        "S007"
+      ]
     }
   ],
   "milestones": [
@@ -1842,7 +1920,9 @@
         "F053",
         "F054",
         "F055",
-        "F056"
+        "F056",
+        "F057",
+        "F058"
       ]
     }
   ],
@@ -1921,6 +2001,8 @@
     "F054",
     "F055",
     "F056",
+    "F057",
+    "F058",
     "F020",
     "F037",
     "F038",
@@ -2256,7 +2338,9 @@
       "F032",
       "F033",
       "F037",
-      "F055"
+      "F055",
+      "F057",
+      "F058"
     ],
     "S003": [
       "F010",
@@ -2273,14 +2357,17 @@
       "F053",
       "F054",
       "F055",
-      "F056"
+      "F056",
+      "F058"
     ],
     "S004": [
       "F006",
       "F028",
       "F029",
       "F037",
-      "F055"
+      "F055",
+      "F057",
+      "F058"
     ],
     "S005": [
       "F012",
@@ -2315,7 +2402,9 @@
       "F049",
       "F050",
       "F051",
-      "F055"
+      "F055",
+      "F057",
+      "F058"
     ],
     "S008": [
       "F011",
@@ -2338,7 +2427,8 @@
       "F048",
       "F049",
       "F050",
-      "F053"
+      "F053",
+      "F057"
     ]
   },
   "agentExecutionRules": [

@@ -5,6 +5,7 @@ import type {
   Ingredient,
   IngredientCategory,
   ComponentRecipeRef,
+  Recipe,
 } from "../../types";
 import { Button, Input, Select, FieldLabel, Chip } from "../ui";
 import { normalizeIngredientName, toSentenceCase } from "../../storage";
@@ -114,6 +115,7 @@ export default function ComponentForm({
   onRemove,
   onAddIngredient,
   allMeals,
+  recipes = [],
   excludeMealId,
 }: {
   component: MealComponent;
@@ -124,6 +126,7 @@ export default function ComponentForm({
   onRemove: () => void;
   onAddIngredient: (ingredient: Ingredient) => void;
   allMeals: BaseMeal[];
+  recipes?: Recipe[];
   /** Excluded when picking a linked base meal (use "" when editing a library recipe). */
   excludeMealId: string;
 }) {
@@ -135,6 +138,7 @@ export default function ComponentForm({
   const [alternativeSearch, setAlternativeSearch] = useState("");
   const [selectedAlternativeId, setSelectedAlternativeId] = useState("");
   const [recipePickerOpen, setRecipePickerOpen] = useState(false);
+  const [altRecipePickerIngId, setAltRecipePickerIngId] = useState<string | null>(null);
 
   const primaryIngredient = ingredients.find((item) => item.id === component.ingredientId);
   const alternativeIngredients = alternatives
@@ -265,21 +269,45 @@ export default function ComponentForm({
               Alternatives
             </span>
             {alternativeIngredients.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {alternativeIngredients.map((ing) => (
-                  <span key={ing.id} className="inline-flex items-center gap-1">
-                    <Chip variant="info">{toSentenceCase(ing.name)}</Chip>
-                    <Button
-                      variant="ghost"
-                      small
-                      className="text-text-muted hover:text-danger"
-                      onClick={() => removeAlternative(ing.id)}
-                      aria-label={`Remove alternative ${ing.name}`}
-                    >
-                      Remove
-                    </Button>
-                  </span>
-                ))}
+              <div className="space-y-1.5">
+                {alternativeIngredients.map((ing) => {
+                  const altRef = (component.recipeRefs ?? []).find(
+                    (r) => r.notes?.startsWith(`alt:${ing.id}`)
+                  );
+                  const altRefLabel = altRef
+                    ? summarizeRecipeRef(altRef, {
+                        linkedMealName: allMeals.find((m) => m.id === altRef.linkedBaseMealId)?.name,
+                      })
+                    : null;
+                  return (
+                    <div key={ing.id} className="flex flex-wrap items-center gap-1.5">
+                      <Chip variant="info">{toSentenceCase(ing.name)}</Chip>
+                      {altRefLabel && (
+                        <Chip variant="neutral" className="text-[10px]" data-testid={`alt-recipe-chip-${ing.id}`}>
+                          Recipe: {altRefLabel}
+                        </Chip>
+                      )}
+                      <Button
+                        variant="ghost"
+                        small
+                        className="text-text-muted text-[10px]"
+                        onClick={() => setAltRecipePickerIngId(ing.id)}
+                        data-testid={`attach-alt-recipe-${ing.id}`}
+                      >
+                        {altRef ? "Change recipe" : "Attach recipe"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        small
+                        className="text-text-muted hover:text-danger"
+                        onClick={() => removeAlternative(ing.id)}
+                        aria-label={`Remove alternative ${ing.name}`}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <span className="text-xs text-text-muted">No alternatives added yet.</span>
@@ -419,6 +447,7 @@ export default function ComponentForm({
           component={component}
           excludeMealId={excludeMealId}
           baseMeals={allMeals}
+          recipes={recipes}
           onSave={(ref: ComponentRecipeRef) => {
             const withId = createComponentRecipeRef({
               ...ref,
@@ -437,6 +466,47 @@ export default function ComponentForm({
             });
             setRecipePickerOpen(false);
           }}
+        />
+      )}
+
+      {altRecipePickerIngId && component.id && (
+        <ComponentRecipePicker
+          open
+          onClose={() => setAltRecipePickerIngId(null)}
+          component={component}
+          excludeMealId={excludeMealId}
+          baseMeals={allMeals}
+          recipes={recipes}
+          onSave={(ref: ComponentRecipeRef) => {
+            const altIngId = altRecipePickerIngId;
+            const withId = createComponentRecipeRef({
+              ...ref,
+              componentId: component.id!,
+              notes: `alt:${altIngId}`,
+              isDefault: false,
+            });
+            const rest = (component.recipeRefs ?? []).filter(
+              (r) => !(r.notes?.startsWith(`alt:${altIngId}`)),
+            );
+            onChange({
+              ...component,
+              recipeRefs: [...rest, withId],
+            });
+            setAltRecipePickerIngId(null);
+          }}
+          onRemove={
+            (component.recipeRefs ?? []).some((r) => r.notes?.startsWith(`alt:${altRecipePickerIngId}`))
+              ? () => {
+                  onChange({
+                    ...component,
+                    recipeRefs: (component.recipeRefs ?? []).filter(
+                      (r) => !(r.notes?.startsWith(`alt:${altRecipePickerIngId}`)),
+                    ),
+                  });
+                  setAltRecipePickerIngId(null);
+                }
+              : undefined
+          }
         />
       )}
     </div>

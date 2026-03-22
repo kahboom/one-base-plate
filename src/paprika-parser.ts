@@ -899,11 +899,15 @@ export function buildDraftRecipe(
 
   const ingredientsPlain = stripHtmlToPlainText(paprikaRecipe.ingredients);
 
+  const directionsPlain = stripHtmlToPlainText(paprikaRecipe.directions);
+
   const libraryRecipe: Recipe = {
     id: crypto.randomUUID(),
     name: paprikaRecipe.name,
+    recipeType: "whole-meal",
     components,
     ingredientsText: ingredientsPlain || paprikaRecipe.ingredients || undefined,
+    directions: directionsPlain || undefined,
     defaultPrep: prepText,
     recipeLinks: recipeLinks.length > 0 ? recipeLinks : undefined,
     notes: notesOut,
