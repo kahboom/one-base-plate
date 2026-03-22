@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import type { Ingredient, IngredientCategory, Recipe } from "../types";
+import type { BaseMeal, Ingredient, IngredientCategory, Recipe } from "../types";
 import {
   loadHousehold,
   saveHouseholdAsync,
@@ -36,6 +36,7 @@ import { findNearDuplicates, searchCatalog } from "../catalog";
 import PaprikaIngredientPicker from "../components/PaprikaIngredientPicker";
 import TagSuggestInput from "../components/TagSuggestInput";
 import AppModal from "../components/AppModal";
+import PostImportDestination from "../components/PostImportDestination";
 import {
   PageHeader,
   Card,
@@ -91,6 +92,9 @@ export default function PaprikaImport() {
   const [step, setStep] = useState<Step>("upload");
   const [parsedRecipes, setParsedRecipes] = useState<ParsedPaprikaRecipe[]>([]);
   const [importedCount, setImportedCount] = useState(0);
+  const [savedImportedRecipes, setSavedImportedRecipes] = useState<Recipe[]>([]);
+  const [doneBaseMeals, setDoneBaseMeals] = useState<BaseMeal[]>([]);
+  const [doneAllRecipes, setDoneAllRecipes] = useState<Recipe[]>([]);
   const [error, setError] = useState("");
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>("all");
   const [sessionSavedAt, setSessionSavedAt] = useState<string | null>(null);
@@ -668,6 +672,21 @@ export default function PaprikaImport() {
       await saveHouseholdAsync(household);
       clearImportSession();
       setImportedCount(selectedRecipes.length);
+
+      const allSaved: Recipe[] = [];
+      for (const parsed of selectedRecipes) {
+        const recipeId = parsed.isDuplicate && parsed.existingRecipeId
+          ? parsed.existingRecipeId
+          : undefined;
+        const found = recipeId
+          ? household.recipes.find((r) => r.id === recipeId)
+          : newRecipes.find((r) => r.name === parsed.raw.name);
+        if (found) allSaved.push(found);
+      }
+      setSavedImportedRecipes(allSaved);
+      setDoneBaseMeals(household.baseMeals);
+      setDoneAllRecipes(household.recipes);
+
       setStep("done");
     } catch {
       setError(
@@ -1482,18 +1501,29 @@ export default function PaprikaImport() {
               Successfully imported {importedCount} recipe{importedCount !== 1 ? "s" : ""} from Paprika.
             </p>
           </Card>
-          <ActionGroup>
-            <Button
-              variant="primary"
-              onClick={() => navigate(`/household/${householdId}/recipes`)}
-              data-testid="go-to-recipes-btn"
-            >
-              View recipe library
-            </Button>
-            <Button onClick={() => navigate(`/household/${householdId}/home`)}>
-              Home
-            </Button>
-          </ActionGroup>
+          {savedImportedRecipes.length > 0 && householdId ? (
+            <PostImportDestination
+              householdId={householdId}
+              recipes={savedImportedRecipes}
+              baseMeals={doneBaseMeals}
+              allRecipes={doneAllRecipes}
+              ingredients={ingredients}
+              onComplete={() => navigate(`/household/${householdId}/home`)}
+            />
+          ) : (
+            <ActionGroup>
+              <Button
+                variant="primary"
+                onClick={() => navigate(`/household/${householdId}/recipes`)}
+                data-testid="go-to-recipes-btn"
+              >
+                View recipe library
+              </Button>
+              <Button onClick={() => navigate(`/household/${householdId}/home`)}>
+                Home
+              </Button>
+            </ActionGroup>
+          )}
         </div>
       )}
     </>

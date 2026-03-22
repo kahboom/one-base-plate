@@ -1,13 +1,14 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { Ingredient, MealComponent, IngredientCategory, Recipe } from "../types";
-import { loadHousehold, saveHousehold, normalizeIngredientName } from "../storage";
+import type { BaseMeal, Ingredient, MealComponent, IngredientCategory, Recipe } from "../types";
+import { loadHousehold, saveHousehold, normalizeIngredientName, normalizeHousehold } from "../storage";
 import { catalogIngredientToHousehold } from "../catalog";
 import { parseRecipeText, guessComponentRole } from "../recipe-parser";
 import type { ParsedIngredientLine } from "../recipe-parser";
 import { PageHeader, Card, Button, Input, Select, ActionGroup, Chip, FieldLabel, EmptyState } from "../components/ui";
+import PostImportDestination from "../components/PostImportDestination";
 
-type Step = "input" | "review" | "draft";
+type Step = "input" | "review" | "draft" | "destination";
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
   "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
@@ -35,6 +36,10 @@ export default function RecipeImport() {
   const [draftNotes, setDraftNotes] = useState("");
   const [draftTime, setDraftTime] = useState(30);
   const [draftComponents, setDraftComponents] = useState<MealComponent[]>([]);
+
+  const [savedRecipe, setSavedRecipe] = useState<Recipe | null>(null);
+  const [baseMeals, setBaseMeals] = useState<BaseMeal[]>([]);
+  const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
 
   useEffect(() => {
     if (!householdId) return;
@@ -132,7 +137,12 @@ export default function RecipeImport() {
     household.recipes = [...(household.recipes ?? []), newRecipe];
     household.ingredients = ingredients;
     saveHousehold(household);
-    navigate(`/household/${householdId}/recipes?recipe=${encodeURIComponent(newRecipe.id)}`);
+
+    const norm = normalizeHousehold(household);
+    setSavedRecipe(newRecipe);
+    setBaseMeals(norm.baseMeals);
+    setAllRecipes(norm.recipes);
+    setStep("destination");
   }
 
   function updateReviewLine(index: number, updates: Partial<ReviewLine>) {
@@ -354,6 +364,17 @@ export default function RecipeImport() {
             <Button onClick={() => navigate(`/household/${householdId}/recipes`)}>Cancel</Button>
           </ActionGroup>
         </div>
+      )}
+
+      {step === "destination" && savedRecipe && householdId && (
+        <PostImportDestination
+          householdId={householdId}
+          recipes={[savedRecipe]}
+          baseMeals={baseMeals}
+          allRecipes={allRecipes}
+          ingredients={ingredients}
+          onComplete={() => navigate(`/household/${householdId}/recipes`)}
+        />
       )}
     </>
   );
