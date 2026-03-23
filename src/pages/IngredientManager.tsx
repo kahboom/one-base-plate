@@ -667,17 +667,17 @@ function IngredientTableRow({
         )}
 
         {/* Name */}
-        <span className="flex-1 min-w-0 sm:flex-[2]">
-          <span className="block text-sm font-medium text-text-primary truncate">
+        <span className="flex flex-1 min-w-0 items-center sm:flex-[2] self-center">
+          <span className="block text-sm font-medium leading-tight text-text-primary truncate">
             {ingredient.name ? toSentenceCase(ingredient.name) : <span className="italic text-text-muted">Unnamed</span>}
           </span>
           {/* Mobile: category + tags inline below name */}
           <span className="flex flex-wrap items-center gap-1 mt-0.5 sm:hidden">
-            <Chip variant={CATEGORY_CHIP_VARIANT[ingredient.category]} className="text-[10px]">
+            <Chip variant={CATEGORY_CHIP_VARIANT[ingredient.category]} className="text-[10px] leading-none">
               {ingredient.category}
             </Chip>
             {ingredient.tags.slice(0, 2).map((tag) => (
-              <Chip key={tag} variant="info" className="text-[10px]">{tag}</Chip>
+              <Chip key={tag} variant="info" className="text-[10px] leading-none">{tag}</Chip>
             ))}
             {ingredient.tags.length > 2 && (
               <span className="text-[10px] text-text-muted">+{ingredient.tags.length - 2}</span>
@@ -686,34 +686,28 @@ function IngredientTableRow({
         </span>
 
         {/* Desktop columns */}
-        <span className="hidden sm:flex sm:flex-1 sm:items-center sm:gap-1">
-          <Chip variant={CATEGORY_CHIP_VARIANT[ingredient.category]} className="text-[10px]">
+        <span className="hidden sm:flex sm:flex-1 sm:items-center sm:gap-1 sm:self-center">
+          <Chip variant={CATEGORY_CHIP_VARIANT[ingredient.category]} className="text-[10px] leading-none">
             {ingredient.category}
           </Chip>
         </span>
 
-        <span className="hidden sm:flex sm:flex-1 sm:flex-wrap sm:items-center sm:gap-1 sm:min-w-0">
+        <span className="hidden sm:flex sm:flex-1 sm:flex-wrap sm:items-center sm:gap-1 sm:min-w-0 sm:self-center">
           {ingredient.tags.slice(0, 3).map((tag) => (
-            <Chip key={tag} variant="info" className="text-[10px]">{tag}</Chip>
+            <Chip key={tag} variant="info" className="text-[10px] leading-none">{tag}</Chip>
           ))}
           {ingredient.tags.length > 3 && (
-            <span className="text-[10px] text-text-muted">+{ingredient.tags.length - 3}</span>
+            <span className="text-[10px] leading-none text-text-muted">+{ingredient.tags.length - 3}</span>
           )}
-        </span>
-
-        <span className="hidden sm:flex sm:w-20 sm:flex-shrink-0 sm:items-center sm:justify-center">
-          <Chip variant="neutral" className="text-[10px]">
-            {ingredient.source === "catalog" ? "catalog" : ingredient.source === "pending-import" ? "import" : "manual"}
-          </Chip>
         </span>
 
         {/* Flags */}
-        <span className="flex flex-shrink-0 items-center gap-1.5">
+        <span className="flex w-16 flex-shrink-0 items-center justify-center gap-1.5 self-center">
           {ingredient.freezerFriendly && (
-            <Chip variant="info" className="text-[10px]" title="Freezer friendly">❄️</Chip>
+            <Chip variant="info" className="text-[10px] leading-none" title="Freezer friendly">❄️</Chip>
           )}
           {ingredient.babySafeWithAdaptation && (
-            <Chip variant="success" className="text-[10px]" title="Baby safe">🍼</Chip>
+            <Chip variant="success" className="text-[10px] leading-none" title="Baby safe">🍼</Chip>
           )}
         </span>
       </span>
@@ -1118,7 +1112,7 @@ export default function IngredientManager() {
       {/* Bulk actions bar */}
       {selectedCount > 0 && (
         <div
-          className="mb-4 flex flex-wrap items-center gap-3 rounded-md border border-brand bg-brand/5 px-4 py-2.5 sticky top-[76px] z-10"
+          className="mb-4 flex flex-wrap items-center gap-3 rounded-md border border-brand bg-brand/5 px-4 py-2.5"
           data-testid="bulk-actions-bar"
         >
           <span className="text-sm font-medium text-text-primary" data-testid="bulk-selected-count">
@@ -1169,7 +1163,6 @@ export default function IngredientManager() {
           <span className="flex-1 sm:flex-[2] min-w-0">Name</span>
           <span className="flex-1">Category</span>
           <span className="flex-1">Tags</span>
-          <span className="w-20 flex-shrink-0 text-center">Source</span>
           <span className="w-16 flex-shrink-0 text-center">Flags</span>
         </div>
       )}
