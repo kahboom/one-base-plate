@@ -52,7 +52,6 @@ export default function WeeklyPlanner() {
   const shareRef = useRef<HTMLDivElement>(null);
   const [browseMealsOpen, setBrowseMealsOpen] = useState(false);
   const [mealDetailModalId, setMealDetailModalId] = useState<string | null>(null);
-  const [themeContextDay, setThemeContextDay] = useState(DAY_LABELS[0]!);
   const processedNavState = useRef(false);
   const trayCap = useSuggestedTrayCap();
 
@@ -267,8 +266,8 @@ export default function WeeklyPlanner() {
 
   const themeAnchor = useMemo(() => {
     if (!household) return null;
-    return getWeeklyAnchorForWeekday(household, themeContextDay) ?? null;
-  }, [household, themeContextDay]);
+    return getWeeklyAnchorForWeekday(household, DAY_LABELS[0]!) ?? null;
+  }, [household]);
 
   const suggestionRows = useMemo(() => {
     if (!household || household.baseMeals.length === 0) return [];
@@ -530,24 +529,6 @@ export default function WeeklyPlanner() {
                 <p className="mt-1 text-sm text-text-secondary" data-testid="suggested-tray-summary" aria-live="polite">
                   Top {trayRows.length} of {household.baseMeals.length} meal{household.baseMeals.length !== 1 ? "s" : ""} for this week
                 </p>
-                <label className="mt-3 block max-w-xs text-sm text-text-secondary">
-                  Theme for suggestions
-                  <select
-                    className="mt-1 block w-full rounded-md border border-border-light bg-bg px-3 py-2 text-sm text-text-primary"
-                    value={themeContextDay}
-                    onChange={(e) => setThemeContextDay(e.target.value)}
-                    data-testid="weekly-theme-context-day"
-                  >
-                    {DAY_LABELS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="mt-1 block text-xs text-text-muted">
-                    Soft boost for meals that match this day&apos;s anchor (after household fit).
-                  </span>
-                </label>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Button
