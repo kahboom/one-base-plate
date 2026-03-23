@@ -3,7 +3,14 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { Household, HouseholdMember, Ingredient, BaseMeal } from "../src/types";
-import { saveHousehold, loadHousehold, seedIfNeeded } from "../src/storage";
+import {
+  saveHousehold,
+  loadHousehold,
+  seedIfNeeded,
+  initStorage,
+  loadHouseholds,
+  saveHouseholds,
+} from "../src/storage";
 import {
   generateAssemblyVariants,
   computeMealOverlap,
@@ -216,47 +223,47 @@ describe("F040: HouseholdSetup includes pet role option", () => {
 });
 
 describe("F040: Seed script and seeding", () => {
-  it("seedIfNeeded populates storage when empty", () => {
-    expect(localStorage.getItem("onebaseplate_households")).toBeNull();
-    seedIfNeeded();
-    const raw = localStorage.getItem("onebaseplate_households");
-    expect(raw).not.toBeNull();
-    const data = JSON.parse(raw!);
+  it("seedIfNeeded populates storage when empty", async () => {
+    await initStorage();
+    expect(loadHouseholds()).toHaveLength(0);
+    await seedIfNeeded();
+    const data = loadHouseholds();
     expect(Array.isArray(data)).toBe(true);
     expect(data.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("seedIfNeeded does not overwrite existing data", () => {
-    const existing = [{ id: "test", name: "Existing" }];
+  it("seedIfNeeded does not overwrite existing data", async () => {
+    const existing = [{ id: "test", name: "Existing" }] as Household[];
     localStorage.setItem("onebaseplate_households", JSON.stringify(existing));
-    seedIfNeeded();
-    const raw = localStorage.getItem("onebaseplate_households");
-    const data = JSON.parse(raw!);
+    await initStorage();
+    await seedIfNeeded();
+    const data = loadHouseholds();
     expect(data).toHaveLength(1);
-    expect(data[0].name).toBe("Existing");
+    expect(data[0]!.name).toBe("Existing");
   });
 
-  it("seedIfNeeded does not re-seed after seeded flag is set", () => {
-    seedIfNeeded();
-    localStorage.removeItem("onebaseplate_households");
-    seedIfNeeded();
-    expect(localStorage.getItem("onebaseplate_households")).toBeNull();
+  it("seedIfNeeded does not re-seed after seeded flag is set", async () => {
+    await initStorage();
+    await seedIfNeeded();
+    saveHouseholds([]);
+    await seedIfNeeded();
+    expect(loadHouseholds()).toHaveLength(0);
   });
 
-  it("seed data contains McG family (H004)", () => {
-    seedIfNeeded();
-    const raw = localStorage.getItem("onebaseplate_households");
-    const data = JSON.parse(raw!) as Household[];
-    const mcg = data.find((h) => h.id === "H004");
+  it("seed data contains McG household (H001)", async () => {
+    await initStorage();
+    await seedIfNeeded();
+    const data = loadHouseholds();
+    const mcg = data.find((h) => h.id === "H001");
     expect(mcg).toBeDefined();
-    expect(mcg!.name).toBe("McG family");
+    expect(mcg!.name).toBe("McG");
   });
 
-  it("McG family includes pet member Lex", () => {
-    seedIfNeeded();
-    const raw = localStorage.getItem("onebaseplate_households");
-    const data = JSON.parse(raw!) as Household[];
-    const mcg = data.find((h) => h.id === "H004")!;
+  it("McG household includes pet member Lex", async () => {
+    await initStorage();
+    await seedIfNeeded();
+    const data = loadHouseholds();
+    const mcg = data.find((h) => h.id === "H001")!;
     const lex = mcg.members.find((m) => m.name === "Lex");
     expect(lex).toBeDefined();
     expect(lex!.role).toBe("pet");

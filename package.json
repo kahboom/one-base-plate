@@ -12,10 +12,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "seed": "npx tsx scripts/seed.ts",
-    "db:seed": "npx tsx scripts/db-seed.ts",
-    "db:migrate-ingredients": "npx tsx scripts/db-migrate-ingredients.ts"
+    "db:seed": "npx tsx scripts/db-seed.ts"
   },
   "dependencies": {
+    "dexie": "^4.3.0",
     "emoji-picker-react": "^4.18.0",
     "html2canvas": "^1.4.1",
     "idb": "^8.0.3",
@@ -37,6 +37,7 @@
     "eslint": "^9.21.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
+    "fake-indexeddb": "^6.2.5",
     "globals": "^15.15.0",
     "jsdom": "^26.0.0",
     "tailwindcss": "^4.2.1",

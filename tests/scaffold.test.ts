@@ -37,7 +37,7 @@ describe("F001: Repository scaffold", () => {
   it("has at least one household fixture with valid structure", () => {
     const fixturePath = join(
       ROOT,
-      "fixtures/households/H001-conflicting-baseline.json",
+      "fixtures/households/H001-mcg.json",
     );
     expect(existsSync(fixturePath)).toBe(true);
 

@@ -1,5 +1,13 @@
+import "fake-indexeddb/auto";
 import "@testing-library/jest-dom/vitest";
+import { beforeEach } from "vitest";
 import { vi } from "vitest";
+import { resetAppStorageForTests } from "../src/storage";
+
+beforeEach(async () => {
+  localStorage.clear();
+  await resetAppStorageForTests();
+});
 
 /* useIncrementalList (Base meals, ingredients, browse modal) */
 globalThis.IntersectionObserver = class IntersectionObserver {

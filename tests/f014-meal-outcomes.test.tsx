@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import type { Household, BaseMeal, Ingredient, HouseholdMember, WeeklyPlan, MealOutcome } from "../src/types";
 import { generateAssemblyVariants } from "../src/planner";
+import { loadHouseholds } from "../src/storage";
 
 /* ---------- shared fixture ---------- */
 const members: HouseholdMember[] = [
@@ -71,7 +72,7 @@ function seedStorage(household: Household) {
 }
 
 function loadFromStorage(): Household {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY)!)[0];
+  return loadHouseholds()[0]!;
 }
 
 beforeEach(() => {

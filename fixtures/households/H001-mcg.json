@@ -1,0 +1,1281 @@
+{
+  "id": "H001",
+  "name": "McG",
+  "members": [
+    {
+      "id": "M-Aaron",
+      "name": "Aaron",
+      "role": "adult",
+      "safeFoods": ["salmon", "chicken breast", "broccoli", "cod", "pork"],
+      "hardNoFoods": ["mushrooms", "blue cheese", "pasta"],
+      "preparationRules": [
+        {
+          "ingredient": "chicken breast",
+          "rule": "Must be sliced thin and fully cooked through, no pink"
+        }
+      ],
+      "textureLevel": "regular",
+      "allergens": [],
+      "notes": ""
+    },
+    {
+      "id": "M-Rachel",
+      "name": "Rachel",
+      "role": "adult",
+      "safeFoods": [
+        "bread",
+        "cheese",
+        "halloumi",
+        "paneer",
+        "chicken breast",
+        "ground beef",
+        "sirloin steak"
+      ],
+      "hardNoFoods": ["salmon", "aubergine", "lamb"],
+      "preparationRules": [
+        {
+          "ingredient": "pork",
+          "rule": "Fat must be completely trimmed off"
+        }
+      ],
+      "textureLevel": "regular",
+      "allergens": [],
+      "notes": ""
+    },
+    {
+      "id": "M-Indy",
+      "name": "Indy",
+      "role": "toddler",
+      "safeFoods": ["sausages", "bread", "cheese", "weetabix", "ground beef"],
+      "hardNoFoods": [],
+      "preparationRules": [],
+      "textureLevel": "soft",
+      "allergens": [],
+      "notes": "Picky toddler."
+    },
+    {
+      "id": "M-Orla",
+      "name": "Órla",
+      "role": "baby",
+      "safeFoods": ["sweet potato", "banana", "avocado", "rice"],
+      "hardNoFoods": ["honey", "whole nuts", "raw egg"],
+      "preparationRules": [
+        {
+          "ingredient": "sweet potato",
+          "rule": "Mash or cut into finger-safe strips"
+        }
+      ],
+      "textureLevel": "mashable",
+      "allergens": [],
+      "notes": "6 months, no teeth yet. BLW-style finger foods plus purees."
+    },
+    {
+      "id": "M-Lex",
+      "name": "Lex",
+      "role": "pet",
+      "safeFoods": [],
+      "hardNoFoods": [],
+      "preparationRules": [],
+      "textureLevel": "regular",
+      "allergens": [],
+      "notes": "Dog. Excluded from meal assembly."
+    }
+  ],
+  "ingredients": [
+    {
+      "id": "ing-pasta",
+      "name": "pasta",
+      "category": "carb",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-rice",
+      "name": "rice",
+      "category": "carb",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-chicken",
+      "name": "chicken breast",
+      "category": "protein",
+      "tags": [],
+      "shelfLifeHint": "3 days",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-salmon",
+      "name": "salmon",
+      "category": "protein",
+      "tags": [],
+      "shelfLifeHint": "2 days",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-broccoli",
+      "name": "broccoli",
+      "category": "veg",
+      "tags": [],
+      "shelfLifeHint": "5 days",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-peas",
+      "name": "peas",
+      "category": "freezer",
+      "tags": ["rescue"],
+      "shelfLifeHint": "months",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-sweet-potato",
+      "name": "sweet potato",
+      "category": "veg",
+      "tags": ["mashable"],
+      "shelfLifeHint": "1 week",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-cheese",
+      "name": "cheese",
+      "category": "dairy",
+      "tags": [],
+      "shelfLifeHint": "1 week",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-tomato-sauce",
+      "name": "tomato sauce",
+      "category": "pantry",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-bread",
+      "name": "bread",
+      "category": "carb",
+      "tags": ["rescue"],
+      "shelfLifeHint": "3 days",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-fishfingers",
+      "name": "fish fingers",
+      "category": "freezer",
+      "tags": ["rescue"],
+      "shelfLifeHint": "months",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-beans",
+      "name": "baked beans",
+      "category": "pantry",
+      "tags": ["rescue"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-olive-oil",
+      "name": "olive oil",
+      "category": "pantry",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-cumin",
+      "name": "cumin",
+      "category": "pantry",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-chili-powder",
+      "name": "chili powder",
+      "category": "pantry",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-garlic-powder",
+      "name": "garlic powder",
+      "category": "pantry",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-lime",
+      "name": "lime",
+      "category": "fruit",
+      "tags": ["quick"],
+      "shelfLifeHint": "1 week",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-black-beans",
+      "name": "black beans",
+      "category": "protein",
+      "tags": ["batch-friendly", "staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-onion",
+      "name": "onion",
+      "category": "veg",
+      "tags": ["staple"],
+      "shelfLifeHint": "2 weeks",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-garlic",
+      "name": "garlic",
+      "category": "veg",
+      "tags": ["staple"],
+      "shelfLifeHint": "2 weeks",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-yogurt",
+      "name": "yogurt",
+      "category": "dairy",
+      "tags": ["quick"],
+      "shelfLifeHint": "1 week",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-cilantro",
+      "name": "cilantro",
+      "category": "veg",
+      "tags": ["quick"],
+      "shelfLifeHint": "5 days",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-ground-beef",
+      "name": "ground beef",
+      "category": "protein",
+      "tags": [],
+      "shelfLifeHint": "3 days",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-flour",
+      "name": "flour",
+      "category": "pantry",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-yeast",
+      "name": "yeast",
+      "category": "pantry",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-sugar",
+      "name": "sugar",
+      "category": "pantry",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-tinned-tomatoes",
+      "name": "tinned tomatoes",
+      "category": "pantry",
+      "tags": ["staple", "batch-friendly"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-oregano",
+      "name": "oregano",
+      "category": "pantry",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-mozzarella",
+      "name": "mozzarella",
+      "category": "dairy",
+      "tags": ["quick"],
+      "shelfLifeHint": "1 week",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-basil",
+      "name": "basil",
+      "category": "veg",
+      "tags": ["quick"],
+      "shelfLifeHint": "5 days",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-italian-seasoning",
+      "name": "italian seasoning",
+      "category": "pantry",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-corn-tortillas",
+      "name": "corn tortillas",
+      "category": "carb",
+      "tags": ["quick"],
+      "shelfLifeHint": "1 week",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-lettuce",
+      "name": "lettuce",
+      "category": "veg",
+      "tags": ["quick"],
+      "shelfLifeHint": "5 days",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-soy-sauce",
+      "name": "soy sauce",
+      "category": "pantry",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-pork",
+      "name": "pork",
+      "category": "protein",
+      "tags": [],
+      "shelfLifeHint": "3 days",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-sirloin-steak",
+      "name": "sirloin steak",
+      "category": "protein",
+      "tags": [],
+      "shelfLifeHint": "3 days",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-butter",
+      "name": "butter",
+      "category": "dairy",
+      "tags": ["staple"],
+      "shelfLifeHint": "2 weeks",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-milk",
+      "name": "milk",
+      "category": "dairy",
+      "tags": ["staple"],
+      "shelfLifeHint": "1 week",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-mustard",
+      "name": "mustard",
+      "category": "pantry",
+      "tags": ["staple"],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-peppers",
+      "name": "peppers",
+      "category": "veg",
+      "tags": ["quick"],
+      "shelfLifeHint": "1 week",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": false
+    },
+    {
+      "id": "ing-tofu",
+      "name": "tofu",
+      "category": "protein",
+      "tags": ["quick"],
+      "shelfLifeHint": "1 week",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    }
+  ],
+  "recipes": [
+    {
+      "id": "rec-taco-chicken",
+      "name": "Grilled taco chicken",
+      "recipeType": "component",
+      "tags": ["batch-friendly", "freezer-friendly", "taco"],
+      "components": [
+        {
+          "id": "mc-rtc-1",
+          "ingredientId": "ing-chicken",
+          "role": "protein",
+          "quantity": "600g"
+        },
+        {
+          "id": "mc-rtc-2",
+          "ingredientId": "ing-olive-oil",
+          "role": "sauce",
+          "quantity": "2 tbsp"
+        },
+        {
+          "id": "mc-rtc-3",
+          "ingredientId": "ing-cumin",
+          "role": "sauce",
+          "quantity": "1 tsp"
+        },
+        {
+          "id": "mc-rtc-4",
+          "ingredientId": "ing-chili-powder",
+          "role": "sauce",
+          "quantity": "1 tsp"
+        },
+        {
+          "id": "mc-rtc-5",
+          "ingredientId": "ing-garlic-powder",
+          "role": "sauce",
+          "quantity": "0.5 tsp"
+        },
+        {
+          "id": "mc-rtc-6",
+          "ingredientId": "ing-lime",
+          "role": "sauce",
+          "quantity": "1"
+        }
+      ],
+      "ingredientsText": "600g chicken breast\n2 tbsp olive oil\n1 tsp cumin\n1 tsp chili powder\n0.5 tsp garlic powder\nJuice of 1 lime",
+      "directions": "1. Slice chicken breast into thin strips or flatten to even thickness.\n2. Mix olive oil, cumin, chili powder, garlic powder, and lime juice in a bowl.\n3. Toss chicken in the marinade and let sit 10-15 minutes.\n4. Grill or pan-fry over high heat, 3-4 minutes per side until cooked through.\n5. Slice against the grain before serving.",
+      "defaultPrep": "Marinate and grill chicken strips.",
+      "prepTimeMinutes": 15,
+      "cookTimeMinutes": 10,
+      "servings": "4"
+    },
+    {
+      "id": "rec-black-bean-filling",
+      "name": "Black bean taco filling",
+      "recipeType": "component",
+      "tags": ["batch-friendly", "quick", "taco"],
+      "components": [
+        {
+          "id": "mc-rbb-1",
+          "ingredientId": "ing-black-beans",
+          "role": "protein",
+          "quantity": "2 tins"
+        },
+        {
+          "id": "mc-rbb-2",
+          "ingredientId": "ing-onion",
+          "role": "veg",
+          "quantity": "1 medium"
+        },
+        {
+          "id": "mc-rbb-3",
+          "ingredientId": "ing-garlic",
+          "role": "veg",
+          "quantity": "2 cloves"
+        },
+        {
+          "id": "mc-rbb-4",
+          "ingredientId": "ing-cumin",
+          "role": "sauce",
+          "quantity": "1 tsp"
+        },
+        {
+          "id": "mc-rbb-5",
+          "ingredientId": "ing-chili-powder",
+          "role": "sauce",
+          "quantity": "0.5 tsp"
+        },
+        {
+          "id": "mc-rbb-6",
+          "ingredientId": "ing-lime",
+          "role": "sauce",
+          "quantity": "0.5"
+        }
+      ],
+      "ingredientsText": "2 tins black beans, drained\n1 medium onion, diced\n2 cloves garlic, minced\n1 tsp cumin\n0.5 tsp chili powder\nJuice of half a lime",
+      "directions": "1. Sauté diced onion in a little oil until soft, about 4 minutes.\n2. Add garlic, cumin, and chili powder; cook 1 minute.\n3. Add drained black beans and a splash of water.\n4. Mash roughly with a fork, leaving some beans whole.\n5. Cook 5 minutes until thickened. Squeeze lime juice over and stir.",
+      "defaultPrep": "Sauté onion, add beans and spices, mash roughly.",
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 10,
+      "servings": "4"
+    },
+    {
+      "id": "rec-yogurt-lime-sauce",
+      "name": "Quick yogurt-lime sauce",
+      "recipeType": "sauce",
+      "tags": ["quick", "taco"],
+      "components": [
+        {
+          "id": "mc-ryls-1",
+          "ingredientId": "ing-yogurt",
+          "role": "sauce",
+          "quantity": "200g"
+        },
+        {
+          "id": "mc-ryls-2",
+          "ingredientId": "ing-lime",
+          "role": "sauce",
+          "quantity": "1"
+        },
+        {
+          "id": "mc-ryls-3",
+          "ingredientId": "ing-cilantro",
+          "role": "sauce",
+          "quantity": "small bunch"
+        }
+      ],
+      "ingredientsText": "200g plain yogurt\nJuice and zest of 1 lime\nSmall bunch cilantro, chopped",
+      "directions": "1. Mix yogurt, lime juice, and lime zest in a bowl.\n2. Finely chop cilantro and stir in.\n3. Season with a pinch of salt. Serve cold.",
+      "defaultPrep": "Stir yogurt, lime, and cilantro together.",
+      "prepTimeMinutes": 5,
+      "servings": "4"
+    },
+    {
+      "id": "rec-pizza-dough",
+      "name": "Basic pizza dough",
+      "recipeType": "component",
+      "tags": ["batch-friendly", "freezer-friendly", "pizza"],
+      "components": [
+        {
+          "id": "mc-rpd-1",
+          "ingredientId": "ing-flour",
+          "role": "carb",
+          "quantity": "500g"
+        },
+        {
+          "id": "mc-rpd-2",
+          "ingredientId": "ing-yeast",
+          "role": "carb",
+          "quantity": "7g sachet"
+        },
+        {
+          "id": "mc-rpd-3",
+          "ingredientId": "ing-olive-oil",
+          "role": "sauce",
+          "quantity": "2 tbsp"
+        },
+        {
+          "id": "mc-rpd-4",
+          "ingredientId": "ing-sugar",
+          "role": "sauce",
+          "quantity": "1 tsp"
+        }
+      ],
+      "ingredientsText": "500g flour\n7g sachet yeast\n2 tbsp olive oil\n1 tsp sugar\n1 tsp salt\n325ml warm water",
+      "directions": "1. Mix flour, yeast, sugar, and salt in a large bowl.\n2. Add warm water and olive oil; stir until a shaggy dough forms.\n3. Knead on a floured surface for 8-10 minutes until smooth and elastic.\n4. Place in an oiled bowl, cover, and let rise 1 hour until doubled.\n5. Punch down and divide into 2-3 balls. Ready to stretch and top.",
+      "defaultPrep": "Mix, knead, and let rise.",
+      "notes": "Dough freezes well. Wrap balls individually in cling film for the freezer.",
+      "prepTimeMinutes": 20,
+      "cookTimeMinutes": 60,
+      "servings": "2-3 pizzas"
+    },
+    {
+      "id": "rec-pizza-sauce",
+      "name": "Quick pizza sauce",
+      "recipeType": "sauce",
+      "tags": ["quick", "batch-friendly", "freezer-friendly", "pizza"],
+      "components": [
+        {
+          "id": "mc-rps-1",
+          "ingredientId": "ing-tinned-tomatoes",
+          "role": "sauce",
+          "quantity": "1 tin"
+        },
+        {
+          "id": "mc-rps-2",
+          "ingredientId": "ing-garlic",
+          "role": "veg",
+          "quantity": "2 cloves"
+        },
+        {
+          "id": "mc-rps-3",
+          "ingredientId": "ing-oregano",
+          "role": "sauce",
+          "quantity": "1 tsp"
+        },
+        {
+          "id": "mc-rps-4",
+          "ingredientId": "ing-olive-oil",
+          "role": "sauce",
+          "quantity": "1 tbsp"
+        }
+      ],
+      "ingredientsText": "1 tin tinned tomatoes\n2 cloves garlic, minced\n1 tsp oregano\n1 tbsp olive oil\nPinch of salt and sugar",
+      "directions": "1. Heat olive oil in a small pan over medium heat.\n2. Add minced garlic, cook 30 seconds.\n3. Add tinned tomatoes, oregano, and a pinch each of salt and sugar.\n4. Simmer 10-15 minutes, stirring occasionally, until thickened.\n5. Blend or mash to desired smoothness.",
+      "defaultPrep": "Simmer tomatoes with garlic and oregano.",
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 15,
+      "servings": "2-3 pizzas"
+    },
+    {
+      "id": "rec-tray-pizza",
+      "name": "Simple tray pizza",
+      "recipeType": "whole-meal",
+      "tags": ["batch-friendly", "pizza"],
+      "components": [
+        {
+          "id": "mc-rtp-1",
+          "ingredientId": "ing-flour",
+          "role": "carb",
+          "quantity": "500g"
+        },
+        {
+          "id": "mc-rtp-2",
+          "ingredientId": "ing-tinned-tomatoes",
+          "role": "sauce",
+          "quantity": "1 tin"
+        },
+        {
+          "id": "mc-rtp-3",
+          "ingredientId": "ing-mozzarella",
+          "role": "topping",
+          "quantity": "250g"
+        },
+        {
+          "id": "mc-rtp-4",
+          "ingredientId": "ing-peppers",
+          "role": "veg",
+          "quantity": "1"
+        },
+        {
+          "id": "mc-rtp-5",
+          "ingredientId": "ing-basil",
+          "role": "topping",
+          "quantity": "few leaves"
+        }
+      ],
+      "ingredientsText": "1 batch pizza dough (or 500g flour + 7g yeast + oil/sugar/salt/water)\n1 tin tomatoes (or batch of pizza sauce)\n250g mozzarella, sliced or torn\n1 pepper, sliced\nFresh basil leaves",
+      "directions": "1. Preheat oven to 220°C / 425°F.\n2. Stretch dough to fit an oiled baking tray.\n3. Spread pizza sauce evenly over the dough.\n4. Scatter mozzarella and sliced peppers over the top.\n5. Bake 15-20 minutes until crust is golden and cheese is bubbling.\n6. Top with fresh basil leaves. Slice and serve.",
+      "defaultPrep": "Stretch dough on tray, top, and bake.",
+      "notes": "Use store-bought dough or a flatbread base for a faster shortcut version.",
+      "prepTimeMinutes": 15,
+      "cookTimeMinutes": 20,
+      "servings": "4"
+    },
+    {
+      "id": "rec-pasta-bake-sauce",
+      "name": "Basic pasta bake sauce",
+      "recipeType": "sauce",
+      "tags": ["batch-friendly", "freezer-friendly", "pasta"],
+      "components": [
+        {
+          "id": "mc-rpbs-1",
+          "ingredientId": "ing-tinned-tomatoes",
+          "role": "sauce",
+          "quantity": "2 tins"
+        },
+        {
+          "id": "mc-rpbs-2",
+          "ingredientId": "ing-onion",
+          "role": "veg",
+          "quantity": "1 medium"
+        },
+        {
+          "id": "mc-rpbs-3",
+          "ingredientId": "ing-garlic",
+          "role": "veg",
+          "quantity": "3 cloves"
+        },
+        {
+          "id": "mc-rpbs-4",
+          "ingredientId": "ing-italian-seasoning",
+          "role": "sauce",
+          "quantity": "1 tbsp"
+        },
+        {
+          "id": "mc-rpbs-5",
+          "ingredientId": "ing-olive-oil",
+          "role": "sauce",
+          "quantity": "1 tbsp"
+        }
+      ],
+      "ingredientsText": "2 tins tinned tomatoes\n1 medium onion, diced\n3 cloves garlic, minced\n1 tbsp italian seasoning\n1 tbsp olive oil\nSalt and pepper to taste",
+      "directions": "1. Heat olive oil in a saucepan over medium heat.\n2. Sauté diced onion until soft, about 5 minutes.\n3. Add garlic and italian seasoning; cook 1 minute.\n4. Pour in tinned tomatoes, stir, and bring to a gentle simmer.\n5. Cook 20 minutes, stirring occasionally, until sauce is rich and thickened.\n6. Season with salt and pepper.",
+      "defaultPrep": "Sauté onion, add tomatoes and seasoning, simmer.",
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 25,
+      "servings": "4-6"
+    },
+    {
+      "id": "rec-roasted-broccoli",
+      "name": "Roasted broccoli",
+      "recipeType": "component",
+      "tags": ["quick", "batch-friendly"],
+      "components": [
+        {
+          "id": "mc-rrb-1",
+          "ingredientId": "ing-broccoli",
+          "role": "veg",
+          "quantity": "1 large head"
+        },
+        {
+          "id": "mc-rrb-2",
+          "ingredientId": "ing-olive-oil",
+          "role": "sauce",
+          "quantity": "2 tbsp"
+        },
+        {
+          "id": "mc-rrb-3",
+          "ingredientId": "ing-garlic",
+          "role": "veg",
+          "quantity": "2 cloves"
+        }
+      ],
+      "ingredientsText": "1 large head broccoli, cut into florets\n2 tbsp olive oil\n2 cloves garlic, sliced\nSalt and pepper",
+      "directions": "1. Preheat oven to 200°C / 400°F.\n2. Cut broccoli into bite-sized florets.\n3. Toss with olive oil, sliced garlic, salt, and pepper on a baking tray.\n4. Spread in a single layer.\n5. Roast 20-25 minutes until edges are crispy and browned.",
+      "defaultPrep": "Toss florets with oil and garlic, roast until crispy.",
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 25,
+      "servings": "4"
+    },
+    {
+      "id": "rec-seasoned-rice",
+      "name": "Plain seasoned rice",
+      "recipeType": "component",
+      "tags": ["quick", "batch-friendly", "bowl"],
+      "components": [
+        {
+          "id": "mc-rsr-1",
+          "ingredientId": "ing-rice",
+          "role": "carb",
+          "quantity": "300g"
+        },
+        {
+          "id": "mc-rsr-2",
+          "ingredientId": "ing-olive-oil",
+          "role": "sauce",
+          "quantity": "1 tbsp"
+        }
+      ],
+      "ingredientsText": "300g rice\n1 tbsp olive oil or butter\nSalt",
+      "directions": "1. Rinse rice under cold water until water runs clear.\n2. Combine rice and 1.5x volume of water in a pot with a pinch of salt and olive oil.\n3. Bring to a boil, then reduce to lowest heat and cover.\n4. Cook 12-15 minutes until water is absorbed.\n5. Remove from heat and let steam, covered, for 5 minutes. Fluff with a fork.",
+      "defaultPrep": "Rinse, boil, cover, and steam.",
+      "prepTimeMinutes": 2,
+      "cookTimeMinutes": 20,
+      "servings": "4"
+    },
+    {
+      "id": "rec-cheese-sauce",
+      "name": "Simple cheese sauce",
+      "recipeType": "sauce",
+      "tags": ["quick", "rescue-friendly"],
+      "components": [
+        {
+          "id": "mc-rcs-1",
+          "ingredientId": "ing-butter",
+          "role": "sauce",
+          "quantity": "30g"
+        },
+        {
+          "id": "mc-rcs-2",
+          "ingredientId": "ing-flour",
+          "role": "sauce",
+          "quantity": "30g"
+        },
+        {
+          "id": "mc-rcs-3",
+          "ingredientId": "ing-milk",
+          "role": "sauce",
+          "quantity": "500ml"
+        },
+        {
+          "id": "mc-rcs-4",
+          "ingredientId": "ing-cheese",
+          "role": "topping",
+          "quantity": "100g"
+        },
+        {
+          "id": "mc-rcs-5",
+          "ingredientId": "ing-mustard",
+          "role": "sauce",
+          "quantity": "0.5 tsp"
+        }
+      ],
+      "ingredientsText": "30g butter\n30g flour\n500ml milk\n100g cheese, grated\n0.5 tsp mustard",
+      "directions": "1. Melt butter in a saucepan over medium heat.\n2. Stir in flour and cook for 1 minute, stirring constantly.\n3. Gradually whisk in milk, a splash at a time, to avoid lumps.\n4. Keep stirring until sauce thickens and begins to simmer, about 5 minutes.\n5. Remove from heat, stir in grated cheese and mustard until smooth.",
+      "defaultPrep": "Make a roux with butter and flour, whisk in milk, melt cheese.",
+      "prepTimeMinutes": 2,
+      "cookTimeMinutes": 8,
+      "servings": "4"
+    }
+  ],
+  "baseMeals": [
+    {
+      "id": "bm-pasta-chicken",
+      "name": "Pasta with chicken and broccoli",
+      "components": [
+        {
+          "ingredientId": "ing-pasta",
+          "role": "carb",
+          "quantity": "400g"
+        },
+        {
+          "ingredientId": "ing-chicken",
+          "role": "protein",
+          "quantity": "500g"
+        },
+        {
+          "ingredientId": "ing-broccoli",
+          "role": "veg",
+          "quantity": "1 head"
+        },
+        {
+          "ingredientId": "ing-tomato-sauce",
+          "role": "sauce",
+          "quantity": "1 jar"
+        }
+      ],
+      "defaultPrep": "Cook pasta. Grill or pan-fry protein. Steam veg.",
+      "estimatedTimeMinutes": 30,
+      "difficulty": "easy",
+      "rescueEligible": true,
+      "wasteReuseHints": ["Leftover pasta works for next-day lunch"]
+    },
+    {
+      "id": "bm-salmon-rice",
+      "name": "Salmon with rice and peas",
+      "components": [
+        {
+          "ingredientId": "ing-rice",
+          "role": "carb",
+          "quantity": "300g"
+        },
+        {
+          "ingredientId": "ing-salmon",
+          "role": "protein",
+          "quantity": "400g"
+        },
+        {
+          "ingredientId": "ing-peas",
+          "role": "veg",
+          "quantity": "200g"
+        }
+      ],
+      "defaultPrep": "Cook rice. Pan-fry salmon. Heat peas.",
+      "estimatedTimeMinutes": 25,
+      "difficulty": "medium",
+      "rescueEligible": false,
+      "wasteReuseHints": []
+    },
+    {
+      "id": "bm-fishfingers",
+      "name": "Fish fingers with beans and bread",
+      "components": [
+        {
+          "ingredientId": "ing-fishfingers",
+          "role": "protein",
+          "quantity": "8 pieces"
+        },
+        {
+          "ingredientId": "ing-beans",
+          "role": "veg",
+          "quantity": "1 tin"
+        },
+        {
+          "ingredientId": "ing-bread",
+          "role": "carb",
+          "quantity": "4 slices"
+        }
+      ],
+      "defaultPrep": "Oven fish fingers. Heat beans. Toast bread.",
+      "estimatedTimeMinutes": 15,
+      "difficulty": "easy",
+      "rescueEligible": true,
+      "wasteReuseHints": []
+    },
+    {
+      "id": "bm-taco-night",
+      "name": "Taco night",
+      "tags": ["taco"],
+      "components": [
+        {
+          "id": "mc-bm-tn-1",
+          "ingredientId": "ing-chicken",
+          "alternativeIngredientIds": ["ing-black-beans"],
+          "role": "protein",
+          "quantity": "600g",
+          "prepNote": "Grill with taco spices",
+          "recipeRefs": [
+            {
+              "id": "cr-tn-chicken",
+              "componentId": "mc-bm-tn-1",
+              "sourceType": "imported-recipe",
+              "recipeId": "rec-taco-chicken",
+              "label": "Grilled taco chicken",
+              "isDefault": true
+            },
+            {
+              "id": "cr-tn-beans",
+              "componentId": "mc-bm-tn-1",
+              "sourceType": "imported-recipe",
+              "recipeId": "rec-black-bean-filling",
+              "label": "Black bean taco filling",
+              "notes": "alt:ing-black-beans"
+            }
+          ]
+        },
+        {
+          "id": "mc-bm-tn-2",
+          "ingredientId": "ing-corn-tortillas",
+          "role": "carb",
+          "quantity": "8-12"
+        },
+        {
+          "id": "mc-bm-tn-3",
+          "ingredientId": "ing-lettuce",
+          "role": "veg",
+          "quantity": "handful"
+        },
+        {
+          "id": "mc-bm-tn-4",
+          "ingredientId": "ing-yogurt",
+          "role": "sauce",
+          "quantity": "200g",
+          "prepNote": "Mix with lime and cilantro",
+          "recipeRefs": [
+            {
+              "id": "cr-tn-sauce",
+              "componentId": "mc-bm-tn-4",
+              "sourceType": "imported-recipe",
+              "recipeId": "rec-yogurt-lime-sauce",
+              "label": "Quick yogurt-lime sauce",
+              "isDefault": true
+            }
+          ]
+        }
+      ],
+      "recipeRefs": [
+        {
+          "recipeId": "rec-taco-chicken",
+          "label": "Grilled taco chicken",
+          "role": "component"
+        },
+        {
+          "recipeId": "rec-yogurt-lime-sauce",
+          "label": "Quick yogurt-lime sauce",
+          "role": "component"
+        }
+      ],
+      "defaultPrep": "Grill or pan-fry seasoned protein. Warm tortillas. Chop lettuce. Mix sauce. Assemble tacos at the table.",
+      "estimatedTimeMinutes": 30,
+      "difficulty": "easy",
+      "rescueEligible": false,
+      "wasteReuseHints": [
+        "Leftover grilled chicken works in rice bowls or salads",
+        "Extra black bean filling freezes well"
+      ]
+    },
+    {
+      "id": "bm-pizza-night",
+      "name": "Pizza night",
+      "tags": ["pizza"],
+      "components": [
+        {
+          "id": "mc-bm-pn-1",
+          "ingredientId": "ing-flour",
+          "role": "carb",
+          "quantity": "500g",
+          "prepNote": "Make dough or use store-bought",
+          "recipeRefs": [
+            {
+              "id": "cr-pn-dough",
+              "componentId": "mc-bm-pn-1",
+              "sourceType": "imported-recipe",
+              "recipeId": "rec-pizza-dough",
+              "label": "Basic pizza dough",
+              "isDefault": true
+            }
+          ]
+        },
+        {
+          "id": "mc-bm-pn-2",
+          "ingredientId": "ing-tinned-tomatoes",
+          "role": "sauce",
+          "quantity": "1 tin",
+          "prepNote": "Simmer into sauce",
+          "recipeRefs": [
+            {
+              "id": "cr-pn-sauce",
+              "componentId": "mc-bm-pn-2",
+              "sourceType": "imported-recipe",
+              "recipeId": "rec-pizza-sauce",
+              "label": "Quick pizza sauce",
+              "isDefault": true
+            }
+          ]
+        },
+        {
+          "id": "mc-bm-pn-3",
+          "ingredientId": "ing-mozzarella",
+          "role": "topping",
+          "quantity": "250g"
+        },
+        {
+          "id": "mc-bm-pn-4",
+          "ingredientId": "ing-peppers",
+          "role": "veg",
+          "quantity": "1"
+        }
+      ],
+      "recipeRefs": [
+        {
+          "recipeId": "rec-pizza-dough",
+          "label": "Basic pizza dough",
+          "role": "component"
+        },
+        {
+          "recipeId": "rec-pizza-sauce",
+          "label": "Quick pizza sauce",
+          "role": "component"
+        },
+        {
+          "recipeId": "rec-tray-pizza",
+          "label": "Simple tray pizza",
+          "role": "shortcut"
+        }
+      ],
+      "defaultPrep": "Make or thaw dough. Make sauce. Stretch dough, top, and bake at high heat.",
+      "estimatedTimeMinutes": 45,
+      "difficulty": "medium",
+      "rescueEligible": false,
+      "wasteReuseHints": [
+        "Extra dough balls freeze individually",
+        "Leftover pizza sauce keeps 5 days in the fridge"
+      ]
+    },
+    {
+      "id": "bm-pasta-bake",
+      "name": "Pasta bake",
+      "tags": ["pasta"],
+      "components": [
+        {
+          "id": "mc-bm-pb-1",
+          "ingredientId": "ing-pasta",
+          "role": "carb",
+          "quantity": "400g"
+        },
+        {
+          "id": "mc-bm-pb-2",
+          "ingredientId": "ing-cheese",
+          "role": "topping",
+          "quantity": "150g"
+        },
+        {
+          "id": "mc-bm-pb-3",
+          "ingredientId": "ing-broccoli",
+          "role": "veg",
+          "quantity": "1 head"
+        },
+        {
+          "id": "mc-bm-pb-4",
+          "ingredientId": "ing-tomato-sauce",
+          "role": "sauce",
+          "quantity": "1 jar or batch",
+          "prepNote": "Use jar sauce or make from scratch",
+          "recipeRefs": [
+            {
+              "id": "cr-pb-sauce",
+              "componentId": "mc-bm-pb-4",
+              "sourceType": "imported-recipe",
+              "recipeId": "rec-pasta-bake-sauce",
+              "label": "Basic pasta bake sauce",
+              "isDefault": true
+            }
+          ]
+        }
+      ],
+      "recipeRefs": [
+        {
+          "recipeId": "rec-pasta-bake-sauce",
+          "label": "Basic pasta bake sauce",
+          "role": "component"
+        }
+      ],
+      "defaultPrep": "Cook pasta. Make or heat sauce. Toss with veg, pour into baking dish, top with cheese. Bake until golden.",
+      "estimatedTimeMinutes": 40,
+      "difficulty": "easy",
+      "rescueEligible": true,
+      "wasteReuseHints": [
+        "Leftovers reheat well for lunch",
+        "Sauce freezes in batches"
+      ]
+    },
+    {
+      "id": "bm-rice-bowl",
+      "name": "Rice bowl",
+      "tags": ["bowl"],
+      "components": [
+        {
+          "id": "mc-bm-rb-1",
+          "ingredientId": "ing-rice",
+          "role": "carb",
+          "quantity": "300g",
+          "recipeRefs": [
+            {
+              "id": "cr-rb-rice",
+              "componentId": "mc-bm-rb-1",
+              "sourceType": "imported-recipe",
+              "recipeId": "rec-seasoned-rice",
+              "label": "Plain seasoned rice",
+              "isDefault": true
+            }
+          ]
+        },
+        {
+          "id": "mc-bm-rb-2",
+          "ingredientId": "ing-chicken",
+          "alternativeIngredientIds": ["ing-tofu"],
+          "role": "protein",
+          "quantity": "500g",
+          "prepNote": "Grill or pan-fry"
+        },
+        {
+          "id": "mc-bm-rb-3",
+          "ingredientId": "ing-broccoli",
+          "role": "veg",
+          "quantity": "1 head",
+          "recipeRefs": [
+            {
+              "id": "cr-rb-broccoli",
+              "componentId": "mc-bm-rb-3",
+              "sourceType": "imported-recipe",
+              "recipeId": "rec-roasted-broccoli",
+              "label": "Roasted broccoli",
+              "isDefault": true
+            }
+          ]
+        },
+        {
+          "id": "mc-bm-rb-4",
+          "ingredientId": "ing-soy-sauce",
+          "role": "sauce",
+          "quantity": "2 tbsp"
+        }
+      ],
+      "recipeRefs": [
+        {
+          "recipeId": "rec-seasoned-rice",
+          "label": "Plain seasoned rice",
+          "role": "component"
+        },
+        {
+          "recipeId": "rec-roasted-broccoli",
+          "label": "Roasted broccoli",
+          "role": "component"
+        }
+      ],
+      "defaultPrep": "Cook rice. Roast or steam veg. Grill protein. Assemble bowls with soy sauce drizzle.",
+      "estimatedTimeMinutes": 35,
+      "difficulty": "easy",
+      "rescueEligible": false,
+      "wasteReuseHints": [
+        "Leftover rice keeps 2 days in the fridge",
+        "Roasted broccoli works as a side for other meals"
+      ]
+    },
+    {
+      "id": "bm-rescue-cheesy-pasta",
+      "name": "Cheesy pasta (rescue)",
+      "tags": ["rescue"],
+      "components": [
+        {
+          "id": "mc-bm-rcp-1",
+          "ingredientId": "ing-pasta",
+          "role": "carb",
+          "quantity": "400g"
+        },
+        {
+          "id": "mc-bm-rcp-2",
+          "ingredientId": "ing-cheese",
+          "role": "topping",
+          "quantity": "100g"
+        },
+        {
+          "id": "mc-bm-rcp-3",
+          "ingredientId": "ing-butter",
+          "role": "sauce",
+          "quantity": "30g",
+          "prepNote": "For cheese sauce base",
+          "recipeRefs": [
+            {
+              "id": "cr-rcp-sauce",
+              "componentId": "mc-bm-rcp-3",
+              "sourceType": "imported-recipe",
+              "recipeId": "rec-cheese-sauce",
+              "label": "Simple cheese sauce",
+              "isDefault": true
+            }
+          ]
+        }
+      ],
+      "recipeRefs": [
+        {
+          "recipeId": "rec-cheese-sauce",
+          "label": "Simple cheese sauce",
+          "role": "component"
+        }
+      ],
+      "defaultPrep": "Cook pasta. Make cheese sauce (roux + milk + cheese). Toss together.",
+      "estimatedTimeMinutes": 15,
+      "difficulty": "easy",
+      "rescueEligible": true,
+      "wasteReuseHints": ["Add leftover veg to bulk it out"]
+    }
+  ],
+  "weeklyPlans": [],
+  "pinnedMealIds": []
+}

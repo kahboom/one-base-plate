@@ -16,6 +16,11 @@ import type { MatchConfidenceBand } from "./recipe-parser";
 import { catalogIngredientToHousehold } from "./catalog";
 import type { CatalogIngredient } from "./catalog";
 import { normalizeIngredientName, normalizeIngredientGroupKey } from "./storage";
+import {
+  getPaprikaImportSessionMemory,
+  rememberAndQueuePaprikaImportSessionPersist,
+  clearPaprikaImportSessionSync,
+} from "./storage/paprika-session-store";
 
 export interface PaprikaRecipe {
   name: string;
@@ -87,8 +92,6 @@ export interface PaprikaImportSession {
   importParserVersion?: number;
 }
 
-const SESSION_KEY = "onebaseplate_paprika_session";
-
 /** Increment when Paprika line parsing / matching rules change so saved sessions refresh from `raw`. */
 export const PAPRIKA_INGREDIENT_PARSER_VERSION = 6;
 
@@ -155,10 +158,9 @@ export function saveImportSession(session: PaprikaImportSession): void {
       importParserVersion: PAPRIKA_INGREDIENT_PARSER_VERSION,
       parsedRecipes: session.parsedRecipes.map(toSessionRecipeSnapshot),
     };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(compactSession));
+    rememberAndQueuePaprikaImportSessionPersist(JSON.stringify(compactSession));
   } catch (error) {
     if (error instanceof DOMException && error.name === "QuotaExceededError") {
-      // Don't crash the import flow when browser storage is full.
       return;
     }
     throw error;
@@ -166,7 +168,7 @@ export function saveImportSession(session: PaprikaImportSession): void {
 }
 
 export function loadImportSession(householdId: string): PaprikaImportSession | null {
-  const raw = localStorage.getItem(SESSION_KEY);
+  const raw = getPaprikaImportSessionMemory();
   if (!raw) return null;
   try {
     const session = JSON.parse(raw) as PaprikaImportSession;
@@ -178,7 +180,7 @@ export function loadImportSession(householdId: string): PaprikaImportSession | n
 }
 
 export function clearImportSession(): void {
-  localStorage.removeItem(SESSION_KEY);
+  clearPaprikaImportSessionSync();
 }
 
 export function computeBulkSummary(recipes: ParsedPaprikaRecipe[]): BulkReviewSummary {

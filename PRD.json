@@ -469,7 +469,7 @@
       "frontend": "Next.js or Vite + React",
       "language": "TypeScript",
       "styling": "Tailwind CSS + shared UI primitives (mobile-first)",
-      "storage": "Local-first JSON or IndexedDB/localStorage for v1",
+      "storage": "Local-first repository abstraction; IndexedDB (Dexie) on web; future Expo SQLite adapter for React Native",
       "tests": "Vitest + Playwright",
       "deployment": "Local/private first; optional Vercel later"
     },
@@ -483,7 +483,11 @@
       "Implement the weekly planner as a visual mini-calendar with meal cards before adding advanced learning behaviors.",
       "Treat the companion UI spec as the screen-level source of truth for layout, readability, and interaction polish.",
       "Adopt a shared styling foundation before further UX polish so already-implemented screens can be refactored without reworking planner logic later.",
-      "Treat responsive mobile layouts as a core requirement for every user-facing screen rather than a final cleanup pass."
+      "Treat responsive mobile layouts as a core requirement for every user-facing screen rather than a final cleanup pass.",
+      "Persist primary household and import-draft data through a typed storage boundary; domain and planner code must not call browser-only storage APIs directly.",
+      "The web build uses Dexie-backed IndexedDB for primary persisted aggregates; a future React Native port should implement the same repository ports with Expo SQLite (or equivalent) behind the abstraction.",
+      "First-run bootstrap continues to use the existing bundled seed-data.json (generated from fixtures); do not replace shipped seed content with ad hoc placeholder households.",
+      "Tiny UI-only preferences (e.g. theme flash, guided tour completion) may remain on localStorage when documented as web-only; they are not the primary datastore."
     ]
   },
   "features": [
@@ -1902,6 +1906,28 @@
       "acceptanceRefs": [
         "S010"
       ]
+    },
+    {
+      "id": "F061",
+      "phase": 2,
+      "priority": "P0",
+      "category": "platform",
+      "description": "Cross-platform local-first storage abstraction with IndexedDB web backend, safe migration off direct localStorage, and preserved seed bootstrap",
+      "steps": [
+        "Introduce typed repository / meta-store ports for household aggregates and app meta blobs, documented as the stable seam for a future Expo SQLite adapter.",
+        "Implement Dexie-backed IndexedDB (`onebaseplate_app`) as the primary web persistence for the household list JSON and Paprika import drafts.",
+        "Run a one-time idempotent migration (v3 guard) from legacy localStorage `onebaseplate_households` and legacy `idb` KV overflow store into Dexie without overwriting existing Dexie data.",
+        "Preserve existing localStorage keys for domain migrations (`onebaseplate_migrated_v1` / `v2`), default household id, and seeded flag; keep theme/tour on documented lightweight localStorage where appropriate.",
+        "Refactor `seedIfNeeded` to populate Dexie from existing `seed-data.json` when storage is empty; never overwrite real user data once households exist.",
+        "Ensure JSON import/export, Paprika save/resume, pins, onboarding, and planner save paths continue to work through the centralized storage layer.",
+        "Add automated tests for Dexie persistence, legacy migration idempotency, seed bootstrap, import/export round-trip, and Paprika draft persistence."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F002",
+        "F048"
+      ],
+      "acceptanceRefs": []
     }
   ],
   "milestones": [
@@ -1994,32 +2020,27 @@
         "F059",
         "F060"
       ]
+    },
+    {
+      "id": "M6",
+      "name": "Cross-platform storage foundation",
+      "includes": [
+        "F061"
+      ]
     }
   ],
   "fixtureHouseholds": [
     {
       "id": "H001",
-      "name": "Conflicting household baseline",
-      "description": "One adult with strict preparation constraints, one picky toddler, one no-teeth weaning baby, and one adult with unrelated preferences.",
-      "purpose": "Primary fixture for MVP testing"
+      "name": "McG (primary seed household)",
+      "description": "Fixture aligned with bundled seed-data: two adults, toddler, baby, and pet; rich ingredients, recipes, and base meals for planning and import flows.",
+      "purpose": "Primary fixture and default seed household"
     },
     {
       "id": "H002",
-      "name": "Two adults plus toddler",
-      "description": "Simpler fixture used to prove the planner still works when no baby adaptations are needed.",
+      "name": "Two adults, toddler, and baby",
+      "description": "Four-person household (Alex, Jordan, Riley, Sam) with conflicting constraints; used for performance and e2e regression tests.",
       "purpose": "Regression coverage"
-    },
-    {
-      "id": "H003",
-      "name": "Single caregiver plus two children",
-      "description": "Used to test rescue mode and low-time planning flows.",
-      "purpose": "Stress and fallback coverage"
-    },
-    {
-      "id": "H004",
-      "name": "McGeever family",
-      "description": "Aaron (adult), Rachel (adult), Indy (toddler), Órla (baby), Lex (dog). Primary seed data for build-time repopulation.",
-      "purpose": "Default seed household"
     }
   ],
   "implementationOrder": [
@@ -2074,6 +2095,8 @@
     "F057",
     "F058",
     "F059",
+    "F060",
+    "F061",
     "F020",
     "F037",
     "F038",
@@ -2513,7 +2536,8 @@
       "F053",
       "F057",
       "F059",
-      "F060"
+      "F060",
+      "F061"
     ]
   },
   "agentExecutionRules": [

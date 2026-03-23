@@ -919,5 +919,14 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - PRD: updated F043 description and steps to mention pagination, source filter, and bulk selection. Updated S010 goal, requiredElements, and acceptance criteria to cover 1000+ ingredients, pagination, bulk selection, safe bulk delete, and selection persistence. Added F060 feature with 18 steps, dependencies F043/F004, acceptance ref S010. Added F060 to M5 milestone and screenToFeatureMap.S010.
 - Known limitations: page size maxes at 100; for libraries > 100 items, users must page through. The `useIncrementalList` hook is still used by other pages (not removed). Bulk tag/category actions are not implemented (future-safe slot in the bulk bar). Import mappings on meals/recipes may retain stale ingredient IDs after deletion (pre-existing behavior, not introduced by this change).
 
+### F061 — Cross-platform local-first storage (Dexie + migration) (2026-03-23)
+- **PRD:** F061; milestone M6; `technicalApproach.suggestedStack.storage` and architecture notes updated for repository + IndexedDB + future Expo SQLite.
+- **Architecture:** Typed `HouseholdRepository` / `AppMetaStore` ports in `src/storage/ports.ts` (stable seam for native SQLite later). Web implementation: Dexie DB `onebaseplate_app`, `meta` table keyed rows for `households` (full `Household[]` JSON) and `paprika_import_session` (string). `src/storage/migrate-v3.ts` runs once (guard `storage_layer_migrated_v3`) and imports legacy `localStorage` `onebaseplate_households`, legacy `idb` `onebaseplate`/`kv` overflow payload, and migrates Paprika draft from `onebaseplate_paprika_session` localStorage into Dexie. Does not overwrite non-empty Dexie household data.
+- **Seed:** Unchanged source — `seed-data.json` / `seedIfNeeded()` writes into Dexie when empty and `onebaseplate_seeded` unset; idempotent with existing flag behavior.
+- **Lightweight localStorage:** Theme (`src/theme.ts`), tour (`GuidedTour.tsx`), `onebaseplate_seeded`, `onebaseplate_default_household_id`, `onebaseplate_migrated_v1` / `v2` remain on localStorage by design.
+- **Major files:** `src/storage/constants.ts`, `dexie-db.ts`, `legacy-idb.ts`, `migrate-v3.ts`, `paprika-session-store.ts`, `ports.ts`; refactored `src/storage.ts`; `src/paprika-parser.ts` session I/O; `src/main.tsx` `await seedIfNeeded()`; `scripts/seed.ts`; `tests/setup.ts` (`fake-indexeddb`, global reset); `tests/f062-storage-layer.test.ts`.
+- **Tests:** `npm test` — 1043 passed, 13 skipped (67 files). `npx tsc --noEmit` may still report unrelated pre-existing issues in other files.
+- **Fixture / PRD alignment:** Scaffold and typecheck imports now reference `fixtures/households/H001-mcg.json`; f016 and e2e use `H002-two-adults-toddler-baby.json`; `fixtureHouseholds` trimmed to on-disk fixtures.
+
 ## Next Task
-- All PRD features including F060 now have `passes=true`. Define the next product slice in `PRD.json` (or reopen a feature with explicit scope) before picking up new implementation work.
+- Pick the next product slice from `PRD.json` implementation order or reopen a feature with explicit scope.

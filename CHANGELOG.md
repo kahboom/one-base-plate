@@ -1,3 +1,11 @@
+### 2026-03-23 — Local-first storage: Dexie IndexedDB, migration off localStorage, preserved seed (F061)
+- Requestor: product owner
+- Reason: Primary household data and large Paprika import drafts should not rely on scattered `localStorage` calls or ad hoc `idb` overflow paths; the codebase should expose a portable repository seam for a future React Native / SQLite adapter.
+- Scope: Added Dexie (`onebaseplate_app` meta store) for households JSON and Paprika session strings. One-time idempotent v3 migration copies legacy `localStorage` households and legacy `idb` KV overflow data into Dexie without overwriting existing Dexie rows. Paprika `saveImportSession` / `loadImportSession` use memory hydrated at `initStorage()` plus async Dexie writes. `seedIfNeeded` remains driven by existing `src/seed-data.json` (same bundled fixture-derived content as before). Domain migration flags (`migrated_v1` / `v2`), default household id, and seeded flag stay on localStorage. Theme and guided tour remain documented lightweight localStorage. New modules under `src/storage/` (constants, Dexie db, legacy idb reader, migrate-v3, ports, paprika session store). `scripts/seed.ts` output updated for IndexedDB-first workflow. Tests: `fake-indexeddb` in `tests/setup.ts`, `tests/f062-storage-layer.test.ts`, updates to f013/f014/f039/f040/f049/f016/e2e/scaffold for fixture and assertion alignment.
+- Files changed: `package.json`, `src/storage.ts`, `src/storage/*`, `src/main.tsx`, `src/paprika-parser.ts`, `scripts/seed.ts`, `tests/setup.ts`, `tests/f062-storage-layer.test.ts`, multiple test files, `PRD.json`, `CHANGELOG.md`, `agent-progress.md`
+- New feature IDs: F061
+- Data model changes: none
+
 ### 2026-03-22 — Paginated ingredient table with bulk selection and safe bulk delete (F060)
 - Requestor: product owner
 - Reason: The Ingredients page used infinite scroll / load-more, which was poor for cleanup and maintenance of large ingredient libraries (100+ items from catalog + imports). Users needed to scan many items quickly, select in bulk, and safely delete junk ingredients without creating orphaned references.

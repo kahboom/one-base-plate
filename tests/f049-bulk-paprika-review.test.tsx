@@ -275,7 +275,7 @@ describe("applyBulkAction", () => {
 
 /* ---- Session persistence tests ---- */
 describe("Import session persistence", () => {
-  it("saves and loads import session from localStorage", () => {
+  it("saves and loads import session from IndexedDB-backed draft", () => {
     const hh = makeHousehold();
     const recipe = makePaprikaRecipe();
     const parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
@@ -529,7 +529,10 @@ describe("PaprikaImport bulk review UI", () => {
     const hh = makeHousehold();
     saveHousehold(hh);
     const recipe = makePaprikaRecipe({ name: "Import Me", ingredients: "200g chicken breast" });
-    const parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
+    let parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
+    parsed = applyBulkAction(parsed, "approve-matched");
+    parsed = applyBulkAction(parsed, "create-all-new");
+    parsed = applyBulkAction(parsed, "ignore-instructions");
     saveImportSession({
       householdId: "h-bulk",
       parsedRecipes: parsed,
@@ -540,7 +543,7 @@ describe("PaprikaImport bulk review UI", () => {
     renderAt("/household/h-bulk/import-paprika");
     await user.click(screen.getByTestId("import-save-all-btn"));
 
-    expect(screen.getByTestId("paprika-done-step")).toBeInTheDocument();
+    expect(await screen.findByTestId("paprika-done-step")).toBeInTheDocument();
     expect(loadImportSession("h-bulk")).toBeNull();
 
     const saved = loadHousehold("h-bulk")!;

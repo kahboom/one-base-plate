@@ -10,7 +10,7 @@ initTheme();
 
 void (async () => {
   await initStorage();
-  seedIfNeeded();
+  await seedIfNeeded();
   runMigrationIfNeeded();
   runRecipeRefMigrationIfNeeded();
 

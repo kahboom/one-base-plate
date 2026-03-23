@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import type { Household, BaseMeal, Ingredient, HouseholdMember } from "../src/types";
 import { generateWeeklyPlan } from "../src/planner";
+import { loadHouseholds } from "../src/storage";
 
 /* ---------- shared fixture ---------- */
 const members: HouseholdMember[] = [
@@ -76,6 +77,10 @@ const STORAGE_KEY = "onebaseplate_households";
 
 function seedStorage(household: Household) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify([household]));
+}
+
+function storedHouseholds(): Household[] {
+  return loadHouseholds();
 }
 
 beforeEach(() => {
@@ -154,8 +159,7 @@ describe("F013: Pin/unpin from Planner page", () => {
     const pinButtons = await screen.findAllByText("Pin");
     await userEvent.click(pinButtons[0]!);
 
-    // Verify storage was updated
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Household[];
+    const stored = storedHouseholds();
     expect(stored[0]!.pinnedMealIds!.length).toBe(1);
 
     unmount();
@@ -195,7 +199,7 @@ describe("F013: Pin/unpin from Planner page", () => {
     const unpinBtn = await screen.findByTestId("pin-meal-a");
     await userEvent.click(unpinBtn);
 
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Household[];
+    const stored = storedHouseholds();
     expect(stored[0]!.pinnedMealIds).toEqual([]);
 
     unmount();
@@ -239,7 +243,7 @@ describe("F013: Pin/unpin from Meal Detail page", () => {
     expect(pinButton.textContent).toBe("Unpin from rotation");
     expect(screen.getByText("Pinned")).toBeTruthy();
 
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Household[];
+    const stored = storedHouseholds();
     expect(stored[0]!.pinnedMealIds).toContain("meal-a");
 
     unmount();
@@ -351,7 +355,7 @@ describe("F013: Pinned rotation view on Home page", () => {
 
     expect(screen.queryByTestId("pinned-meals")).toBeNull();
 
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Household[];
+    const stored = storedHouseholds();
     expect(stored[0]!.pinnedMealIds).toEqual([]);
 
     unmount();
@@ -399,7 +403,7 @@ describe("F013: Pin/unpin from Weekly Planner suggested tray", () => {
     const pinButtons = screen.getAllByText("Pin");
     await userEvent.click(pinButtons[0]!);
 
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Household[];
+    const stored = storedHouseholds();
     expect(stored[0]!.pinnedMealIds!.length).toBe(1);
 
     unmount();

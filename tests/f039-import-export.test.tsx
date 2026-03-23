@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import type { Household } from "../src/types";
 import {
   loadHouseholds,
+  resetAppStorageForTests,
   saveHousehold,
   saveHouseholds,
   exportHouseholdsJSON,
@@ -92,7 +93,7 @@ describe("F039: Export/import storage functions", () => {
     expect(() => importHouseholdsJSON('{"id":"h1"}')).toThrow("expected array");
   });
 
-  it("round-trips: exported JSON can be re-imported to restore data", () => {
+  it("round-trips: exported JSON can be re-imported to restore data", async () => {
     const h = makeHousehold({
       id: "rt1",
       name: "Round Trip",
@@ -124,7 +125,7 @@ describe("F039: Export/import storage functions", () => {
     saveHousehold(h);
 
     const exported = exportHouseholdsJSON();
-    localStorage.clear();
+    await resetAppStorageForTests();
     expect(loadHouseholds()).toHaveLength(0);
 
     importHouseholdsJSON(exported, "replace");

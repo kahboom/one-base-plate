@@ -19,11 +19,11 @@ import {
 
 import HouseholdList from "../src/pages/HouseholdList";
 
-import fixtureH001 from "../fixtures/households/H001-conflicting-baseline.json";
+import fixtureH002 from "../fixtures/households/H002-two-adults-toddler-baby.json";
 import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
 
 function loadFixture(): Household {
-  const h = fixtureH001 as Household;
+  const h = fixtureH002 as Household;
   saveHousehold(h);
   return h;
 }
@@ -47,20 +47,20 @@ describe("F016: App loads and renders with representative fixture", () => {
   it("renders household list without errors", () => {
     loadFixture();
     renderRoute("/");
-    expect(screen.getByText("Conflicting household baseline")).toBeInTheDocument();
+    expect(screen.getByText("Two adults, toddler, and baby")).toBeInTheDocument();
   });
 
   it("renders Home screen with fixture household immediately", () => {
     loadFixture();
-    renderRoute("/household/H001/home");
+    renderRoute("/household/H002/home");
     expect(screen.getByText("What should we eat tonight?")).toBeInTheDocument();
     expect(screen.getByTestId("top-suggestions")).toBeInTheDocument();
   });
 
   it("renders Household Setup with all four members", () => {
     loadFixture();
-    renderRoute("/household/H001");
-    expect(screen.getByDisplayValue("Conflicting household baseline")).toBeInTheDocument();
+    renderRoute("/household/H002");
+    expect(screen.getByDisplayValue("Two adults, toddler, and baby")).toBeInTheDocument();
     expect(screen.getByText("Alex")).toBeInTheDocument();
     expect(screen.getByText("Jordan")).toBeInTheDocument();
     expect(screen.getByText("Riley")).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe("F016: App loads and renders with representative fixture", () => {
 
   it("renders Planner with meal cards ranked by overlap", () => {
     loadFixture();
-    renderRoute("/household/H001/planner");
+    renderRoute("/household/H002/planner");
     expect(screen.getByText("Meal Planner")).toBeInTheDocument();
     expect(screen.getByTestId("meal-card-grid")).toBeInTheDocument();
     const grid = screen.getByTestId("meal-card-grid");
@@ -78,7 +78,7 @@ describe("F016: App loads and renders with representative fixture", () => {
 
   it("renders WeeklyPlanner with day cards and suggested tray", () => {
     loadFixture();
-    renderRoute("/household/H001/weekly");
+    renderRoute("/household/H002/weekly");
     expect(screen.getByText("Weekly Planner")).toBeInTheDocument();
     expect(screen.getByTestId("day-cards")).toBeInTheDocument();
     expect(screen.getByTestId("suggested-tray")).toBeInTheDocument();
@@ -89,7 +89,7 @@ describe("F016: Navigation across setup, planning, and grocery screens", () => {
   it("navigates from HouseholdSetup to MemberProfile and back without errors", async () => {
     const user = userEvent.setup();
     loadFixture();
-    renderRoute("/household/H001");
+    renderRoute("/household/H002");
     const firstMemberCard = screen.getAllByTestId(/^member-/)[0]!;
     await user.click(within(firstMemberCard).getByRole("button", { name: "Edit" }));
     const editLinks = screen.getAllByText(/Edit profile details/i);
@@ -98,19 +98,19 @@ describe("F016: Navigation across setup, planning, and grocery screens", () => {
 
   it("renders IngredientManager with fixture ingredients", () => {
     loadFixture();
-    renderRoute("/household/H001/ingredients");
+    renderRoute("/household/H002/ingredients");
     expect(screen.getByRole("heading", { name: /ingredients/i })).toBeInTheDocument();
   });
 
   it("renders BaseMealManager with fixture meals", () => {
     loadFixture();
-    renderRoute("/household/H001/meals");
+    renderRoute("/household/H002/meals");
     expect(screen.getByRole("heading", { name: /base meals/i })).toBeInTheDocument();
   });
 
   it("renders GroceryList empty state when no plan saved", () => {
     loadFixture();
-    renderRoute("/household/H001/grocery");
+    renderRoute("/household/H002/grocery");
     expect(screen.getByText(/no weekly plan saved/i)).toBeInTheDocument();
   });
 
@@ -125,13 +125,13 @@ describe("F016: Navigation across setup, planning, and grocery screens", () => {
       notes: "",
     }];
     saveHousehold(h);
-    renderRoute("/household/H001/grocery");
+    renderRoute("/household/H002/grocery");
     expect(screen.getByTestId("grocery-categories")).toBeInTheDocument();
   });
 
   it("renders RescueMode with scenario picker", () => {
     loadFixture();
-    renderRoute("/household/H001/rescue");
+    renderRoute("/household/H002/rescue");
     expect(screen.getByRole("heading", { name: /rescue mode/i })).toBeInTheDocument();
     expect(screen.getByText(/low energy/i)).toBeInTheDocument();
     expect(screen.getByText(/low time/i)).toBeInTheDocument();
@@ -142,7 +142,7 @@ describe("F016: Editing constraints and regenerating plan", () => {
   it("selects a meal in Planner and shows variants without lag", async () => {
     const user = userEvent.setup();
     loadFixture();
-    renderRoute("/household/H001/planner");
+    renderRoute("/household/H002/planner");
 
     const firstMealCard = screen.getByTestId("meal-card-grid").querySelector("[data-testid]");
     expect(firstMealCard).toBeTruthy();
@@ -155,7 +155,7 @@ describe("F016: Editing constraints and regenerating plan", () => {
   it("generates a weekly plan and displays day cards with meals", async () => {
     const user = userEvent.setup();
     loadFixture();
-    renderRoute("/household/H001/weekly");
+    renderRoute("/household/H002/weekly");
 
     await user.click(screen.getByTestId("generate-btn"));
 
@@ -167,7 +167,7 @@ describe("F016: Editing constraints and regenerating plan", () => {
   it("assigns a meal via tap-to-assign and plan updates immediately", async () => {
     const user = userEvent.setup();
     loadFixture();
-    renderRoute("/household/H001/weekly");
+    renderRoute("/household/H002/weekly");
 
     const tray = screen.getByTestId("suggested-tray");
     const assignBtns = within(tray).getAllByText("Assign");
@@ -185,7 +185,7 @@ describe("F016: Editing constraints and regenerating plan", () => {
   it("selects a rescue scenario and gets results without errors", async () => {
     const user = userEvent.setup();
     loadFixture();
-    renderRoute("/household/H001/rescue");
+    renderRoute("/household/H002/rescue");
 
     await user.click(screen.getByText(/low time/i));
 
@@ -264,7 +264,7 @@ describe("F016: No crashes during normal flows", () => {
     const h = loadFixture();
     h.baseMeals = [];
     saveHousehold(h);
-    renderRoute("/household/H001/planner");
+    renderRoute("/household/H002/planner");
     expect(screen.getByText(/no base meals/i)).toBeInTheDocument();
   });
 
@@ -272,7 +272,7 @@ describe("F016: No crashes during normal flows", () => {
     const h = loadFixture();
     h.baseMeals = [];
     saveHousehold(h);
-    renderRoute("/household/H001/weekly");
+    renderRoute("/household/H002/weekly");
     expect(screen.getByText(/no base meals/i)).toBeInTheDocument();
   });
 
@@ -280,7 +280,7 @@ describe("F016: No crashes during normal flows", () => {
     const h = loadFixture();
     h.baseMeals = [];
     saveHousehold(h);
-    renderRoute("/household/H001/rescue");
+    renderRoute("/household/H002/rescue");
     expect(screen.getByText(/no meals/i)).toBeInTheDocument();
   });
 });

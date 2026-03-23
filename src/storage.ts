@@ -1,5 +1,27 @@
-import { openDB } from "idb";
 import type { ComponentRecipeRef, Household, Ingredient, MealComponent, Recipe, RecipeRef } from "./types";
+import seedData from "./seed-data.json";
+import {
+  DEFAULT_HOUSEHOLD_KEY,
+  META_HOUSEHOLDS,
+  META_PAPRIKA_SESSION,
+  MIGRATION_KEY,
+  RECIPE_REF_MIGRATION_KEY,
+  SEEDED_KEY,
+  STORAGE_KEY,
+} from "./storage/constants";
+import { getAppDb, recreateAppDb } from "./storage/dexie-db";
+import { migrateLegacyIntoDexieIfNeeded } from "./storage/migrate-v3";
+import { setPaprikaImportSessionMemory } from "./storage/paprika-session-store";
+
+export {
+  STORAGE_KEY,
+  SEEDED_KEY,
+  MIGRATION_KEY,
+  RECIPE_REF_MIGRATION_KEY,
+  DEFAULT_HOUSEHOLD_KEY,
+} from "./storage/constants";
+
+export type { HouseholdRepository, AppMetaStore } from "./storage/ports";
 
 /** Assign stable ids to meal components when missing; idempotent. */
 export function ensureHouseholdComponentIds(household: Household): Household {
@@ -45,102 +67,68 @@ export function normalizeHousehold(household: Household): NormalizedHousehold {
     household.recipes === undefined ? { ...household, recipes: [] } : household;
   return ensureRecipeComponentIds(ensureHouseholdComponentIds(base)) as NormalizedHousehold;
 }
-import seedData from "./seed-data.json";
 
-export const STORAGE_KEY = "onebaseplate_households";
-const SEEDED_KEY = "onebaseplate_seeded";
-const MIGRATION_KEY = "onebaseplate_migrated_v1";
-const DEFAULT_HOUSEHOLD_KEY = "onebaseplate_default_household_id";
-/** When set, household JSON lives in IndexedDB (localStorage quota exceeded). */
-const HOUSEHOLDS_IDB_META = "onebaseplate_households_in_idb";
-
-const IDB_NAME = "onebaseplate";
-const IDB_VERSION = 1;
-const IDB_STORE = "kv";
-
-let idbPromise: ReturnType<typeof openDb> | null = null;
-/** In-IDB mode only: hydrated household list (localStorage mode reads from localStorage each time). */
+/** After initStorage(), holds Dexie-backed household list; null before first init or after test reset. */
 let householdsCache: Household[] | null = null;
 
-function openDb() {
-  return openDB(IDB_NAME, IDB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains(IDB_STORE)) {
-        db.createObjectStore(IDB_STORE);
-      }
-    },
-  });
+async function dexieGetHouseholds(): Promise<Household[] | undefined> {
+  const row = await getAppDb().meta.get(META_HOUSEHOLDS);
+  const v = row?.value;
+  return Array.isArray(v) ? (v as Household[]) : undefined;
 }
 
-function getIdb() {
-  return (idbPromise ??= openDb());
+async function dexieSetHouseholds(households: Household[]): Promise<void> {
+  await getAppDb().meta.put({ key: META_HOUSEHOLDS, value: households });
 }
 
-async function idbGetHouseholds(): Promise<Household[] | undefined> {
-  const db = await getIdb();
-  return db.get(IDB_STORE, STORAGE_KEY);
-}
-
-async function idbPutHouseholds(households: Household[]): Promise<void> {
-  const db = await getIdb();
-  await db.put(IDB_STORE, households, STORAGE_KEY);
-}
-
-export function isHouseholdsInIndexedDB(): boolean {
-  return localStorage.getItem(HOUSEHOLDS_IDB_META) === "1";
-}
-
-/** Call once at app startup before reading households (loads IDB when migrated). */
+/**
+ * Call once at app startup before reading households.
+ * Migrates legacy localStorage + legacy idb KV into Dexie, then hydrates memory caches.
+ */
 export async function initStorage(): Promise<void> {
-  if (!isHouseholdsInIndexedDB()) return;
-  householdsCache = (await idbGetHouseholds()) ?? [];
+  await migrateLegacyIntoDexieIfNeeded();
+  const fromDexie = await dexieGetHouseholds();
+  householdsCache = fromDexie ?? [];
+  const paprikaRow = await getAppDb().meta.get(META_PAPRIKA_SESSION);
+  const raw = typeof paprikaRow?.value === "string" ? paprikaRow.value : null;
+  setPaprikaImportSessionMemory(raw);
 }
 
-export function seedIfNeeded(): void {
+/** Async: seeds from `seed-data.json` when storage is empty and seeded flag unset. */
+export async function seedIfNeeded(): Promise<void> {
   if (localStorage.getItem(SEEDED_KEY)) return;
   if (loadHouseholds().length > 0) return;
-  if (isHouseholdsInIndexedDB()) {
-    householdsCache = seedData as unknown as Household[];
-    void idbPutHouseholds(householdsCache);
-  } else {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(seedData));
-  }
+  const seeded = seedData as unknown as Household[];
+  householdsCache = seeded;
+  await dexieSetHouseholds(seeded);
   localStorage.setItem(SEEDED_KEY, "1");
 }
 
+/**
+ * Sync read for UI. Uses memory after initStorage(); before init, falls back to localStorage
+ * (tests that seed LS without calling initStorage).
+ */
 export function loadHouseholds(): Household[] {
-  if (isHouseholdsInIndexedDB()) {
-    return householdsCache ?? [];
-  }
+  if (householdsCache !== null) return householdsCache;
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
-  return JSON.parse(raw) as Household[];
+  try {
+    return JSON.parse(raw) as Household[];
+  } catch {
+    return [];
+  }
 }
 
-/** Persists the full household list; awaits IndexedDB when that backend is active or after quota migration. */
 export async function persistHouseholdsNow(households: Household[]): Promise<void> {
-  if (isHouseholdsInIndexedDB()) {
-    householdsCache = households;
-    await idbPutHouseholds(households);
-    return;
-  }
-  const json = JSON.stringify(households);
-  try {
-    localStorage.setItem(STORAGE_KEY, json);
-  } catch (e) {
-    if (e instanceof DOMException && e.name === "QuotaExceededError") {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.setItem(HOUSEHOLDS_IDB_META, "1");
-      householdsCache = households;
-      await idbPutHouseholds(households);
-      return;
-    }
-    throw e;
-  }
+  householdsCache = households;
+  localStorage.removeItem(STORAGE_KEY);
+  await dexieSetHouseholds(households);
 }
 
 export function saveHouseholds(households: Household[]): void {
-  void persistHouseholdsNow(households).catch((err) => {
+  householdsCache = households;
+  localStorage.removeItem(STORAGE_KEY);
+  void dexieSetHouseholds(households).catch((err) => {
     console.error("Failed to persist households:", err);
   });
 }
@@ -198,13 +186,11 @@ export function clearDefaultHouseholdId(): void {
   localStorage.removeItem(DEFAULT_HOUSEHOLD_KEY);
 }
 
-/** Removes all households and clears the stored default household id. */
 export function clearAllHouseholdsAndDefault(): void {
   saveHouseholds([]);
   clearDefaultHouseholdId();
 }
 
-/** Clears base meals, weekly plans, pinned meals, and meal outcomes for one household. Ingredients and members are unchanged. */
 export function clearHouseholdMealsAndPlans(householdId: string): void {
   const households = loadHouseholds();
   const idx = households.findIndex((h) => h.id === householdId);
@@ -223,9 +209,7 @@ export function clearHouseholdMealsAndPlans(householdId: string): void {
 
 export function exportHouseholdsJSON(householdIds?: string[]): string {
   const all = loadHouseholds();
-  const data = householdIds
-    ? all.filter((h) => householdIds.includes(h.id))
-    : all;
+  const data = householdIds ? all.filter((h) => householdIds.includes(h.id)) : all;
   return JSON.stringify(data, null, 2);
 }
 
@@ -253,13 +237,18 @@ export function importHouseholdsJSON(
   return merged;
 }
 
-/** Sentence-case display: capitalize first letter, rest as-is */
+/** Clears Dexie app DB and memory caches. Use in tests after localStorage.clear(). */
+export async function resetAppStorageForTests(): Promise<void> {
+  householdsCache = null;
+  setPaprikaImportSessionMemory(null);
+  await recreateAppDb();
+}
+
 export function toSentenceCase(name: string): string {
   if (!name) return name;
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-/** Canonical normalization: lowercase, trim, collapse internal spaces, strip trailing punctuation */
 export function normalizeIngredientName(name: string): string {
   return name
     .toLowerCase()
@@ -268,12 +257,10 @@ export function normalizeIngredientName(name: string): string {
     .replace(/[.,;:!?]+$/, "");
 }
 
-/** For import grouping: same as normalizeIngredientName, then hyphens become spaces (all-purpose ≈ all purpose). */
 export function normalizeIngredientGroupKey(name: string): string {
   return normalizeIngredientName(name).replace(/-/g, " ").replace(/\s+/g, " ").trim();
 }
 
-/** Pick the most complete ingredient record as the survivor */
 function pickSurvivor(duplicates: Ingredient[]): Ingredient {
   let best = duplicates[0]!;
   let bestScore = 0;
@@ -294,7 +281,6 @@ function pickSurvivor(duplicates: Ingredient[]): Ingredient {
   return best;
 }
 
-/** Merge metadata from duplicates into the survivor */
 export function mergeDuplicateMetadata(survivor: Ingredient, duplicates: Ingredient[]): Ingredient {
   const merged = { ...survivor };
   const allTags = new Set(merged.tags);
@@ -314,10 +300,6 @@ export function mergeDuplicateMetadata(survivor: Ingredient, duplicates: Ingredi
   return merged;
 }
 
-/**
- * Remap ingredient references across all household data structures.
- * Mutates the household in place. Returns the number of references updated.
- */
 export function remapIngredientReferences(household: Household, idRemap: Map<string, string>): number {
   if (idRemap.size === 0) return 0;
   let updated = 0;
@@ -371,7 +353,6 @@ export interface MigrationResult {
   referencesUpdated: number;
 }
 
-/** Migrate a single household's ingredients: normalize names, merge duplicates, reassign references */
 export function migrateHouseholdIngredients(household: Household): MigrationResult {
   const result: MigrationResult = { normalized: 0, duplicatesMerged: 0, referencesUpdated: 0 };
 
@@ -417,18 +398,12 @@ export function migrateHouseholdIngredients(household: Household): MigrationResu
   return result;
 }
 
-const RECIPE_REF_MIGRATION_KEY = "onebaseplate_migrated_v2";
-
 export interface RecipeRefMigrationResult {
   recipeRefsBackfilled: number;
   componentRecipeIdsSet: number;
   recipeTypesInferred: number;
 }
 
-/**
- * Migrate a single household: backfill RecipeRef on BaseMeals from sourceRecipeId,
- * copy importedRecipeSourceId to recipeId on ComponentRecipeRefs, infer recipeType.
- */
 export function migrateHouseholdRecipeRefs(household: Household): RecipeRefMigrationResult {
   const result: RecipeRefMigrationResult = {
     recipeRefsBackfilled: 0,
@@ -482,7 +457,6 @@ export function migrateHouseholdRecipeRefs(household: Household): RecipeRefMigra
   return result;
 }
 
-/** Run recipe-ref migration on all households if not already done */
 export function runRecipeRefMigrationIfNeeded(): RecipeRefMigrationResult {
   if (localStorage.getItem(RECIPE_REF_MIGRATION_KEY)) {
     return { recipeRefsBackfilled: 0, componentRecipeIdsSet: 0, recipeTypesInferred: 0 };
@@ -510,7 +484,6 @@ export function runRecipeRefMigrationIfNeeded(): RecipeRefMigrationResult {
   return totals;
 }
 
-/** Run migration on all households if not already done */
 export function runMigrationIfNeeded(): MigrationResult {
   if (localStorage.getItem(MIGRATION_KEY)) {
     return { normalized: 0, duplicatesMerged: 0, referencesUpdated: 0 };
@@ -532,4 +505,9 @@ export function runMigrationIfNeeded(): MigrationResult {
   saveHouseholds(households);
   localStorage.setItem(MIGRATION_KEY, "1");
   return totals;
+}
+
+/** @internal Tests that manipulate Dexie directly after init. */
+export function __testOnly_setHouseholdsCache(list: Household[] | null): void {
+  householdsCache = list;
 }

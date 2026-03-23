@@ -16,11 +16,11 @@ import {
   computeMealOverlap,
 } from "../../src/planner";
 
-import fixtureH001 from "../../fixtures/households/H001-conflicting-baseline.json";
+import fixtureH002 from "../../fixtures/households/H002-two-adults-toddler-baby.json";
 import { householdLayoutRouteBranch } from "../householdLayoutRoutes";
 
 function loadFixture(): Household {
-  const h = fixtureH001 as Household;
+  const h = fixtureH002 as Household;
   saveHousehold(h);
   return h;
 }
@@ -40,9 +40,9 @@ beforeEach(() => {
 describe("E2E: Household setup flow", () => {
   it("loads fixture household with all four members and displays them", () => {
     loadFixture();
-    renderRoute("/household/H001");
+    renderRoute("/household/H002");
 
-    expect(screen.getByDisplayValue("Conflicting household baseline")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Two adults, toddler, and baby")).toBeInTheDocument();
     expect(screen.getByText("Alex")).toBeInTheDocument();
     expect(screen.getByText("Jordan")).toBeInTheDocument();
     expect(screen.getByText("Riley")).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe("E2E: Household setup flow", () => {
     expect(alex.preparationRules.length).toBe(2);
     expect(alex.preparationRules[0]!.ingredient).toBe("chicken breast");
 
-    const reloaded = loadHousehold("H001")!;
+    const reloaded = loadHousehold("H002")!;
     const alexReloaded = reloaded.members.find((m) => m.id === "M001")!;
     expect(alexReloaded.hardNoFoods).toEqual(alex.hardNoFoods);
     expect(alexReloaded.preparationRules).toEqual(alex.preparationRules);
@@ -140,7 +140,7 @@ describe("E2E: Base meal planning flow", () => {
 
   it("planner page renders meal cards from fixture", () => {
     loadFixture();
-    renderRoute("/household/H001/planner");
+    renderRoute("/household/H002/planner");
 
     expect(screen.getByTestId("meal-card-bm-pasta-chicken")).toBeInTheDocument();
     expect(screen.getByTestId("meal-card-bm-salmon-rice")).toBeInTheDocument();
@@ -150,7 +150,7 @@ describe("E2E: Base meal planning flow", () => {
   it("selecting a meal card shows per-member assembly variants", async () => {
     loadFixture();
     const user = userEvent.setup();
-    renderRoute("/household/H001/planner");
+    renderRoute("/household/H002/planner");
 
     await user.click(screen.getByTestId("meal-card-bm-pasta-chicken"));
 
@@ -187,7 +187,7 @@ describe("E2E: Weekly plan generation flow", () => {
   it("weekly planner page renders with fixture data", async () => {
     loadFixture();
     const user = userEvent.setup();
-    renderRoute("/household/H001/weekly");
+    renderRoute("/household/H002/weekly");
 
     await user.click(screen.getByText("Generate plan"));
 
@@ -198,12 +198,12 @@ describe("E2E: Weekly plan generation flow", () => {
   it("generated plan can be saved and reloaded", async () => {
     loadFixture();
     const user = userEvent.setup();
-    renderRoute("/household/H001/weekly");
+    renderRoute("/household/H002/weekly");
 
     await user.click(screen.getByText("Generate plan"));
     await user.click(screen.getByText("Save plan"));
 
-    const saved = loadHousehold("H001")!;
+    const saved = loadHousehold("H002")!;
     expect(saved.weeklyPlans.length).toBeGreaterThan(0);
     const latestPlan = saved.weeklyPlans[saved.weeklyPlans.length - 1]!;
     expect(latestPlan.days.length).toBe(7);
@@ -236,7 +236,7 @@ describe("E2E: Rescue mode flow", () => {
   it("rescue mode page renders scenario picker and shows results", async () => {
     loadFixture();
     const user = userEvent.setup();
-    renderRoute("/household/H001/rescue");
+    renderRoute("/household/H002/rescue");
 
     expect(screen.getByTestId("scenario-picker")).toBeInTheDocument();
 
@@ -248,14 +248,14 @@ describe("E2E: Rescue mode flow", () => {
   it("rescue meal can be added to tonight from fixture", async () => {
     loadFixture();
     const user = userEvent.setup();
-    renderRoute("/household/H001/rescue");
+    renderRoute("/household/H002/rescue");
 
     await user.click(screen.getByTestId("scenario-low-time"));
 
     const addButtons = screen.getAllByText("Add to tonight");
     await user.click(addButtons[0]!);
 
-    const saved = loadHousehold("H001")!;
+    const saved = loadHousehold("H002")!;
     expect(saved.weeklyPlans.length).toBeGreaterThan(0);
     const plan = saved.weeklyPlans[saved.weeklyPlans.length - 1]!;
     const tonight = plan.days.find((d) => d.day === "Tonight");
@@ -265,11 +265,11 @@ describe("E2E: Rescue mode flow", () => {
 
   it("rescue mode is reachable from Home in one tap", () => {
     loadFixture();
-    renderRoute("/household/H001/home");
+    renderRoute("/household/H002/home");
 
     const rescueCard = screen.getByTestId("rescue-mode-card");
     expect(rescueCard).toBeInTheDocument();
-    expect(rescueCard.getAttribute("href")).toBe("/household/H001/rescue");
+    expect(rescueCard.getAttribute("href")).toBe("/household/H002/rescue");
   });
 });
 
@@ -320,7 +320,7 @@ describe("E2E: Grocery list generation flow", () => {
     }];
     saveHousehold(h);
 
-    renderRoute("/household/H001/grocery");
+    renderRoute("/household/H002/grocery");
 
     expect(screen.getByTestId("grocery-categories")).toBeInTheDocument();
   });
@@ -338,7 +338,7 @@ describe("E2E: Grocery list generation flow", () => {
     saveHousehold(h);
 
     const user = userEvent.setup();
-    renderRoute("/household/H001/grocery");
+    renderRoute("/household/H002/grocery");
 
     const summary = screen.getByTestId("grocery-summary");
     const initialText = summary.textContent!;

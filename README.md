@@ -66,25 +66,6 @@ On the **household home** screen, **Top suggestions** lists up to **three** meal
 
 ---
 
-## Progress (F001 Complete)
-
-### F001: Repository scaffold — COMPLETE
-
-- [x] Vite + React + TypeScript project scaffold
-- [x] TypeScript types in `src/types.ts` matching all PRD data model entities
-- [x] 3 household fixtures (H001, H002, H003) covering all persona types
-- [x] 1 meal fixture (`pasta-base.json`)
-- [x] Vitest with jsdom environment and test setup
-- [x] Scaffold test suite (7 tests, all passing)
-- [x] `init.sh` runs: install → typecheck → test → dev server
-- [x] Verified: `tsc --noEmit`, vitest, and `vite build` all succeed
-
-### Next: F002
-
-**User can create a household with multiple members and role types**
-
----
-
 ## Requirements
 
 - Node.js (recommended: v18+)
