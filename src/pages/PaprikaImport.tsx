@@ -35,6 +35,7 @@ import type {
 import { findNearDuplicates, searchCatalog } from "../catalog";
 import PaprikaIngredientPicker from "../components/PaprikaIngredientPicker";
 import TagSuggestInput from "../components/TagSuggestInput";
+import { useListKeyNav } from "../hooks/useListKeyNav";
 import AppModal from "../components/AppModal";
 import PostImportDestination from "../components/PostImportDestination";
 import {
@@ -105,6 +106,17 @@ export default function PaprikaImport() {
   const [catalogPickerGroupKey, setCatalogPickerGroupKey] = useState<string | null>(null);
   const [createGroupKey, setCreateGroupKey] = useState<string | null>(null);
   const [catalogSearch, setCatalogSearch] = useState("");
+
+  const catalogResults = useMemo(
+    () => (catalogSearch ? searchCatalog(catalogSearch) : []).slice(0, 40),
+    [catalogSearch],
+  );
+  const catalogSelectRef = useRef<(index: number) => void>(() => {});
+  const catalogKeyNav = useListKeyNav(
+    catalogResults.length,
+    useCallback((index: number) => catalogSelectRef.current(index), []),
+  );
+
   const [createForm, setCreateForm] = useState<{
     canonicalName: string;
     category: IngredientCategory;
@@ -551,6 +563,15 @@ export default function PaprikaImport() {
     },
     [],
   );
+
+  catalogSelectRef.current = (index: number) => {
+    const item = catalogResults[index];
+    if (!item) return;
+    if (catalogPickerGroupKey) {
+      applyResolutionToGroup(catalogPickerGroupKey, { kind: "catalog", catalogItem: item });
+    }
+    setCatalogPickerGroupKey(null);
+  };
 
   const approveSuggestedHouseholdMatch = useCallback(
     (groupKey: string, ingredient: Ingredient | null | undefined) => {
@@ -1298,22 +1319,31 @@ export default function PaprikaImport() {
             <h3 className="mb-2 text-base font-semibold text-text-primary">Add from catalog</h3>
             <Input
               value={catalogSearch}
-              onChange={(e) => setCatalogSearch(e.target.value)}
+              onChange={(e) => { setCatalogSearch(e.target.value); catalogKeyNav.setActiveIndex(-1); }}
+              onKeyDown={catalogKeyNav.onKeyDown}
               placeholder="Search catalog…"
               className="mb-2"
             />
-            <ul className="max-h-52 space-y-1 overflow-y-auto rounded border border-border-light bg-bg p-1 text-sm">
-              {(catalogSearch ? searchCatalog(catalogSearch) : []).slice(0, 40).map((item) => (
+            <ul
+              ref={catalogKeyNav.listRef as React.RefObject<HTMLUListElement>}
+              className="max-h-52 space-y-1 overflow-y-auto rounded border border-border-light bg-bg p-1 text-sm"
+            >
+              {catalogResults.map((item, i) => (
                 <li key={item.id}>
                   <button
                     type="button"
-                    className="w-full rounded px-2 py-1.5 text-left hover:bg-bg-elevated"
+                    className={`w-full rounded px-2 py-1.5 text-left transition-colors ${
+                      catalogKeyNav.activeIndex === i
+                        ? "bg-bg-elevated ring-1 ring-brand"
+                        : "hover:bg-bg-elevated"
+                    }`}
                     onClick={() => {
                       if (catalogPickerGroupKey) {
                         applyResolutionToGroup(catalogPickerGroupKey, { kind: "catalog", catalogItem: item });
                       }
                       setCatalogPickerGroupKey(null);
                     }}
+                    onMouseEnter={() => catalogKeyNav.setActiveIndex(i)}
                   >
                     {item.name}
                   </button>

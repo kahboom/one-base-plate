@@ -1406,14 +1406,16 @@
       "phase": 2,
       "priority": "P0",
       "category": "ux",
-      "description": "Ingredient Manager becomes a compact browse-first list with modal editing",
+      "description": "Ingredient Manager becomes a compact browse-first paginated list with modal editing and bulk selection",
       "steps": [
         "Replace the current permanently expanded ingredient cards with a browse-first Ingredient Manager built for fast scanning.",
-        "Show search, category filter, tag filter, and primary actions in a compact control bar above the list.",
-        "Render ingredients as compact rows or compact stacked list items that surface name, category, tags, freezer-friendly, baby-safe, and optional thumbnail at a glance.",
+        "Show search, category filter, tag filter, source filter, sort, and page-size controls in a sticky compact control bar above the list.",
+        "Render ingredients as compact rows or compact stacked list items that surface name, category, tags, freezer-friendly, baby-safe, source, and optional thumbnail at a glance.",
+        "Use traditional pagination (page numbers, prev/next) instead of infinite scroll or load-more for large ingredient libraries.",
         "Open ingredient details in a modal or drawer for edit instead of keeping every ingredient expanded inline.",
         "Keep destructive delete actions secondary and place them inside the modal/drawer or an overflow menu.",
-        "Ensure the page remains comfortable to use with 25 to 50+ ingredients on mobile and desktop.",
+        "Support bulk selection via per-row checkboxes, select-all-on-page, select-all-filtered, and clear selection.",
+        "Ensure the page remains comfortable to use with 1000+ ingredients on mobile and desktop.",
         "Verify the Ingredient Manager no longer feels like a giant form or a stack of bulky cards."
       ],
       "passes": true,
@@ -1865,6 +1867,41 @@
         "S007",
         "S010"
       ]
+    },
+    {
+      "id": "F060",
+      "phase": 2,
+      "priority": "P0",
+      "category": "ux",
+      "description": "Paginated ingredient table with bulk selection and safe bulk delete for large ingredient libraries",
+      "steps": [
+        "Replace infinite-scroll/load-more with traditional paginated data-table (page numbers, prev/next, first/last controls).",
+        "Add page-size control (25, 50, 100 items per page) in the control bar.",
+        "Add source filter (manual, catalog, imported) to the control bar alongside existing search, category, tag, and sort.",
+        "Make the control bar sticky so filters remain accessible while scrolling.",
+        "Add per-row selection checkboxes that do not trigger modal editing.",
+        "Add select-all-on-page header checkbox with indeterminate state.",
+        "Add bulk actions bar (visible when 1+ items selected) with select-all-filtered, clear selection, and delete selected.",
+        "Selection persists across page navigation and filter changes within the session.",
+        "Bulk delete opens a confirmation dialog showing selected count, sample ingredient names, and reference-safety analysis.",
+        "Scan baseMeals, recipes, weeklyPlans, and importMappings for ingredient ID references before allowing deletion.",
+        "If all selected ingredients are unreferenced, allow bulk delete with confirmation.",
+        "If some are referenced, offer to delete only the unreferenced subset with a clear explanation of which items are protected and why.",
+        "If all are referenced, block deletion and show only a close button.",
+        "After bulk delete, page and pagination recover gracefully (auto-navigate to valid page).",
+        "Desktop rows show checkbox, thumbnail, name, category, tags, source, and flags in aligned columns.",
+        "Mobile rows use a compact stacked layout with checkbox, name, and inline chips.",
+        "Result summary shows total items, filtered count, selected count, and current page/total pages.",
+        "Empty and no-results states render correctly after bulk operations."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F043",
+        "F004"
+      ],
+      "acceptanceRefs": [
+        "S010"
+      ]
     }
   ],
   "milestones": [
@@ -1954,7 +1991,8 @@
         "F056",
         "F057",
         "F058",
-        "F059"
+        "F059",
+        "F060"
       ]
     }
   ],
@@ -2301,23 +2339,30 @@
       {
         "id": "S010",
         "name": "Ingredient Manager",
-        "goal": "Let the user browse, add, and edit household ingredients quickly without giant forms.",
+        "goal": "Let the user browse, add, edit, and bulk-manage household ingredients quickly without giant forms, supporting 1000+ ingredient libraries.",
         "requiredElements": [
           "Integrated household navigation using the shared navigation pattern",
-          "Search input",
-          "Category filter and tag filter",
+          "Sticky compact control bar with search, category filter, tag filter, source filter, sort, and page-size controls",
           "Primary actions: Add ingredient, Add from catalog",
-          "Compact ingredient rows or compact list items with name, category, tags, key flags, and optional thumbnail",
+          "Compact ingredient rows with selection checkbox, name, category, tags, source, key flags, and optional thumbnail",
           "Tap or click to open ingredient detail modal or drawer",
           "Modal or drawer form for full editing",
+          "Traditional pagination controls (page numbers, prev/next, first/last) instead of infinite scroll",
+          "Bulk selection: per-row checkbox, select-all-on-page, select-all-filtered, clear selection",
+          "Bulk actions bar with bulk delete and clear selection",
+          "Bulk delete confirmation dialog with reference-safety checks",
+          "Result summary showing total items, filtered count, selected count, and current page",
           "Clear empty state that offers catalog add and manual add"
         ],
         "acceptance": [
-          "User can scan 25 to 50+ ingredients without the page feeling bulky",
-          "Desktop view may align fields like a table, but the default UI must still feel lightweight and readable rather than like a dense data grid",
+          "User can scan and manage 1000+ ingredients without endless scrolling",
+          "Desktop view is table-like but still visually lightweight and readable rather than like a dense data grid",
           "Mobile view uses compact stacked list items with large tap targets",
           "Editing an ingredient takes one tap from the browse list",
-          "The primary screen stays browse-first instead of showing every ingredient as an expanded form"
+          "The primary screen stays browse-first instead of showing every ingredient as an expanded form",
+          "Bulk delete is safe: referenced ingredients are protected, only unreferenced items can be deleted",
+          "No orphaned ingredient references are created by bulk delete",
+          "Selection persists across page changes and filter changes within a session"
         ]
       }
     ],
@@ -2467,7 +2512,8 @@
       "F050",
       "F053",
       "F057",
-      "F059"
+      "F059",
+      "F060"
     ]
   },
   "agentExecutionRules": [

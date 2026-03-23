@@ -6,8 +6,8 @@ import type { Household, Ingredient } from "../src/types";
 import { saveHousehold, loadHousehold } from "../src/storage";
 import { MASTER_CATALOG } from "../src/catalog";
 import IngredientManager from "../src/pages/IngredientManager";
-import { DEFAULT_INCREMENTAL_PAGE_SIZE } from "../src/hooks/useIncrementalList";
-import { loadAllIngredientListRows } from "./incremental-load-helpers";
+import { DEFAULT_PAGE_SIZE } from "../src/hooks/usePaginatedList";
+import { loadAllIngredientListRows, showAllIngredientRows } from "./incremental-load-helpers";
 
 const CATALOG_SIZE = MASTER_CATALOG.length;
 
@@ -135,8 +135,8 @@ describe("F004: Tag ingredients", () => {
   });
 });
 
-describe("F004: Incremental ingredient list", () => {
-  it("renders one page of rows then load more reveals more", async () => {
+describe("F004: Paginated ingredient list", () => {
+  it("renders one page of rows then next page shows more", async () => {
     const household = seedHousehold();
     household.ingredients = manyExtraIngredients(55);
     saveHousehold(household);
@@ -145,17 +145,20 @@ describe("F004: Incremental ingredient list", () => {
     renderIngredientManager("h-ing");
 
     const total = loadHousehold("h-ing")!.ingredients.length;
-    expect(total).toBeGreaterThan(DEFAULT_INCREMENTAL_PAGE_SIZE);
+    expect(total).toBeGreaterThan(DEFAULT_PAGE_SIZE);
 
     const list = screen.getByTestId("ingredient-list");
     const rowButtons = () =>
       within(list).getAllByRole("button", { name: /^Edit / });
 
-    expect(rowButtons()).toHaveLength(DEFAULT_INCREMENTAL_PAGE_SIZE);
+    expect(rowButtons()).toHaveLength(DEFAULT_PAGE_SIZE);
 
-    await user.click(screen.getByTestId("ingredient-list-load-more"));
+    expect(screen.queryByTestId("ingredient-list-load-more")).not.toBeInTheDocument();
+    expect(screen.getByTestId("pagination-controls")).toBeInTheDocument();
 
-    expect(rowButtons()).toHaveLength(Math.min(DEFAULT_INCREMENTAL_PAGE_SIZE * 2, total));
+    await user.click(screen.getByTestId("pagination-next"));
+
+    expect(rowButtons()).toHaveLength(Math.min(DEFAULT_PAGE_SIZE, total - DEFAULT_PAGE_SIZE));
   });
 });
 
@@ -191,7 +194,7 @@ describe("F004: Ingredients persist across re-open", () => {
     ).length;
     const expected = 2 + CATALOG_SIZE - catalogDupes;
     expect(screen.getByText(`Items (${expected})`)).toBeInTheDocument();
-    loadAllIngredientListRows();
+    showAllIngredientRows();
     expect(screen.getByText("Oats")).toBeInTheDocument();
     expect(screen.getByText("Salmon")).toBeInTheDocument();
   });
@@ -228,6 +231,8 @@ describe("F004: Ingredient delete behavior", () => {
     const user = userEvent.setup();
     renderIngredientManager("h-ing");
 
+    // Search to find the item (may not be on page 1 with many catalog items)
+    await user.type(screen.getByTestId("ingredient-search"), "Delete Me");
     await user.click(screen.getByTestId("ingredient-row-ing-delete"));
     const modal = screen.getByTestId("ingredient-modal");
     await user.click(within(modal).getByTestId("delete-ingredient-btn"));

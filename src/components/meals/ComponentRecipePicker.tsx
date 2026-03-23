@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { BaseMeal, ComponentRecipeRef, MealComponent, Recipe, RecipeRef } from "../../types";
 import AppModal from "../AppModal";
 import { Button, FieldLabel, Input, Chip } from "../ui";
+import { useListKeyNav } from "../../hooks/useListKeyNav";
 
 export type ComponentRecipePickerMode = "default" | "tonight" | "meal";
 
@@ -92,6 +93,13 @@ export default function ComponentRecipePicker({
   const importedRows = candidates.filter((c) => c.group === "imported");
   const mealRows = candidates.filter((c) => c.group === "meal");
 
+  const handleCandidateSelect = useCallback(
+    (index: number) => { pickRow(candidates[index]!); },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [candidates],
+  );
+  const keyNav = useListKeyNav(candidates.length, handleCandidateSelect);
+
   function pickRow(row: CandidateRow) {
     if (isMealMode && onSaveMealRef) {
       const ref: RecipeRef = {
@@ -172,34 +180,42 @@ export default function ComponentRecipePicker({
     meal: "Base meals",
   };
 
-  function renderGroup(rows: CandidateRow[], group: CandidateRow["group"]) {
+  function renderGroup(rows: CandidateRow[], group: CandidateRow["group"], flatOffset: number) {
     if (rows.length === 0) return null;
     return (
       <>
         <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
           {groupLabel[group]}
         </p>
-        {rows.map((row) => (
-          <button
-            key={`${group}-${row.id}`}
-            type="button"
-            className="flex w-full items-center justify-between rounded-sm border border-border-light px-2 py-2 text-left text-sm hover:bg-bg"
-            onClick={() => pickRow(row)}
-            data-testid={`pick-recipe-${group}-${row.id}`}
-          >
-            <span className="truncate font-medium text-text-primary">{row.name}</span>
-            {row.recipe?.recipeType && (
-              <Chip variant="neutral" className="shrink-0 text-[10px] ml-1">
-                {row.recipe.recipeType}
-              </Chip>
-            )}
-            {row.group === "imported" && (
-              <Chip variant="info" className="shrink-0 text-[10px] ml-1">
-                Imported
-              </Chip>
-            )}
-          </button>
-        ))}
+        {rows.map((row, i) => {
+          const flatIndex = flatOffset + i;
+          return (
+            <button
+              key={`${group}-${row.id}`}
+              type="button"
+              className={`flex w-full items-center justify-between rounded-sm border px-2 py-2 text-left text-sm transition-colors ${
+                keyNav.activeIndex === flatIndex
+                  ? "border-brand bg-bg ring-1 ring-brand"
+                  : "border-border-light hover:bg-bg"
+              }`}
+              onClick={() => pickRow(row)}
+              onMouseEnter={() => keyNav.setActiveIndex(flatIndex)}
+              data-testid={`pick-recipe-${group}-${row.id}`}
+            >
+              <span className="truncate font-medium text-text-primary">{row.name}</span>
+              {row.recipe?.recipeType && (
+                <Chip variant="neutral" className="shrink-0 text-[10px] ml-1">
+                  {row.recipe.recipeType}
+                </Chip>
+              )}
+              {row.group === "imported" && (
+                <Chip variant="info" className="shrink-0 text-[10px] ml-1">
+                  Imported
+                </Chip>
+              )}
+            </button>
+          );
+        })}
       </>
     );
   }
@@ -231,16 +247,17 @@ export default function ComponentRecipePicker({
           <Input
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); keyNav.setActiveIndex(-1); }}
+            onKeyDown={keyNav.onKeyDown}
             placeholder="Search…"
             data-testid="component-recipe-search"
           />
         </FieldLabel>
 
         <div className="mt-2 max-h-48 space-y-0.5 overflow-y-auto" data-testid="recipe-picker-results">
-          {renderGroup(recipeRows, "recipe")}
-          {renderGroup(importedRows, "imported")}
-          {renderGroup(mealRows, "meal")}
+          {renderGroup(recipeRows, "recipe", 0)}
+          {renderGroup(importedRows, "imported", recipeRows.length)}
+          {renderGroup(mealRows, "meal", recipeRows.length + importedRows.length)}
           {candidates.length === 0 && (
             <p className="text-xs text-text-muted">No matches.</p>
           )}

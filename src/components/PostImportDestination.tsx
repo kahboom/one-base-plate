@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type {
   BaseMeal,
@@ -11,6 +11,7 @@ import type {
 import { loadHousehold, saveHousehold, normalizeHousehold } from "../storage";
 import { promoteRecipeToBaseMeal } from "../lib/promoteRecipe";
 import { Card, Button, Input, FieldLabel, Chip, ActionGroup, EmptyState } from "./ui";
+import { useListKeyNav } from "../hooks/useListKeyNav";
 
 type Destination =
   | "choose"
@@ -57,6 +58,12 @@ export default function PostImportDestination({
     );
     return list.slice(0, 20);
   }, [baseMeals, mealSearch]);
+
+  const handleMealKeySelect = useCallback(
+    (index: number) => { setSelectedMealId(filteredMeals[index]!.id); },
+    [filteredMeals],
+  );
+  const mealKeyNav = useListKeyNav(filteredMeals.length, handleMealKeySelect);
 
   const selectedMeal = baseMeals.find((m) => m.id === selectedMealId);
 
@@ -375,26 +382,32 @@ export default function PostImportDestination({
               <Input
                 type="search"
                 value={mealSearch}
-                onChange={(e) => setMealSearch(e.target.value)}
+                onChange={(e) => { setMealSearch(e.target.value); mealKeyNav.setActiveIndex(-1); }}
+                onKeyDown={mealKeyNav.onKeyDown}
                 placeholder="Search your base meals…"
                 data-testid="attach-meal-search"
               />
             </FieldLabel>
 
-            <div className="mt-2 max-h-56 space-y-1 overflow-y-auto" data-testid="attach-meal-list">
+            <div
+              ref={mealKeyNav.listRef as React.RefObject<HTMLDivElement>}
+              className="mt-2 max-h-56 space-y-1 overflow-y-auto"
+              data-testid="attach-meal-list"
+            >
               {filteredMeals.length === 0 && (
                 <EmptyState>No meals found.</EmptyState>
               )}
-              {filteredMeals.map((meal) => (
+              {filteredMeals.map((meal, i) => (
                 <button
                   key={meal.id}
                   type="button"
                   className={`flex w-full items-center justify-between rounded-sm border px-3 py-2 text-left text-sm transition-colors ${
-                    selectedMealId === meal.id
+                    selectedMealId === meal.id || mealKeyNav.activeIndex === i
                       ? "border-brand bg-brand/5 font-medium"
                       : "border-border-light hover:bg-bg"
                   }`}
                   onClick={() => setSelectedMealId(meal.id)}
+                  onMouseEnter={() => mealKeyNav.setActiveIndex(i)}
                   data-testid={`attach-meal-option-${meal.id}`}
                 >
                   <span className="truncate text-text-primary">{meal.name}</span>
@@ -434,22 +447,32 @@ export default function PostImportDestination({
               <Input
                 type="search"
                 value={mealSearch}
-                onChange={(e) => setMealSearch(e.target.value)}
+                onChange={(e) => { setMealSearch(e.target.value); mealKeyNav.setActiveIndex(-1); }}
+                onKeyDown={mealKeyNav.onKeyDown}
                 placeholder="Search your base meals…"
                 data-testid="component-meal-search"
               />
             </FieldLabel>
 
-            <div className="mt-2 max-h-56 space-y-1 overflow-y-auto" data-testid="component-meal-list">
+            <div
+              ref={mealKeyNav.listRef as React.RefObject<HTMLDivElement>}
+              className="mt-2 max-h-56 space-y-1 overflow-y-auto"
+              data-testid="component-meal-list"
+            >
               {filteredMeals.length === 0 && (
                 <EmptyState>No meals found.</EmptyState>
               )}
-              {filteredMeals.map((meal) => (
+              {filteredMeals.map((meal, i) => (
                 <button
                   key={meal.id}
                   type="button"
-                  className="flex w-full items-center justify-between rounded-sm border border-border-light px-3 py-2 text-left text-sm hover:bg-bg transition-colors"
+                  className={`flex w-full items-center justify-between rounded-sm border px-3 py-2 text-left text-sm transition-colors ${
+                    mealKeyNav.activeIndex === i
+                      ? "border-brand bg-brand/5 font-medium"
+                      : "border-border-light hover:bg-bg"
+                  }`}
                   onClick={() => setSelectedMealId(meal.id)}
+                  onMouseEnter={() => mealKeyNav.setActiveIndex(i)}
                   data-testid={`component-meal-option-${meal.id}`}
                 >
                   <span className="truncate text-text-primary">{meal.name}</span>

@@ -128,7 +128,7 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    loadAllIngredientListRows();
+    await user.type(screen.getByTestId("ingredient-search"), "Rice");
     await user.click(screen.getByTestId("ingredient-row-i2"));
     const modal = screen.getByTestId("ingredient-modal");
     const preview = within(modal).getByTestId("ingredient-image-preview");
@@ -184,7 +184,7 @@ describe("F037 — Ingredient Manager image input", () => {
         </Routes>
       </MemoryRouter>,
     );
-    loadAllIngredientListRows();
+    await user.type(screen.getByTestId("ingredient-search"), "Rice");
     await user.click(screen.getByTestId("ingredient-row-i2"));
     const modal = screen.getByTestId("ingredient-modal");
     const preview = within(modal).getByTestId("ingredient-image-preview");
@@ -461,7 +461,7 @@ describe("F037 — Mobile readability", () => {
         </Routes>
       </MemoryRouter>,
     );
-    loadAllIngredientListRows();
+    await user.type(screen.getByTestId("ingredient-search"), "Rice");
     await user.click(screen.getByTestId("ingredient-row-i2"));
     const modal = screen.getByTestId("ingredient-modal");
     const preview = within(modal).getByTestId("ingredient-image-preview");

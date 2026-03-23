@@ -6,7 +6,7 @@ import type { Household, Ingredient } from "../src/types";
 import { saveHousehold, loadHousehold } from "../src/storage";
 import { MASTER_CATALOG, searchCatalog, catalogIngredientToHousehold, getCatalogByCategory } from "../src/catalog";
 import IngredientManager from "../src/pages/IngredientManager";
-import { loadAllIngredientListRows } from "./incremental-load-helpers";
+import { showAllIngredientRows } from "./incremental-load-helpers";
 
 const CATALOG_SIZE = MASTER_CATALOG.length;
 
@@ -114,39 +114,48 @@ describe("F044: Master ingredient catalog", () => {
 });
 
 describe("F044: Catalog auto-populates on the ingredient page", () => {
-  it("ingredient list auto-populates with all catalog items for empty household", () => {
+  it("ingredient list auto-populates with all catalog items for empty household", async () => {
     seedHousehold();
+    const user = userEvent.setup();
     renderPage();
-    loadAllIngredientListRows();
+    showAllIngredientRows();
 
     expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
+    // Spot-check specific items via search since list is paginated
+    await user.type(screen.getByTestId("ingredient-search"), "Chicken breast");
     expect(screen.getByText("Chicken breast")).toBeInTheDocument();
-    expect(screen.getByText("Pasta")).toBeInTheDocument();
-    expect(screen.getByText("Broccoli")).toBeInTheDocument();
+    await user.clear(screen.getByTestId("ingredient-search"));
+    await user.type(screen.getByTestId("ingredient-search"), "Cheese");
     expect(screen.getByText("Cheese")).toBeInTheDocument();
   });
 
-  it("does not duplicate household items that match catalog names", () => {
+  it("does not duplicate household items that match catalog names", async () => {
     seedHousehold([makeIngredient({ name: "Pasta", category: "carb" })]);
+    const user = userEvent.setup();
     renderPage();
-    loadAllIngredientListRows();
-
-    // Pasta exists in both household and catalog — should not be duplicated
-    const pastaMatches = screen.getAllByText("Pasta");
-    expect(pastaMatches).toHaveLength(1);
 
     // Total = household(1) + catalog - overlap(1)
     expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
+
+    // Search for Pasta — should exist only once
+    await user.type(screen.getByTestId("ingredient-search"), "Pasta");
+    const pastaMatches = screen.getAllByText("Pasta");
+    expect(pastaMatches).toHaveLength(1);
   });
 
-  it("household items appear alongside catalog items", () => {
+  it("household items appear alongside catalog items", async () => {
     seedHousehold([makeIngredient({ name: "Unicorn meat", category: "protein" })]);
+    const user = userEvent.setup();
     renderPage();
-    loadAllIngredientListRows();
 
-    expect(screen.getByText("Unicorn meat")).toBeInTheDocument();
-    expect(screen.getByText("Chicken breast")).toBeInTheDocument();
     expect(screen.getByText(`Items (${CATALOG_SIZE + 1})`)).toBeInTheDocument();
+    // Search for custom item to verify
+    await user.type(screen.getByTestId("ingredient-search"), "Unicorn meat");
+    expect(screen.getByText("Unicorn meat")).toBeInTheDocument();
+    // Search for a catalog item to verify it's present
+    await user.clear(screen.getByTestId("ingredient-search"));
+    await user.type(screen.getByTestId("ingredient-search"), "Chicken breast");
+    expect(screen.getByText("Chicken breast")).toBeInTheDocument();
   });
 
   it("there is no 'Add from catalog' button", () => {

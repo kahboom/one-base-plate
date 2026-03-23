@@ -6,7 +6,7 @@ import type { Household, Ingredient } from "../src/types";
 import { saveHousehold } from "../src/storage";
 import { MASTER_CATALOG } from "../src/catalog";
 import IngredientManager from "../src/pages/IngredientManager";
-import { loadAllIngredientListRows } from "./incremental-load-helpers";
+import { showAllIngredientRows } from "./incremental-load-helpers";
 
 const CATALOG_SIZE = MASTER_CATALOG.length;
 
@@ -61,23 +61,28 @@ beforeEach(() => {
 });
 
 describe("F043: Browse-first compact list", () => {
-  it("renders ingredients as compact rows including catalog items", () => {
+  it("renders ingredients as compact rows including catalog items", async () => {
     const ingredients = [
       makeIngredient({ name: "Chicken", category: "protein", tags: ["quick"], freezerFriendly: true }),
       makeIngredient({ name: "Rice", category: "carb", tags: ["staple"] }),
       makeIngredient({ name: "Broccoli", category: "veg", babySafeWithAdaptation: true }),
     ];
     seedWithIngredients(ingredients);
+    const user = userEvent.setup();
     renderPage();
-    loadAllIngredientListRows();
+    showAllIngredientRows();
 
-    const list = screen.getByTestId("ingredient-list");
-    const rows = within(list).getAllByTestId(/^ingredient-row-/);
-    expect(rows.length).toBe(expectedTotal(ingredients));
+    const total = expectedTotal(ingredients);
+    expect(screen.getByText(`Items (${total})`)).toBeInTheDocument();
 
-    // Seeded items are present
+    // Paginated: page 1 shows up to 100 items; verify seeded items via search
+    await user.type(screen.getByTestId("ingredient-search"), "Chicken");
     expect(screen.getByText("Chicken")).toBeInTheDocument();
+    await user.clear(screen.getByTestId("ingredient-search"));
+    await user.type(screen.getByTestId("ingredient-search"), "Rice");
     expect(screen.getByText("Rice")).toBeInTheDocument();
+    await user.clear(screen.getByTestId("ingredient-search"));
+    await user.type(screen.getByTestId("ingredient-search"), "Broccoli");
     expect(screen.getByText("Broccoli")).toBeInTheDocument();
   });
 
@@ -89,7 +94,7 @@ describe("F043: Browse-first compact list", () => {
     ];
     seedWithIngredients(ingredients);
     renderPage();
-    loadAllIngredientListRows();
+    showAllIngredientRows();
 
     const chickenRow = screen.getByTestId("ingredient-row-ing-chicken");
     expect(within(chickenRow).getByTitle("Freezer friendly")).toBeInTheDocument();
@@ -234,12 +239,13 @@ describe("F043: Modal editing", () => {
     const modal = screen.getByTestId("ingredient-modal");
 
     await user.clear(within(modal).getByTestId("modal-ingredient-name"));
-    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Turkey");
+    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Aardvark roast");
     await user.click(within(modal).getByText("Done"));
 
     expect(screen.queryByTestId("ingredient-modal")).not.toBeInTheDocument();
-    loadAllIngredientListRows();
-    expect(screen.getByText("Turkey")).toBeInTheDocument();
+    // Search for renamed item (may have moved pages due to sort)
+    await user.type(screen.getByTestId("ingredient-search"), "Aardvark roast");
+    expect(screen.getByText("Aardvark roast")).toBeInTheDocument();
   });
 
   it("does not show a remove ingredient action in browse or modal", async () => {
@@ -275,13 +281,14 @@ describe("F043: Comfortable with many ingredients", () => {
   it("handles many ingredients (catalog + custom) without rendering expanded forms", () => {
     seedWithIngredients([]);
     renderPage();
-    loadAllIngredientListRows();
 
     // Catalog items auto-populated
     expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
 
+    // Paginated — only one page of rows visible, not the full list
     const rows = screen.getAllByTestId(/^ingredient-row-/);
-    expect(rows).toHaveLength(CATALOG_SIZE);
+    expect(rows.length).toBeLessThanOrEqual(100);
+    expect(rows.length).toBeGreaterThan(0);
 
     // No expanded form inputs visible
     expect(screen.queryByPlaceholderText("Ingredient name")).not.toBeInTheDocument();
@@ -300,30 +307,34 @@ describe("F043: Comfortable with many ingredients", () => {
 });
 
 describe("F043: Auto-populated catalog", () => {
-  it("auto-populates catalog items on load for empty households", () => {
+  it("auto-populates catalog items on load for empty households", async () => {
     seedWithIngredients([]);
+    const user = userEvent.setup();
     renderPage();
-    loadAllIngredientListRows();
 
-    // Should see all catalog items
+    // Should see all catalog items in total count
     expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
-    // Spot check some catalog items
+    // Search for specific catalog items to verify population
+    await user.type(screen.getByTestId("ingredient-search"), "Chicken breast");
     expect(screen.getByText("Chicken breast")).toBeInTheDocument();
-    expect(screen.getByText("Pasta")).toBeInTheDocument();
+    await user.clear(screen.getByTestId("ingredient-search"));
+    await user.type(screen.getByTestId("ingredient-search"), "Broccoli");
     expect(screen.getByText("Broccoli")).toBeInTheDocument();
   });
 
-  it("does not duplicate existing household ingredients that match catalog names", () => {
+  it("does not duplicate existing household ingredients that match catalog names", async () => {
     const ingredients = [
       makeIngredient({ name: "Pasta", category: "carb", tags: ["custom-tag"] }),
     ];
     seedWithIngredients(ingredients);
+    const user = userEvent.setup();
     renderPage();
-    loadAllIngredientListRows();
 
     const total = expectedTotal(ingredients);
     expect(screen.getByText(`Items (${total})`)).toBeInTheDocument();
 
+    // Search for Pasta specifically
+    await user.type(screen.getByTestId("ingredient-search"), "Pasta");
     // Should have exactly one Pasta (the household version, not duplicated)
     const pastaRows = screen.getAllByText("Pasta");
     expect(pastaRows).toHaveLength(1);

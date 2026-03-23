@@ -895,5 +895,29 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: all ingredient IDs, recipe IDs, and recipeRef wiring internally consistent; no duplicate ingredient names; JSON valid; build clean; tests pass.
 - PRD: added F059 feature entry with 9 steps, dependencies F044/F057, acceptance refs S001/S002/S003/S004/S007/S010. Added to M5, implementationOrder, and screenToFeatureMap.
 
+### F060 — Paginated ingredient table with bulk selection and safe bulk delete (2026-03-22)
+- Replaced infinite-scroll (`useIncrementalList`) with traditional pagination (`usePaginatedList`) for the Ingredients page.
+- Created `src/hooks/usePaginatedList.ts`: generic page-based list hook with page/totalPages/pageSize controls, reset-on-filter-change, and memoized page slices. Supports 25/50/100 items per page. The existing `useIncrementalList` hook is preserved for other pages (BaseMealManager, RecipeLibrary, BrowseMealsModal).
+- Created `src/lib/ingredientRefs.ts`: `findIngredientReferences()` utility that scans household baseMeals, recipes, weeklyPlans, and importMappings for ingredient ID references. Returns a map of ingredient ID to reference details (type + entity name). Pure function, no side effects.
+- Refactored `src/pages/IngredientManager.tsx` in place:
+  - Replaced `useIncrementalList` with `usePaginatedList`; removed sentinel ref, IntersectionObserver, and "Load more" button.
+  - Added sticky control bar with source filter (manual/catalog/imported) alongside existing search, category, tag, and sort controls.
+  - Added page-size selector (25/50/100) in the control bar.
+  - Added per-row selection checkboxes with `stopPropagation` so clicking the checkbox selects without opening the edit modal.
+  - Added select-all-on-page header checkbox with indeterminate state for partial selection.
+  - Added bulk actions bar (appears when 1+ items selected) with: select-all-filtered, clear selection, and delete selected.
+  - Selection state (`selectedIds: Set<string>`) persists across page navigation and filter changes within the session.
+  - Added `BulkDeleteConfirmDialog` component: shows selected count, first 5 sample names, and reference-safety analysis. Protected ingredients (referenced by meals/recipes/plans) are listed with the entity names that reference them. Offers "Delete N unreferenced" when a mix exists, or "Close" when all are referenced.
+  - Added `PaginationControls` component: first/prev/page-numbers/next/last with ellipsis for large page counts.
+  - Refactored `IngredientRow` to `IngredientTableRow`: outer element is a `<button>` for accessibility, with inner checkbox label using `stopPropagation`. Desktop shows aligned columns (checkbox, thumbnail, name, category, tags, source, flags). Mobile uses stacked card layout with inline chips below the name.
+  - Result summary shows total items, filtered count, selected count, and current page/total pages.
+  - After bulk delete, pagination auto-recovers to a valid page.
+  - Single-ingredient delete from modal, normalization, duplicate handling, catalog population, and add-ingredient flows all preserved unchanged.
+- Created `tests/f060-ingredient-bulk.test.tsx` with 34 tests covering: paginated rendering, page size changes, page navigation, row selection via checkbox, select-all-on-page toggle, select-all-filtered, clear selection, selection persistence across pages, selection persistence across filters, source filter, bulk delete confirmation dialog, unreferenced ingredient deletion, protected ingredient detection (baseMeal references), partial delete (unreferenced only), all-referenced blocking, `findIngredientReferences` unit tests (baseMeal, recipe, weeklyPlan, alternative IDs, no-references), recovery after bulk delete (page and empty state), row-click-opens-modal, mobile layout, no load-more button, no sentinel element.
+- Updated existing tests for pagination compatibility: `f004-ingredients.test.tsx` (incremental → pagination test), `f037-photos.test.tsx` (search before click for off-page items), `f043-ingredient-browse.test.tsx` (replaced `loadAllIngredientListRows` with `showAllIngredientRows`/search), `f044-ingredient-catalog.test.tsx` (same), `f047-ingredient-migration.test.tsx` (same). Updated `tests/incremental-load-helpers.ts` with deprecated `loadAllIngredientListRows` (graceful no-op) and new `showAllIngredientRows` (sets page size to 100).
+- All 1010 tests pass (13 pre-existing skips).
+- PRD: updated F043 description and steps to mention pagination, source filter, and bulk selection. Updated S010 goal, requiredElements, and acceptance criteria to cover 1000+ ingredients, pagination, bulk selection, safe bulk delete, and selection persistence. Added F060 feature with 18 steps, dependencies F043/F004, acceptance ref S010. Added F060 to M5 milestone and screenToFeatureMap.S010.
+- Known limitations: page size maxes at 100; for libraries > 100 items, users must page through. The `useIncrementalList` hook is still used by other pages (not removed). Bulk tag/category actions are not implemented (future-safe slot in the bulk bar). Import mappings on meals/recipes may retain stale ingredient IDs after deletion (pre-existing behavior, not introduced by this change).
+
 ## Next Task
-- All PRD features including F059 now have `passes=true`. Define the next product slice in `PRD.json` (or reopen a feature with explicit scope) before picking up new implementation work.
+- All PRD features including F060 now have `passes=true`. Define the next product slice in `PRD.json` (or reopen a feature with explicit scope) before picking up new implementation work.

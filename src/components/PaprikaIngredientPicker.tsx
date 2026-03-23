@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { Ingredient } from "../types";
 import { Input } from "./ui";
+import { useListKeyNav } from "../hooks/useListKeyNav";
 
 export default function PaprikaIngredientPicker({
   ingredients,
@@ -26,24 +27,43 @@ export default function PaprikaIngredientPicker({
     return sorted.filter((i) => i.name.toLowerCase().includes(n)).slice(0, 50);
   }, [sorted, q]);
 
+  const handleSelect = useCallback(
+    (index: number) => { onSelect(filtered[index]!); },
+    [filtered, onSelect],
+  );
+
+  const { activeIndex, setActiveIndex, onKeyDown, listRef } = useListKeyNav(
+    filtered.length,
+    handleSelect,
+  );
+
   return (
     <div data-testid={testId}>
       <Input
         value={q}
-        onChange={(e) => setQ(e.target.value)}
+        onChange={(e) => { setQ(e.target.value); setActiveIndex(-1); }}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         className="mb-2"
         data-testid={`${testId}-search`}
       />
-      <ul className="max-h-48 space-y-1 overflow-y-auto rounded border border-border-light bg-bg p-1 text-sm">
-        {filtered.map((ing) => (
+      <ul
+        ref={listRef as React.RefObject<HTMLUListElement>}
+        className="max-h-48 space-y-1 overflow-y-auto rounded border border-border-light bg-bg p-1 text-sm"
+      >
+        {filtered.map((ing, i) => (
           <li key={ing.id}>
             <button
               type="button"
               className={`w-full rounded px-2 py-1.5 text-left hover:bg-bg-elevated ${
-                valueId === ing.id ? "bg-brand/10 font-medium text-brand" : "text-text-primary"
+                activeIndex === i
+                  ? "bg-bg-elevated ring-1 ring-brand"
+                  : valueId === ing.id
+                    ? "bg-brand/10 font-medium text-brand"
+                    : "text-text-primary"
               }`}
               onClick={() => onSelect(ing)}
+              onMouseEnter={() => setActiveIndex(i)}
               data-testid={`${testId}-option-${ing.id}`}
             >
               {ing.name}

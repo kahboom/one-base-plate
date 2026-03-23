@@ -295,7 +295,7 @@ function pickSurvivor(duplicates: Ingredient[]): Ingredient {
 }
 
 /** Merge metadata from duplicates into the survivor */
-function mergeDuplicateMetadata(survivor: Ingredient, duplicates: Ingredient[]): Ingredient {
+export function mergeDuplicateMetadata(survivor: Ingredient, duplicates: Ingredient[]): Ingredient {
   const merged = { ...survivor };
   const allTags = new Set(merged.tags);
   for (const dup of duplicates) {
@@ -314,72 +314,26 @@ function mergeDuplicateMetadata(survivor: Ingredient, duplicates: Ingredient[]):
   return merged;
 }
 
-export interface MigrationResult {
-  normalized: number;
-  duplicatesMerged: number;
-  referencesUpdated: number;
-}
+/**
+ * Remap ingredient references across all household data structures.
+ * Mutates the household in place. Returns the number of references updated.
+ */
+export function remapIngredientReferences(household: Household, idRemap: Map<string, string>): number {
+  if (idRemap.size === 0) return 0;
+  let updated = 0;
 
-/** Migrate a single household's ingredients: normalize names, merge duplicates, reassign references */
-export function migrateHouseholdIngredients(household: Household): MigrationResult {
-  const result: MigrationResult = { normalized: 0, duplicatesMerged: 0, referencesUpdated: 0 };
-
-  // Step 1: Normalize all ingredient names
-  for (const ing of household.ingredients) {
-    const normalized = normalizeIngredientName(ing.name);
-    if (normalized !== ing.name) {
-      ing.name = normalized;
-      result.normalized++;
-    }
-  }
-
-  // Step 2: Group by normalized name to find duplicates
-  const groups = new Map<string, Ingredient[]>();
-  for (const ing of household.ingredients) {
-    const key = ing.name;
-    const group = groups.get(key) ?? [];
-    group.push(ing);
-    groups.set(key, group);
-  }
-
-  // Step 3: For each duplicate group, pick survivor, build ID remap
-  const idRemap = new Map<string, string>();
-  const survivorIds = new Set<string>();
-
-  for (const [, group] of groups) {
-    if (group.length <= 1) {
-      survivorIds.add(group[0]!.id);
-      continue;
-    }
-    const survivor = pickSurvivor(group);
-    const merged = mergeDuplicateMetadata(survivor, group);
-    // Update the survivor in-place
-    Object.assign(survivor, merged);
-    survivorIds.add(survivor.id);
-    for (const dup of group) {
-      if (dup.id !== survivor.id) {
-        idRemap.set(dup.id, survivor.id);
-        result.duplicatesMerged++;
-      }
-    }
-  }
-
-  // Step 4: Remove duplicate ingredients (keep only survivors)
-  household.ingredients = household.ingredients.filter((ing) => survivorIds.has(ing.id));
-
-  // Step 5: Reassign references in meal components
   function remapMealComponents(meal: { components: MealComponent[] }) {
     for (const comp of meal.components) {
       const newId = idRemap.get(comp.ingredientId);
       if (newId) {
         comp.ingredientId = newId;
-        result.referencesUpdated++;
+        updated++;
       }
       if (comp.alternativeIngredientIds) {
         comp.alternativeIngredientIds = comp.alternativeIngredientIds.map((altId) => {
           const mapped = idRemap.get(altId);
           if (mapped) {
-            result.referencesUpdated++;
+            updated++;
             return mapped;
           }
           return altId;
@@ -392,25 +346,73 @@ export function migrateHouseholdIngredients(household: Household): MigrationResu
     }
   }
 
-  if (idRemap.size > 0) {
-    for (const meal of household.baseMeals) {
-      remapMealComponents(meal);
-    }
-    for (const recipe of household.recipes ?? []) {
-      remapMealComponents(recipe);
-    }
-
-    // Reassign grocery list references in weekly plans
-    for (const plan of household.weeklyPlans) {
-      for (const item of plan.generatedGroceryList) {
-        const newId = idRemap.get(item.ingredientId);
-        if (newId) {
-          item.ingredientId = newId;
-          result.referencesUpdated++;
-        }
+  for (const meal of household.baseMeals) {
+    remapMealComponents(meal);
+  }
+  for (const recipe of household.recipes ?? []) {
+    remapMealComponents(recipe);
+  }
+  for (const plan of household.weeklyPlans) {
+    for (const item of plan.generatedGroceryList) {
+      const newId = idRemap.get(item.ingredientId);
+      if (newId) {
+        item.ingredientId = newId;
+        updated++;
       }
     }
   }
+
+  return updated;
+}
+
+export interface MigrationResult {
+  normalized: number;
+  duplicatesMerged: number;
+  referencesUpdated: number;
+}
+
+/** Migrate a single household's ingredients: normalize names, merge duplicates, reassign references */
+export function migrateHouseholdIngredients(household: Household): MigrationResult {
+  const result: MigrationResult = { normalized: 0, duplicatesMerged: 0, referencesUpdated: 0 };
+
+  for (const ing of household.ingredients) {
+    const normalized = normalizeIngredientName(ing.name);
+    if (normalized !== ing.name) {
+      ing.name = normalized;
+      result.normalized++;
+    }
+  }
+
+  const groups = new Map<string, Ingredient[]>();
+  for (const ing of household.ingredients) {
+    const key = ing.name;
+    const group = groups.get(key) ?? [];
+    group.push(ing);
+    groups.set(key, group);
+  }
+
+  const idRemap = new Map<string, string>();
+  const survivorIds = new Set<string>();
+
+  for (const [, group] of groups) {
+    if (group.length <= 1) {
+      survivorIds.add(group[0]!.id);
+      continue;
+    }
+    const survivor = pickSurvivor(group);
+    const merged = mergeDuplicateMetadata(survivor, group);
+    Object.assign(survivor, merged);
+    survivorIds.add(survivor.id);
+    for (const dup of group) {
+      if (dup.id !== survivor.id) {
+        idRemap.set(dup.id, survivor.id);
+        result.duplicatesMerged++;
+      }
+    }
+  }
+
+  household.ingredients = household.ingredients.filter((ing) => survivorIds.has(ing.id));
+  result.referencesUpdated = remapIngredientReferences(household, idRemap);
 
   return result;
 }
