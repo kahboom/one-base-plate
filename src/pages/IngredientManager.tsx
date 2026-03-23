@@ -207,7 +207,8 @@ function IngredientModal({
   householdRef,
   onChange,
   onDelete,
-  onClose,
+  onDismiss,
+  onDone,
   onDuplicateFound,
   onMerge,
 }: {
@@ -217,7 +218,10 @@ function IngredientModal({
   householdRef: Household | null;
   onChange: (updated: Ingredient) => void;
   onDelete: () => void;
-  onClose: () => void;
+  /** Backdrop, Escape, or close (✕) — discard new drafts; for edits, same as saving name normalization */
+  onDismiss: () => void;
+  /** Primary Done — commit new ingredient or close after edit (no duplicate warning) */
+  onDone: () => void;
   onDuplicateFound: (newIng: Ingredient, existing: Ingredient) => void;
   onMerge: (survivorId: string, absorbedId: string) => void;
 }) {
@@ -285,7 +289,7 @@ function IngredientModal({
   return (
     <AppModal
       open
-      onClose={onClose}
+      onClose={onDismiss}
       ariaLabel="Edit ingredient"
       className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6"
       panelTestId="ingredient-modal"
@@ -299,7 +303,7 @@ function IngredientModal({
               {ingredient.source === "catalog" ? "From catalog" : "Manual"}
             </span>
           </div>
-          <Button variant="ghost" onClick={onClose} aria-label="Close modal">✕</Button>
+          <Button variant="ghost" onClick={onDismiss} aria-label="Close modal">✕</Button>
         </div>
 
         {duplicates.length > 0 && (
@@ -509,7 +513,7 @@ function IngredientModal({
             if (duplicates.length > 0) {
               onDuplicateFound(ingredient, duplicates[0]!);
             } else {
-              onClose();
+              onDone();
             }
           }}>Done</Button>
         </div>
@@ -821,7 +825,8 @@ export default function IngredientManager() {
     newIngredient: Ingredient;
     existingIngredient: Ingredient;
   } | null>(null);
-  const [newIngredientIds, setNewIngredientIds] = useState<Set<string>>(new Set());
+  /** In-memory draft for Add ingredient — not persisted until Done */
+  const [draftNewIngredient, setDraftNewIngredient] = useState<Ingredient | null>(null);
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
 
   // Selection state
@@ -893,15 +898,12 @@ export default function IngredientManager() {
     setPageSize,
   } = usePaginatedList(sortedIngredients, { resetDeps: [...paginationResetDeps] });
 
-  const editingIngredient = editingId
-    ? ingredients.find((ing) => ing.id === editingId) ?? null
-    : null;
+  const editingIngredient =
+    draftNewIngredient ?? (editingId ? ingredients.find((ing) => ing.id === editingId) ?? null : null);
 
   function addIngredient() {
-    const newIng = createEmptyIngredient();
-    setIngredients((prev) => [...prev, newIng]);
-    setNewIngredientIds((prev) => new Set(prev).add(newIng.id));
-    setEditingId(newIng.id);
+    setEditingId(null);
+    setDraftNewIngredient(createEmptyIngredient());
   }
 
   function updateIngredient(updated: Ingredient) {
@@ -910,16 +912,50 @@ export default function IngredientManager() {
     );
   }
 
+  function handleModalChange(updated: Ingredient) {
+    if (draftNewIngredient && updated.id === draftNewIngredient.id) {
+      setDraftNewIngredient(updated);
+    } else {
+      updateIngredient(updated);
+    }
+  }
+
+  function dismissIngredientModal() {
+    if (draftNewIngredient) {
+      setDraftNewIngredient(null);
+      return;
+    }
+    if (editingIngredient?.name) {
+      updateIngredient({ ...editingIngredient, name: normalizeIngredientName(editingIngredient.name) });
+    }
+    setEditingId(null);
+  }
+
+  function doneIngredientModal() {
+    if (draftNewIngredient) {
+      const ing = draftNewIngredient;
+      const normalized = { ...ing, name: normalizeIngredientName(ing.name) };
+      if (!normalized.name.trim()) {
+        setDraftNewIngredient(null);
+        return;
+      }
+      setIngredients((prev) => [...prev, normalized]);
+      setDraftNewIngredient(null);
+      return;
+    }
+    if (editingIngredient) {
+      if (editingIngredient.name) {
+        updateIngredient({ ...editingIngredient, name: normalizeIngredientName(editingIngredient.name) });
+      }
+      setEditingId(null);
+    }
+  }
+
   function removeIngredient(ingredientId: string) {
     const ing = ingredients.find((i) => i.id === ingredientId);
     const displayName = ing?.name.trim() ? toSentenceCase(ing.name) : "this ingredient";
     requestConfirm(displayName, () => {
       setIngredients((prev) => prev.filter((item) => item.id !== ingredientId));
-      setNewIngredientIds((prev) => {
-        const next = new Set(prev);
-        next.delete(ingredientId);
-        return next;
-      });
       setSelectedIds((prev) => {
         const next = new Set(prev);
         next.delete(ingredientId);
@@ -1012,11 +1048,6 @@ export default function IngredientManager() {
       const deleteSet = new Set(idsToDelete);
       setIngredients((prev) => prev.filter((i) => !deleteSet.has(i.id)));
       setSelectedIds((prev) => {
-        const next = new Set(prev);
-        for (const id of idsToDelete) next.delete(id);
-        return next;
-      });
-      setNewIngredientIds((prev) => {
         const next = new Set(prev);
         for (const id of idsToDelete) next.delete(id);
         return next;
@@ -1180,7 +1211,10 @@ export default function IngredientManager() {
               ingredient={ingredient}
               selected={selectedIds.has(ingredient.id)}
               onToggleSelect={() => toggleSelect(ingredient.id)}
-              onClick={() => setEditingId(ingredient.id)}
+              onClick={() => {
+                setDraftNewIngredient(null);
+                setEditingId(ingredient.id);
+              }}
             />
           ))}
         </div>
@@ -1197,23 +1231,14 @@ export default function IngredientManager() {
       {editingIngredient && (
         <IngredientModal
           ingredient={editingIngredient}
-          isNewIngredient={newIngredientIds.has(editingIngredient.id)}
+          isNewIngredient={draftNewIngredient !== null}
           allIngredients={ingredients}
           householdRef={householdRef}
-          onChange={updateIngredient}
+          onChange={handleModalChange}
           onDelete={() => removeIngredient(editingIngredient.id)}
           onMerge={handleMerge}
-          onClose={() => {
-            if (editingIngredient.name) {
-              updateIngredient({ ...editingIngredient, name: normalizeIngredientName(editingIngredient.name) });
-            }
-            setNewIngredientIds((prev) => {
-              const next = new Set(prev);
-              next.delete(editingIngredient.id);
-              return next;
-            });
-            setEditingId(null);
-          }}
+          onDismiss={dismissIngredientModal}
+          onDone={doneIngredientModal}
           onDuplicateFound={(newIng, existing) => {
             setDuplicateWarning({ newIngredient: newIng, existingIngredient: existing });
           }}
@@ -1229,11 +1254,7 @@ export default function IngredientManager() {
             setIngredients((prev) =>
               prev.filter((i) => i.id !== duplicateWarning.newIngredient.id),
             );
-            setNewIngredientIds((prev) => {
-              const next = new Set(prev);
-              next.delete(duplicateWarning.newIngredient.id);
-              return next;
-            });
+            setDraftNewIngredient(null);
             setEditingId(null);
           }
           setDuplicateWarning(null);

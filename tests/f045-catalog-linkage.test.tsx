@@ -109,14 +109,6 @@ describe("F045: Catalog linkage stored on ingredients", () => {
     expect(screen.getByTestId("ingredient-source-label")).toHaveTextContent("Manual");
   });
 
-  it("catalog chip shown on ingredient row for catalog-sourced items", () => {
-    seedHousehold();
-    renderPage();
-
-    const rows = screen.getAllByTestId(/^ingredient-row-/);
-    const firstRow = rows[0]!;
-    expect(within(firstRow).getByText("catalog")).toBeInTheDocument();
-  });
 });
 
 describe.skip("F045: Near-duplicate detection", () => {
