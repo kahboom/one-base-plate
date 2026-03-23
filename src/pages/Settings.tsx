@@ -16,6 +16,7 @@ import {
   saveDefaultHouseholdId,
 } from "../storage";
 import { clearImportSession } from "../paprika-parser";
+import AuthUI from "../components/AuthUI";
 
 export default function Settings() {
   const { householdId } = useParams<{ householdId: string }>();
@@ -96,6 +97,8 @@ export default function Settings() {
   return (
     <>
       <PageHeader title="Settings" />
+
+      <AuthUI />
 
       <Card className="mb-6">
         <h2 className="mb-3 text-sm font-semibold text-text-primary">Appearance</h2>

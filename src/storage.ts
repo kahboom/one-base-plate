@@ -12,6 +12,7 @@ import {
 import { getAppDb, recreateAppDb } from "./storage/dexie-db";
 import { migrateLegacyIntoDexieIfNeeded } from "./storage/migrate-v3";
 import { setPaprikaImportSessionMemory } from "./storage/paprika-session-store";
+import { syncAfterSave, syncDeleteHousehold, isAuthenticated } from "./sync/sync-engine";
 
 export {
   STORAGE_KEY,
@@ -123,6 +124,7 @@ export async function persistHouseholdsNow(households: Household[]): Promise<voi
   householdsCache = households;
   localStorage.removeItem(STORAGE_KEY);
   await dexieSetHouseholds(households);
+  if (isAuthenticated()) void syncAfterSave(households);
 }
 
 export function saveHouseholds(households: Household[]): void {
@@ -131,6 +133,7 @@ export function saveHouseholds(households: Household[]): void {
   void dexieSetHouseholds(households).catch((err) => {
     console.error("Failed to persist households:", err);
   });
+  if (isAuthenticated()) void syncAfterSave(households);
 }
 
 export async function saveHouseholdAsync(household: Household): Promise<void> {
@@ -172,6 +175,7 @@ export function saveHousehold(household: Household): void {
 
 export function deleteHousehold(id: string): void {
   saveHouseholds(loadHouseholds().filter((h) => h.id !== id));
+  if (isAuthenticated()) void syncDeleteHousehold(id);
 }
 
 export function loadDefaultHouseholdId(): string | null {
@@ -505,6 +509,16 @@ export function runMigrationIfNeeded(): MigrationResult {
   saveHouseholds(households);
   localStorage.setItem(MIGRATION_KEY, "1");
   return totals;
+}
+
+/**
+ * Replace the local Dexie store with remote household data (used during first-login hydration).
+ * This is the only public path that overwrites local data from a remote source.
+ */
+export async function hydrateFromRemote(households: Household[]): Promise<void> {
+  householdsCache = households;
+  localStorage.removeItem(STORAGE_KEY);
+  await dexieSetHouseholds(households);
 }
 
 /** @internal Tests that manipulate Dexie directly after init. */

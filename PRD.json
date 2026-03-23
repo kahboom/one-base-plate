@@ -471,7 +471,9 @@
       "styling": "Tailwind CSS + shared UI primitives (mobile-first)",
       "storage": "Local-first repository abstraction; IndexedDB (Dexie) on web; future Expo SQLite adapter for React Native",
       "tests": "Vitest + Playwright",
-      "deployment": "Local/private first; optional Vercel later"
+      "deployment": "Local/private first; optional Vercel later",
+      "auth": "Supabase Auth (email/password); optional — app works fully local when env vars are absent",
+      "remotePersistence": "Supabase Postgres with household-aggregate JSONB snapshots; sync is best-effort after local save"
     },
     "architectureNotes": [
       "Prefer local-first storage for rapid MVP delivery and privacy.",
@@ -487,7 +489,8 @@
       "Persist primary household and import-draft data through a typed storage boundary; domain and planner code must not call browser-only storage APIs directly.",
       "The web build uses Dexie-backed IndexedDB for primary persisted aggregates; a future React Native port should implement the same repository ports with Expo SQLite (or equivalent) behind the abstraction.",
       "First-run bootstrap continues to use the existing bundled seed-data.json (generated from fixtures); do not replace shipped seed content with ad hoc placeholder households.",
-      "Tiny UI-only preferences (e.g. theme flash, guided tour completion) may remain on localStorage when documented as web-only; they are not the primary datastore."
+      "Tiny UI-only preferences (e.g. theme flash, guided tour completion) may remain on localStorage when documented as web-only; they are not the primary datastore.",
+      "Supabase Auth + Postgres provides optional authenticated cross-browser sync. The local Dexie store remains the fast local cache and the portability boundary. Signed-out mode works fully locally. Signed-in mode syncs household snapshots as JSONB to Supabase with household-level last-write-wins. First login includes a safe migration flow that never silently destroys data."
     ]
   },
   "features": [
@@ -1928,6 +1931,32 @@
         "F048"
       ],
       "acceptanceRefs": []
+    },
+    {
+      "id": "F062",
+      "phase": 2,
+      "priority": "P0",
+      "category": "platform",
+      "description": "Account-based cloud persistence with Supabase Auth and household snapshot sync",
+      "steps": [
+        "Add @supabase/supabase-js dependency and env-based configuration for Supabase URL and anon key.",
+        "Create Supabase client singleton that gracefully returns null when env vars are missing.",
+        "Add auth service layer wrapping Supabase Auth sign-up, sign-in, sign-out, and session restore.",
+        "Add React AuthContext provider and useAuth hook for session state across the component tree.",
+        "Define remote data model: households table (id, JSONB data, owner_id, updated_at, version), household_memberships (access control), and profiles (user metadata). Provide SQL migration reference file.",
+        "Create remote repository module for CRUD against Supabase households and memberships tables.",
+        "Create sync engine that coordinates local-first Dexie saves with remote Supabase upserts. Strategy: household-level last-write-wins using updatedAt.",
+        "Wire sync into existing storage.ts: after every local Dexie write, if authenticated, fire-and-forget remote sync. Keep local save as the fast path.",
+        "Add safe first-login migration: detect local-only, remote-only, or both-sides scenarios. When both have data, show explicit chooser dialog (keep local, keep remote, merge by household ID).",
+        "Add minimal auth UI in Settings: sign-in/sign-up form, current session display, sync status badge (local-only vs cloud-synced), sign-out button.",
+        "Preserve all existing local-only behavior when signed out: seed, planner, import/export, Paprika, pins, outcomes, anchors unchanged.",
+        "Add 22 automated tests covering: signed-out local-only (no regressions), authenticated save + remote sync, first-login upload/hydrate/conflict resolution, hydrateFromRemote, sync state tracking, household access filtering, and JSON import/export round-trip."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F061"
+      ],
+      "acceptanceRefs": []
     }
   ],
   "milestones": [
@@ -2027,6 +2056,13 @@
       "includes": [
         "F061"
       ]
+    },
+    {
+      "id": "M7",
+      "name": "Accounts and cross-browser sync",
+      "includes": [
+        "F062"
+      ]
     }
   ],
   "fixtureHouseholds": [
@@ -2097,6 +2133,7 @@
     "F059",
     "F060",
     "F061",
+    "F062",
     "F020",
     "F037",
     "F038",

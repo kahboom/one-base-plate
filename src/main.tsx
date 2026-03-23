@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { initStorage, seedIfNeeded, runMigrationIfNeeded, runRecipeRefMigrationIfNeeded } from "./storage";
 import { initTheme } from "./theme";
+import { AuthProvider } from "./auth/AuthContext";
 import "./app.css";
 
 initTheme();
@@ -16,9 +17,11 @@ void (async () => {
 
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </AuthProvider>
     </StrictMode>,
   );
 })();

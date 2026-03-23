@@ -57,7 +57,12 @@ On the **household home** screen, **Top suggestions** lists up to **three** meal
 
 - **`src/`** — React app (Vite + TypeScript)
 - **`src/types.ts`** — TypeScript types matching PRD data model entities
-- **`fixtures/households/`** — Household fixture files (H001, H002, H003)
+- **`src/storage/`** — Local persistence (Dexie IndexedDB, migration, ports)
+- **`src/auth/`** — Authentication service, context, and hook (Supabase Auth)
+- **`src/sync/`** — Remote sync engine, remote repository, sync types
+- **`src/supabase/`** — Supabase client singleton
+- **`supabase/migrations/`** — SQL DDL reference for remote tables and RLS
+- **`fixtures/households/`** — Household fixture files (H001, H002)
 - **`fixtures/meals/`** — Meal fixtures (e.g. `pasta-base.json`)
 - **`tests/`** — Vitest test suite with jsdom environment
 - **`PRD.json`** — Product requirements and feature list
@@ -70,6 +75,29 @@ On the **household home** screen, **Top suggestions** lists up to **three** meal
 
 - Node.js (recommended: v18+)
 - npm
+
+---
+
+## Cloud Sync (Optional)
+
+The app works fully locally by default. To enable cross-browser sync with user accounts:
+
+1. Create a [Supabase](https://supabase.com) project.
+2. Run the SQL in `supabase/migrations/001_households.sql` against your project (via the Supabase SQL editor or CLI) to create the `households`, `household_memberships`, and `profiles` tables with RLS policies.
+3. Copy `.env.example` to `.env` and fill in your project URL and anon key:
+
+```bash
+cp .env.example .env
+```
+
+```
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+4. Restart the dev server. The Settings page will now show an Account section where users can sign up, sign in, and sync data.
+
+When the env vars are absent, the app runs in local-only mode with no Supabase dependency.
 
 ---
 
