@@ -7,7 +7,7 @@ import { saveHousehold, loadHousehold } from "../src/storage";
 import { MASTER_CATALOG } from "../src/catalog";
 import IngredientManager from "../src/pages/IngredientManager";
 import { DEFAULT_PAGE_SIZE } from "../src/hooks/usePaginatedList";
-import { loadAllIngredientListRows, showAllIngredientRows } from "./incremental-load-helpers";
+import { showAllIngredientRows } from "./incremental-load-helpers";
 
 const CATALOG_SIZE = MASTER_CATALOG.length;
 

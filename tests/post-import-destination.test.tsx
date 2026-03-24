@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import App from "../src/App";
 import { saveHousehold, loadHousehold } from "../src/storage";
-import type { BaseMeal, Household, Ingredient, Recipe } from "../src/types";
+import type { BaseMeal, Household, Ingredient } from "../src/types";
 
 function makeIngredient(overrides: Partial<Ingredient> & { id: string; name: string; category: Ingredient["category"] }): Ingredient {
   return {
@@ -13,13 +13,6 @@ function makeIngredient(overrides: Partial<Ingredient> & { id: string; name: str
     freezerFriendly: false,
     babySafeWithAdaptation: false,
     source: "manual",
-    ...overrides,
-  };
-}
-
-function makeRecipe(overrides: Partial<Recipe> & { id: string; name: string }): Recipe {
-  return {
-    components: [],
     ...overrides,
   };
 }

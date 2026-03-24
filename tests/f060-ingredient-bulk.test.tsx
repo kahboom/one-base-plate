@@ -4,12 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { Household, Ingredient, BaseMeal, Recipe, WeeklyPlan } from "../src/types";
 import { saveHousehold, loadHousehold } from "../src/storage";
-import { MASTER_CATALOG } from "../src/catalog";
 import IngredientManager from "../src/pages/IngredientManager";
 import { DEFAULT_PAGE_SIZE } from "../src/hooks/usePaginatedList";
 import { findIngredientReferences } from "../src/lib/ingredientRefs";
-
-const CATALOG_SIZE = MASTER_CATALOG.length;
 
 function makeIngredient(overrides: Partial<Ingredient> & { name: string }): Ingredient {
   return {
@@ -25,10 +22,11 @@ function makeIngredient(overrides: Partial<Ingredient> & { name: string }): Ingr
 }
 
 function makeMeal(overrides: Partial<BaseMeal> & { name: string; ingredientIds?: string[] }): BaseMeal {
+  const { name, ingredientIds, ...rest } = overrides;
   return {
-    id: `meal-${overrides.name.toLowerCase().replace(/\s+/g, "-")}`,
-    name: overrides.name,
-    components: (overrides.ingredientIds ?? []).map((id) => ({
+    id: `meal-${name.toLowerCase().replace(/\s+/g, "-")}`,
+    name,
+    components: (ingredientIds ?? []).map((id) => ({
       id: crypto.randomUUID(),
       ingredientId: id,
       role: "protein" as const,
@@ -39,7 +37,7 @@ function makeMeal(overrides: Partial<BaseMeal> & { name: string; ingredientIds?:
     difficulty: "easy",
     rescueEligible: false,
     wasteReuseHints: [],
-    ...overrides,
+    ...rest,
   };
 }
 

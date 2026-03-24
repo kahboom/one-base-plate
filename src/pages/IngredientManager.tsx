@@ -729,8 +729,6 @@ function PaginationControls({
   totalPages: number;
   onPageChange: (p: number) => void;
 }) {
-  if (totalPages <= 1) return null;
-
   const pages = useMemo(() => {
     const result: (number | "ellipsis")[] = [];
     if (totalPages <= 7) {
@@ -746,6 +744,8 @@ function PaginationControls({
     }
     return result;
   }, [page, totalPages]);
+
+  if (totalPages <= 1) return null;
 
   return (
     <nav className="flex items-center justify-center gap-1 pt-4" aria-label="Pagination" data-testid="pagination-controls">

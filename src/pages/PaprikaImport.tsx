@@ -627,7 +627,7 @@ export default function PaprikaImport() {
       setError("Could not load this household. Return to the household list and try again.");
       return;
     }
-    let household: NormalizedHousehold = normalizeHousehold(rawHousehold);
+    const household: NormalizedHousehold = normalizeHousehold(rawHousehold);
     setError("");
 
     if (!canFinalizePaprikaImport(parsedRecipes)) {

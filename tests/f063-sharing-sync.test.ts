@@ -295,7 +295,17 @@ describe("F063: Shared household via membership (mock adapter)", () => {
     const sharedH = makeHousehold({
       id: "shared-hydrate",
       name: "Shared Kitchen",
-      ingredients: [{ id: "i1", name: "salt", category: "pantry", tags: [] }] as Household["ingredients"],
+      ingredients: [
+        {
+          id: "i1",
+          name: "salt",
+          category: "pantry",
+          tags: [],
+          shelfLifeHint: "",
+          freezerFriendly: false,
+          babySafeWithAdaptation: false,
+        },
+      ],
     });
 
     await hydrateFromRemote([sharedH]);
@@ -376,9 +386,43 @@ describe("F063: Household data integrity through sync", () => {
     const h = makeHousehold({
       id: "integrity-1",
       name: "Full Household",
-      members: [{ id: "m1", name: "Alex", role: "adult", safeFoods: [], hardNoFoods: [], preparationRules: [], allergens: [] }] as Household["members"],
-      ingredients: [{ id: "i1", name: "garlic", category: "produce", tags: ["staple"] }] as Household["ingredients"],
-      baseMeals: [{ id: "bm1", name: "Pasta Night", effort: "medium", components: [], recipeLinks: [], tags: [] }] as Household["baseMeals"],
+      members: [
+        {
+          id: "m1",
+          name: "Alex",
+          role: "adult",
+          safeFoods: [],
+          hardNoFoods: [],
+          preparationRules: [],
+          textureLevel: "regular",
+          allergens: [],
+          notes: "",
+        },
+      ],
+      ingredients: [
+        {
+          id: "i1",
+          name: "garlic",
+          category: "veg",
+          tags: ["staple"],
+          shelfLifeHint: "",
+          freezerFriendly: false,
+          babySafeWithAdaptation: false,
+        },
+      ],
+      baseMeals: [
+        {
+          id: "bm1",
+          name: "Pasta Night",
+          difficulty: "medium",
+          components: [],
+          tags: [],
+          defaultPrep: "cook",
+          estimatedTimeMinutes: 30,
+          rescueEligible: false,
+          wasteReuseHints: [],
+        },
+      ],
       weeklyPlans: [],
       pinnedMealIds: ["bm1"],
       mealOutcomes: [],

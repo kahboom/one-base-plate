@@ -35,7 +35,6 @@ export function usePaginatedList<T>(
 
   useEffect(() => {
     setPageRaw(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [depsStr, pageSize]);
 
   useEffect(() => {

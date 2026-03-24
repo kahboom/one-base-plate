@@ -32,7 +32,6 @@ export default function PostImportDestination({
   householdId,
   recipes,
   baseMeals,
-  allRecipes,
   ingredients,
   onComplete,
 }: PostImportDestinationProps) {
