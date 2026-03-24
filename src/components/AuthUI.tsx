@@ -1,4 +1,5 @@
 import { useState } from "react";
+import * as authService from "../auth/auth-service";
 import { useAuth } from "../auth/useAuth";
 import { Button, Input, Card, Chip } from "./ui";
 import FirstLoginMigrationDialog from "./FirstLoginMigrationDialog";
@@ -15,6 +16,15 @@ import { useEffect } from "react";
 
 type AuthTab = "signin" | "signup";
 
+function isEmailNotConfirmedMessage(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("email not confirmed") ||
+    m.includes("email address not confirmed") ||
+    m.includes("signup requires email confirmation")
+  );
+}
+
 export default function AuthUI() {
   const { user, loading, configured, signIn, signUp, signOut } = useAuth();
   const [tab, setTab] = useState<AuthTab>("signin");
@@ -22,6 +32,8 @@ export default function AuthUI() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [resendBusy, setResendBusy] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [syncState, setSyncState] = useState<SyncState>(getSyncState);
 
   const [migrationContext, setMigrationContext] = useState<FirstLoginContext | null>(null);
@@ -101,6 +113,7 @@ export default function AuthUI() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setResendMessage(null);
     setBusy(true);
 
     const result = tab === "signup"
@@ -192,7 +205,7 @@ export default function AuthUI() {
                 : "text-text-secondary hover:text-text-primary"
             }`}
             data-testid="auth-tab-signin"
-            onClick={() => { setTab("signin"); setError(null); }}
+            onClick={() => { setTab("signin"); setError(null); setResendMessage(null); }}
           >
             Sign in
           </button>
@@ -205,7 +218,7 @@ export default function AuthUI() {
                 : "text-text-secondary hover:text-text-primary"
             }`}
             data-testid="auth-tab-signup"
-            onClick={() => { setTab("signup"); setError(null); }}
+            onClick={() => { setTab("signup"); setError(null); setResendMessage(null); }}
           >
             Create account
           </button>
@@ -230,7 +243,48 @@ export default function AuthUI() {
             onChange={(e) => setPassword(e.target.value)}
           />
           {error && (
-            <p className="text-sm text-danger" data-testid="auth-error">{error}</p>
+            <div className="space-y-2" data-testid="auth-error">
+              <p className="text-sm text-danger">{error}</p>
+              {isEmailNotConfirmedMessage(error) && (
+                <div className="rounded-sm border border-border-light bg-bg p-3 text-xs text-text-secondary">
+                  <p className="mb-2">
+                    If you already clicked the link, your app URL must match Supabase: open{" "}
+                    <strong>Authentication → URL Configuration</strong> and set{" "}
+                    <strong>Site URL</strong> to this origin (e.g.{" "}
+                    <code className="text-text-primary">http://localhost:5173</code>
+                    ), and add the same under <strong>Redirect URLs</strong>. Then use{" "}
+                    <strong>Resend</strong> below or confirm the user in the Supabase dashboard.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="default"
+                    small
+                    disabled={resendBusy || !email.trim()}
+                    data-testid="auth-resend-confirmation-btn"
+                    onClick={async () => {
+                      setResendMessage(null);
+                      setResendBusy(true);
+                      const { error: resendErr } = await authService.resendSignupConfirmation(
+                        email.trim(),
+                      );
+                      setResendBusy(false);
+                      if (resendErr) {
+                        setResendMessage(resendErr);
+                      } else {
+                        setResendMessage("Check your inbox for a new confirmation link.");
+                      }
+                    }}
+                  >
+                    {resendBusy ? "Sending…" : "Resend confirmation email"}
+                  </Button>
+                  {resendMessage && (
+                    <p className="mt-2 text-text-primary" data-testid="auth-resend-message">
+                      {resendMessage}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           )}
           <Button variant="primary" type="submit" disabled={busy} data-testid="auth-submit-btn">
             {busy ? "Working..." : tab === "signup" ? "Create account" : "Sign in"}

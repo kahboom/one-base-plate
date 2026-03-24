@@ -1984,6 +1984,38 @@
         "F062"
       ],
       "acceptanceRefs": []
+    },
+    {
+      "id": "F064",
+      "phase": 2,
+      "priority": "P0",
+      "category": "functional",
+      "description": "Paprika parser and matcher hardening for import quality: robust handling of packaging words, trailing quantities, size descriptors, singular/plural normalization, accent preservation, compound-name protection, and tomato-family matching",
+      "steps": [
+        "Strip packaging tokens (can, jar, pack, package, bag, bottle, tin, box, carton, container) from parsed ingredient names unconditionally, not only when the parsed unit is also a packaging word.",
+        "Detect and parse trailing quantity patterns such as 'chicken stock 200ml', 'olive oil 100ml', 'baby leeks 6', and 'baby plum tomatoes 300g, halved' so the name is clean and the quantity/unit are extracted.",
+        "Strip embedded size and dimension phrases like '6-inch', '14.5 ounce', '2-pound', and '1/2-inch-thick' from ingredient names, moving them to prep notes.",
+        "Strip size adjectives (large, small, medium, big, jumbo, extra-large) from canonical names and move them to prep notes.",
+        "Strip additional trailing prep/serving suffixes including 'for serving', 'to serve', 'in water', 'in brine', 'cut into wedges', and 'drained but liquid reserved'.",
+        "Add style and cooking descriptors (stewed, plum, Italian-style, cooked, hot, lightly packed) to prep descriptor stripping so canonical names are cleaner.",
+        "Preserve unicode and accented letters in the matching normalizer instead of stripping all non-ASCII characters.",
+        "Add singular/plural normalization for matching so 'tomato' and 'tomatoes', 'potato' and 'potatoes', 'leek' and 'leeks' etc. are treated as the same ingredient.",
+        "Add compound-name protection so specific ingredients like coconut milk, chicken stock, taco seasoning, and tortellini are not silently matched to wrong generic heads like milk, stock cubes, or spinach.",
+        "Add tomato-family matching so variants like 'Italian-style stewed tomatoes', 'Italian plum tomatoes', and 'chopped tomatoes' all map to tomatoes.",
+        "Add catalog entries and aliases for commonly imported ingredients not yet in the master catalog.",
+        "Bump PAPRIKA_INGREDIENT_PARSER_VERSION so stale saved review sessions re-parse from raw lines.",
+        "Update normalizeIngredientGroupKey to use improved normalization so singular/plural variants produce the same group key.",
+        "Add comprehensive regression tests covering all listed edge cases without regressing existing F048/F049/F050 behavior."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F049",
+        "F050"
+      ],
+      "acceptanceRefs": [
+        "S007",
+        "S010"
+      ]
     }
   ],
   "milestones": [
@@ -2074,7 +2106,8 @@
         "F057",
         "F058",
         "F059",
-        "F060"
+        "F060",
+        "F064"
       ]
     },
     {
@@ -2163,6 +2196,7 @@
     "F061",
     "F062",
     "F063",
+    "F064",
     "F020",
     "F037",
     "F038",
@@ -2576,7 +2610,8 @@
       "F055",
       "F057",
       "F058",
-      "F059"
+      "F059",
+      "F064"
     ],
     "S008": [
       "F011",
@@ -2603,7 +2638,8 @@
       "F057",
       "F059",
       "F060",
-      "F061"
+      "F061",
+      "F064"
     ]
   },
   "agentExecutionRules": [

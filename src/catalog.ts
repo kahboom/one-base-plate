@@ -54,6 +54,9 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c("cat-noodles", "Noodles", "carb", ["quick"], false, true),
   c("cat-oats", "Oats", "carb", ["quick", "staple"], false, true),
   c("cat-pitta", "Pitta bread", "carb", ["quick"], false, false),
+  c("cat-gnocchi", "Gnocchi", "carb", ["quick"], false, true),
+  c("cat-hamburger-buns", "Hamburger buns", "carb", ["quick"], false, false, ["burger buns"]),
+  c("cat-tortellini", "Tortellini", "carb", ["quick"], true, true),
 
   // Vegetables
   c("cat-broccoli", "Broccoli", "veg", ["quick", "mashable"], true, true),
@@ -63,13 +66,16 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c("cat-spinach", "Spinach", "veg", ["quick", "mashable"], true, true),
   c("cat-peppers", "Peppers", "veg", ["quick"], true, false),
   c("cat-courgette", "Courgette", "veg", ["mashable"], false, true),
-  c("cat-tomatoes", "Tomatoes", "veg", ["staple"], false, true),
+  c("cat-tomatoes", "Tomatoes", "veg", ["staple"], false, true, ["chopped tomatoes", "plum tomatoes", "stewed tomatoes", "cherry tomatoes", "grape tomatoes"]),
   c("cat-green-beans", "Green beans", "veg", ["quick"], true, true),
   c("cat-cucumber", "Cucumber", "veg", ["quick"], false, false),
   c("cat-onion", "Onion", "veg", ["staple"], false, false),
   c("cat-garlic", "Garlic", "veg", ["staple"], false, false),
   c("cat-mushrooms", "Mushrooms", "veg", ["quick"], false, false),
   c("cat-avocado", "Avocado", "veg", ["quick", "mashable"], false, true),
+  c("cat-leek", "Leek", "veg", ["quick"], false, true, ["leeks", "baby leeks"]),
+  c("cat-cabbage", "Cabbage", "veg", ["staple"], false, true, ["savoy cabbage", "red cabbage", "green cabbage"]),
+  c("cat-kale", "Kale", "veg", ["quick", "mashable"], true, true),
 
   // Fruit
   c("cat-banana", "Banana", "fruit", ["quick", "mashable"], false, true),
@@ -104,8 +110,11 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   // Pantry
   c("cat-tinned-tomatoes", "Tinned tomatoes", "pantry", ["staple", "batch-friendly"], false, true, ["canned tomatoes", "diced tomatoes"]),
   c("cat-coconut-milk", "Coconut milk", "pantry", ["staple"], false, true),
-  c("cat-passata", "Passata", "pantry", ["staple"], false, true, ["tomato puree", "strained tomatoes"]),
+  c("cat-passata", "Passata", "pantry", ["staple"], false, true, ["tomato puree", "strained tomatoes", "tomato passata"]),
   c("cat-stock-cubes", "Stock cubes", "pantry", ["staple"], false, false),
+  c("cat-chicken-stock", "Chicken stock", "pantry", ["staple"], false, false, ["chicken broth"]),
+  c("cat-vegetable-stock", "Vegetable stock", "pantry", ["staple"], false, false, ["vegetable broth"]),
+  c("cat-beef-stock", "Beef stock", "pantry", ["staple"], false, false, ["beef broth"]),
   c("cat-olive-oil", "Olive oil", "pantry", ["staple"], false, true),
   c("cat-soy-sauce", "Soy sauce", "pantry", ["staple"], false, false),
   c("cat-flour", "Flour", "pantry", ["staple"], false, false),

@@ -96,7 +96,9 @@ export default function SyncRecoveryPanel() {
     ? "Your session may have expired. Try signing out and back in."
     : syncState.errorKind === "remote_unavailable"
       ? "The sync server is temporarily unreachable. Your data is safe locally."
-      : null;
+      : syncState.errorKind === "schema_missing"
+        ? "Your Supabase project does not have the sync tables yet. Open SQL Editor in the dashboard and run, in order, the contents of supabase/migrations/001_households.sql then supabase/migrations/002_invites.sql from this repository, then reload the app."
+        : null;
 
   return (
     <>
@@ -117,6 +119,15 @@ export default function SyncRecoveryPanel() {
             <p className="text-xs text-danger" data-testid="sync-error-message">{syncState.error}</p>
             {errorGuidance && (
               <p className="mt-1 text-xs text-text-muted">{errorGuidance}</p>
+            )}
+            {syncState.errorKind === "schema_missing" && (
+              <p className="mt-1 text-xs text-text-muted">
+                If you signed up before running the first script, run once in SQL Editor:{" "}
+                <code className="break-all text-[10px] text-text-primary">
+                  insert into public.profiles (id, email) select id, email from auth.users on
+                  conflict (id) do nothing;
+                </code>
+              </p>
             )}
           </div>
         )}

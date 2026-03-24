@@ -90,7 +90,7 @@ describe("F051 Paprika ingredient parser hardening", () => {
     it("parses integer ranges before size words (no measure unit)", () => {
       const carrots = parseIngredientLine("3-4 large carrots");
       expect(carrots.quantity).toBe("3-4");
-      expect(carrots.name.toLowerCase()).toBe("large carrots");
+      expect(carrots.name.toLowerCase()).toBe("carrots");
 
       const scallions = parseIngredientLine("4-5 scallions");
       expect(scallions.quantity).toBe("4-5");
@@ -276,14 +276,14 @@ describe("F051 Paprika ingredient parser hardening", () => {
       const r = parseIngredientLine(".5 large zucchinis");
       expect(r.quantity).toBe(".5");
       expect(r.quantityValue).toBeCloseTo(0.5);
-      expect(r.name.toLowerCase()).toBe("large zucchinis");
+      expect(r.name.toLowerCase()).toBe("zucchinis");
     });
 
     it('normalizes ". 5" (dot space digit) to a decimal before the name', () => {
       const r = parseIngredientLine(". 5 large zucchinis");
       expect(r.quantity).toBe(".5");
       expect(r.quantityValue).toBeCloseTo(0.5);
-      expect(r.name.toLowerCase()).toBe("large zucchinis");
+      expect(r.name.toLowerCase()).toBe("zucchinis");
     });
 
     it('leaves ". 5 tbsp" as list-style whole number (not 0.5 tbsp)', () => {

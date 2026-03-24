@@ -136,6 +136,19 @@ describe("F063: Error classification", () => {
     expect(getSyncState().errorKind).toBe("remote_unavailable");
   });
 
+  it("classifies missing Supabase tables as schema_missing (not remote_unavailable)", async () => {
+    setCurrentUserId("user-1");
+    mockRepo.upsertRemoteHousehold.mockRejectedValue(
+      new Error(
+        "Failed to insert household: Could not find the table 'public.households' in the schema cache",
+      ),
+    );
+
+    await syncAfterSave([makeHousehold()]);
+
+    expect(getSyncState().errorKind).toBe("schema_missing");
+  });
+
   it("classifies unknown errors as unknown", async () => {
     setCurrentUserId("user-1");
     mockRepo.upsertRemoteHousehold.mockRejectedValue(new Error("Something unexpected"));

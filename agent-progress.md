@@ -950,5 +950,25 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Tests:** `npm test` — 1086 passed (1073 + 13 skipped), 69 files. 21 new tests in `tests/f063-sharing-sync.test.ts` covering: enhanced sync state defaults (1), dirty tracking (2), error classification (3), offline dirty-state (1), sync retry after reconnect (1), manual sync push + conflict detection (2), compareWithRemote (1), shared household membership + hydration (2), JSON export backup (2), signed-out regressions (3), household data integrity (1), pull error handling (2).
 - **Known limitations:** Invite acceptance requires the user to be signed in before visiting the link (no inline sign-up on the invite page). No real-time subscription — shared edits require manual sync or page refresh. Household-level last-write-wins still applies; no field-level merge. Invite codes are single-household; no batch invite across households. `002_invites.sql` must be applied manually (same pattern as `001_households.sql`).
 
+### F064 — Paprika parser and matcher hardening for import quality (2026-03-24)
+- **PRD:** F064; milestone M5; P0 functional; depends on F049+F050; acceptance refs S007, S010.
+- **Root causes fixed:**
+  1. `normalizeForMatch` destroyed non-ASCII chars via `[^a-z0-9\s]` → fixed with Unicode property escapes `\p{L}\p{N}`.
+  2. Packaging words leaked into canonical names (only stripped when unit was also packaging) → now stripped unconditionally.
+  3. No trailing quantity support ("chicken stock 200ml", "baby leeks 6") → new `tryParseTrailingQuantity` function.
+  4. No embedded size/dimension stripping ("6-inch", "2-pound") → new `stripEmbeddedSizeDimension` function.
+  5. Size adjectives not stripped ("large", "medium") → new `stripLeadingSizeDescriptors` moves them to prep notes.
+  6. No singular/plural normalization → new `singularize()` function and `normalizeForMatching()` two-layer pipeline.
+  7. Missing suffix stripping ("for serving", "in water", "cut into wedges") → expanded `stripTrailingPrepPhrases`.
+  8. Tomato-family matching failed (Jaccard too low) → style-word stripping for matching + catalog aliases.
+  9. Weak compound-name protection → expanded `COMPOUND_WHERE_FIRST_TOKEN_ALONE_IS_WRONG`, `GENERIC_HEADS`, `REQUIRED_MODIFIER_TOKENS`.
+- **Parser changes:** Order of operations in `finalizeCanonicalName` fixed (packaging stripping before prep descriptor stripping). Pre-unit size modifier detection ("1-2 large pieces of kale" → unit=pieces, name=kale). Additional prep descriptors: stewed, cooked, roasted, smoked, dried, fresh, lightly, loosely. "quantity" word stripped from names. Trailing "leaves" stripped.
+- **Normalizer changes:** `normalizeForMatch` preserves Unicode. New `singularize()` with exception list (hummus, couscous, gnocchi, tortellini, peas, etc.). New `normalizeForMatching()` strips packaging words and size descriptors then singularizes. New `tokenizeSingular()`.
+- **Matcher changes:** `matchScore` uses singularized tokens for Jaccard comparison. New `stripMatchStyleDescriptors` strips style words (italian, stewed, roasted, cooked, plum, baby, vine, hot) for a secondary matching pass. `matchIngredient` tries both primary and style-stripped queries against candidates and aliases, with separate veto checks for each path. Catalog alias matching integrated into the scoring loop. GENERIC_HEADS expanded with milk, oil, stock, broth, sauce, seasoning, powder, spinach. Compound protection expanded: coconut milk/cream/oil, chicken/beef/vegetable stock/broth, olive/sesame oil, taco seasoning, peanut butter, tomato paste/sauce. Tortellini-specific veto prevents matching to spinach.
+- **Catalog changes:** 9 new entries: chicken stock, vegetable stock, beef stock, leek, cabbage, kale, gnocchi, hamburger buns, tortellini. Tomatoes aliases added: chopped/plum/stewed/cherry/grape tomatoes.
+- **Session/versioning:** `PAPRIKA_INGREDIENT_PARSER_VERSION` bumped from 6 to 7. `normalizeIngredientGroupKey` updated with inline singularization.
+- **Tests:** 75 new tests in `tests/f064-parser-matcher-hardening.test.ts`. Updated 3 F051 tests for size-descriptor stripping behavior. Updated 1 F047 test for pagination resilience with larger catalog. All 1,161 tests pass (70 files, 13 skipped).
+- **Known limitations:** "Italian" is not stripped from canonical names (risk to "Italian seasoning"); matching handles it via style-stripped secondary path. "Hot" prefix not stripped from canonical names; handled via matching. Some complex multi-ingredient lines like "spinach and ricotta tortellini" preserve the full compound name rather than extracting individual components.
+
 ## Next Task
 - Pick the next product slice from `PRD.json` implementation order or reopen a feature with explicit scope.

@@ -13,7 +13,7 @@ import {
   runMigrationIfNeeded,
 } from "../src/storage";
 import IngredientManager from "../src/pages/IngredientManager";
-import { showAllIngredientRows } from "./incremental-load-helpers";
+import { showAllIngredientRows, ingredientTextExistsOnAnyPage } from "./incremental-load-helpers";
 
 function makeIngredient(overrides: Partial<Ingredient> & { id: string; name: string }): Ingredient {
   return {
@@ -327,8 +327,8 @@ describe("Post-migration end-to-end", () => {
 
     const loaded = loadHousehold("h-f047")!;
     expect(loaded.ingredients[0]!.name).toBe("chicken breast");
-    expect(screen.getByText("Chicken breast")).toBeTruthy();
-    expect(screen.getByText("Sweet potato")).toBeTruthy();
+    expect(ingredientTextExistsOnAnyPage("Chicken breast")).toBe(true);
+    expect(ingredientTextExistsOnAnyPage("Sweet potato")).toBe(true);
   });
 
   it("meal associations remain valid after migration with duplicates", () => {

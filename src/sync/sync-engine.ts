@@ -46,6 +46,15 @@ function classifyError(err: unknown): SyncErrorKind {
   if (msg.includes("jwt") || msg.includes("token") || msg.includes("expired") || msg.includes("refresh_token") || msg.includes("not authenticated")) {
     return "auth_expired";
   }
+  // PostgREST: missing table / stale schema cache (run repo SQL migrations on Supabase).
+  if (
+    msg.includes("schema cache") ||
+    msg.includes("could not find the table") ||
+    msg.includes("pgrst205") ||
+    (msg.includes("does not exist") && (msg.includes("relation") || msg.includes("table")))
+  ) {
+    return "schema_missing";
+  }
   if (msg.includes("fetch") || msg.includes("network") || msg.includes("failed to fetch") || msg.includes("econnrefused") || msg.includes("timeout") || msg.includes("502") || msg.includes("503")) {
     return "remote_unavailable";
   }

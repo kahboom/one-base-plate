@@ -23,3 +23,23 @@ export function showAllIngredientRows() {
     fireEvent.change(pageSizeSelect, { target: { value: "100" } });
   }
 }
+
+/**
+ * Returns true if the given text is found on any page of the ingredient list.
+ * Navigates through all pages, then returns to the first page.
+ */
+export function ingredientTextExistsOnAnyPage(text: string): boolean {
+  showAllIngredientRows();
+  if (screen.queryByText(text)) return true;
+  const nextBtn = screen.queryByTestId("pagination-next");
+  if (!nextBtn) return false;
+  let found = false;
+  for (let i = 0; i < 20; i++) {
+    if ((nextBtn as HTMLButtonElement).disabled) break;
+    fireEvent.click(nextBtn);
+    if (screen.queryByText(text)) { found = true; break; }
+  }
+  const firstBtn = screen.queryByTestId("pagination-first");
+  if (firstBtn) fireEvent.click(firstBtn);
+  return found;
+}

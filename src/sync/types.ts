@@ -2,7 +2,11 @@ import type { Household } from "../types";
 
 export type SyncStatus = "idle" | "syncing" | "error" | "offline";
 
-export type SyncErrorKind = "auth_expired" | "remote_unavailable" | "unknown";
+export type SyncErrorKind =
+  | "auth_expired"
+  | "remote_unavailable"
+  | "schema_missing"
+  | "unknown";
 
 export interface SyncState {
   status: SyncStatus;

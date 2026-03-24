@@ -27,7 +27,20 @@ const PREP_DESCRIPTORS = new Set([
   "julienned", "trimmed", "cubed", "halved", "quartered", "torn", "packed", "sifted", "freshly", "finely", "roughly",
   "thinly", "thickly", "softened", "melted", "toasted", "thawed", "frozen",
   "skinless", "boneless", "bone-in", "skin-on",
+  "stewed", "cooked", "roasted", "smoked", "dried", "fresh",
+  "lightly", "loosely",
 ]);
+
+const SIZE_DESCRIPTORS = new Set([
+  "large", "small", "medium", "big", "jumbo", "extra-large", "thin", "thick",
+]);
+
+const PACKAGING_WORDS = new Set([
+  "can", "cans", "jar", "jars", "pack", "packs", "package", "packages",
+  "bag", "bags", "bottle", "bottles", "box", "boxes", "tin", "tins",
+  "carton", "cartons", "container", "containers", "packet", "packets",
+]);
+
 const QUALIFIER_PREFIXES = [
   "low-sodium",
   "reduced-sodium",
@@ -134,7 +147,7 @@ const SECTION_HEADING_ONE_WORD = new RegExp(
 );
 
 const PACKAGING_LEAD_STRIP = new RegExp(
-  "^(?:packages?|containers?|jars?|bottles?|boxes?|bags?|cans?|tins?)\\s+",
+  "^(?:packages?|containers?|jars?|bottles?|boxes?|bags?|cans?|tins?|packs?|packets?|cartons?)\\s+",
   "i",
 );
 
@@ -349,14 +362,12 @@ export function parseLeadingQuantityPrefix(
   };
 }
 
-function stripRedundantPackagingLead(name: string, unitLower: string): string {
+function stripRedundantPackagingLead(name: string, _unitLower: string): string {
   let n = name.trim();
   if (!n) return n;
-  const u = unitLower;
-  const packagingUnit =
-    /^(packages?|containers?|jars?|bottles?|boxes?|bags?|cans?|tins?|loaves?|loaf|fillets?|fillet)\b/i.test(u);
-  if (packagingUnit && PACKAGING_LEAD_STRIP.test(n)) {
-    n = n.replace(PACKAGING_LEAD_STRIP, "").trim();
+  if (PACKAGING_LEAD_STRIP.test(n)) {
+    const stripped = n.replace(PACKAGING_LEAD_STRIP, "").trim();
+    if (stripped) n = stripped;
   }
   return n;
 }
@@ -471,17 +482,45 @@ function applyMatchAliases(name: string): string {
   return out.replace(/\s+/g, " ").trim();
 }
 
+function stripLeadingSizeDescriptors(name: string, notes: string[]): string {
+  const parts = name.split(/\s+/).filter(Boolean);
+  let idx = 0;
+  while (idx < parts.length - 1) {
+    const w = parts[idx]!.toLowerCase();
+    if (SIZE_DESCRIPTORS.has(w)) {
+      notes.push(w);
+      idx += 1;
+    } else {
+      break;
+    }
+  }
+  if (idx > 0 && idx < parts.length) {
+    return parts.slice(idx).join(" ").trim();
+  }
+  return name;
+}
+
 function stripTrailingPrepPhrases(name: string, notes: string[]): string {
   let out = name.trim();
-  const trailingPatterns = [
-    /\s+(?:to\s+taste|optional|for\s+serving|for\s+garnish)$/i,
-    /\s+(?:rinsed|drained|peeled|zested|minced|chopped|diced|sliced|grated|shredded|crushed)(?:\s+well)?$/i,
-  ];
-  for (const pattern of trailingPatterns) {
-    const match = out.match(pattern);
-    if (match) {
-      notes.push(match[0]!.trim().toLowerCase());
-      out = out.replace(pattern, "").trim();
+  let progress = true;
+  while (progress) {
+    progress = false;
+    const trailingPatterns = [
+      /\s+(?:to\s+taste|optional|for\s+serving|for\s+garnish|to\s+serve)$/i,
+      /\s+(?:in\s+water|in\s+brine|in\s+oil)(?:,.*)?$/i,
+      /\s+(?:drained\s+but\s+liquid\s+reserved)$/i,
+      /\s+(?:cut\s+into\s+(?:wedges|strips|pieces|chunks|cubes|rounds|rings|slices))$/i,
+      /\s+(?:thinly|thickly|roughly|finely)\s+(?:sliced|chopped|diced|minced|cut|shredded)$/i,
+      /\s+(?:rinsed|drained|peeled|zested|minced|chopped|diced|sliced|grated|shredded|crushed|deseeded|cored|seeded)(?:\s+well)?$/i,
+      /,\s*(?:halved|quartered|drained|rinsed|peeled|sliced|chopped|diced|thawed|defrosted)$/i,
+    ];
+    for (const pattern of trailingPatterns) {
+      const match = out.match(pattern);
+      if (match) {
+        notes.push(match[0]!.replace(/^[,\s]+/, "").trim().toLowerCase());
+        out = out.replace(pattern, "").trim();
+        progress = true;
+      }
     }
   }
   return out;
@@ -533,11 +572,14 @@ function finalizeCanonicalName(
     prepNotes.push(...commaParts.map((part) => part.toLowerCase()));
   }
 
+  canonical = stripRedundantPackagingLead(canonical, unitRaw.toLowerCase());
   canonical = stripLeadingQualifiers(canonical, prepNotes);
   canonical = stripLeadingPrepDescriptors(canonical, prepNotes);
+  canonical = stripLeadingSizeDescriptors(canonical, prepNotes);
+  canonical = canonical.replace(/^quantity\s+/i, "").trim();
   canonical = stripTrailingPrepPhrases(canonical, prepNotes);
+  canonical = canonical.replace(/\s+leaves?\b/i, "").trim();
   canonical = canonical.replace(/\s+/g, " ").trim();
-  canonical = stripRedundantPackagingLead(canonical, unitRaw.toLowerCase());
   canonical = applyIngredientMatchSynonyms(canonical);
 
   const u = unitRaw.toLowerCase().replace(/\.$/, "").trim();
@@ -595,6 +637,72 @@ function tryParseWordQuantity(
   return { quantity: qtyStr, unit: unitRaw, quantityValue: qtyValue, name: canonical, prepNotes };
 }
 
+const TRAILING_QTY_UNIT_RE = /\s+(\d+(?:\.\d+)?)\s*(ml|g|kg|oz|lbs?|litres?|liters?|pints?|quarts?|fl\.?\s*oz\.?)\s*$/i;
+const TRAILING_QTY_SPACE_UNIT_RE = /\s+(\d+(?:\.\d+)?)\s+(ml|g|kg|oz|lbs?|litres?|liters?|pints?|quarts?|packs?|packages?|cans?|tins?|bottles?|jars?|bags?|fl\.?\s*oz\.?)\s*$/i;
+const TRAILING_COUNT_RE = /\s+(\d+)\s*$/;
+
+function tryParseTrailingQuantity(
+  text: string,
+  prepNotes: string[],
+): { quantity: string; unit: string; quantityValue?: number; name: string; prepNotes: string[] } | null {
+  let namePart = text;
+  let qtyRaw = "";
+  let unitRaw = "";
+  let qtyValue: number | undefined;
+
+  let m = namePart.match(TRAILING_QTY_UNIT_RE);
+  if (!m) m = namePart.match(TRAILING_QTY_SPACE_UNIT_RE);
+  if (m) {
+    qtyRaw = m[1]!;
+    unitRaw = m[2]!.replace(/\.$/, "").trim();
+    qtyValue = parseFloat(m[1]!);
+    namePart = namePart.slice(0, m.index!).trim();
+  } else {
+    const cm = namePart.match(TRAILING_COUNT_RE);
+    if (cm) {
+      const candidate = namePart.slice(0, cm.index!).trim();
+      if (candidate && /[a-z]/i.test(candidate)) {
+        qtyRaw = cm[1]!;
+        qtyValue = parseInt(cm[1]!, 10);
+        namePart = candidate;
+      }
+    }
+  }
+
+  if (!qtyRaw) return null;
+
+  const commaParts = namePart.split(",").map((p) => p.trim()).filter(Boolean);
+  namePart = commaParts.shift() ?? "";
+  if (commaParts.length > 0) {
+    prepNotes.push(...commaParts.map((p) => p.toLowerCase()));
+  }
+
+  const canonical = finalizeCanonicalName(namePart, unitRaw, prepNotes);
+  if (!canonical) return null;
+
+  return {
+    quantity: qtyRaw,
+    unit: unitRaw,
+    quantityValue: qtyValue,
+    name: canonical,
+    prepNotes,
+  };
+}
+
+function stripEmbeddedSizeDimension(
+  namePart: string,
+  prepNotes: string[],
+): string {
+  const embeddedDimRe = /^(\d+(?:\/\d+)?[-–]?\s*(?:inch(?:es)?|ounces?|oz\.?|pounds?|lbs?\.?|cm|centimete?rs?|mm|millimete?rs?)(?:[-–](?:thick|wide|long|tall))?)\s+/i;
+  let out = namePart;
+  const dm = out.match(embeddedDimRe);
+  if (dm) {
+    prepNotes.push(dm[1]!.trim().toLowerCase());
+    out = out.slice(dm[0]!.length).trim();
+  }
+  return out;
+}
+
 export function parseIngredientLine(
   line: string,
 ): { quantity: string; unit: string; quantityValue?: number; name: string; prepNotes: string[] } {
@@ -647,7 +755,7 @@ export function parseIngredientLine(
       }
     }
 
-    const sizeUnitRe = /^(\d+[-–]?\s*(?:ounces?|oz\.?|pounds?|lbs?\.?|grams?|g|ml|fl\.?\s*oz\.?))\s+/i;
+    const sizeUnitRe = /^(\d+(?:[-–]\d+)?[-–]?\s*(?:ounces?|oz\.?|pounds?|lbs?\.?|grams?|g|ml|fl\.?\s*oz\.?))\s+/i;
     if (!unitRaw && sizeUnitRe.test(namePart)) {
       const sizeMatch = namePart.match(sizeUnitRe)!;
       const afterSize = namePart.slice(sizeMatch[0]!.length);
@@ -656,6 +764,23 @@ export function parseIngredientLine(
         prepNotes.push(sizeMatch[1]!.trim());
         unitRaw = reUnit.unit.replace(/\.$/, "").trim();
         namePart = afterSize.slice(reUnit.end).trim();
+      } else {
+        prepNotes.push(sizeMatch[1]!.trim());
+        namePart = afterSize.trim();
+      }
+    }
+
+    namePart = stripEmbeddedSizeDimension(namePart, prepNotes);
+
+    const preUnitSizeRe = /^(large|small|medium|big|jumbo|extra-large|thin|thick)\s+/i;
+    if (!unitRaw && preUnitSizeRe.test(namePart)) {
+      const modMatch = namePart.match(preUnitSizeRe)!;
+      const afterMod = namePart.slice(modMatch[0]!.length);
+      const reUnit = matchUnitAt(afterMod, 0);
+      if (reUnit) {
+        prepNotes.push(modMatch[1]!.toLowerCase());
+        unitRaw = reUnit.unit.replace(/\.$/, "").trim();
+        namePart = afterMod.slice(reUnit.end).trim();
       }
     }
 
@@ -674,6 +799,9 @@ export function parseIngredientLine(
   const wordResult = tryParseWordQuantity(cleaned, prepNotes);
   if (wordResult) return wordResult;
 
+  const trailingResult = tryParseTrailingQuantity(cleaned, prepNotes);
+  if (trailingResult) return trailingResult;
+
   cleaned = cleaned.replace(/\(([^)]*)\)/g, (_, note: string) => {
     if (note.trim()) prepNotes.push(note.trim().toLowerCase());
     return " ";
@@ -687,6 +815,7 @@ export function parseIngredientLine(
   canonical = canonical.replace(/^\.\s+/, "").trim();
   canonical = stripLeadingQualifiers(canonical, prepNotes);
   canonical = stripLeadingPrepDescriptors(canonical, prepNotes);
+  canonical = stripLeadingSizeDescriptors(canonical, prepNotes);
   canonical = stripTrailingPrepPhrases(canonical, prepNotes);
   canonical = canonical.replace(/\s+/g, " ").trim();
   canonical = applyIngredientMatchSynonyms(canonical);
@@ -698,15 +827,52 @@ function normalizeForMatch(s: string): string {
   return s
     .toLowerCase()
     .replace(/-/g, " ")
-    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+const SINGULAR_EXCEPTIONS = new Set([
+  "hummus", "couscous", "lentils", "chickpeas", "oats", "peas", "noodles",
+  "greens", "grits", "grains", "sprouts", "capers", "molasses", "quinoa",
+  "edamame", "gnocchi", "tortellini", "rigatoni", "penne", "fusilli",
+]);
+
+export function singularize(word: string): string {
+  const w = word.toLowerCase();
+  if (w.length < 3) return w;
+  if (SINGULAR_EXCEPTIONS.has(w)) return w;
+  if (w.endsWith("ies") && w.length > 4) return w.slice(0, -3) + "y";
+  if (w.endsWith("ves")) return w.slice(0, -3) + "f";
+  if (w.endsWith("oes") && w.length > 4) return w.slice(0, -2);
+  if (w.endsWith("ses") && w.length > 4) return w.slice(0, -2);
+  if (w.endsWith("ches") || w.endsWith("shes") || w.endsWith("xes") || w.endsWith("zes")) return w.slice(0, -2);
+  if (w.endsWith("s") && !w.endsWith("ss") && !w.endsWith("us")) return w.slice(0, -1);
+  return w;
 }
 
 function tokenize(s: string): string[] {
   return normalizeForMatch(s)
     .split(/\s+/)
     .filter(Boolean);
+}
+
+function tokenizeSingular(s: string): string[] {
+  return tokenize(s).map(singularize);
+}
+
+const MATCH_STRIP_STYLE_WORDS = new Set([
+  "italian", "style", "vine", "baby", "plum",
+  "fire", "sun", "stewed", "roasted", "cooked",
+  "grilled", "baked", "steamed", "hot",
+]);
+
+export function normalizeForMatching(s: string): string {
+  const tokens = tokenize(s);
+  const cleaned = tokens
+    .filter((t) => !PACKAGING_WORDS.has(t) && !SIZE_DESCRIPTORS.has(t))
+    .map(singularize);
+  return cleaned.join(" ");
 }
 
 const STOPWORDS = new Set([
@@ -728,11 +894,20 @@ const REQUIRED_MODIFIER_TOKENS = new Set([
   "dried",
   "dry",
   "panko",
-  "italian",
   "seasoned",
+  "coconut",
+  "sesame",
+  "peanut",
+  "olive",
+  "taco",
+  "tortellini",
 ]);
 
-const GENERIC_HEADS = new Set(["cheese", "onion", "garlic", "bread", "cream", "pepper", "salt"]);
+const GENERIC_HEADS = new Set([
+  "cheese", "onion", "garlic", "bread", "cream", "pepper", "salt",
+  "milk", "oil", "stock", "broth", "sauce", "seasoning", "powder",
+  "spinach",
+]);
 
 const COMPOUND_WHERE_FIRST_TOKEN_ALONE_IS_WRONG = new Set([
   "cream cheese",
@@ -741,6 +916,21 @@ const COMPOUND_WHERE_FIRST_TOKEN_ALONE_IS_WRONG = new Set([
   "french onion soup",
   "cream of chicken soup",
   "cream of mushroom soup",
+  "coconut milk",
+  "coconut cream",
+  "coconut oil",
+  "chicken stock",
+  "chicken broth",
+  "beef stock",
+  "beef broth",
+  "vegetable stock",
+  "vegetable broth",
+  "taco seasoning",
+  "olive oil",
+  "sesame oil",
+  "peanut butter",
+  "tomato paste",
+  "tomato sauce",
 ]);
 
 export function matchScore(a: string, b: string): number {
@@ -748,10 +938,17 @@ export function matchScore(a: string, b: string): number {
   const nb = normalizeForMatch(b);
   if (!na || !nb) return 0;
   if (na === nb) return 1;
+
+  const singa = tokenizeSingular(a);
+  const singb = tokenizeSingular(b);
+  const singaJoined = singa.join(" ");
+  const singbJoined = singb.join(" ");
+  if (singaJoined === singbJoined) return 1;
+
   const ta = tokenize(a);
   const tb = tokenize(b);
-  const sa = new Set(ta.filter((t) => !STOPWORDS.has(t)));
-  const sb = new Set(tb.filter((t) => !STOPWORDS.has(t)));
+  const sa = new Set(singa.filter((t) => !STOPWORDS.has(t)));
+  const sb = new Set(singb.filter((t) => !STOPWORDS.has(t)));
   if (sa.size === 0 || sb.size === 0) return 0;
   let inter = 0;
   for (const t of sa) {
@@ -772,9 +969,14 @@ export function matchScore(a: string, b: string): number {
     }
     return 0.68;
   }
+  if (singaJoined.includes(singbJoined) || singbJoined.includes(singaJoined)) {
+    return 0.68;
+  }
   const wordsA = ta.filter((w) => !STOPWORDS.has(w));
   const wordsB = tb.filter((w) => !STOPWORDS.has(w));
-  const sharedWords = wordsA.filter((w) => wordsB.some((wb) => wb === w || (w.length > 3 && (wb.includes(w) || w.includes(wb)))));
+  const wordsASing = wordsA.map(singularize);
+  const wordsBSing = wordsB.map(singularize);
+  const sharedWords = wordsASing.filter((w) => wordsBSing.some((wb) => wb === w || (w.length > 3 && (wb.includes(w) || w.includes(wb)))));
   if (sharedWords.length > 0) {
     return 0.28 + (sharedWords.length / Math.max(wordsA.length, wordsB.length)) * 0.35;
   }
@@ -791,29 +993,32 @@ function candidateContainsToken(candidateNorm: string, token: string): boolean {
 function catalogMatchVeto(queryNorm: string, queryTokens: string[], candidateName: string): boolean {
   const cn = normalizeForMatch(candidateName);
   const ctoks = tokenize(candidateName);
+  const querySing = queryTokens.map(singularize);
+  const candSing = ctoks.map(singularize);
 
-  for (const t of queryTokens) {
+  for (const t of querySing) {
     if (STOPWORDS.has(t) || t.length < 3) continue;
     if (!REQUIRED_MODIFIER_TOKENS.has(t)) continue;
-    if (!candidateContainsToken(cn, t)) return true;
+    if (!candSing.some((c) => c === t || singularize(c) === t)) return true;
   }
 
-  const qNonStop = queryTokens.filter((t) => !STOPWORDS.has(t) && t.length > 0);
-  const cNonStop = ctoks.filter((t) => !STOPWORDS.has(t));
+  const qNonStop = querySing.filter((t) => !STOPWORDS.has(t) && t.length > 0);
+  const cNonStop = candSing.filter((t) => !STOPWORDS.has(t));
 
   if (cNonStop.length === 1 && qNonStop.length > 1) {
     const head = cNonStop[0]!;
-    if (GENERIC_HEADS.has(head)) {
+    if (GENERIC_HEADS.has(head) || GENERIC_HEADS.has(singularize(head))) {
       for (const t of qNonStop) {
-        if (t !== head && !candidateContainsToken(cn, t)) return true;
+        if (t !== head && singularize(t) !== singularize(head) && !candSing.includes(t)) return true;
       }
     }
   }
 
   const candLower = candidateName.toLowerCase().trim();
+  const queryNormSing = querySing.join(" ");
   for (const compound of COMPOUND_WHERE_FIRST_TOKEN_ALONE_IS_WRONG) {
     if (candLower === compound || candLower.endsWith(compound)) {
-      const q = queryNorm.trim();
+      const q = queryNormSing.trim();
       if (q === compound) break;
       if (compound.startsWith(q + " ") || (q.length < compound.length && compound.startsWith(q) && q.split(/\s+/).length === 1)) {
         return true;
@@ -824,6 +1029,9 @@ function catalogMatchVeto(queryNorm: string, queryTokens: string[], candidateNam
   if (cn.includes("onion") && queryNorm.includes("soup") && !cn.includes("soup")) return true;
   if (queryNorm.includes("crumb") && !cn.includes("crumb") && !cn.includes("breadcrumbs")) return true;
 
+  if (queryNorm.includes("tortellini") && cn === "spinach") return true;
+  if (queryNorm.includes("tortellini") && !cn.includes("tortellini")) return true;
+
   return false;
 }
 
@@ -831,6 +1039,7 @@ function householdMatchVeto(queryNorm: string, queryTokens: string[], candidateN
   const cn = normalizeForMatch(candidateName);
   if (cn.includes("onion") && queryNorm.includes("soup") && !cn.includes("soup")) return true;
   if (queryNorm.includes("crumb") && !cn.includes("crumb") && !cn.includes("bread")) return true;
+  if (queryNorm.includes("tortellini") && !cn.includes("tortellini")) return true;
   return catalogMatchVeto(queryNorm, queryTokens, candidateName);
 }
 
@@ -844,6 +1053,12 @@ export function confidenceBandFromScore(score: number): MatchConfidenceBand {
   if (score >= 0.95 || score === 1) return "exact";
   if (score >= 0.75) return "strong";
   return "low";
+}
+
+function stripMatchStyleDescriptors(name: string): string {
+  const tokens = tokenize(name);
+  const cleaned = tokens.filter((t) => !MATCH_STRIP_STYLE_WORDS.has(t) && !STOPWORDS.has(t));
+  return cleaned.join(" ");
 }
 
 export function matchIngredient(
@@ -870,12 +1085,32 @@ export function matchIngredient(
   const matchName = applyMatchAliases(applyIngredientMatchSynonyms(name.trim()));
   const queryNorm = normalizeForMatch(matchName);
   const queryTokens = tokenize(matchName);
+  const querySingular = normalizeForMatching(matchName);
+
+  const strippedQuery = stripMatchStyleDescriptors(matchName);
+  const strippedNorm = normalizeForMatch(strippedQuery);
+  const strippedTokens = tokenize(strippedQuery);
 
   let bestHousehold: Ingredient | null = null;
   let bestHouseholdScore = 0;
   for (const ing of householdIngredients) {
-    if (householdMatchVeto(queryNorm, queryTokens, ing.name)) continue;
-    const score = matchScore(matchName, ing.name);
+    const vetoed = householdMatchVeto(queryNorm, queryTokens, ing.name);
+    const strippedVetoed = strippedQuery !== matchName
+      ? householdMatchVeto(strippedNorm, strippedTokens, ing.name)
+      : true;
+    if (vetoed && strippedVetoed) continue;
+
+    let score = matchScore(matchName, ing.name);
+    const candSingular = normalizeForMatching(ing.name);
+    if (querySingular === candSingular && score < 1) score = 1;
+
+    if (score < HOUSEHOLD_MIN && strippedQuery && strippedQuery !== matchName) {
+      const strippedScore = matchScore(strippedQuery, ing.name);
+      if (strippedScore > score) score = strippedScore;
+      const strippedSingular = normalizeForMatching(strippedQuery);
+      if (strippedSingular === candSingular && score < 1) score = 1;
+    }
+
     if (score > bestHouseholdScore && score >= HOUSEHOLD_MIN) {
       bestHouseholdScore = score;
       bestHousehold = ing;
@@ -894,8 +1129,41 @@ export function matchIngredient(
   let bestCatalog: CatalogIngredient | null = null;
   let bestCatalogScore = 0;
   for (const ci of catalog) {
-    if (catalogMatchVeto(queryNorm, queryTokens, ci.name)) continue;
-    const score = matchScore(matchName, ci.name);
+    const vetoed = catalogMatchVeto(queryNorm, queryTokens, ci.name);
+    const strippedVetoed = strippedQuery !== matchName
+      ? catalogMatchVeto(strippedNorm, strippedTokens, ci.name)
+      : true;
+    if (vetoed && strippedVetoed) continue;
+
+    let score = matchScore(matchName, ci.name);
+    const candSingular = normalizeForMatching(ci.name);
+    if (querySingular === candSingular && score < 1) score = 1;
+
+    if (score < CATALOG_MIN && strippedQuery && strippedQuery !== matchName) {
+      const strippedScore = matchScore(strippedQuery, ci.name);
+      if (strippedScore > score) score = strippedScore;
+      const strippedSingular = normalizeForMatching(strippedQuery);
+      if (strippedSingular === candSingular && score < 1) score = 1;
+    }
+
+    if (score < CATALOG_MIN && ci.aliases) {
+      for (const alias of ci.aliases) {
+        const aliasVetoed = catalogMatchVeto(queryNorm, queryTokens, alias);
+        const aliasStrippedVetoed = strippedQuery !== matchName
+          ? catalogMatchVeto(strippedNorm, strippedTokens, alias)
+          : true;
+        if (aliasVetoed && aliasStrippedVetoed) continue;
+        const aliasScore = matchScore(matchName, alias);
+        if (aliasScore > score) score = aliasScore;
+        if (score < CATALOG_MIN && strippedQuery && strippedQuery !== matchName) {
+          const strippedAliasScore = matchScore(strippedQuery, alias);
+          if (strippedAliasScore > score) score = strippedAliasScore;
+        }
+        const aliasSingular = normalizeForMatching(alias);
+        if (querySingular === aliasSingular && score < 1) score = 1;
+      }
+    }
+
     if (score > bestCatalogScore && score >= CATALOG_MIN) {
       bestCatalogScore = score;
       bestCatalog = ci;

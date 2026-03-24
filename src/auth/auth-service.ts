@@ -10,8 +10,23 @@ export interface AuthResult {
 export async function signUp(email: string, password: string): Promise<AuthResult> {
   const client = getSupabaseClient();
   if (!client) return { user: null, session: null, error: "Supabase not configured" };
-  const { data, error } = await client.auth.signUp({ email, password });
+  const redirect =
+    typeof window !== "undefined" && window.location?.origin
+      ? `${window.location.origin}/`
+      : undefined;
+  const { data, error } = await client.auth.signUp({
+    email,
+    password,
+    options: redirect ? { emailRedirectTo: redirect } : undefined,
+  });
   return { user: data.user, session: data.session, error: error?.message ?? null };
+}
+
+export async function resendSignupConfirmation(email: string): Promise<{ error: string | null }> {
+  const client = getSupabaseClient();
+  if (!client) return { error: "Supabase not configured" };
+  const { error } = await client.auth.resend({ type: "signup", email });
+  return { error: error?.message ?? null };
 }
 
 export async function signIn(email: string, password: string): Promise<AuthResult> {
