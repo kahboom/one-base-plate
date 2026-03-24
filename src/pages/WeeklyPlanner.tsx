@@ -559,6 +559,7 @@ export default function WeeklyPlanner() {
                     meal={meal}
                     members={household.members}
                     ingredients={household.ingredients}
+                    recipes={household.recipes ?? []}
                     overlap={overlap}
                     outcomes={household.mealOutcomes ?? []}
                     patterns={learnedPatterns}
@@ -589,6 +590,7 @@ export default function WeeklyPlanner() {
               meal={meal}
               members={household.members}
               ingredients={household.ingredients}
+              recipes={household.recipes ?? []}
               overlap={overlap}
               outcomes={household.mealOutcomes ?? []}
               patterns={learnedPatterns}

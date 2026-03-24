@@ -11,6 +11,7 @@ import { summarizeRecipeRef } from "../lib/componentRecipes";
 import { PageHeader, Card, Button, Chip, Section } from "../components/ui";
 import MealImageSlot from "../components/MealImageSlot";
 import ImportMappingAdjust from "../components/ImportMappingAdjust";
+import { resolveMealImageUrl } from "../lib/mealImage";
 
 export default function MealDetail() {
   const { householdId, mealId } = useParams<{
@@ -120,7 +121,7 @@ export function MealDetailContent({
       <Card data-testid="meal-hero" className="mb-6">
         <MealImageSlot
           variant="detail"
-          imageUrl={meal.imageUrl}
+          imageUrl={resolveMealImageUrl(meal, household.recipes ?? [])}
           alt={meal.name}
           imageTestId="meal-hero-image"
           placeholderTestId="meal-hero-image-placeholder"

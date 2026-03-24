@@ -35,6 +35,7 @@ import {
   applySessionOverridesToMeal,
   getDefaultRecipeRef,
 } from "../lib/componentRecipes";
+import { resolveMealImageUrl } from "../lib/mealImage";
 import {
   assignMealToLatestWeekPlan,
   getWeeklyAnchorForWeekday,
@@ -329,6 +330,7 @@ export default function Planner() {
                       meal={meal}
                       members={household.members}
                       ingredients={household.ingredients}
+                      recipes={household.recipes ?? []}
                       overlap={overlap}
                       outcomes={household.mealOutcomes ?? []}
                       patterns={patterns}
@@ -368,6 +370,7 @@ export default function Planner() {
                   meal={meal}
                   members={household.members}
                   ingredients={household.ingredients}
+                  recipes={household.recipes ?? []}
                   overlap={overlap}
                   outcomes={household.mealOutcomes ?? []}
                   patterns={patterns}
@@ -393,7 +396,7 @@ export default function Planner() {
             <div className="w-full shrink-0 sm:w-40">
               <MealImageSlot
                 variant="card"
-                imageUrl={selectedMeal.imageUrl}
+                imageUrl={resolveMealImageUrl(selectedMeal, household.recipes ?? [])}
                 alt=""
                 imageTestId="selected-meal-hero-image"
                 placeholderTestId="selected-meal-hero-placeholder"

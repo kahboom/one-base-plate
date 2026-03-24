@@ -261,6 +261,7 @@ export default function Home() {
                   meal={meal}
                   members={household.members}
                   ingredients={household.ingredients}
+                  recipes={household.recipes ?? []}
                   outcomes={household.mealOutcomes ?? []}
                   pinned
                   onPin={() => handleTogglePin(meal.id)}
@@ -285,6 +286,7 @@ export default function Home() {
                   meal={meal}
                   members={household.members}
                   ingredients={household.ingredients}
+                  recipes={household.recipes ?? []}
                   overlap={overlap}
                   outcomes={household.mealOutcomes ?? []}
                   patterns={patterns}

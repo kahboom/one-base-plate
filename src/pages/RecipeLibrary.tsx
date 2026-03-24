@@ -73,6 +73,7 @@ function createEmptyRecipe(): Recipe {
   return {
     id: crypto.randomUUID(),
     name: "",
+    description: "",
     components: [],
     defaultPrep: "",
     recipeLinks: [],
@@ -234,6 +235,11 @@ function RecipeModal({
                 <span className="text-xs text-text-muted">
                   Recipe library — promote to a base meal when you want to plan it
                 </span>
+                {recipe.description && (
+                  <p className="mt-1 text-sm text-text-secondary line-clamp-2">
+                    {recipe.description}
+                  </p>
+                )}
               </div>
             </div>
             <Button variant="ghost" onClick={onClose} aria-label="Close modal">
@@ -264,6 +270,18 @@ function RecipeModal({
                 placeholder="Recipe name"
                 required
                 data-testid="modal-recipe-name"
+              />
+            </FieldLabel>
+            <FieldLabel label="Description">
+              <textarea
+                className="w-full rounded-lg border border-border-light bg-surface p-3 text-sm text-text-primary placeholder-text-muted focus:border-brand focus:outline-none"
+                rows={2}
+                value={recipe.description ?? ""}
+                onChange={(e) =>
+                  onChange({ ...recipe, description: e.target.value || undefined })
+                }
+                placeholder="Brief summary of the dish"
+                data-testid="recipe-description"
               />
             </FieldLabel>
           </section>

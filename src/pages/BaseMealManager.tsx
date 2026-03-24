@@ -25,6 +25,7 @@ import {
 import ComponentForm from "../components/meals/ComponentForm";
 import RecipeLinksEditor from "../components/meals/RecipeLinksEditor";
 import ComponentRecipePicker from "../components/meals/ComponentRecipePicker";
+import { resolveMealImageUrl } from "../lib/mealImage";
 
 const MEAL_SORT_OPTIONS: {
   value: string;
@@ -163,7 +164,7 @@ function MealModal({
           <div className="flex min-w-0 flex-1 items-start gap-3">
             <MealImageSlot
               variant="modalHeader"
-              imageUrl={meal.imageUrl}
+              imageUrl={resolveMealImageUrl(meal, recipes)}
               alt=""
               imageTestId="meal-modal-header-image"
               placeholderTestId="meal-modal-header-image-placeholder"
@@ -504,7 +505,7 @@ function MealModal({
   );
 }
 
-function MealRow({ meal, onClick }: { meal: BaseMeal; onClick: () => void }) {
+function MealRow({ meal, recipes, onClick }: { meal: BaseMeal; recipes: Recipe[]; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -515,7 +516,7 @@ function MealRow({ meal, onClick }: { meal: BaseMeal; onClick: () => void }) {
     >
       <MealImageSlot
         variant="row"
-        imageUrl={meal.imageUrl}
+        imageUrl={resolveMealImageUrl(meal, recipes)}
         alt=""
         imageTestId="meal-row-image"
         placeholderTestId="meal-row-image-placeholder"
@@ -726,6 +727,7 @@ export default function BaseMealManager() {
             <MealRow
               key={meal.id}
               meal={meal}
+              recipes={recipes}
               onClick={() => setEditingId(meal.id)}
             />
           ))}

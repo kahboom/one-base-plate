@@ -115,6 +115,7 @@ export type RecipeType =
 export interface Recipe {
   id: string;
   name: string;
+  description?: string;
   recipeType?: RecipeType;
   /** Parent recipe id for sub-recipe / sauce relationships. */
   parentRecipeId?: string;
