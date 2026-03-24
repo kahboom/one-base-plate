@@ -56,6 +56,20 @@ export default function AuthUI() {
   }
 
   if (user) {
+    const chipVariant =
+      syncState.status === "error" ? "danger" as const
+        : !syncState.online ? "neutral" as const
+          : syncState.hasPendingChanges ? "warning" as const
+            : syncState.status === "syncing" ? "info" as const
+              : "success" as const;
+
+    const chipLabel =
+      syncState.status === "syncing" ? "Syncing..."
+        : !syncState.online ? "Offline"
+          : syncState.status === "error" ? "Sync error"
+            : syncState.hasPendingChanges ? "Local changes pending"
+              : "Cloud synced";
+
     return (
       <Card className="mb-6" data-testid="auth-signed-in">
         <h2 className="mb-3 text-sm font-semibold text-text-primary">Account</h2>
@@ -63,25 +77,10 @@ export default function AuthUI() {
           Signed in as <strong>{user.email}</strong>
         </p>
         <div className="mt-2 flex items-center gap-2">
-          <Chip
-            variant={syncState.status === "error" ? "danger" : "success"}
-            data-testid="sync-mode-badge"
-          >
-            {syncState.status === "syncing"
-              ? "Syncing..."
-              : syncState.status === "error"
-                ? "Sync error"
-                : "Cloud synced"}
+          <Chip variant={chipVariant} data-testid="sync-mode-badge">
+            {chipLabel}
           </Chip>
-          {syncState.lastSyncedAt && (
-            <span className="text-xs text-text-muted">
-              Last synced {new Date(syncState.lastSyncedAt).toLocaleTimeString()}
-            </span>
-          )}
         </div>
-        {syncState.error && (
-          <p className="mt-2 text-xs text-danger">{syncState.error}</p>
-        )}
         <div className="mt-4">
           <Button
             variant="danger"

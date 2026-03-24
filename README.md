@@ -83,7 +83,9 @@ On the **household home** screen, **Top suggestions** lists up to **three** meal
 The app works fully locally by default. To enable cross-browser sync with user accounts:
 
 1. Create a [Supabase](https://supabase.com) project.
-2. Run the SQL in `supabase/migrations/001_households.sql` against your project (via the Supabase SQL editor or CLI) to create the `households`, `household_memberships`, and `profiles` tables with RLS policies.
+2. Run the SQL migrations against your project (via the Supabase SQL editor or CLI):
+   - `supabase/migrations/001_households.sql` — creates `households`, `household_memberships`, and `profiles` tables with RLS policies.
+   - `supabase/migrations/002_invites.sql` — creates `household_invites` table for sharing and adds additional RLS policies for member/profile visibility.
 3. Copy `.env.example` to `.env` and fill in your project URL and anon key:
 
 ```bash
@@ -98,6 +100,17 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here
 4. Restart the dev server. The Settings page will now show an Account section where users can sign up, sign in, and sync data.
 
 When the env vars are absent, the app runs in local-only mode with no Supabase dependency.
+
+### Household Sharing
+
+Once signed in, household owners can share access via invite links:
+
+1. Go to Settings > Household sharing > Generate invite link.
+2. Copy the link and share it with another person.
+3. The recipient signs in (or creates an account) and visits the invite link (`/invite/{code}`).
+4. They join the household as an editor and can view/edit shared data.
+
+Owners can view members, revoke invites, and remove members from the Settings page. Editors can leave a household at any time.
 
 ---
 

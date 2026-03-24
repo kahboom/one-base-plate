@@ -6,7 +6,14 @@
  */
 
 import type { Household } from "../types";
-import type { SyncState, RemoteHousehold, ConflictChoice, FirstLoginContext } from "./types";
+import type {
+  SyncState,
+  SyncErrorKind,
+  RemoteHousehold,
+  ConflictChoice,
+  FirstLoginContext,
+  HouseholdCompareResult,
+} from "./types";
 import * as defaultRemoteRepo from "./remote-repository";
 
 export interface RemoteRepoAdapter {
@@ -17,11 +24,32 @@ export interface RemoteRepoAdapter {
 
 let repo: RemoteRepoAdapter = defaultRemoteRepo;
 let currentUserId: string | null = null;
-let syncState: SyncState = { status: "idle", lastSyncedAt: null, error: null };
+const DEFAULT_SYNC_STATE: SyncState = {
+  status: "idle",
+  lastSyncedAt: null,
+  error: null,
+  errorKind: null,
+  hasPendingChanges: false,
+  online: typeof navigator !== "undefined" ? navigator.onLine : true,
+};
+let syncState: SyncState = { ...DEFAULT_SYNC_STATE };
 let listeners: Array<(state: SyncState) => void> = [];
+let onlineListenersBound = false;
+let loadHouseholdsRef: (() => Household[]) | null = null;
 
 function notify() {
   for (const fn of listeners) fn(syncState);
+}
+
+function classifyError(err: unknown): SyncErrorKind {
+  const msg = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase();
+  if (msg.includes("jwt") || msg.includes("token") || msg.includes("expired") || msg.includes("refresh_token") || msg.includes("not authenticated")) {
+    return "auth_expired";
+  }
+  if (msg.includes("fetch") || msg.includes("network") || msg.includes("failed to fetch") || msg.includes("econnrefused") || msg.includes("timeout") || msg.includes("502") || msg.includes("503")) {
+    return "remote_unavailable";
+  }
+  return "unknown";
 }
 
 export function getSyncState(): SyncState {
@@ -48,23 +76,75 @@ export function isAuthenticated(): boolean {
 }
 
 /**
+ * Provide a reference to loadHouseholds so the engine can read local state
+ * for manualSync / reconnect without a circular import.
+ */
+export function setLoadHouseholdsRef(fn: () => Household[]): void {
+  loadHouseholdsRef = fn;
+}
+
+/**
+ * Bind browser online/offline event listeners. Call once at app init.
+ * Automatically retries sync when coming back online with pending changes.
+ */
+export function initOnlineListeners(): void {
+  if (typeof window === "undefined" || onlineListenersBound) return;
+  onlineListenersBound = true;
+
+  window.addEventListener("online", () => {
+    syncState = { ...syncState, online: true };
+    if (syncState.status === "offline") {
+      syncState = { ...syncState, status: "idle" };
+    }
+    notify();
+    if (syncState.hasPendingChanges && currentUserId && loadHouseholdsRef) {
+      void syncAfterSave(loadHouseholdsRef());
+    }
+  });
+
+  window.addEventListener("offline", () => {
+    syncState = { ...syncState, online: false, status: "offline" };
+    notify();
+  });
+}
+
+function checkOnline(): boolean {
+  return typeof navigator !== "undefined" ? navigator.onLine : true;
+}
+
+/**
  * Called after every local save. Upserts each changed household to remote.
  * Errors are caught and surfaced via syncState, never thrown to the caller.
  */
 export async function syncAfterSave(households: Household[]): Promise<void> {
   if (!currentUserId) return;
 
-  syncState = { ...syncState, status: "syncing", error: null };
+  const online = checkOnline();
+  if (!online) {
+    syncState = { ...syncState, status: "offline", online: false, hasPendingChanges: true };
+    notify();
+    return;
+  }
+
+  syncState = { ...syncState, status: "syncing", error: null, errorKind: null, hasPendingChanges: true };
   notify();
 
   try {
     for (const h of households) {
       await repo.upsertRemoteHousehold(h, currentUserId);
     }
-    syncState = { status: "idle", lastSyncedAt: new Date().toISOString(), error: null };
+    syncState = {
+      ...syncState,
+      status: "idle",
+      lastSyncedAt: new Date().toISOString(),
+      error: null,
+      errorKind: null,
+      hasPendingChanges: false,
+    };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Sync failed";
-    syncState = { ...syncState, status: "error", error: msg };
+    const kind = classifyError(err);
+    syncState = { ...syncState, status: "error", error: msg, errorKind: kind, hasPendingChanges: true };
     console.error("[sync-engine] syncAfterSave failed:", msg);
   }
 
@@ -77,17 +157,24 @@ export async function syncAfterSave(households: Household[]): Promise<void> {
 export async function pullRemoteHouseholds(): Promise<RemoteHousehold[]> {
   if (!currentUserId) return [];
 
-  syncState = { ...syncState, status: "syncing", error: null };
+  syncState = { ...syncState, status: "syncing", error: null, errorKind: null };
   notify();
 
   try {
     const remote = await repo.fetchRemoteHouseholds(currentUserId);
-    syncState = { status: "idle", lastSyncedAt: new Date().toISOString(), error: null };
+    syncState = {
+      ...syncState,
+      status: "idle",
+      lastSyncedAt: new Date().toISOString(),
+      error: null,
+      errorKind: null,
+    };
     notify();
     return remote;
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Pull failed";
-    syncState = { ...syncState, status: "error", error: msg };
+    const kind = classifyError(err);
+    syncState = { ...syncState, status: "error", error: msg, errorKind: kind };
     notify();
     console.error("[sync-engine] pullRemoteHouseholds failed:", msg);
     return [];
@@ -100,21 +187,112 @@ export async function pullRemoteHouseholds(): Promise<RemoteHousehold[]> {
 export async function pushLocalHouseholds(households: Household[]): Promise<void> {
   if (!currentUserId) return;
 
-  syncState = { ...syncState, status: "syncing", error: null };
+  syncState = { ...syncState, status: "syncing", error: null, errorKind: null };
   notify();
 
   try {
     for (const h of households) {
       await repo.upsertRemoteHousehold(h, currentUserId);
     }
-    syncState = { status: "idle", lastSyncedAt: new Date().toISOString(), error: null };
+    syncState = {
+      ...syncState,
+      status: "idle",
+      lastSyncedAt: new Date().toISOString(),
+      error: null,
+      errorKind: null,
+      hasPendingChanges: false,
+    };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Push failed";
-    syncState = { ...syncState, status: "error", error: msg };
+    const kind = classifyError(err);
+    syncState = { ...syncState, status: "error", error: msg, errorKind: kind };
     console.error("[sync-engine] pushLocalHouseholds failed:", msg);
   }
 
   notify();
+}
+
+/**
+ * Compare local households with remote to detect conflicts.
+ * Returns per-household comparison results.
+ */
+export async function compareWithRemote(
+  localHouseholds: Household[],
+): Promise<{ remotes: RemoteHousehold[]; comparisons: HouseholdCompareResult[] }> {
+  const remotes = await pullRemoteHouseholds();
+  const comparisons: HouseholdCompareResult[] = [];
+
+  const remoteMap = new Map(remotes.map((r) => [r.id, r]));
+  const localMap = new Map(localHouseholds.map((l) => [l.id, l]));
+
+  for (const local of localHouseholds) {
+    const remote = remoteMap.get(local.id);
+    if (!remote) {
+      comparisons.push({ householdId: local.id, localNewer: true, remoteNewer: false, onlyLocal: true, onlyRemote: false });
+      continue;
+    }
+    const localTime = (local as Household & { updatedAt?: string }).updatedAt;
+    const remoteTime = remote.updated_at;
+    const localMs = localTime ? new Date(localTime).getTime() : 0;
+    const remoteMs = remoteTime ? new Date(remoteTime).getTime() : 0;
+    comparisons.push({
+      householdId: local.id,
+      localNewer: localMs > remoteMs,
+      remoteNewer: remoteMs > localMs,
+      onlyLocal: false,
+      onlyRemote: false,
+    });
+  }
+
+  for (const remote of remotes) {
+    if (!localMap.has(remote.id)) {
+      comparisons.push({ householdId: remote.id, localNewer: false, remoteNewer: true, onlyLocal: false, onlyRemote: true });
+    }
+  }
+
+  return { remotes, comparisons };
+}
+
+/**
+ * Manual sync trigger. Pushes local pending changes to remote.
+ * Returns comparison results so the UI can present conflict choices if needed.
+ */
+export async function manualSync(
+  localHouseholds: Household[],
+): Promise<{ comparisons: HouseholdCompareResult[]; remotes: RemoteHousehold[] }> {
+  if (!currentUserId) return { comparisons: [], remotes: [] };
+
+  const { remotes, comparisons } = await compareWithRemote(localHouseholds);
+
+  const hasRemoteNewer = comparisons.some((c) => c.remoteNewer && !c.onlyRemote);
+  if (hasRemoteNewer && syncState.hasPendingChanges) {
+    return { comparisons, remotes };
+  }
+
+  syncState = { ...syncState, status: "syncing", error: null, errorKind: null };
+  notify();
+
+  try {
+    for (const h of localHouseholds) {
+      await repo.upsertRemoteHousehold(h, currentUserId);
+    }
+    syncState = {
+      ...syncState,
+      status: "idle",
+      lastSyncedAt: new Date().toISOString(),
+      error: null,
+      errorKind: null,
+      hasPendingChanges: false,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Manual sync failed";
+    const kind = classifyError(err);
+    syncState = { ...syncState, status: "error", error: msg, errorKind: kind };
+    console.error("[sync-engine] manualSync failed:", msg);
+  }
+
+  notify();
+  return { comparisons, remotes };
 }
 
 /**
@@ -200,7 +378,12 @@ export function __testOnly_setRemoteRepo(mock: RemoteRepoAdapter): void {
 /** Reset for tests. */
 export function __testOnly_resetSyncEngine(): void {
   currentUserId = null;
-  syncState = { status: "idle", lastSyncedAt: null, error: null };
+  syncState = {
+    ...DEFAULT_SYNC_STATE,
+    online: checkOnline(),
+  };
   listeners = [];
   repo = defaultRemoteRepo;
+  loadHouseholdsRef = null;
+  onlineListenersBound = false;
 }

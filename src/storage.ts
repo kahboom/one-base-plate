@@ -512,13 +512,30 @@ export function runMigrationIfNeeded(): MigrationResult {
 }
 
 /**
- * Replace the local Dexie store with remote household data (used during first-login hydration).
- * This is the only public path that overwrites local data from a remote source.
+ * Replace the local Dexie store with remote household data (used during first-login hydration
+ * and explicit cloud-recovery flows).
  */
 export async function hydrateFromRemote(households: Household[]): Promise<void> {
   householdsCache = households;
   localStorage.removeItem(STORAGE_KEY);
   await dexieSetHouseholds(households);
+}
+
+/** Alias for hydrateFromRemote with a clearer intent name for the recovery UI. */
+export async function replaceLocalWithRemote(households: Household[]): Promise<void> {
+  return hydrateFromRemote(households);
+}
+
+/** Trigger a JSON download of current household data as a backup. */
+export function downloadHouseholdsBackup(householdIds?: string[]): void {
+  const json = exportHouseholdsJSON(householdIds);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `onebaseplate-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 /** @internal Tests that manipulate Dexie directly after init. */

@@ -1957,6 +1957,33 @@
         "F061"
       ],
       "acceptanceRefs": []
+    },
+    {
+      "id": "F063",
+      "phase": 2,
+      "priority": "P0",
+      "category": "platform",
+      "description": "Shared household access, invite flow, and safer sync/recovery UX",
+      "steps": [
+        "Add household_invites Supabase table with code, household_id, created_by, expires_at, max_uses, use_count. Provide SQL migration reference file (002_invites.sql) with RLS policies for owner management and authenticated lookup.",
+        "Create invite service module (createInvite, acceptInvite, revokeInvite, listInvites) using random 8-char alphanumeric codes with configurable expiry and usage limits.",
+        "Add remote repository functions: fetchHouseholdMembers (joins memberships with profiles), removeHouseholdMember, fetchRemoteHouseholdById.",
+        "Extend SyncState with hasPendingChanges dirty flag, online boolean, and errorKind classification (auth_expired, remote_unavailable, unknown).",
+        "Enhance sync engine: offline detection via navigator.onLine, auto-retry on reconnect, manualSync with remote comparison, compareWithRemote for conflict detection.",
+        "Fix session restore: call setCurrentUserId in AuthProvider when existing session is found on mount and on auth state changes, so sync works after page refresh.",
+        "Wire initOnlineListeners and setLoadHouseholdsRef in main.tsx at app startup.",
+        "Add /invite/:code route and AcceptInvite page: shows sign-in prompt if not authenticated, accepts invite and hydrates shared household locally on success.",
+        "Add HouseholdSharingPanel component on Settings: member list with roles, generate invite link, copy link, revoke invite, remove member (owner), leave household (editor).",
+        "Add SyncRecoveryPanel component on Settings: rich sync status chips (synced/syncing/pending/offline/error), last synced time, manual sync button, export backup, re-download from cloud with explicit confirm, conflict resolution dialog for remote-newer scenarios.",
+        "Update AuthUI sync badge to reflect enhanced sync states (pending, offline, error with kind).",
+        "Preserve all existing offline-first and signed-out local-only behavior unchanged.",
+        "Add 21 automated tests covering: sync state defaults, dirty tracking, error classification, offline dirty-state, sync retry after reconnect, manual sync, conflict detection, shared household membership, hydration, JSON export backup, signed-out regressions, household data integrity, and pull error handling."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F062"
+      ],
+      "acceptanceRefs": []
     }
   ],
   "milestones": [
@@ -2061,7 +2088,8 @@
       "id": "M7",
       "name": "Accounts and cross-browser sync",
       "includes": [
-        "F062"
+        "F062",
+        "F063"
       ]
     }
   ],
@@ -2134,6 +2162,7 @@
     "F060",
     "F061",
     "F062",
+    "F063",
     "F020",
     "F037",
     "F038",

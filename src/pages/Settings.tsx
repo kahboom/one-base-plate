@@ -17,11 +17,15 @@ import {
 } from "../storage";
 import { clearImportSession } from "../paprika-parser";
 import AuthUI from "../components/AuthUI";
+import SyncRecoveryPanel from "../components/SyncRecoveryPanel";
+import HouseholdSharingPanel from "../components/HouseholdSharingPanel";
+import { useAuth } from "../auth/useAuth";
 
 export default function Settings() {
   const { householdId } = useParams<{ householdId: string }>();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
   const [dataImportMessage, setDataImportMessage] = useState<"success" | null>(null);
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
   const {
@@ -99,6 +103,9 @@ export default function Settings() {
       <PageHeader title="Settings" />
 
       <AuthUI />
+
+      {user && <SyncRecoveryPanel />}
+      {user && householdId && <HouseholdSharingPanel householdId={householdId} />}
 
       <Card className="mb-6">
         <h2 className="mb-3 text-sm font-semibold text-text-primary">Appearance</h2>

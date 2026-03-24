@@ -17,6 +17,7 @@ import PaprikaImport from "./pages/PaprikaImport";
 import RecipeLibrary from "./pages/RecipeLibrary";
 import RecipeIdRedirect from "./pages/RecipeIdRedirect";
 import Settings from "./pages/Settings";
+import AcceptInvite from "./pages/AcceptInvite";
 import { loadHouseholds, loadDefaultHouseholdId } from "./storage";
 
 function DefaultRoute() {
@@ -36,6 +37,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<DefaultRoute />} />
+      <Route path="/invite/:code" element={<AcceptInvite />} />
       <Route path="/households" element={<HouseholdList />} />
       <Route path="/household/new" element={<HouseholdSetup />} />
       <Route path="/household/:householdId" element={<HouseholdLayout />}>

@@ -2,6 +2,7 @@ import { createContext, useEffect, useState, useCallback, type ReactNode } from 
 import type { User, Session } from "@supabase/supabase-js";
 import * as authService from "./auth-service";
 import { isSupabaseConfigured } from "../config";
+import { setCurrentUserId } from "../sync/sync-engine";
 
 export interface AuthState {
   user: User | null;
@@ -39,12 +40,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authService.getSession().then(({ session: s }) => {
       setSession(s);
       setUser(s?.user ?? null);
+      if (s?.user?.id) {
+        setCurrentUserId(s.user.id);
+      }
       setLoading(false);
     });
 
     const unsubscribe = authService.onAuthStateChange((_event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
+      setCurrentUserId(s?.user?.id ?? null);
     });
 
     return () => unsubscribe?.();
