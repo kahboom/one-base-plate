@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Card, Button, Chip, ConfirmDialog } from "./ui";
 import { useAuth } from "../auth/useAuth";
 import { getCurrentUserId } from "../sync/sync-engine";
-import { fetchHouseholdMembers, removeHouseholdMember } from "../sync/remote-repository";
+import {
+  fetchHouseholdMembers,
+  removeHouseholdMember,
+  resolveRemoteHouseholdPk,
+} from "../sync/remote-repository";
 import { createInvite, listInvites, revokeInvite } from "../sync/invite-service";
 import type { HouseholdMember, HouseholdInvite } from "../sync/types";
 
@@ -25,14 +29,29 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
 
   const [removingMember, setRemovingMember] = useState<HouseholdMember | null>(null);
   const [leavingHousehold, setLeavingHousehold] = useState(false);
+  const [remoteHouseholdPk, setRemoteHouseholdPk] = useState<string | null>(null);
 
   const isOwner = members.some((m) => m.userId === currentUserId && m.role === "owner");
 
   const refresh = useCallback(async () => {
+    setRemoteHouseholdPk(null);
     try {
+      const uid = getCurrentUserId();
+      if (!uid) return;
+
+      const pk = await resolveRemoteHouseholdPk(householdId, uid);
+      setRemoteHouseholdPk(pk);
+
+      if (!pk) {
+        setMembers([]);
+        setInvites([]);
+        setError(null);
+        return;
+      }
+
       const [memberData, inviteData] = await Promise.all([
-        fetchHouseholdMembers(householdId),
-        listInvites(householdId).catch(() => [] as HouseholdInvite[]),
+        fetchHouseholdMembers(pk),
+        listInvites(pk).catch(() => [] as HouseholdInvite[]),
       ]);
       setMembers(memberData);
       setInvites(inviteData);
@@ -50,9 +69,10 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
   }, [user, currentUserId, refresh]);
 
   async function handleCreateInvite() {
+    if (!remoteHouseholdPk) return;
     setCreatingInvite(true);
     try {
-      const result = await createInvite(householdId);
+      const result = await createInvite(remoteHouseholdPk);
       setInvites((prev) => [result.invite, ...prev]);
       await copyToClipboard(result.link, result.invite.code);
     } catch (err) {
@@ -83,9 +103,9 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
   }
 
   async function handleRemoveMember() {
-    if (!removingMember) return;
+    if (!removingMember || !remoteHouseholdPk) return;
     try {
-      await removeHouseholdMember(householdId, removingMember.userId);
+      await removeHouseholdMember(remoteHouseholdPk, removingMember.userId);
       setMembers((prev) => prev.filter((m) => m.userId !== removingMember.userId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove member");
@@ -95,9 +115,9 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
   }
 
   async function handleLeaveHousehold() {
-    if (!currentUserId) return;
+    if (!currentUserId || !remoteHouseholdPk) return;
     try {
-      await removeHouseholdMember(householdId, currentUserId);
+      await removeHouseholdMember(remoteHouseholdPk, currentUserId);
       navigate("/households");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to leave household");
@@ -124,6 +144,14 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
 
         {error && (
           <p className="mb-3 text-xs text-danger" data-testid="sharing-error">{error}</p>
+        )}
+
+        {!error && remoteHouseholdPk === null && (
+          <p className="mb-4 text-xs text-text-muted" data-testid="sharing-not-cloud-linked">
+            Cloud sharing isn’t available for this household: it isn’t linked to a synced household on your
+            account (for example, seed ids like H001 aren’t cloud UUIDs). Create a household while signed
+            in or use Sync so your data uses a cloud id, then open Settings again from that household.
+          </p>
         )}
 
         <div className="mb-4">
@@ -220,7 +248,7 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
           </div>
         )}
 
-        {!isOwner && (
+        {!isOwner && remoteHouseholdPk && (
           <div className="mt-4 pt-4 border-t border-border-light">
             <Button
               variant="danger"

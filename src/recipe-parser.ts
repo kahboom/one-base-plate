@@ -742,6 +742,15 @@ export function parseIngredientLine(
     namePart = namePart.replace(/^\.\s+/, "").trim();
 
     let unitRaw = pq.unitRaw;
+
+    if (unitRaw && /^[-–—]\s*\d/.test(namePart)) {
+      const uEsc = unitRaw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const rangeCont = namePart.match(new RegExp(`^[-–—]\\s*\\d+(?:\\.\\d+)?\\s*${uEsc}\\b\\s*`, "i"));
+      if (rangeCont) {
+        namePart = namePart.slice(rangeCont[0]!.length).trim();
+      }
+    }
+
     const dimRe = /^-?\s*(?:inch(?:es)?|cm|centimete?rs?|mm|millimete?rs?)\b\s*/i;
     if (!unitRaw && dimRe.test(namePart)) {
       const dimMatch = namePart.match(dimRe)!;

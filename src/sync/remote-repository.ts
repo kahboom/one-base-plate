@@ -2,6 +2,34 @@ import type { Household } from "../types";
 import type { RemoteHousehold, HouseholdMember } from "./types";
 import { getSupabaseClient } from "../supabase/client";
 
+/** `households.id` / `household_memberships.household_id` are UUIDs; local app ids may be strings like `H001`. */
+const REMOTE_HOUSEHOLD_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isRemoteHouseholdRowId(id: string): boolean {
+  return REMOTE_HOUSEHOLD_ID_RE.test(id);
+}
+
+/** Map a route/local household id to the Supabase `households.id` row PK. */
+export function resolveRemoteHouseholdPkFromList(
+  routeOrLocalHouseholdId: string,
+  remotes: RemoteHousehold[],
+): string | null {
+  if (isRemoteHouseholdRowId(routeOrLocalHouseholdId)) return routeOrLocalHouseholdId;
+  for (const r of remotes) {
+    if (r.data?.id === routeOrLocalHouseholdId) return r.id;
+  }
+  return null;
+}
+
+export async function resolveRemoteHouseholdPk(
+  routeOrLocalHouseholdId: string,
+  userId: string,
+): Promise<string | null> {
+  if (isRemoteHouseholdRowId(routeOrLocalHouseholdId)) return routeOrLocalHouseholdId;
+  const remotes = await fetchRemoteHouseholds(userId);
+  return resolveRemoteHouseholdPkFromList(routeOrLocalHouseholdId, remotes);
+}
+
 function requireClient() {
   const client = getSupabaseClient();
   if (!client) throw new Error("Supabase client not configured");
