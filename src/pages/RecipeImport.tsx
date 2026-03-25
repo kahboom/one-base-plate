@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { BaseMeal, Ingredient, MealComponent, IngredientCategory, Recipe } from "../types";
-import { loadHousehold, saveHousehold, normalizeIngredientName, normalizeHousehold, toSentenceCase } from "../storage";
+import { normalizeIngredientName } from "../ingredient-migration";
+import { loadHousehold, saveHousehold, normalizeHousehold, toSentenceCase } from "../storage";
 import { catalogIngredientToHousehold } from "../catalog";
 import { parseRecipeText, guessComponentRole } from "../recipe-parser";
 import type { ParsedIngredientLine } from "../recipe-parser";
