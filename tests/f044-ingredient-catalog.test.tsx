@@ -77,8 +77,8 @@ describe("F044: Master ingredient catalog", () => {
   it("searchCatalog finds matching items case-insensitively", () => {
     const results = searchCatalog("chick");
     expect(results.length).toBeGreaterThanOrEqual(2);
-    expect(results.some((r) => r.name === "Chicken breast")).toBe(true);
-    expect(results.some((r) => r.name === "Chickpeas")).toBe(true);
+    expect(results.some((r) => r.name === "chicken breast")).toBe(true);
+    expect(results.some((r) => r.name === "chickpeas")).toBe(true);
   });
 
   it("searchCatalog returns empty for blank query", () => {
@@ -188,7 +188,7 @@ describe("F044: Catalog ingredients work with existing flows", () => {
     // Auto-save persists catalog items on load; verify
     const household = loadHousehold("h-catalog")!;
     expect(household.ingredients.length).toBe(CATALOG_SIZE);
-    const eggs = household.ingredients.find((i) => i.name === "Eggs");
+    const eggs = household.ingredients.find((i) => i.name === "eggs");
     expect(eggs).toBeDefined();
     expect(eggs!.category).toBe("protein");
     expect(eggs!.tags).toContain("quick");
@@ -206,7 +206,7 @@ describe("F044: Catalog ingredients work with existing flows", () => {
     await user.click(rows[0]!);
 
     const modal = screen.getByTestId("ingredient-modal");
-    expect(within(modal).getByTestId("modal-ingredient-name")).toHaveValue("Pasta");
+    expect(within(modal).getByTestId("modal-ingredient-name")).toHaveValue("pasta");
 
     // Edit it
     await user.clear(within(modal).getByTestId("modal-ingredient-name"));
@@ -217,7 +217,7 @@ describe("F044: Catalog ingredients work with existing flows", () => {
   });
 
   it("catalog ingredient has valid structure for planner/grocery flows", () => {
-    const catalogItem = MASTER_CATALOG.find((i) => i.name === "Chicken breast")!;
+    const catalogItem = MASTER_CATALOG.find((i) => i.name === "chicken breast")!;
     const ing = catalogIngredientToHousehold(catalogItem);
 
     expect(ing.id).toBeTruthy();
@@ -245,5 +245,26 @@ describe("F044: Catalog ingredients work with existing flows", () => {
     const rows = screen.getAllByTestId(/^ingredient-row-/);
     const catalogFruits = MASTER_CATALOG.filter((i) => i.category === "fruit").length;
     expect(rows).toHaveLength(catalogFruits);
+  });
+
+  it("deleting a catalog ingredient suppresses re-population on revisit", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    const view = renderPage();
+
+    await user.type(screen.getByTestId("ingredient-search"), "wraps / tortillas");
+    await user.click(screen.getByTestId(/^ingredient-row-/));
+    const modal = screen.getByTestId("ingredient-modal");
+    await user.click(within(modal).getByTestId("delete-ingredient-btn"));
+    const deleteConfirm = screen.getByRole("dialog", { name: "Delete ingredient" });
+    await user.click(within(deleteConfirm).getByRole("button", { name: "Delete" }));
+
+    const saved = loadHousehold("h-catalog")!;
+    expect(saved.suppressedCatalogIds).toContain("cat-wraps");
+
+    view.unmount();
+    renderPage();
+    await user.type(screen.getByTestId("ingredient-search"), "wraps / tortillas");
+    expect(screen.queryByText("Wraps / tortillas")).not.toBeInTheDocument();
   });
 });

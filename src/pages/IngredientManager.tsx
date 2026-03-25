@@ -61,10 +61,22 @@ const CATEGORY_CHIP_VARIANT: Record<IngredientCategory, "success" | "warning" | 
   pantry: "neutral",
 };
 
-function populateFromCatalog(existing: Ingredient[]): Ingredient[] {
+function populateFromCatalog(
+  existing: Ingredient[],
+  suppressedCatalogIds: string[] = [],
+): Ingredient[] {
   const existingNames = new Set(existing.map((i) => i.name.toLowerCase()));
+  const existingCatalogIds = new Set(
+    existing.map((i) => i.catalogId).filter((id): id is string => !!id),
+  );
+  const suppressed = new Set(suppressedCatalogIds);
   const newFromCatalog = MASTER_CATALOG
-    .filter((ci) => !existingNames.has(ci.name.toLowerCase()))
+    .filter(
+      (ci) =>
+        !existingNames.has(ci.name.toLowerCase()) &&
+        !existingCatalogIds.has(ci.id) &&
+        !suppressed.has(ci.id),
+    )
     .map((ci) => catalogIngredientToHousehold(ci));
   return [...existing, ...newFromCatalog];
 }
@@ -641,7 +653,9 @@ function IngredientTableRow({
         selected ? "border-brand bg-brand/5" : "border-border-light"
       }`}
       data-testid={`ingredient-row-${ingredient.id}`}
-      aria-label={`Edit ${ingredient.name || "unnamed ingredient"}`}
+      aria-label={`Edit ${
+        ingredient.name.trim() ? toSentenceCase(ingredient.name) : "unnamed ingredient"
+      }`}
       onClick={onClick}
     >
       {/* Checkbox */}
@@ -654,7 +668,9 @@ function IngredientTableRow({
           className="h-5 w-5 accent-brand cursor-pointer"
           checked={selected}
           onChange={(e) => { e.stopPropagation(); onToggleSelect(); }}
-          aria-label={`Select ${ingredient.name || "unnamed ingredient"}`}
+          aria-label={`Select ${
+            ingredient.name.trim() ? toSentenceCase(ingredient.name) : "unnamed ingredient"
+          }`}
           data-testid={`ingredient-select-${ingredient.id}`}
         />
       </label>
@@ -840,7 +856,7 @@ export default function IngredientManager() {
     if (!householdId) return;
     const household = loadHousehold(householdId);
     if (household) {
-      setIngredients(populateFromCatalog(household.ingredients));
+      setIngredients(populateFromCatalog(household.ingredients, household.suppressedCatalogIds));
       setHouseholdName(household.name);
       setHouseholdRef(household);
     }
@@ -955,6 +971,16 @@ export default function IngredientManager() {
     const ing = ingredients.find((i) => i.id === ingredientId);
     const displayName = ing?.name.trim() ? toSentenceCase(ing.name) : "this ingredient";
     requestConfirm(displayName, () => {
+      if (householdId && ing?.catalogId) {
+        const household = loadHousehold(householdId);
+        if (household) {
+          household.suppressedCatalogIds = [
+            ...new Set([...(household.suppressedCatalogIds ?? []), ing.catalogId]),
+          ];
+          saveHousehold(household);
+          setHouseholdRef(household);
+        }
+      }
       setIngredients((prev) => prev.filter((item) => item.id !== ingredientId));
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -982,6 +1008,11 @@ export default function IngredientManager() {
       household.ingredients = household.ingredients
         .map((i) => (i.id === survivor.id ? merged : i))
         .filter((i) => i.id !== absorbed.id);
+      if (absorbed.catalogId) {
+        household.suppressedCatalogIds = [
+          ...new Set([...(household.suppressedCatalogIds ?? []), absorbed.catalogId]),
+        ];
+      }
       saveHousehold(household);
 
       setIngredients(household.ingredients);
@@ -1046,6 +1077,22 @@ export default function IngredientManager() {
   const handleBulkDeleteConfirm = useCallback(
     (idsToDelete: string[]) => {
       const deleteSet = new Set(idsToDelete);
+      if (householdId) {
+        const household = loadHousehold(householdId);
+        if (household) {
+          const absorbedCatalogIds = ingredients
+            .filter((i) => deleteSet.has(i.id))
+            .map((i) => i.catalogId)
+            .filter((id): id is string => !!id);
+          if (absorbedCatalogIds.length > 0) {
+            household.suppressedCatalogIds = [
+              ...new Set([...(household.suppressedCatalogIds ?? []), ...absorbedCatalogIds]),
+            ];
+            saveHousehold(household);
+            setHouseholdRef(household);
+          }
+        }
+      }
       setIngredients((prev) => prev.filter((i) => !deleteSet.has(i.id)));
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -1054,7 +1101,7 @@ export default function IngredientManager() {
       });
       setBulkDeleteOpen(false);
     },
-    [],
+    [householdId, ingredients],
   );
 
   if (!loaded) return null;
@@ -1230,6 +1277,7 @@ export default function IngredientManager() {
       {/* Edit modal */}
       {editingIngredient && (
         <IngredientModal
+          key={editingIngredient.id}
           ingredient={editingIngredient}
           isNewIngredient={draftNewIngredient !== null}
           allIngredients={ingredients}

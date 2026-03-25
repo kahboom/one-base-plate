@@ -9,6 +9,37 @@ export function isRemoteHouseholdRowId(id: string): boolean {
   return REMOTE_HOUSEHOLD_ID_RE.test(id);
 }
 
+/** Supabase row UUID used for this household (local id may differ, e.g. H001). */
+export function remoteRowIdForHousehold(household: Household): string | null {
+  if (isRemoteHouseholdRowId(household.id)) return household.id;
+  if (household.cloudHouseholdId && isRemoteHouseholdRowId(household.cloudHouseholdId)) {
+    return household.cloudHouseholdId;
+  }
+  return null;
+}
+
+/** When hydrating from `households` rows, attach `cloudHouseholdId` if the row PK ≠ embedded `data.id`. */
+export function mergeCloudHouseholdIdFromRemote(r: RemoteHousehold): Household {
+  const d = r.data;
+  if (d.id === r.id) return d;
+  return { ...d, cloudHouseholdId: r.id };
+}
+
+export function findRemoteForLocal(
+  local: Household,
+  remotes: RemoteHousehold[],
+): RemoteHousehold | undefined {
+  return remotes.find((r) => localHouseholdMatchesRemote(local, r));
+}
+
+export function localHouseholdMatchesRemote(local: Household, remote: RemoteHousehold): boolean {
+  return (
+    local.id === remote.id ||
+    (local.cloudHouseholdId !== undefined && local.cloudHouseholdId === remote.id) ||
+    local.id === remote.data?.id
+  );
+}
+
 /** Map a route/local household id to the Supabase `households.id` row PK. */
 export function resolveRemoteHouseholdPkFromList(
   routeOrLocalHouseholdId: string,
@@ -24,11 +55,32 @@ export function resolveRemoteHouseholdPkFromList(
 export async function resolveRemoteHouseholdPk(
   routeOrLocalHouseholdId: string,
   userId: string,
+  cloudHouseholdIdHint?: string | null,
 ): Promise<string | null> {
+  if (cloudHouseholdIdHint && isRemoteHouseholdRowId(cloudHouseholdIdHint)) return cloudHouseholdIdHint;
   if (isRemoteHouseholdRowId(routeOrLocalHouseholdId)) return routeOrLocalHouseholdId;
   const remotes = await fetchRemoteHouseholds(userId);
   return resolveRemoteHouseholdPkFromList(routeOrLocalHouseholdId, remotes);
 }
+
+/**
+ * Choose `households.id` for upsert: reuse local UUID, stored cloud id, or allocate a new UUID for seed-style ids.
+ */
+export function planRemoteHouseholdRowId(household: Household): { rowId: string; isNewCloudRow: boolean } {
+  if (isRemoteHouseholdRowId(household.id)) {
+    return { rowId: household.id, isNewCloudRow: false };
+  }
+  if (household.cloudHouseholdId && isRemoteHouseholdRowId(household.cloudHouseholdId)) {
+    return { rowId: household.cloudHouseholdId, isNewCloudRow: false };
+  }
+  return { rowId: crypto.randomUUID(), isNewCloudRow: true };
+}
+
+export type UpsertRemoteHouseholdResult = {
+  remote: RemoteHousehold;
+  /** Present after first cloud row is created for a non-UUID local id — persist on the local `Household`. */
+  newCloudHouseholdId?: string;
+};
 
 function requireClient() {
   const client = getSupabaseClient();
@@ -74,14 +126,11 @@ export async function fetchRemoteHouseholdById(householdId: string): Promise<Rem
 export async function upsertRemoteHousehold(
   household: Household,
   userId: string,
-): Promise<RemoteHousehold> {
+): Promise<UpsertRemoteHouseholdResult> {
   const client = requireClient();
+  const { rowId, isNewCloudRow } = planRemoteHouseholdRowId(household);
 
-  const { data: existing } = await client
-    .from("households")
-    .select("id")
-    .eq("id", household.id)
-    .maybeSingle();
+  const { data: existing } = await client.from("households").select("id").eq("id", rowId).maybeSingle();
 
   const now = new Date().toISOString();
 
@@ -93,18 +142,18 @@ export async function upsertRemoteHousehold(
         updated_at: now,
         version: 1,
       })
-      .eq("id", household.id)
+      .eq("id", rowId)
       .select()
       .single();
 
     if (error) throw new Error(`Failed to update household: ${error.message}`);
-    return data as RemoteHousehold;
+    return { remote: data as RemoteHousehold };
   }
 
   const { data, error } = await client
     .from("households")
     .insert({
-      id: household.id,
+      id: rowId,
       data: household,
       owner_id: userId,
       updated_at: now,
@@ -117,12 +166,13 @@ export async function upsertRemoteHousehold(
 
   await client
     .from("household_memberships")
-    .upsert(
-      { household_id: household.id, user_id: userId, role: "owner" },
-      { onConflict: "household_id,user_id" },
-    );
+    .upsert({ household_id: rowId, user_id: userId, role: "owner" }, { onConflict: "household_id,user_id" });
 
-  return data as RemoteHousehold;
+  const remote = data as RemoteHousehold;
+  return {
+    remote,
+    newCloudHouseholdId: isNewCloudRow ? rowId : undefined,
+  };
 }
 
 export async function deleteRemoteHousehold(householdId: string): Promise<void> {

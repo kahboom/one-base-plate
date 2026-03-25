@@ -63,7 +63,7 @@ describe("F045: Catalog linkage stored on ingredients", () => {
 
     // Auto-save persists; verify
     const household = loadHousehold("h-f045")!;
-    const chicken = household.ingredients.find((i) => i.name === "Chicken breast");
+    const chicken = household.ingredients.find((i) => i.name === "chicken breast");
     expect(chicken).toBeDefined();
     expect(chicken!.catalogId).toBe("cat-chicken-breast");
     expect(chicken!.source).toBe("catalog");
@@ -206,7 +206,7 @@ describe.skip("F045: Merge or cancel duplicate additions", () => {
 
 describe.skip("F045: Household-specific edits do not mutate catalog", () => {
   it("editing a catalog-linked ingredient does not change the master catalog", async () => {
-    const catalogPastaBefore = MASTER_CATALOG.find((i) => i.name === "Pasta")!;
+    const catalogPastaBefore = MASTER_CATALOG.find((i) => i.name === "pasta")!;
     const originalTags = [...catalogPastaBefore.tags];
 
     seedHousehold();
@@ -225,13 +225,13 @@ describe.skip("F045: Household-specific edits do not mutate catalog", () => {
     await user.click(within(modal).getByText("Done"));
 
     // Auto-save persists; master catalog unchanged
-    const catalogPastaAfter = MASTER_CATALOG.find((i) => i.name === "Pasta")!;
+    const catalogPastaAfter = MASTER_CATALOG.find((i) => i.name === "pasta")!;
     expect(catalogPastaAfter.tags).toEqual(originalTags);
     expect(catalogPastaAfter.tags).not.toContain("my-custom-tag");
 
     // Household ingredient has the custom tag
     const household = loadHousehold("h-f045")!;
-    const pasta = household.ingredients.find((i) => i.name === "Pasta");
+    const pasta = household.ingredients.find((i) => i.name === "pasta");
     expect(pasta!.tags).toContain("my-custom-tag");
   });
 
@@ -251,11 +251,11 @@ describe.skip("F045: Household-specific edits do not mutate catalog", () => {
     await user.click(within(modal).getByText("Done"));
 
     // Auto-save persists
-    const catalogPasta = MASTER_CATALOG.find((i) => i.name === "Pasta")!;
+    const catalogPasta = MASTER_CATALOG.find((i) => i.name === "pasta")!;
     expect(catalogPasta.freezerFriendly).toBe(false);
 
     const household = loadHousehold("h-f045")!;
-    const pasta = household.ingredients.find((i) => i.name === "Pasta");
+    const pasta = household.ingredients.find((i) => i.name === "pasta");
     expect(pasta!.freezerFriendly).toBe(true);
   });
 });

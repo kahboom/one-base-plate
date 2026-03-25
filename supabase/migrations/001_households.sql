@@ -66,6 +66,11 @@ create policy "Users can read their households"
     )
   );
 
+-- Owners can read their row before any membership exists (PostgREST INSERT … RETURNING checks SELECT RLS).
+create policy "Owners can read households they own"
+  on public.households for select
+  using (owner_id = auth.uid());
+
 create policy "Users can insert households they own"
   on public.households for insert
   with check (owner_id = auth.uid());
@@ -79,6 +84,11 @@ create policy "Users can update their households"
         and household_memberships.user_id = auth.uid()
     )
   );
+
+-- Same chicken-and-egg as SELECT: first sync may UPDATE before membership is visible under other policies.
+create policy "Owners can update households they own"
+  on public.households for update
+  using (owner_id = auth.uid());
 
 create policy "Users can delete households they own"
   on public.households for delete

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Button, Chip, ConfirmDialog } from "./ui";
 import { useAuth } from "../auth/useAuth";
+import { loadHousehold } from "../storage";
 import { getCurrentUserId } from "../sync/sync-engine";
 import {
   fetchHouseholdMembers,
@@ -39,7 +40,7 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
       const uid = getCurrentUserId();
       if (!uid) return;
 
-      const pk = await resolveRemoteHouseholdPk(householdId, uid);
+      const pk = await resolveRemoteHouseholdPk(householdId, uid, loadHousehold(householdId)?.cloudHouseholdId);
       setRemoteHouseholdPk(pk);
 
       if (!pk) {
@@ -148,9 +149,9 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
 
         {!error && remoteHouseholdPk === null && (
           <p className="mb-4 text-xs text-text-muted" data-testid="sharing-not-cloud-linked">
-            Cloud sharing isn’t available for this household: it isn’t linked to a synced household on your
-            account (for example, seed ids like H001 aren’t cloud UUIDs). Create a household while signed
-            in or use Sync so your data uses a cloud id, then open Settings again from that household.
+            This household isn’t on your cloud account yet. Use <strong>Sync now</strong> in the sync section
+            above while signed in; after the first successful sync, members and invites load here (your local
+            id such as H001 stays the same in the URL).
           </p>
         )}
 

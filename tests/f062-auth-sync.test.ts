@@ -54,9 +54,9 @@ function createMockRepo(): RemoteRepoAdapter & {
 } {
   return {
     fetchRemoteHouseholds: vi.fn().mockResolvedValue([]),
-    upsertRemoteHousehold: vi.fn().mockImplementation(async (h: Household) =>
-      makeRemoteHousehold(h),
-    ),
+    upsertRemoteHousehold: vi.fn().mockImplementation(async (h: Household) => ({
+      remote: makeRemoteHousehold(h),
+    })),
     deleteRemoteHousehold: vi.fn().mockResolvedValue(undefined),
   };
 }
@@ -133,11 +133,12 @@ describe("F062: Authenticated save triggers remote sync", () => {
     await initStorage();
     setCurrentUserId("user-1");
 
-    saveHousehold(makeHousehold({ id: "del-sync" }));
-    deleteHousehold("del-sync");
+    const delId = crypto.randomUUID();
+    saveHousehold(makeHousehold({ id: delId }));
+    deleteHousehold(delId);
 
     await vi.waitFor(() => {
-      expect(mockRepo.deleteRemoteHousehold).toHaveBeenCalledWith("del-sync");
+      expect(mockRepo.deleteRemoteHousehold).toHaveBeenCalledWith(delId);
     });
   });
 

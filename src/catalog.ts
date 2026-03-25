@@ -20,8 +20,15 @@ function c(
   babySafeWithAdaptation = false,
   aliases?: string[],
 ): CatalogIngredient {
-  const item: CatalogIngredient = { id, name, category, tags, freezerFriendly, babySafeWithAdaptation };
-  if (aliases) item.aliases = aliases;
+  const item: CatalogIngredient = {
+    id,
+    name: name.toLowerCase(),
+    category,
+    tags,
+    freezerFriendly,
+    babySafeWithAdaptation,
+  };
+  if (aliases) item.aliases = aliases.map((a) => a.toLowerCase());
   return item;
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { BaseMeal, Ingredient, MealComponent, IngredientCategory, Recipe } from "../types";
-import { loadHousehold, saveHousehold, normalizeIngredientName, normalizeHousehold } from "../storage";
+import { loadHousehold, saveHousehold, normalizeIngredientName, normalizeHousehold, toSentenceCase } from "../storage";
 import { catalogIngredientToHousehold } from "../catalog";
 import { parseRecipeText, guessComponentRole } from "../recipe-parser";
 import type { ParsedIngredientLine } from "../recipe-parser";
@@ -231,7 +231,7 @@ export default function RecipeImport() {
                     )}
                     {line.matchedCatalog && !line.matchedIngredient && (
                       <Chip variant="info" className="mt-1 text-[10px]">
-                        Catalog: {line.matchedCatalog.name}
+                        Catalog: {toSentenceCase(line.matchedCatalog.name)}
                       </Chip>
                     )}
                   </div>

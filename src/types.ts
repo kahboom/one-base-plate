@@ -244,6 +244,11 @@ export interface WeeklyAnchor {
 
 export interface Household {
   id: string;
+  /**
+   * Supabase `households.id` when `id` is not a UUID (e.g. seed `H001`).
+   * Set on first successful cloud sync; keep local `id` for URLs and references.
+   */
+  cloudHouseholdId?: string;
   name: string;
   members: HouseholdMember[];
   ingredients: Ingredient[];
@@ -251,6 +256,8 @@ export interface Household {
   recipes?: Recipe[];
   baseMeals: BaseMeal[];
   weeklyPlans: WeeklyPlan[];
+  /** Catalog item ids intentionally removed/merged by user; prevents auto re-population. */
+  suppressedCatalogIds?: string[];
   pinnedMealIds?: string[];
   mealOutcomes?: MealOutcome[];
   weeklyAnchors?: WeeklyAnchor[];

@@ -222,7 +222,7 @@ describe("F043: Modal editing", () => {
 
     const modal = screen.getByTestId("ingredient-modal");
     expect(modal).toBeInTheDocument();
-    expect(within(modal).getByTestId("modal-ingredient-name")).toHaveValue("Chicken");
+    expect(within(modal).getByTestId("modal-ingredient-name")).toHaveValue("chicken");
     expect(within(modal).getByTestId("modal-ingredient-category")).toHaveValue("protein");
     expect(within(modal).getByLabelText("Freezer friendly")).toBeChecked();
     expect(within(modal).getByTestId("tag-quick")).toBeInTheDocument();

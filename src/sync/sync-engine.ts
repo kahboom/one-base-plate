@@ -22,6 +22,24 @@ export interface RemoteRepoAdapter {
   deleteRemoteHousehold: typeof defaultRemoteRepo.deleteRemoteHousehold;
 }
 
+/** Persist `cloudHouseholdId` after first Supabase row is created for seed-style local ids (avoid sync↔storage import cycle). */
+async function persistNewCloudHouseholdIds(
+  updates: Array<{ localId: string; cloudHouseholdId: string }>,
+): Promise<void> {
+  if (updates.length === 0) return;
+  const { loadHouseholds, saveHouseholdsLocalOnly } = await import("../storage");
+  const list = loadHouseholds();
+  let changed = false;
+  for (const { localId, cloudHouseholdId } of updates) {
+    const idx = list.findIndex((h) => h.id === localId);
+    if (idx >= 0) {
+      list[idx] = { ...list[idx]!, cloudHouseholdId };
+      changed = true;
+    }
+  }
+  if (changed) saveHouseholdsLocalOnly(list);
+}
+
 let repo: RemoteRepoAdapter = defaultRemoteRepo;
 let currentUserId: string | null = null;
 const DEFAULT_SYNC_STATE: SyncState = {
@@ -139,9 +157,12 @@ export async function syncAfterSave(households: Household[]): Promise<void> {
   notify();
 
   try {
+    const cloudPatches: Array<{ localId: string; cloudHouseholdId: string }> = [];
     for (const h of households) {
-      await repo.upsertRemoteHousehold(h, currentUserId);
+      const { newCloudHouseholdId } = await repo.upsertRemoteHousehold(h, currentUserId);
+      if (newCloudHouseholdId) cloudPatches.push({ localId: h.id, cloudHouseholdId: newCloudHouseholdId });
     }
+    await persistNewCloudHouseholdIds(cloudPatches);
     syncState = {
       ...syncState,
       status: "idle",
@@ -200,9 +221,12 @@ export async function pushLocalHouseholds(households: Household[]): Promise<void
   notify();
 
   try {
+    const cloudPatches: Array<{ localId: string; cloudHouseholdId: string }> = [];
     for (const h of households) {
-      await repo.upsertRemoteHousehold(h, currentUserId);
+      const { newCloudHouseholdId } = await repo.upsertRemoteHousehold(h, currentUserId);
+      if (newCloudHouseholdId) cloudPatches.push({ localId: h.id, cloudHouseholdId: newCloudHouseholdId });
     }
+    await persistNewCloudHouseholdIds(cloudPatches);
     syncState = {
       ...syncState,
       status: "idle",
@@ -231,11 +255,8 @@ export async function compareWithRemote(
   const remotes = await pullRemoteHouseholds();
   const comparisons: HouseholdCompareResult[] = [];
 
-  const remoteMap = new Map(remotes.map((r) => [r.id, r]));
-  const localMap = new Map(localHouseholds.map((l) => [l.id, l]));
-
   for (const local of localHouseholds) {
-    const remote = remoteMap.get(local.id);
+    const remote = defaultRemoteRepo.findRemoteForLocal(local, remotes);
     if (!remote) {
       comparisons.push({ householdId: local.id, localNewer: true, remoteNewer: false, onlyLocal: true, onlyRemote: false });
       continue;
@@ -254,7 +275,7 @@ export async function compareWithRemote(
   }
 
   for (const remote of remotes) {
-    if (!localMap.has(remote.id)) {
+    if (!localHouseholds.some((l) => defaultRemoteRepo.localHouseholdMatchesRemote(l, remote))) {
       comparisons.push({ householdId: remote.id, localNewer: false, remoteNewer: true, onlyLocal: false, onlyRemote: true });
     }
   }
@@ -282,9 +303,12 @@ export async function manualSync(
   notify();
 
   try {
+    const cloudPatches: Array<{ localId: string; cloudHouseholdId: string }> = [];
     for (const h of localHouseholds) {
-      await repo.upsertRemoteHousehold(h, currentUserId);
+      const { newCloudHouseholdId } = await repo.upsertRemoteHousehold(h, currentUserId);
+      if (newCloudHouseholdId) cloudPatches.push({ localId: h.id, cloudHouseholdId: newCloudHouseholdId });
     }
+    await persistNewCloudHouseholdIds(cloudPatches);
     syncState = {
       ...syncState,
       status: "idle",
@@ -342,7 +366,7 @@ export async function resolveFirstLogin(
   }
 
   if (!hasLocal && hasRemote) {
-    return remoteHouseholds.map((r) => r.data);
+    return remoteHouseholds.map((r) => defaultRemoteRepo.mergeCloudHouseholdIdFromRemote(r));
   }
 
   // Both sides have data — resolve by choice
@@ -354,15 +378,15 @@ export async function resolveFirstLogin(
   }
 
   if (effectiveChoice === "keep-remote") {
-    return remoteHouseholds.map((r) => r.data);
+    return remoteHouseholds.map((r) => defaultRemoteRepo.mergeCloudHouseholdIdFromRemote(r));
   }
 
   // merge: combine by household id; local wins on conflict
   const merged = [...localHouseholds];
   for (const remote of remoteHouseholds) {
-    const localMatch = merged.find((l) => l.id === remote.data.id);
+    const localMatch = merged.find((l) => defaultRemoteRepo.localHouseholdMatchesRemote(l, remote));
     if (!localMatch) {
-      merged.push(remote.data);
+      merged.push(defaultRemoteRepo.mergeCloudHouseholdIdFromRemote(remote));
     }
   }
   await pushLocalHouseholds(merged);

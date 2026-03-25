@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
+  findRemoteForLocal,
   isRemoteHouseholdRowId,
+  mergeCloudHouseholdIdFromRemote,
+  planRemoteHouseholdRowId,
   resolveRemoteHouseholdPkFromList,
 } from "../src/sync/remote-repository";
 import type { RemoteHousehold } from "../src/sync/types";
@@ -35,5 +38,43 @@ describe("remote household id resolution", () => {
 
   it("returns null when local id is unknown", () => {
     expect(resolveRemoteHouseholdPkFromList("H999", [rh("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "H001")])).toBeNull();
+  });
+
+  it("planRemoteHouseholdRowId allocates a UUID for seed-style ids", () => {
+    const h = { id: "H001", name: "x", members: [], ingredients: [], baseMeals: [], weeklyPlans: [] } as Household;
+    const a = planRemoteHouseholdRowId(h);
+    const b = planRemoteHouseholdRowId(h);
+    expect(a.isNewCloudRow).toBe(true);
+    expect(b.isNewCloudRow).toBe(true);
+    expect(isRemoteHouseholdRowId(a.rowId)).toBe(true);
+    expect(a.rowId).not.toBe(b.rowId);
+  });
+
+  it("planRemoteHouseholdRowId reuses cloudHouseholdId when set", () => {
+    const cloud = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    const h = {
+      id: "H001",
+      cloudHouseholdId: cloud,
+      name: "x",
+      members: [],
+      ingredients: [],
+      baseMeals: [],
+      weeklyPlans: [],
+    } as Household;
+    const p = planRemoteHouseholdRowId(h);
+    expect(p).toEqual({ rowId: cloud, isNewCloudRow: false });
+  });
+
+  it("mergeCloudHouseholdIdFromRemote attaches row PK when embedded id differs", () => {
+    const cloudPk = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+    const merged = mergeCloudHouseholdIdFromRemote(rh(cloudPk, "H001"));
+    expect(merged.id).toBe("H001");
+    expect(merged.cloudHouseholdId).toBe(cloudPk);
+  });
+
+  it("findRemoteForLocal matches seed id to remote row via data.id", () => {
+    const local = { id: "H001", name: "x", members: [], ingredients: [], baseMeals: [], weeklyPlans: [] } as Household;
+    const remotes = [rh("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "H001")];
+    expect(findRemoteForLocal(local, remotes)?.id).toBe("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
   });
 });

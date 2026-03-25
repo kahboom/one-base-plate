@@ -113,7 +113,7 @@ describe("F039: Export/import storage functions", () => {
       ingredients: [
         {
           id: "i1",
-          name: "Pasta",
+          name: "pasta",
           category: "carb",
           tags: ["staple"],
           shelfLifeHint: "",

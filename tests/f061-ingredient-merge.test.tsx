@@ -617,4 +617,40 @@ describe("F061: Merge execution", () => {
     const confirm = within(modal).getByTestId("merge-confirm-view");
     expect(confirm).toHaveTextContent("1 reference will be remapped");
   });
+
+  it("suppresses absorbed catalog ingredient so it does not reappear", async () => {
+    seedHousehold({
+      ingredients: [
+        makeIngredient({
+          id: "ing-wraps",
+          name: "wraps / tortillas",
+          category: "carb",
+          catalogId: "cat-wraps",
+          source: "catalog",
+        }),
+        makeIngredient({ id: "ing-tortillas", name: "tortillas", category: "carb" }),
+      ],
+    });
+    const user = userEvent.setup();
+    const view = renderPage();
+
+    await user.type(screen.getByTestId("ingredient-search"), "wraps / tortillas");
+    const modal = await openIngredientModal(user, "ing-wraps");
+    await user.click(within(modal).getByTestId("merge-open-btn"));
+    await user.type(within(modal).getByTestId("merge-search-input"), "tortillas");
+    const results = within(modal).getByTestId("merge-search-results");
+    await user.click(within(results).getAllByRole("button")[0]!);
+    await user.click(within(modal).getByTestId("merge-survivor-radio-ing-tortillas"));
+    await user.click(within(modal).getByTestId("merge-confirm-btn"));
+
+    const saved = loadHousehold("h-merge")!;
+    expect(saved.suppressedCatalogIds).toContain("cat-wraps");
+    expect(saved.ingredients.some((i) => i.id === "ing-wraps")).toBe(false);
+
+    view.unmount();
+    renderPage();
+    await user.clear(screen.getByTestId("ingredient-search"));
+    await user.type(screen.getByTestId("ingredient-search"), "wraps / tortillas");
+    expect(screen.queryByText("Wraps / tortillas")).not.toBeInTheDocument();
+  });
 });

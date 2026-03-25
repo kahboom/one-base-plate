@@ -207,7 +207,7 @@ describe("matchIngredient", () => {
   it("falls back to catalog when no household match", () => {
     const { catalogItem, status } = matchIngredient("Pasta", []);
     expect(status).toBe("catalog");
-    expect(catalogItem?.name).toBe("Pasta");
+    expect(catalogItem?.name).toBe("pasta");
   });
 
   it("returns unmatched when nothing matches", () => {
@@ -374,7 +374,7 @@ describe("RecipeImport page", () => {
     const user = userEvent.setup();
     const hh = makeHousehold();
     // Remove pasta from household ingredients so it comes from catalog
-    hh.ingredients = hh.ingredients.filter((i) => i.name !== "Pasta");
+    hh.ingredients = hh.ingredients.filter((i) => i.name !== "pasta");
     saveHousehold(hh);
     renderAt("/household/h-import/import-recipe");
 
@@ -390,7 +390,7 @@ describe("RecipeImport page", () => {
 
     const saved = loadHousehold("h-import")!;
     expect(saved.recipes).toHaveLength(1);
-    const pastaIng = saved.ingredients.find((i) => i.name === "Pasta");
+    const pastaIng = saved.ingredients.find((i) => i.name === "pasta");
     expect(pastaIng).toBeDefined();
     expect(pastaIng!.source).toBe("catalog");
   });

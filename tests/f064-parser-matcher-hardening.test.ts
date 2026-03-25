@@ -474,7 +474,7 @@ describe("F064 — Passata / compound catalog matching", () => {
     expect(r.name.toLowerCase()).toBe("tomato passata");
     const m = matchIngredient(r.name, [], MASTER_CATALOG);
     expect(m.status).toBe("catalog");
-    expect(m.catalogItem?.name).toBe("Passata");
+    expect(m.catalogItem?.name).toBe("passata");
   });
 
   it("680g-700g jar tomato passata → name = 'tomato passata' (unit-attached range)", () => {
@@ -483,7 +483,7 @@ describe("F064 — Passata / compound catalog matching", () => {
     expect(r.unit.toLowerCase()).toBe("g");
     const m = matchIngredient(r.name, [], MASTER_CATALOG);
     expect(m.status).toBe("catalog");
-    expect(m.catalogItem?.name).toBe("Passata");
+    expect(m.catalogItem?.name).toBe("passata");
   });
 
   it("700g jar passata → matches Passata", () => {
@@ -491,7 +491,7 @@ describe("F064 — Passata / compound catalog matching", () => {
     expect(r.name.toLowerCase()).toBe("passata");
     const m = matchIngredient(r.name, [], MASTER_CATALOG);
     expect(m.status).toBe("catalog");
-    expect(m.catalogItem?.name).toBe("Passata");
+    expect(m.catalogItem?.name).toBe("passata");
   });
 });
 

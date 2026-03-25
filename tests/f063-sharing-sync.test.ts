@@ -4,6 +4,7 @@ import {
   initStorage,
   loadHouseholds,
   saveHousehold,
+  saveHouseholdsLocalOnly,
   exportHouseholdsJSON,
   importHouseholdsJSON,
   resetAppStorageForTests,
@@ -55,9 +56,9 @@ function createMockRepo(): RemoteRepoAdapter & {
 } {
   return {
     fetchRemoteHouseholds: vi.fn().mockResolvedValue([]),
-    upsertRemoteHousehold: vi.fn().mockImplementation(async (h: Household) =>
-      makeRemoteHousehold(h),
-    ),
+    upsertRemoteHousehold: vi.fn().mockImplementation(async (h: Household) => ({
+      remote: makeRemoteHousehold(h),
+    })),
     deleteRemoteHousehold: vi.fn().mockResolvedValue(undefined),
   };
 }
@@ -233,7 +234,8 @@ describe("F063: Manual sync", () => {
     setCurrentUserId("user-1");
 
     const h = makeHousehold({ id: "conflict-1", name: "Local" });
-    saveHousehold(h);
+    // Avoid saveHousehold (would enqueue a successful sync and race this scenario).
+    saveHouseholdsLocalOnly([h]);
 
     // Make remote newer
     const remoteH = makeHousehold({ id: "conflict-1", name: "Remote" });
@@ -247,9 +249,9 @@ describe("F063: Manual sync", () => {
     expect(getSyncState().hasPendingChanges).toBe(true);
 
     // Reset mock to succeed for manualSync
-    mockRepo.upsertRemoteHousehold.mockImplementation(async (hh: Household) =>
-      makeRemoteHousehold(hh),
-    );
+    mockRepo.upsertRemoteHousehold.mockImplementation(async (hh: Household) => ({
+      remote: makeRemoteHousehold(hh),
+    }));
 
     const result = await manualSync(loadHouseholds());
 

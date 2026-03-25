@@ -13,6 +13,7 @@ import { getAppDb, recreateAppDb } from "./storage/dexie-db";
 import { migrateLegacyIntoDexieIfNeeded } from "./storage/migrate-v3";
 import { setPaprikaImportSessionMemory } from "./storage/paprika-session-store";
 import { syncAfterSave, syncDeleteHousehold, isAuthenticated } from "./sync/sync-engine";
+import { isRemoteHouseholdRowId, remoteRowIdForHousehold } from "./sync/remote-repository";
 
 export {
   STORAGE_KEY,
@@ -60,12 +61,18 @@ function ensureRecipeComponentIds(household: Household): Household {
   return { ...household, recipes };
 }
 
-export type NormalizedHousehold = Household & { recipes: Recipe[] };
+export type NormalizedHousehold = Household & { recipes: Recipe[]; suppressedCatalogIds: string[] };
 
 /** Default `recipes`, assign component ids; idempotent. */
 export function normalizeHousehold(household: Household): NormalizedHousehold {
   const base: Household =
-    household.recipes === undefined ? { ...household, recipes: [] } : household;
+    household.recipes === undefined || household.suppressedCatalogIds === undefined
+      ? {
+        ...household,
+        recipes: household.recipes ?? [],
+        suppressedCatalogIds: household.suppressedCatalogIds ?? [],
+      }
+      : household;
   return ensureRecipeComponentIds(ensureHouseholdComponentIds(base)) as NormalizedHousehold;
 }
 
@@ -136,14 +143,27 @@ export function saveHouseholds(households: Household[]): void {
   if (isAuthenticated()) void syncAfterSave(households);
 }
 
+/**
+ * Persist households without enqueueing cloud sync (used when sync assigns `cloudHouseholdId`
+ * so we do not re-enter `syncAfterSave`).
+ */
+export function saveHouseholdsLocalOnly(households: Household[]): void {
+  householdsCache = households;
+  localStorage.removeItem(STORAGE_KEY);
+  void dexieSetHouseholds(households).catch((err) => {
+    console.error("Failed to persist households:", err);
+  });
+}
+
 export async function saveHouseholdAsync(household: Household): Promise<void> {
-  const normalized = normalizeHousehold(household);
+  const struct = normalizeHousehold(household);
+  const toStore = normalizeHouseholdIngredientNames(struct);
   const households = loadHouseholds();
-  const index = households.findIndex((h) => h.id === normalized.id);
+  const index = households.findIndex((h) => h.id === toStore.id);
   if (index >= 0) {
-    households[index] = normalized;
+    households[index] = toStore;
   } else {
-    households.push(normalized);
+    households.push(toStore);
   }
   await persistHouseholdsNow(households);
 }
@@ -153,29 +173,34 @@ export function loadHousehold(id: string): Household | undefined {
   const index = households.findIndex((h) => h.id === id);
   if (index < 0) return undefined;
   const raw = households[index]!;
-  const normalized = normalizeHousehold(raw);
-  if (normalized !== raw) {
-    households[index] = normalized;
+  const struct = normalizeHousehold(raw);
+  const toStore = normalizeHouseholdIngredientNames(struct);
+  if (raw !== struct || struct !== toStore) {
+    households[index] = toStore;
     saveHouseholds(households);
   }
-  return normalized;
+  return toStore;
 }
 
 export function saveHousehold(household: Household): void {
-  const normalized = normalizeHousehold(household);
+  const struct = normalizeHousehold(household);
+  const toStore = normalizeHouseholdIngredientNames(struct);
   const households = loadHouseholds();
-  const index = households.findIndex((h) => h.id === normalized.id);
+  const index = households.findIndex((h) => h.id === toStore.id);
   if (index >= 0) {
-    households[index] = normalized;
+    households[index] = toStore;
   } else {
-    households.push(normalized);
+    households.push(toStore);
   }
   saveHouseholds(households);
 }
 
 export function deleteHousehold(id: string): void {
-  saveHouseholds(loadHouseholds().filter((h) => h.id !== id));
-  if (isAuthenticated()) void syncDeleteHousehold(id);
+  const households = loadHouseholds();
+  const target = households.find((h) => h.id === id);
+  const remotePk = target ? remoteRowIdForHousehold(target) : isRemoteHouseholdRowId(id) ? id : null;
+  saveHouseholds(households.filter((h) => h.id !== id));
+  if (isAuthenticated() && remotePk) void syncDeleteHousehold(remotePk);
 }
 
 export function loadDefaultHouseholdId(): string | null {
@@ -259,6 +284,19 @@ export function normalizeIngredientName(name: string): string {
     .trim()
     .replace(/\s+/g, " ")
     .replace(/[.,;:!?]+$/, "");
+}
+
+/** Canonical ingredient names in storage; same ref if nothing changed. */
+function normalizeHouseholdIngredientNames(household: Household): Household {
+  let changed = false;
+  const ingredients = household.ingredients.map((ing) => {
+    const n = normalizeIngredientName(ing.name);
+    if (n === ing.name) return ing;
+    changed = true;
+    return { ...ing, name: n };
+  });
+  if (!changed) return household;
+  return { ...household, ingredients };
 }
 
 const SINGULAR_EXCEPTIONS_GK = new Set([

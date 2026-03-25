@@ -331,7 +331,7 @@ describe("F051 Paprika ingredient parser hardening", () => {
     it("does not map garlic powder to Garlic", () => {
       const m = matchIngredient("garlic powder", emptyHousehold, MASTER_CATALOG);
       expect(m.catalogItem?.id).toBe("cat-garlic-powder");
-      expect(m.catalogItem?.name).toBe("Garlic powder");
+      expect(m.catalogItem?.name).toBe("garlic powder");
     });
 
     it("does not map onion powder to Onion", () => {

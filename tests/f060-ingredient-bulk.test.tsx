@@ -326,12 +326,12 @@ describe("F060: Source filter", () => {
     renderPage();
 
     await user.selectOptions(screen.getByTestId("ingredient-source-filter"), "manual");
-    expect(screen.getByText("Custom Item")).toBeInTheDocument();
-    expect(screen.queryByText("Imported Item")).not.toBeInTheDocument();
+    expect(screen.getByText("Custom item")).toBeInTheDocument();
+    expect(screen.queryByText("Imported item")).not.toBeInTheDocument();
 
     await user.selectOptions(screen.getByTestId("ingredient-source-filter"), "pending-import");
-    expect(screen.getByText("Imported Item")).toBeInTheDocument();
-    expect(screen.queryByText("Custom Item")).not.toBeInTheDocument();
+    expect(screen.getByText("Imported item")).toBeInTheDocument();
+    expect(screen.queryByText("Custom item")).not.toBeInTheDocument();
   });
 });
 
@@ -386,9 +386,9 @@ describe("F060: Bulk delete confirmation", () => {
     expect(screen.getByText("Gamma")).toBeInTheDocument();
 
     const saved = loadHousehold("h-bulk")!;
-    expect(saved.ingredients.find((i) => i.name === "Alpha")).toBeUndefined();
-    expect(saved.ingredients.find((i) => i.name === "Beta")).toBeUndefined();
-    expect(saved.ingredients.find((i) => i.name === "Gamma")).toBeDefined();
+    expect(saved.ingredients.find((i) => i.name === "alpha")).toBeUndefined();
+    expect(saved.ingredients.find((i) => i.name === "beta")).toBeUndefined();
+    expect(saved.ingredients.find((i) => i.name === "gamma")).toBeDefined();
   });
 
   it("clears deleted items from selection after bulk delete", async () => {
@@ -600,7 +600,7 @@ describe("F060: Modal editing from rows", () => {
 
     const modal = screen.getByTestId("ingredient-modal");
     expect(modal).toBeInTheDocument();
-    expect(within(modal).getByTestId("modal-ingredient-name")).toHaveValue("Apple");
+    expect(within(modal).getByTestId("modal-ingredient-name")).toHaveValue("apple");
     expect(within(modal).getByTestId("modal-ingredient-category")).toHaveValue("fruit");
   });
 });

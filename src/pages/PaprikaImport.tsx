@@ -1083,7 +1083,7 @@ export default function PaprikaImport() {
                         )}
                         {sample.resolutionStatus === "pending" && sample.matchedCatalog && (
                           <Chip variant="info" className="max-w-full truncate text-[10px]">
-                            Catalog: {sample.matchedCatalog.name}
+                            Catalog: {toSentenceCase(sample.matchedCatalog.name)}
                           </Chip>
                         )}
                       </div>
@@ -1345,7 +1345,7 @@ export default function PaprikaImport() {
                     }}
                     onMouseEnter={() => catalogKeyNav.setActiveIndex(i)}
                   >
-                    {item.name}
+                    {toSentenceCase(item.name)}
                   </button>
                 </li>
               ))}
@@ -1435,7 +1435,7 @@ export default function PaprikaImport() {
                       (sample.confidenceBand === "exact" || sample.confidenceBand === "strong")
                     ) {
                       const ok = window.confirm(
-                        `A strong catalog match (${sample.matchedCatalog.name}) exists. Create a new ingredient anyway?`,
+                        `A strong catalog match (${toSentenceCase(sample.matchedCatalog.name)}) exists. Create a new ingredient anyway?`,
                       );
                       if (!ok) return;
                     }

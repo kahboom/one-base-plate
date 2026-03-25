@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { PageShell, Card, Button, Chip } from "../components/ui";
 import { acceptInvite } from "../sync/invite-service";
+import { mergeCloudHouseholdIdFromRemote } from "../sync/remote-repository";
 import { hydrateFromRemote, loadHouseholds, saveHouseholds } from "../storage";
 import { getCurrentUserId } from "../sync/sync-engine";
 
@@ -35,7 +36,7 @@ export default function AcceptInvite() {
 
     acceptInvite(code, userId)
       .then(async ({ household }) => {
-        const hhData = household.data;
+        const hhData = mergeCloudHouseholdIdFromRemote(household);
         setHouseholdName(hhData.name ?? "Shared Household");
 
         const existing = loadHouseholds();
