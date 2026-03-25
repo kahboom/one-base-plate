@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import type { Household, Ingredient, BaseMeal } from "../src/types";
 import {

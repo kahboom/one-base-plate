@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import type { Ingredient } from "../types";
-import { normalizeIngredientName, toSentenceCase } from "../storage";
+import { normalizeIngredientName, toSentenceCase, ingredientMatchesQuery } from "../storage";
 import { buildManualIngredient } from "../lib/manualIngredient";
 
 const inputClassName =
@@ -64,10 +64,9 @@ const IngredientCombobox = forwardRef<IngredientComboboxHandle, IngredientCombob
   const nTrimmed = trimmed ? norm(trimmed) : "";
 
   const filtered = useMemo(() => {
-    const q = trimmed.toLowerCase();
     const list = ingredients
       .filter((ing) => !isBlocked(norm(ing.name)))
-      .filter((ing) => !q || ing.name.toLowerCase().includes(q))
+      .filter((ing) => !trimmed || ingredientMatchesQuery(ing, trimmed))
       .sort((a, b) => a.name.localeCompare(b.name));
     return list.slice(0, MAX_SUGGESTIONS);
   }, [ingredients, trimmed, isBlocked]);

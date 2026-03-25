@@ -992,13 +992,6 @@ export function matchScore(a: string, b: string): number {
   return 0;
 }
 
-function candidateContainsToken(candidateNorm: string, token: string): boolean {
-  if (!token || token.length < 2) return true;
-  const c = ` ${candidateNorm} `;
-  const t = token.toLowerCase();
-  return c.includes(` ${t} `) || candidateNorm.startsWith(t + " ") || candidateNorm.endsWith(" " + t) || candidateNorm === t;
-}
-
 function catalogMatchVeto(queryNorm: string, queryTokens: string[], candidateName: string): boolean {
   const cn = normalizeForMatch(candidateName);
   const ctoks = tokenize(candidateName);
@@ -1070,6 +1063,39 @@ function stripMatchStyleDescriptors(name: string): string {
   return cleaned.join(" ");
 }
 
+/** -1 if both veto paths reject; otherwise fuzzy score (may be below caller's minimum). */
+function scoreMatchAgainstCandidate(
+  matchName: string,
+  queryNorm: string,
+  queryTokens: string[],
+  querySingular: string,
+  strippedQuery: string,
+  strippedNorm: string,
+  strippedTokens: string[],
+  candidateName: string,
+  vetoFn: (queryNorm: string, queryTokens: string[], candidateName: string) => boolean,
+  minForStrippedBoost: number,
+): number {
+  const vetoed = vetoFn(queryNorm, queryTokens, candidateName);
+  const strippedVetoed = strippedQuery !== matchName
+    ? vetoFn(strippedNorm, strippedTokens, candidateName)
+    : true;
+  if (vetoed && strippedVetoed) return -1;
+
+  let score = matchScore(matchName, candidateName);
+  const candSingular = normalizeForMatching(candidateName);
+  if (querySingular === candSingular && score < 1) score = 1;
+
+  if (score < minForStrippedBoost && strippedQuery && strippedQuery !== matchName) {
+    const strippedScore = matchScore(strippedQuery, candidateName);
+    if (strippedScore > score) score = strippedScore;
+    const strippedSingular = normalizeForMatching(strippedQuery);
+    if (strippedSingular === candSingular && score < 1) score = 1;
+  }
+
+  return score;
+}
+
 export function matchIngredient(
   name: string,
   householdIngredients: Ingredient[],
@@ -1100,91 +1126,125 @@ export function matchIngredient(
   const strippedNorm = normalizeForMatch(strippedQuery);
   const strippedTokens = tokenize(strippedQuery);
 
-  let bestHousehold: Ingredient | null = null;
-  let bestHouseholdScore = 0;
+  type BestPick = {
+    tier: number;
+    score: number;
+    ingredient: Ingredient | null;
+    catalogItem: CatalogIngredient | null;
+  };
+
+  const candidatePicks: BestPick[] = [];
+
   for (const ing of householdIngredients) {
-    const vetoed = householdMatchVeto(queryNorm, queryTokens, ing.name);
-    const strippedVetoed = strippedQuery !== matchName
-      ? householdMatchVeto(strippedNorm, strippedTokens, ing.name)
-      : true;
-    if (vetoed && strippedVetoed) continue;
+    const sCanon = scoreMatchAgainstCandidate(
+      matchName,
+      queryNorm,
+      queryTokens,
+      querySingular,
+      strippedQuery,
+      strippedNorm,
+      strippedTokens,
+      ing.name,
+      householdMatchVeto,
+      HOUSEHOLD_MIN,
+    );
+    if (sCanon >= HOUSEHOLD_MIN) candidatePicks.push({ tier: 0, score: sCanon, ingredient: ing, catalogItem: null });
 
-    let score = matchScore(matchName, ing.name);
-    const candSingular = normalizeForMatching(ing.name);
-    if (querySingular === candSingular && score < 1) score = 1;
-
-    if (score < HOUSEHOLD_MIN && strippedQuery && strippedQuery !== matchName) {
-      const strippedScore = matchScore(strippedQuery, ing.name);
-      if (strippedScore > score) score = strippedScore;
-      const strippedSingular = normalizeForMatching(strippedQuery);
-      if (strippedSingular === candSingular && score < 1) score = 1;
-    }
-
-    if (score > bestHouseholdScore && score >= HOUSEHOLD_MIN) {
-      bestHouseholdScore = score;
-      bestHousehold = ing;
+    for (const alias of ing.aliases ?? []) {
+      const sAlias = scoreMatchAgainstCandidate(
+        matchName,
+        queryNorm,
+        queryTokens,
+        querySingular,
+        strippedQuery,
+        strippedNorm,
+        strippedTokens,
+        alias,
+        householdMatchVeto,
+        HOUSEHOLD_MIN,
+      );
+      if (sAlias >= HOUSEHOLD_MIN) candidatePicks.push({ tier: 1, score: sAlias, ingredient: ing, catalogItem: null });
     }
   }
-  if (bestHousehold) {
-    return {
-      ingredient: bestHousehold,
-      catalogItem: null,
-      status: "matched",
-      matchScore: bestHouseholdScore,
-      confidenceBand: confidenceBandFromScore(bestHouseholdScore),
-    };
-  }
 
-  let bestCatalog: CatalogIngredient | null = null;
-  let bestCatalogScore = 0;
   for (const ci of catalog) {
-    const vetoed = catalogMatchVeto(queryNorm, queryTokens, ci.name);
-    const strippedVetoed = strippedQuery !== matchName
-      ? catalogMatchVeto(strippedNorm, strippedTokens, ci.name)
-      : true;
-    if (vetoed && strippedVetoed) continue;
+    let catScore = -1;
+    let catTier: 2 | 3 = 2;
 
-    let score = matchScore(matchName, ci.name);
-    const candSingular = normalizeForMatching(ci.name);
-    if (querySingular === candSingular && score < 1) score = 1;
-
-    if (score < CATALOG_MIN && strippedQuery && strippedQuery !== matchName) {
-      const strippedScore = matchScore(strippedQuery, ci.name);
-      if (strippedScore > score) score = strippedScore;
-      const strippedSingular = normalizeForMatching(strippedQuery);
-      if (strippedSingular === candSingular && score < 1) score = 1;
+    const sCanon = scoreMatchAgainstCandidate(
+      matchName,
+      queryNorm,
+      queryTokens,
+      querySingular,
+      strippedQuery,
+      strippedNorm,
+      strippedTokens,
+      ci.name,
+      catalogMatchVeto,
+      CATALOG_MIN,
+    );
+    if (sCanon >= CATALOG_MIN) {
+      catScore = sCanon;
+      catTier = 2;
     }
 
-    if (score < CATALOG_MIN && ci.aliases) {
-      for (const alias of ci.aliases) {
-        const aliasVetoed = catalogMatchVeto(queryNorm, queryTokens, alias);
-        const aliasStrippedVetoed = strippedQuery !== matchName
-          ? catalogMatchVeto(strippedNorm, strippedTokens, alias)
-          : true;
-        if (aliasVetoed && aliasStrippedVetoed) continue;
-        const aliasScore = matchScore(matchName, alias);
-        if (aliasScore > score) score = aliasScore;
-        if (score < CATALOG_MIN && strippedQuery && strippedQuery !== matchName) {
-          const strippedAliasScore = matchScore(strippedQuery, alias);
-          if (strippedAliasScore > score) score = strippedAliasScore;
-        }
-        const aliasSingular = normalizeForMatching(alias);
-        if (querySingular === aliasSingular && score < 1) score = 1;
+    for (const alias of ci.aliases ?? []) {
+      const sAlias = scoreMatchAgainstCandidate(
+        matchName,
+        queryNorm,
+        queryTokens,
+        querySingular,
+        strippedQuery,
+        strippedNorm,
+        strippedTokens,
+        alias,
+        catalogMatchVeto,
+        CATALOG_MIN,
+      );
+      if (sAlias < CATALOG_MIN) continue;
+      if (catScore < 0 || sAlias > catScore || (sAlias === catScore && catTier > 2)) {
+        catScore = sAlias;
+        catTier = 3;
       }
     }
 
-    if (score > bestCatalogScore && score >= CATALOG_MIN) {
-      bestCatalogScore = score;
-      bestCatalog = ci;
+    if (catScore >= CATALOG_MIN) {
+      candidatePicks.push({ tier: catTier, score: catScore, ingredient: null, catalogItem: ci });
     }
   }
-  if (bestCatalog) {
+
+  let best: BestPick | null = null;
+  for (const c of candidatePicks) {
+    if (!best || c.score > best.score || (c.score === best.score && c.tier < best.tier)) {
+      best = c;
+    }
+  }
+
+  if (!best) {
     return {
       ingredient: null,
-      catalogItem: bestCatalog,
+      catalogItem: null,
+      status: "unmatched",
+      matchScore: 0,
+      confidenceBand: "low",
+    };
+  }
+  if (best.ingredient) {
+    return {
+      ingredient: best.ingredient,
+      catalogItem: null,
+      status: "matched",
+      matchScore: best.score,
+      confidenceBand: confidenceBandFromScore(best.score),
+    };
+  }
+  if (best.catalogItem) {
+    return {
+      ingredient: null,
+      catalogItem: best.catalogItem,
       status: "catalog",
-      matchScore: bestCatalogScore,
-      confidenceBand: confidenceBandFromScore(bestCatalogScore),
+      matchScore: best.score,
+      confidenceBand: confidenceBandFromScore(best.score),
     };
   }
 

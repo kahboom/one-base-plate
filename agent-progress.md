@@ -850,7 +850,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Corrected:** `PRD.json` marked **F051** `passes=true` (implementation and tests were already recorded in this log on 2026-03-18; only the PRD flag was stale).
 - **Corrected:** `dataModel.entities` updated to match current `src/types.ts` and shipped behavior: **ComponentRecipeRef**, **DayPlan.componentRecipeOverrides**, **WeeklyAnchor** / **Household.weeklyAnchors**, **Recipe** library rows, **Household** aggregate, **GroceryItem**, **MealOutcome**, **RecipeLink**, **RecipeProvenance**, **ImportMapping**; **MealComponent** / **Ingredient** / **BaseMeal** field lists aligned with code; flattened mistaken nested entity array; **AssemblyVariant** documents canonical app fields first with optional legacy persist keys.
 - **Explicit mismatches resolved:** PRD `passes` for F051 vs codebase; PRD `catalogItemId` vs code `catalogId`; PRD `importedRecipeSource` vs code `provenance`; obsolete PRD-only `ImportedRecipeSource` / `ImportedIngredientMatch` vs code `RecipeProvenance` / `ImportMapping`.
-- **Next truly incomplete PRD feature:** None — every feature entry in `PRD.json` now has `passes=true`. Next engineering work should come from new PRD items, milestones beyond M5, or non-feature hardening (unless a feature is re-opened intentionally).
+- **Note (2026-03-25):** **F065** (household ingredient aliases) added and completed; see F065 entry below. Prior “no incomplete feature” statement applied before F065 landed.
 - **Verification:** `npx tsc --noEmit` passes; `npx vitest run tests/f005-base-meals.test.tsx tests/f028-multi-protein.test.tsx tests/f029-recipe-links-notes.test.tsx tests/f021-weekly-calendar.test.tsx tests/f056-theme-anchors.test.tsx` — 5 files, 47 tests passed.
 
 ### F057 — First-class Recipe model with RecipeRef and typed categories (2026-03-22)
@@ -970,5 +970,13 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Tests:** 75 new tests in `tests/f064-parser-matcher-hardening.test.ts`. Updated 3 F051 tests for size-descriptor stripping behavior. Updated 1 F047 test for pagination resilience with larger catalog. All 1,161 tests pass (70 files, 13 skipped).
 - **Known limitations:** "Italian" is not stripped from canonical names (risk to "Italian seasoning"); matching handles it via style-stripped secondary path. "Hot" prefix not stripped from canonical names; handled via matching. Some complex multi-ingredient lines like "spinach and ricotta tortellini" preserve the full compound name rather than extracting individual components.
 
+### F065 — Household-manageable ingredient aliases (2026-03-25)
+- **PRD:** F065; milestone M5; P1 functional; depends on F059, F064, F004, F060; acceptance refs S010, S007.
+- **Data model:** `Ingredient.aliases?: string[]` in `src/types.ts`. Normalization via `normalizeIngredientAliasList` / `normalizeIngredientForStorage` in `src/storage.ts`; `normalizeHouseholdIngredientNames` normalizes aliases on save; `mergeDuplicateMetadata` unions aliases across merges.
+- **Matching:** `matchIngredient` refactored to tiered candidates (household canonical → household alias → catalog canonical → catalog alias) with score-first selection and tier tie-break; shared `scoreMatchAgainstCandidate` helper preserves `HOUSEHOLD_MIN`, `CATALOG_MIN`, and veto behavior.
+- **UX:** Ingredient Manager modal “Also matches” with validation (`validateIngredientAliases`: blocking when alias equals another ingredient’s primary name; warnings for cross-ingredient alias overlap). Browse search, `IngredientCombobox`, and `ComponentForm` alternative search use `ingredientMatchesQuery`. Desktop row `+N alt` hint.
+- **Tests:** `tests/f065-ingredient-aliases.test.tsx` (normalization, validation, merge, matcher tiers, `parseRecipeText`, `parsePaprikaLineFromRaw`, storage round-trip, Ingredient Manager RTL). Catalog delete flow in `f044` targets **Tortillas** (`cat-wraps`) explicitly. Household round-trip expectations in `f002`/`f039` include `suppressedCatalogIds: []`.
+- **Verification:** `npx tsc --noEmit`, `npx vitest run` — 1194 passed, 13 skipped (72 files).
+
 ## Next Task
-- Pick the next product slice from `PRD.json` implementation order or reopen a feature with explicit scope.
+- Continue from `PRD.json` implementation order after F065, or open a new scoped feature if product priorities shift.

@@ -7,7 +7,6 @@ import { saveHousehold, loadHousehold } from "../src/storage";
 import { MASTER_CATALOG } from "../src/catalog";
 import IngredientManager from "../src/pages/IngredientManager";
 import { DEFAULT_PAGE_SIZE } from "../src/hooks/usePaginatedList";
-import { showAllIngredientRows } from "./incremental-load-helpers";
 
 const CATALOG_SIZE = MASTER_CATALOG.length;
 
@@ -163,7 +162,8 @@ describe("F004: Paginated ingredient list", () => {
 });
 
 describe("F004: Ingredients persist across re-open", () => {
-  it("re-opening the ingredient manager shows previously saved ingredients", () => {
+  it("re-opening the ingredient manager shows previously saved ingredients", async () => {
+    const user = userEvent.setup();
     const household = seedHousehold();
     household.ingredients = [
       {
@@ -194,8 +194,10 @@ describe("F004: Ingredients persist across re-open", () => {
     ).length;
     const expected = 2 + CATALOG_SIZE - catalogDupes;
     expect(screen.getByText(`Items (${expected})`)).toBeInTheDocument();
-    showAllIngredientRows();
+    await user.type(screen.getByTestId("ingredient-search"), "Oats");
     expect(screen.getByText("Oats")).toBeInTheDocument();
+    await user.clear(screen.getByTestId("ingredient-search"));
+    await user.type(screen.getByTestId("ingredient-search"), "Salmon");
     expect(screen.getByText("Salmon")).toBeInTheDocument();
   });
 });

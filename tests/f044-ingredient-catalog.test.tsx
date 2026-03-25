@@ -202,7 +202,7 @@ describe("F044: Catalog ingredients work with existing flows", () => {
     // Find and click a catalog item (Pasta)
     // Use search to narrow down
     await user.type(screen.getByTestId("ingredient-search"), "Pasta");
-    const rows = screen.getAllByTestId(/^ingredient-row-/);
+    const rows = screen.getAllByTestId((id) => id.startsWith("ingredient-row-"));
     await user.click(rows[0]!);
 
     const modal = screen.getByTestId("ingredient-modal");
@@ -242,7 +242,7 @@ describe("F044: Catalog ingredients work with existing flows", () => {
     await user.clear(screen.getByTestId("ingredient-search"));
     await user.selectOptions(screen.getByTestId("ingredient-category-filter"), "fruit");
 
-    const rows = screen.getAllByTestId(/^ingredient-row-/);
+    const rows = screen.getAllByTestId((id) => id.startsWith("ingredient-row-"));
     const catalogFruits = MASTER_CATALOG.filter((i) => i.category === "fruit").length;
     expect(rows).toHaveLength(catalogFruits);
   });
@@ -252,8 +252,8 @@ describe("F044: Catalog ingredients work with existing flows", () => {
     const user = userEvent.setup();
     const view = renderPage();
 
-    await user.type(screen.getByTestId("ingredient-search"), "wraps / tortillas");
-    await user.click(screen.getByTestId(/^ingredient-row-/));
+    await user.type(screen.getByTestId("ingredient-search"), "tortillas");
+    await user.click(screen.getByRole("button", { name: /^Edit Tortillas$/i }));
     const modal = screen.getByTestId("ingredient-modal");
     await user.click(within(modal).getByTestId("delete-ingredient-btn"));
     const deleteConfirm = screen.getByRole("dialog", { name: "Delete ingredient" });
@@ -264,7 +264,7 @@ describe("F044: Catalog ingredients work with existing flows", () => {
 
     view.unmount();
     renderPage();
-    await user.type(screen.getByTestId("ingredient-search"), "wraps / tortillas");
-    expect(screen.queryByText("Wraps / tortillas")).not.toBeInTheDocument();
+    await user.type(screen.getByTestId("ingredient-search"), "tortillas");
+    expect(screen.queryByRole("button", { name: /^Edit Tortillas$/i })).not.toBeInTheDocument();
   });
 });

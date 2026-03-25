@@ -40,6 +40,7 @@ describe("F002: Storage layer", () => {
       ],
       ingredients: [],
       recipes: [],
+      suppressedCatalogIds: [],
       baseMeals: [],
       weeklyPlans: [],
     };

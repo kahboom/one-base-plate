@@ -39,6 +39,8 @@ export interface RecipeRef {
 export interface Ingredient {
   id: string;
   name: string;
+  /** Alternate match/search/import names; canonical display remains `name`. */
+  aliases?: string[];
   category: IngredientCategory;
   tags: string[];
   shelfLifeHint: string;

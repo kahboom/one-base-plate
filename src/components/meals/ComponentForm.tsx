@@ -8,7 +8,7 @@ import type {
   Recipe,
 } from "../../types";
 import { Button, Input, Select, FieldLabel, Chip } from "../ui";
-import { normalizeIngredientName, toSentenceCase } from "../../storage";
+import { normalizeIngredientName, toSentenceCase, ingredientMatchesQuery } from "../../storage";
 import ComponentRecipePicker from "./ComponentRecipePicker";
 import {
   getDefaultRecipeRef,
@@ -163,7 +163,7 @@ export default function ComponentForm({
   const filteredAlternativeOptions = ingredients.filter((ing) => {
     if (usedIds.has(ing.id)) return false;
     if (!alternativeSearch.trim()) return true;
-    return ing.name.toLowerCase().includes(alternativeSearch.trim().toLowerCase());
+    return ingredientMatchesQuery(ing, alternativeSearch.trim());
   });
 
   function handleAddSelectedAlternative() {

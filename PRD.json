@@ -131,6 +131,7 @@
         "fields": [
           "id",
           "name",
+          "aliases[] (optional; alternate match/search/import names)",
           "category (protein|carb|veg|fruit|dairy|snack|freezer|pantry)",
           "tags[]",
           "shelfLifeHint",
@@ -2016,6 +2017,33 @@
         "S007",
         "S010"
       ]
+    },
+    {
+      "id": "F065",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "Household-manageable ingredient aliases: alternate match names for import and search without changing canonical display name",
+      "steps": [
+        "Extend household Ingredient with optional aliases[]; normalize on save (lowercase, trim, collapse spaces, strip trailing punctuation); dedupe and drop aliases equal to canonical name.",
+        "Ingredient Manager modal: Also matches section with add/remove, helper copy, blocking validation when an alias equals another ingredient's primary name, non-blocking warnings when an alias overlaps another ingredient's alias list.",
+        "Alias-aware browse search and combobox/alternative-ingredient pickers; list rows show a compact +N alt hint without spreadsheet-style columns.",
+        "Refactor matchIngredient: score-first across tiers household canonical, household aliases, catalog canonical, catalog aliases; on score tie prefer earlier tier; preserve HOUSEHOLD_MIN/CATALOG_MIN and existing veto behavior; never mutate MASTER_CATALOG from household alias edits.",
+        "Recipe text import and Paprika line parsing use updated matchIngredient; low-confidence and ambiguous lines remain reviewable; defer merging Paprika review groups only by shared parserSuggestedIngredientId to avoid coriander-style mis-merges.",
+        "mergeDuplicateMetadata unions aliases across merged ingredients; backward compatibility for saved data without aliases; no auto-conversion of duplicate ingredients into aliases.",
+        "Tests: normalization, persistence round-trip, validation, search, matcher tiers, import/Paprika smoke, UI flows."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F059",
+        "F064",
+        "F004",
+        "F060"
+      ],
+      "acceptanceRefs": [
+        "S010",
+        "S007"
+      ]
     }
   ],
   "milestones": [
@@ -2107,7 +2135,8 @@
         "F058",
         "F059",
         "F060",
-        "F064"
+        "F064",
+        "F065"
       ]
     },
     {
@@ -2197,6 +2226,7 @@
     "F062",
     "F063",
     "F064",
+    "F065",
     "F020",
     "F037",
     "F038",
@@ -2470,6 +2500,7 @@
           "Compact ingredient rows with selection checkbox, name, category, tags, source, key flags, and optional thumbnail",
           "Tap or click to open ingredient detail modal or drawer",
           "Modal or drawer form for full editing",
+          "Optional household-managed ingredient aliases (Also matches) for import/search, with validation and compact list hint",
           "Traditional pagination controls (page numbers, prev/next, first/last) instead of infinite scroll",
           "Bulk selection: per-row checkbox, select-all-on-page, select-all-filtered, clear selection",
           "Bulk actions bar with bulk delete and clear selection",
@@ -2485,7 +2516,8 @@
           "The primary screen stays browse-first instead of showing every ingredient as an expanded form",
           "Bulk delete is safe: referenced ingredients are protected, only unreferenced items can be deleted",
           "No orphaned ingredient references are created by bulk delete",
-          "Selection persists across page changes and filter changes within a session"
+          "Selection persists across page changes and filter changes within a session",
+          "Search finds ingredients by canonical name or any saved alias; list still emphasizes the primary name"
         ]
       }
     ],
@@ -2611,7 +2643,8 @@
       "F057",
       "F058",
       "F059",
-      "F064"
+      "F064",
+      "F065"
     ],
     "S008": [
       "F011",
@@ -2639,7 +2672,8 @@
       "F059",
       "F060",
       "F061",
-      "F064"
+      "F064",
+      "F065"
     ]
   },
   "agentExecutionRules": [

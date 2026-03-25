@@ -286,14 +286,134 @@ export function normalizeIngredientName(name: string): string {
     .replace(/[.,;:!?]+$/, "");
 }
 
-/** Canonical ingredient names in storage; same ref if nothing changed. */
+/**
+ * Normalize alias strings for persistence: same rules as names, deduped, no blanks,
+ * none equal to canonical name. Returns undefined when there is nothing to store.
+ */
+export function normalizeIngredientAliasList(
+  canonicalName: string,
+  aliases: string[] | undefined,
+): string[] | undefined {
+  const canon = normalizeIngredientName(canonicalName);
+  if (!aliases?.length) return undefined;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of aliases) {
+    const a = normalizeIngredientName(raw);
+    if (!a || a === canon) continue;
+    if (seen.has(a)) continue;
+    seen.add(a);
+    out.push(a);
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+/** Apply `normalizeIngredientName` and `normalizeIngredientAliasList` for persistence. */
+export function normalizeIngredientForStorage(ing: Ingredient): Ingredient {
+  const n = normalizeIngredientName(ing.name);
+  const aliases = normalizeIngredientAliasList(n, ing.aliases);
+  const out: Ingredient = { ...ing, name: n };
+  if (aliases) out.aliases = aliases;
+  else delete out.aliases;
+  return out;
+}
+
+/** True if trimmed query (lowercase) matches canonical name or any stored alias. */
+export function ingredientMatchesQuery(ing: Ingredient, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if (ing.name.toLowerCase().includes(q)) return true;
+  for (const a of ing.aliases ?? []) {
+    if (a.includes(q)) return true;
+  }
+  return false;
+}
+
+export type IngredientAliasValidation = {
+  blockingReason?: string;
+  warnings: string[];
+};
+
+/**
+ * Blocking: a normalized alias equals another ingredient's canonical name.
+ * Warnings: same normalized alias appears on another ingredient's alias list.
+ */
+/** Strip aliases that match another ingredient's canonical name (safe persist / import hygiene). */
+export function sanitizeIngredientAliasesAgainstHousehold(ingredients: Ingredient[]): Ingredient[] {
+  return ingredients.map((ing) => {
+    const canon = normalizeIngredientName(ing.name);
+    const aliases = normalizeIngredientAliasList(canon, ing.aliases);
+    if (!aliases) {
+      return ing.aliases ? { ...ing, aliases: undefined } : ing;
+    }
+    const kept = aliases.filter(
+      (a) =>
+        !ingredients.some(
+          (other) => other.id !== ing.id && normalizeIngredientName(other.name) === a,
+        ),
+    );
+    const next = normalizeIngredientAliasList(canon, kept);
+    if (next) return { ...ing, aliases: next };
+    const { aliases: _a, ...rest } = ing;
+    return rest as Ingredient;
+  });
+}
+
+export function validateIngredientAliases(
+  ingredient: Ingredient,
+  allIngredients: Ingredient[],
+): IngredientAliasValidation {
+  const canon = normalizeIngredientName(ingredient.name);
+  const normalized = normalizeIngredientAliasList(canon, ingredient.aliases) ?? [];
+  const warnings: string[] = [];
+
+  for (const alias of normalized) {
+    const otherCanon = allIngredients.find(
+      (i) => i.id !== ingredient.id && normalizeIngredientName(i.name) === alias,
+    );
+    if (otherCanon) {
+      return {
+        blockingReason: `“${alias}” is already the primary name of “${toSentenceCase(otherCanon.name)}”. Remove it here or merge ingredients.`,
+        warnings: [],
+      };
+    }
+  }
+
+  for (const alias of normalized) {
+    const other = allIngredients.find(
+      (i) =>
+        i.id !== ingredient.id &&
+        (i.aliases ?? []).some((x) => normalizeIngredientName(x) === alias),
+    );
+    if (other) {
+      warnings.push(
+        `“${alias}” is also listed under “${toSentenceCase(other.name)}” — imports may pick the stronger match.`,
+      );
+    }
+  }
+
+  return { warnings };
+}
+
+/** Canonical ingredient names and aliases in storage; same ref if nothing changed. */
 function normalizeHouseholdIngredientNames(household: Household): Household {
   let changed = false;
   const ingredients = household.ingredients.map((ing) => {
     const n = normalizeIngredientName(ing.name);
-    if (n === ing.name) return ing;
+    const aliasesNorm = normalizeIngredientAliasList(n, ing.aliases);
+    const prevAliases = ing.aliases;
+    const aliasesEqual =
+      (aliasesNorm === undefined && (prevAliases === undefined || prevAliases.length === 0)) ||
+      (aliasesNorm !== undefined &&
+        prevAliases !== undefined &&
+        prevAliases.length === aliasesNorm.length &&
+        prevAliases.every((x, i) => normalizeIngredientName(x) === aliasesNorm[i]));
+    if (n === ing.name && aliasesEqual) return ing;
     changed = true;
-    return { ...ing, name: n };
+    const next: Ingredient = { ...ing, name: n };
+    if (aliasesNorm) next.aliases = aliasesNorm;
+    else delete next.aliases;
+    return next;
   });
   if (!changed) return household;
   return { ...household, ingredients };
@@ -351,6 +471,7 @@ function pickSurvivor(duplicates: Ingredient[]): Ingredient {
 export function mergeDuplicateMetadata(survivor: Ingredient, duplicates: Ingredient[]): Ingredient {
   const merged = { ...survivor };
   const allTags = new Set(merged.tags);
+  const aliasAccum: string[] = [...(merged.aliases ?? [])];
   for (const dup of duplicates) {
     if (dup.id === merged.id) continue;
     for (const tag of dup.tags) allTags.add(tag);
@@ -362,8 +483,12 @@ export function mergeDuplicateMetadata(survivor: Ingredient, duplicates: Ingredi
     if (!merged.shelfLifeHint && dup.shelfLifeHint) merged.shelfLifeHint = dup.shelfLifeHint;
     if (dup.freezerFriendly) merged.freezerFriendly = true;
     if (dup.babySafeWithAdaptation) merged.babySafeWithAdaptation = true;
+    for (const a of dup.aliases ?? []) aliasAccum.push(a);
   }
   merged.tags = [...allTags];
+  const mergedAliases = normalizeIngredientAliasList(merged.name, aliasAccum);
+  if (mergedAliases) merged.aliases = mergedAliases;
+  else delete merged.aliases;
   return merged;
 }
 

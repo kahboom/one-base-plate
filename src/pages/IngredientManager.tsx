@@ -1,7 +1,18 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import type { Ingredient, IngredientCategory, Household } from "../types";
-import { loadHousehold, saveHousehold, toSentenceCase, normalizeIngredientName, mergeDuplicateMetadata, remapIngredientReferences } from "../storage";
+import {
+  loadHousehold,
+  saveHousehold,
+  toSentenceCase,
+  normalizeIngredientName,
+  normalizeIngredientForStorage,
+  mergeDuplicateMetadata,
+  remapIngredientReferences,
+  validateIngredientAliases,
+  ingredientMatchesQuery,
+  sanitizeIngredientAliasesAgainstHousehold,
+} from "../storage";
 import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from "../catalog";
 import {
   PageHeader,
@@ -238,6 +249,8 @@ function IngredientModal({
   onMerge: (survivorId: string, absorbedId: string) => void;
 }) {
   const [tagInput, setTagInput] = useState("");
+  const [aliasInput, setAliasInput] = useState("");
+  const [aliasCommitError, setAliasCommitError] = useState("");
   const [mergeMode, setMergeMode] = useState(false);
   const [mergeSearch, setMergeSearch] = useState("");
   const [mergeTarget, setMergeTarget] = useState<Ingredient | null>(null);
@@ -256,11 +269,16 @@ function IngredientModal({
     [ingredient.name, allIngredients, ingredient.id],
   );
 
+  const aliasValidation = useMemo(() => {
+    const canon = normalizeIngredientName(ingredient.name);
+    return validateIngredientAliases({ ...ingredient, name: canon }, allIngredients);
+  }, [ingredient, allIngredients]);
+
   const mergeResults = useMemo(() => {
     if (!mergeMode || !mergeSearch.trim()) return [];
-    const q = mergeSearch.toLowerCase();
+    const q = mergeSearch.trim();
     return allIngredients
-      .filter((i) => i.id !== ingredient.id && i.name.toLowerCase().includes(q))
+      .filter((i) => i.id !== ingredient.id && ingredientMatchesQuery(i, q))
       .slice(0, 8);
   }, [mergeMode, mergeSearch, allIngredients, ingredient.id]);
 
@@ -296,6 +314,39 @@ function IngredientModal({
 
   function removeTag(tag: string) {
     onChange({ ...ingredient, tags: ingredient.tags.filter((t) => t !== tag) });
+  }
+
+  function commitAlias() {
+    const canon = normalizeIngredientName(ingredient.name);
+    const a = normalizeIngredientName(aliasInput);
+    if (!a || a === canon) {
+      setAliasInput("");
+      setAliasCommitError("");
+      return;
+    }
+    const list = [...(ingredient.aliases ?? [])];
+    if (list.some((x) => normalizeIngredientName(x) === a)) {
+      setAliasInput("");
+      setAliasCommitError("");
+      return;
+    }
+    const trial: Ingredient = { ...ingredient, name: canon, aliases: [...list, a] };
+    const v = validateIngredientAliases(trial, allIngredients);
+    if (v.blockingReason) {
+      setAliasCommitError(v.blockingReason);
+      return;
+    }
+    setAliasCommitError("");
+    onChange(trial);
+    setAliasInput("");
+  }
+
+  function removeAlias(alias: string) {
+    const norm = normalizeIngredientName(alias);
+    onChange({
+      ...ingredient,
+      aliases: (ingredient.aliases ?? []).filter((x) => normalizeIngredientName(x) !== norm),
+    });
   }
 
   return (
@@ -335,6 +386,75 @@ function IngredientModal({
               data-testid="modal-ingredient-name"
             />
           </FieldLabel>
+
+          <div>
+            <span className="mb-1 block text-sm font-medium text-text-secondary">Also matches</span>
+            <p className="mb-2 text-xs text-text-muted">
+              Used for recipe import and search. Example: cilantro, fresh coriander.
+            </p>
+            {(aliasValidation.blockingReason || aliasCommitError) && (
+              <div
+                className="mb-2 rounded-md border border-danger bg-conflict-bg px-3 py-2 text-sm text-conflict-text"
+                data-testid="alias-blocking-error"
+                role="alert"
+              >
+                {aliasCommitError || aliasValidation.blockingReason}
+              </div>
+            )}
+            {aliasValidation.warnings.length > 0 && (
+              <div
+                className="mb-2 rounded-md border border-warning bg-warning/10 px-3 py-2 text-sm text-text-primary"
+                data-testid="alias-warnings"
+              >
+                <ul className="list-disc pl-4">
+                  {aliasValidation.warnings.map((w) => (
+                    <li key={w}>{w}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-1" data-testid="ingredient-alias-list">
+              {(ingredient.aliases ?? []).map((a) => (
+                <span key={a} className="inline-flex items-center gap-1">
+                  <Chip variant="neutral" data-testid="ingredient-alias-chip">
+                    {toSentenceCase(a)}
+                  </Chip>
+                  <Button
+                    variant="ghost"
+                    small
+                    type="button"
+                    aria-label={`Remove alias ${a}`}
+                    data-testid={`alias-remove-${a.replace(/\s+/g, "-")}`}
+                    onClick={() => removeAlias(a)}
+                  >
+                    x
+                  </Button>
+                </span>
+              ))}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Input
+                type="text"
+                value={aliasInput}
+                onChange={(e) => {
+                  setAliasInput(e.target.value);
+                  setAliasCommitError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitAlias();
+                  }
+                }}
+                placeholder="Add alternate name"
+                className="max-w-[220px]"
+                data-testid="alias-add-input"
+              />
+              <Button type="button" small onClick={commitAlias} data-testid="alias-add-btn">
+                Add
+              </Button>
+            </div>
+          </div>
 
           <FieldLabel label="Category">
             <Select
@@ -521,13 +641,20 @@ function IngredientModal({
 
         <div className="mt-6 flex items-center justify-between border-t border-border-light pt-4">
           {isNewIngredient ? <span /> : <Button variant="danger" onClick={onDelete} data-testid="delete-ingredient-btn">Delete</Button>}
-          <Button variant="primary" onClick={() => {
-            if (duplicates.length > 0) {
-              onDuplicateFound(ingredient, duplicates[0]!);
-            } else {
-              onDone();
-            }
-          }}>Done</Button>
+          <Button
+            variant="primary"
+            data-testid="ingredient-modal-done"
+            onClick={() => {
+              if (aliasValidation.blockingReason || aliasCommitError) return;
+              if (duplicates.length > 0) {
+                onDuplicateFound(ingredient, duplicates[0]!);
+              } else {
+                onDone();
+              }
+            }}
+          >
+            Done
+          </Button>
         </div>
     </AppModal>
   );
@@ -687,10 +814,19 @@ function IngredientTableRow({
         )}
 
         {/* Name */}
-        <span className="flex flex-1 min-w-0 items-center sm:flex-[2] self-center">
+        <span className="flex flex-1 min-w-0 items-center sm:flex-[2] self-center gap-1.5">
           <span className="block text-sm font-medium leading-tight text-text-primary truncate">
             {ingredient.name ? toSentenceCase(ingredient.name) : <span className="italic text-text-muted">Unnamed</span>}
           </span>
+          {(ingredient.aliases?.length ?? 0) > 0 && (
+            <span
+              className="flex-shrink-0 text-[10px] text-text-muted hidden sm:inline"
+              data-testid={`ingredient-row-alias-hint-${ingredient.id}`}
+              title={(ingredient.aliases ?? []).map((a) => toSentenceCase(a)).join(", ")}
+            >
+              +{ingredient.aliases!.length} alt
+            </span>
+          )}
           {/* Mobile: category + tags inline below name */}
           <span className="flex flex-wrap items-center gap-1 mt-0.5 sm:hidden">
             <Chip variant={CATEGORY_CHIP_VARIANT[ingredient.category]} className="text-[10px] leading-none">
@@ -867,7 +1003,7 @@ export default function IngredientManager() {
     if (!loaded || !householdId) return;
     const household = loadHousehold(householdId);
     if (!household) return;
-    household.ingredients = ingredients;
+    household.ingredients = sanitizeIngredientAliasesAgainstHousehold(ingredients);
     saveHousehold(household);
     setHouseholdRef(household);
   }, [loaded, householdId, ingredients]);
@@ -881,8 +1017,7 @@ export default function IngredientManager() {
   const filteredIngredients = useMemo(() => {
     return ingredients.filter((ing) => {
       if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        if (!ing.name.toLowerCase().includes(q)) return false;
+        if (!ingredientMatchesQuery(ing, searchQuery)) return false;
       }
       if (categoryFilter && ing.category !== categoryFilter) return false;
       if (tagFilter && !ing.tags.includes(tagFilter)) return false;
@@ -942,7 +1077,7 @@ export default function IngredientManager() {
       return;
     }
     if (editingIngredient?.name) {
-      updateIngredient({ ...editingIngredient, name: normalizeIngredientName(editingIngredient.name) });
+      updateIngredient(normalizeIngredientForStorage(editingIngredient));
     }
     setEditingId(null);
   }
@@ -950,18 +1085,26 @@ export default function IngredientManager() {
   function doneIngredientModal() {
     if (draftNewIngredient) {
       const ing = draftNewIngredient;
-      const normalized = { ...ing, name: normalizeIngredientName(ing.name) };
+      const normalized = normalizeIngredientForStorage(ing);
       if (!normalized.name.trim()) {
         setDraftNewIngredient(null);
         return;
       }
+      const v = validateIngredientAliases(normalized, ingredients);
+      if (v.blockingReason) return;
       setIngredients((prev) => [...prev, normalized]);
       setDraftNewIngredient(null);
       return;
     }
     if (editingIngredient) {
       if (editingIngredient.name) {
-        updateIngredient({ ...editingIngredient, name: normalizeIngredientName(editingIngredient.name) });
+        const normalized = normalizeIngredientForStorage(editingIngredient);
+        const v = validateIngredientAliases(
+          normalized,
+          ingredients.map((i) => (i.id === normalized.id ? normalized : i)),
+        );
+        if (v.blockingReason) return;
+        updateIngredient(normalized);
       }
       setEditingId(null);
     }
