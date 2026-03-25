@@ -10,6 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "seed": "npx tsx scripts/seed.ts",
     "db:seed": "npx tsx scripts/db-seed.ts"
@@ -41,6 +43,7 @@
     "fake-indexeddb": "^6.2.5",
     "globals": "^15.15.0",
     "jsdom": "^26.0.0",
+    "prettier": "^3.6.2",
     "tailwindcss": "^4.2.1",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",
