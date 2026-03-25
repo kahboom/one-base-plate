@@ -27,7 +27,7 @@ async function persistNewCloudHouseholdIds(
   updates: Array<{ localId: string; cloudHouseholdId: string }>,
 ): Promise<void> {
   if (updates.length === 0) return;
-  const { loadHouseholds, saveHouseholdsLocalOnly } = await import("../storage");
+  const { loadHouseholds, saveHouseholds } = await import("../storage");
   const list = loadHouseholds();
   let changed = false;
   for (const { localId, cloudHouseholdId } of updates) {
@@ -37,7 +37,7 @@ async function persistNewCloudHouseholdIds(
       changed = true;
     }
   }
-  if (changed) saveHouseholdsLocalOnly(list);
+  if (changed) saveHouseholds(list);
 }
 
 let repo: RemoteRepoAdapter = defaultRemoteRepo;
@@ -253,34 +253,36 @@ export async function compareWithRemote(
   localHouseholds: Household[],
 ): Promise<{ remotes: RemoteHousehold[]; comparisons: HouseholdCompareResult[] }> {
   const remotes = await pullRemoteHouseholds();
-  const comparisons: HouseholdCompareResult[] = [];
 
-  for (const local of localHouseholds) {
+  const fromLocal: HouseholdCompareResult[] = localHouseholds.map((local) => {
     const remote = defaultRemoteRepo.findRemoteForLocal(local, remotes);
     if (!remote) {
-      comparisons.push({ householdId: local.id, localNewer: true, remoteNewer: false, onlyLocal: true, onlyRemote: false });
-      continue;
+      return { householdId: local.id, localNewer: true, remoteNewer: false, onlyLocal: true, onlyRemote: false };
     }
     const localTime = (local as Household & { updatedAt?: string }).updatedAt;
     const remoteTime = remote.updated_at;
     const localMs = localTime ? new Date(localTime).getTime() : 0;
     const remoteMs = remoteTime ? new Date(remoteTime).getTime() : 0;
-    comparisons.push({
+    return {
       householdId: local.id,
       localNewer: localMs > remoteMs,
       remoteNewer: remoteMs > localMs,
       onlyLocal: false,
       onlyRemote: false,
-    });
-  }
+    };
+  });
 
-  for (const remote of remotes) {
-    if (!localHouseholds.some((l) => defaultRemoteRepo.localHouseholdMatchesRemote(l, remote))) {
-      comparisons.push({ householdId: remote.id, localNewer: false, remoteNewer: true, onlyLocal: false, onlyRemote: true });
-    }
-  }
+  const remoteOnly: HouseholdCompareResult[] = remotes
+    .filter((r) => !localHouseholds.some((l) => defaultRemoteRepo.localHouseholdMatchesRemote(l, r)))
+    .map((r) => ({
+      householdId: r.id,
+      localNewer: false,
+      remoteNewer: true,
+      onlyLocal: false,
+      onlyRemote: true,
+    }));
 
-  return { remotes, comparisons };
+  return { remotes, comparisons: [...fromLocal, ...remoteOnly] };
 }
 
 /**
@@ -411,10 +413,7 @@ export function __testOnly_setRemoteRepo(mock: RemoteRepoAdapter): void {
 /** Reset for tests. */
 export function __testOnly_resetSyncEngine(): void {
   currentUserId = null;
-  syncState = {
-    ...DEFAULT_SYNC_STATE,
-    online: checkOnline(),
-  };
+  syncState = { ...DEFAULT_SYNC_STATE, online: checkOnline() };
   listeners = [];
   repo = defaultRemoteRepo;
   loadHouseholdsRef = null;
