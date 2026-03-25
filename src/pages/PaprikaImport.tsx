@@ -74,7 +74,13 @@ function lineMatchesReviewFilter(line: PaprikaReviewLine, filter: ReviewFilter):
     return line.resolutionStatus === "pending";
   }
   if (filter === "ignored") return line.action === "ignore";
-  if (filter === "matched") return line.action === "use" && line.status === "matched";
+  if (filter === "matched") {
+    return (
+      line.action === "use" &&
+      line.status === "matched" &&
+      line.resolutionStatus === "resolved"
+    );
+  }
   if (filter === "low-confidence") {
     return line.confidenceBand === "low" && line.resolutionStatus === "pending";
   }
@@ -973,7 +979,7 @@ export default function PaprikaImport() {
                 onClick={() => setReviewFilter("ambiguous")}
                 data-testid="filter-ambiguous"
               >
-                Exceptions ({pendingCount})
+                Pending ({pendingCount})
               </Button>
               <Button
                 small

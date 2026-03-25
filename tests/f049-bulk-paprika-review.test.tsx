@@ -470,6 +470,114 @@ describe("PaprikaImport bulk review UI", () => {
 
     renderAt("/household/h-bulk/import-paprika");
     expect(screen.getByTestId("filter-ambiguous")).toBeInTheDocument();
+    expect(screen.getByTestId("filter-ambiguous")).toHaveTextContent(/Pending/i);
+  });
+
+  it("pending filter shows unresolved suggested matches only", async () => {
+    const user = userEvent.setup();
+    const hh = makeHousehold();
+    saveHousehold(hh);
+    const recipe = makePaprikaRecipe({
+      name: "Mixed Confidence",
+      ingredients: "200g chicken breast\n1 cup rice",
+    });
+    const chicken = hh.ingredients.find((i) => i.id === "ing-chicken")!;
+    const rice = hh.ingredients.find((i) => i.id === "ing-rice")!;
+    const parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
+    const pr = parsed[0]!;
+    const adjusted = [
+      {
+        ...pr,
+        parsedLines: pr.parsedLines.map((line) => {
+          if (line.name === "chicken breast") {
+            return {
+              ...line,
+              action: "use" as const,
+              status: "matched" as const,
+              matchedIngredient: chicken,
+              confidenceBand: "low" as const,
+              resolutionStatus: "pending" as const,
+            };
+          }
+          if (line.name === "rice") {
+            return {
+              ...line,
+              action: "use" as const,
+              status: "matched" as const,
+              matchedIngredient: rice,
+              confidenceBand: "strong" as const,
+              resolutionStatus: "resolved" as const,
+            };
+          }
+          return line;
+        }),
+      },
+    ];
+    saveImportSession({
+      householdId: "h-bulk",
+      parsedRecipes: adjusted,
+      step: "review",
+      savedAt: new Date().toISOString(),
+    });
+
+    renderAt("/household/h-bulk/import-paprika");
+    await user.click(screen.getByTestId("filter-ambiguous"));
+    expect(screen.getByTestId("review-group-suggested-0")).toBeInTheDocument();
+    expect(screen.getAllByTestId(/review-group-\d+/)).toHaveLength(1);
+  });
+
+  it("matched filter excludes pending low-confidence suggestions", async () => {
+    const user = userEvent.setup();
+    const hh = makeHousehold();
+    saveHousehold(hh);
+    const recipe = makePaprikaRecipe({
+      name: "Mixed Confidence",
+      ingredients: "200g chicken breast\n1 cup rice",
+    });
+    const chicken = hh.ingredients.find((i) => i.id === "ing-chicken")!;
+    const rice = hh.ingredients.find((i) => i.id === "ing-rice")!;
+    const parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
+    const pr = parsed[0]!;
+    const adjusted = [
+      {
+        ...pr,
+        parsedLines: pr.parsedLines.map((line) => {
+          if (line.name === "chicken breast") {
+            return {
+              ...line,
+              action: "use" as const,
+              status: "matched" as const,
+              matchedIngredient: chicken,
+              confidenceBand: "low" as const,
+              resolutionStatus: "pending" as const,
+            };
+          }
+          if (line.name === "rice") {
+            return {
+              ...line,
+              action: "use" as const,
+              status: "matched" as const,
+              matchedIngredient: rice,
+              confidenceBand: "strong" as const,
+              resolutionStatus: "resolved" as const,
+            };
+          }
+          return line;
+        }),
+      },
+    ];
+    saveImportSession({
+      householdId: "h-bulk",
+      parsedRecipes: adjusted,
+      step: "review",
+      savedAt: new Date().toISOString(),
+    });
+
+    renderAt("/household/h-bulk/import-paprika");
+    await user.click(screen.getByTestId("filter-matched"));
+    expect(screen.getAllByTestId(/review-group-\d+/)).toHaveLength(1);
+    expect(screen.getByText(/Will use household ingredient/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Suggested:/i)).not.toBeInTheDocument();
   });
 
   it("shows recipe name label on each review line", async () => {
