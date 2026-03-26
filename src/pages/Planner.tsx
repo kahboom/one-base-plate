@@ -737,6 +737,7 @@ export default function Planner() {
           baseMeals={household.baseMeals}
           recipes={household.recipes ?? []}
           mode="tonight"
+          contextRole={pickerComponent.role}
           onSave={(ref) => {
             if (!pickerComponent.id) return;
             setSessionOverrides((prev) => {

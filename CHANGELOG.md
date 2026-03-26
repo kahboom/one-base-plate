@@ -1,3 +1,11 @@
+### 2026-03-26 — Lightweight recipe organization tags (F066)
+- Requestor: product owner
+- Reason: Recipe library needed optional curated tags for light filtering and attach-recipe scannability without a heavyweight tag-management system or noisy modals.
+- Scope: Added `src/lib/recipeTags.ts` with curated tag list (quick, batch-prep, freezer-friendly, rescue, side, sauce, kid-friendly, prep-ahead), legacy alias normalization (`batch-friendly` → `batch-prep`, `rescue-friendly` → `rescue`), `computeTagBoost` / `recipeTypeContextScore` / `compareRecipesForSuggestion` for weak tie-break ranking. Recipe library: compact tag filter bar, tag chips on rows when present. Recipe modal: collapsed Organization section with tappable curated chips; unknown tags remain stored but are not in the picker. `ComponentRecipePicker`: up to two tag chips per recipe row, optional `contextRole` / `rescueMode`, within-group sort using name + type context + soft tag boost. Seed: `prep-ahead` on roasted broccoli, `kid-friendly` on cheese sauce in H001 fixture; regenerated `src/seed-data.json`. Tests: `tests/f066-recipe-tags.test.tsx`. PRD F066, screen maps S002/S004/S007/S010.
+- Files changed: `src/lib/recipeTags.ts` (new), `src/pages/RecipeLibrary.tsx`, `src/components/meals/ComponentRecipePicker.tsx`, `src/components/meals/ComponentForm.tsx`, `src/pages/Planner.tsx`, `fixtures/households/H001-mcg.json`, `src/seed-data.json`, `tests/f066-recipe-tags.test.tsx`, `PRD.json`, `CHANGELOG.md`, `agent-progress.md`
+- New feature IDs: F066
+- Data model changes: none (`Recipe.tags` already optional `string[]`)
+
 ### 2026-03-25 — Household-manageable ingredient aliases for import and search (F065)
 - Requestor: product owner
 - Reason: Users need alternate names (cilantro / coriander, courgette / zucchini) so recipe and Paprika imports match the right household ingredient without duplicating rows or changing the canonical display name. Catalog aliases (F059) alone cannot capture household-specific wording.

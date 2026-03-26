@@ -448,6 +448,7 @@ export default function ComponentForm({
           excludeMealId={excludeMealId}
           baseMeals={allMeals}
           recipes={recipes}
+          contextRole={component.role}
           onSave={(ref: ComponentRecipeRef) => {
             const withId = createComponentRecipeRef({
               ...ref,
@@ -477,6 +478,7 @@ export default function ComponentForm({
           excludeMealId={excludeMealId}
           baseMeals={allMeals}
           recipes={recipes}
+          contextRole={component.role}
           onSave={(ref: ComponentRecipeRef) => {
             const altIngId = altRecipePickerIngId;
             const withId = createComponentRecipeRef({

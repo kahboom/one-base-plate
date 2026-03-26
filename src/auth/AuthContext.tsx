@@ -37,19 +37,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    authService.getSession().then(({ session: s }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user?.id) {
-        setCurrentUserId(s.user.id);
-      }
-      setLoading(false);
-    });
+    authService
+      .getSession()
+      .then(({ session: s }) => {
+        setSession(s);
+        setUser(s?.user ?? null);
+        if (s?.user?.id) {
+          setCurrentUserId(s.user.id);
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
     const unsubscribe = authService.onAuthStateChange((_event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
       setCurrentUserId(s?.user?.id ?? null);
+      // Session is often delivered here (e.g. INITIAL_SESSION) before getSession() settles or if it hangs.
+      setLoading(false);
     });
 
     return () => unsubscribe?.();

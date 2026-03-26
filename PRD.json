@@ -2044,6 +2044,32 @@
         "S010",
         "S007"
       ]
+    },
+    {
+      "id": "F066",
+      "phase": 2,
+      "priority": "P2",
+      "category": "functional",
+      "description": "Lightweight recipe organization tags: curated optional tags on Recipe, compact library filter, soft ranking in attach-recipe picker — not a broad social/discovery taxonomy",
+      "steps": [
+        "Define a small curated tag set (quick, batch-prep, freezer-friendly, rescue, side, sauce, kid-friendly, prep-ahead) with legacy alias mapping (e.g. batch-friendly → batch-prep) for existing seed/import data.",
+        "Keep Recipe.tags as optional string[]; preserve unknown/custom tags in storage; expose only curated values in the quick-pick chip UI.",
+        "Recipe library: compact tag filter row; filter by one tag at a time with clear; name search and sort remain primary.",
+        "Recipe editor: collapsed Organization section with tappable chips; no required tags; no freeform tag sprawl in the main path.",
+        "ComponentRecipePicker: show up to two tag chips on recipe rows; soft tag + recipeType-context ranking within groups; recipeType remains stronger than tag-only hints.",
+        "Tests: filter, modal chips, persistence, unknown tags safe, ranking/tie-break behavior.",
+        "Update PRD screen mappings and changelog; optional seed tweaks only."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F057",
+        "F058"
+      ],
+      "acceptanceRefs": [
+        "S002",
+        "S004",
+        "S007"
+      ]
     }
   ],
   "milestones": [
@@ -2136,7 +2162,8 @@
         "F059",
         "F060",
         "F064",
-        "F065"
+        "F065",
+        "F066"
       ]
     },
     {
@@ -2227,6 +2254,7 @@
     "F063",
     "F064",
     "F065",
+    "F066",
     "F020",
     "F037",
     "F038",
@@ -2575,7 +2603,8 @@
       "F055",
       "F057",
       "F058",
-      "F059"
+      "F059",
+      "F066"
     ],
     "S003": [
       "F010",
@@ -2604,7 +2633,8 @@
       "F055",
       "F057",
       "F058",
-      "F059"
+      "F059",
+      "F066"
     ],
     "S005": [
       "F012",
@@ -2644,7 +2674,8 @@
       "F058",
       "F059",
       "F064",
-      "F065"
+      "F065",
+      "F066"
     ],
     "S008": [
       "F011",
@@ -2673,7 +2704,8 @@
       "F060",
       "F061",
       "F064",
-      "F065"
+      "F065",
+      "F066"
     ]
   },
   "agentExecutionRules": [

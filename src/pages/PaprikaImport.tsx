@@ -617,6 +617,36 @@ export default function PaprikaImport() {
     );
   }, [createGroupKey, parsedRecipes]);
 
+  const submitCreateIngredientModal = useCallback(() => {
+    if (!createGroupKey) return;
+    const draft: PaprikaCreateDraft = {
+      canonicalName: createForm.canonicalName,
+      category: createForm.category,
+      tags: createForm.tags.split(",").map((s) => s.trim()).filter(Boolean),
+      retainImportAlias: createForm.retainImportAlias,
+    };
+    const norm = normalizeIngredientName(draft.canonicalName);
+    const dups = findNearDuplicates(norm, ingredients);
+    if (dups.length > 0) {
+      setDuplicateDialog({ draft, groupKey: createGroupKey, existing: dups[0]! });
+      return;
+    }
+    const sample = parsedRecipes
+      .flatMap((r) => r.parsedLines)
+      .find((l) => (l.groupKey ?? groupKeyForParsedName(l.name)) === createGroupKey);
+    if (
+      sample?.matchedCatalog &&
+      (sample.confidenceBand === "exact" || sample.confidenceBand === "strong")
+    ) {
+      const ok = window.confirm(
+        `A strong catalog match (${toSentenceCase(sample.matchedCatalog.name)}) exists. Create a new ingredient anyway?`,
+      );
+      if (!ok) return;
+    }
+    applyResolutionToGroup(createGroupKey, { kind: "create", draft });
+    setCreateGroupKey(null);
+  }, [createGroupKey, createForm, ingredients, parsedRecipes, applyResolutionToGroup]);
+
   function handleBulkAction(action: "approve-matched" | "create-all-new" | "ignore-instructions") {
     setParsedRecipes((prev) => applyBulkAction(prev, action));
   }
@@ -1377,6 +1407,12 @@ export default function PaprikaImport() {
                 <Input
                   value={createForm.canonicalName}
                   onChange={(e) => setCreateForm((f) => ({ ...f, canonicalName: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      submitCreateIngredientModal();
+                    }
+                  }}
                   data-testid="paprika-create-canonical"
                 />
               </FieldLabel>
@@ -1403,6 +1439,7 @@ export default function PaprikaImport() {
                   onChange={(tags) => setCreateForm((f) => ({ ...f, tags }))}
                   suggestions={existingTagSuggestions}
                   inputTestId="paprika-create-tags"
+                  onSubmitPlain={submitCreateIngredientModal}
                 />
               </FieldLabel>
               <label className="flex items-center gap-2 text-sm text-text-secondary">
@@ -1419,35 +1456,7 @@ export default function PaprikaImport() {
               <div className="flex flex-wrap gap-2 pt-2">
                 <Button
                   variant="primary"
-                  onClick={() => {
-                    if (!createGroupKey) return;
-                    const draft: PaprikaCreateDraft = {
-                      canonicalName: createForm.canonicalName,
-                      category: createForm.category,
-                      tags: createForm.tags.split(",").map((s) => s.trim()).filter(Boolean),
-                      retainImportAlias: createForm.retainImportAlias,
-                    };
-                    const norm = normalizeIngredientName(draft.canonicalName);
-                    const dups = findNearDuplicates(norm, ingredients);
-                    if (dups.length > 0) {
-                      setDuplicateDialog({ draft, groupKey: createGroupKey, existing: dups[0]! });
-                      return;
-                    }
-                    const sample = parsedRecipes
-                      .flatMap((r) => r.parsedLines)
-                      .find((l) => (l.groupKey ?? groupKeyForParsedName(l.name)) === createGroupKey);
-                    if (
-                      sample?.matchedCatalog &&
-                      (sample.confidenceBand === "exact" || sample.confidenceBand === "strong")
-                    ) {
-                      const ok = window.confirm(
-                        `A strong catalog match (${toSentenceCase(sample.matchedCatalog.name)}) exists. Create a new ingredient anyway?`,
-                      );
-                      if (!ok) return;
-                    }
-                    applyResolutionToGroup(createGroupKey, { kind: "create", draft });
-                    setCreateGroupKey(null);
-                  }}
+                  onClick={submitCreateIngredientModal}
                   data-testid="paprika-create-submit"
                 >
                   {editingCreateDraft ? "Save changes" : "Apply to group"}

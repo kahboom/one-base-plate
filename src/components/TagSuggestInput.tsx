@@ -37,7 +37,10 @@ export interface TagSuggestInputProps {
   mode: TagSuggestMode;
   /** Single mode: called when user picks a suggestion (parent typically clears input). */
   onPick?: (tag: string) => void;
-  /** Single mode: Enter when not choosing from list (e.g. add typed tag). */
+  /**
+   * Enter when no dropdown option is keyboard-highlighted: e.g. single mode adds the typed tag;
+   * comma mode can submit a parent form.
+   */
   onSubmitPlain?: () => void;
 }
 
@@ -138,7 +141,7 @@ export default function TagSuggestInput({
         applySuggestion(filtered[activeIndex]!);
         return;
       }
-      if (mode === "single" && onSubmitPlain) {
+      if (onSubmitPlain) {
         e.preventDefault();
         onSubmitPlain();
         close();

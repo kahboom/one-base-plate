@@ -193,7 +193,6 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c('cat-garlic', 'Garlic', 'veg', ['staple'], false, false, [
     'garlic',
     'garlic cloves',
-    'garlic slices',
   ]),
   c('cat-mushrooms', 'Mushrooms', 'veg', ['quick'], false, false),
   c('cat-avocado', 'Avocado', 'veg', ['quick', 'mashable'], false, true),

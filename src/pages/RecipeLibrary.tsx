@@ -34,6 +34,13 @@ import {
   type RecipeSortKey,
   type SortDir,
 } from "../lib/listSort";
+import {
+  CURATED_RECIPE_TAGS,
+  recipeHasTag,
+  recipeTagLabel,
+  recipeMatchesCuratedFilter,
+  normalizeRecipeTagForCurated,
+} from "../lib/recipeTags";
 
 const RECIPE_SORT_OPTIONS: {
   value: string;
@@ -91,6 +98,7 @@ function recipePrepSummary(r: Recipe): string {
 }
 
 function RecipeRow({ recipe, onClick }: { recipe: Recipe; onClick: () => void }) {
+  const tagPreview = (recipe.tags ?? []).slice(0, 3);
   return (
     <button
       type="button"
@@ -119,9 +127,23 @@ function RecipeRow({ recipe, onClick }: { recipe: Recipe; onClick: () => void })
           {recipe.components.length !== 1 ? "s" : ""}
         </span>
       </span>
-      <Chip variant="neutral" className="text-[10px] shrink-0">
-        Library
-      </Chip>
+      <span
+        className="flex max-w-[42%] shrink-0 flex-wrap items-center justify-end gap-1"
+        data-testid={tagPreview.length > 0 ? "recipe-row-tags" : undefined}
+      >
+        {tagPreview.map((t) => (
+          <Chip
+            key={t}
+            variant="neutral"
+            className="max-w-[7rem] truncate text-[9px] font-normal opacity-90"
+          >
+            {recipeTagLabel(t)}
+          </Chip>
+        ))}
+        <Chip variant="neutral" className="text-[10px] shrink-0">
+          Library
+        </Chip>
+      </span>
     </button>
   );
 }
@@ -153,6 +175,9 @@ function RecipeModal({
   const [estimatedMinutes, setEstimatedMinutes] = useState(30);
 
   const totalPrep = (recipe.prepTimeMinutes ?? 0) + (recipe.cookTimeMinutes ?? 0);
+  const curatedOrgTagCount = CURATED_RECIPE_TAGS.filter(({ value }) =>
+    recipeHasTag(recipe, value),
+  ).length;
 
   useEffect(() => {
     setEstimatedMinutes(totalPrep > 0 ? totalPrep : 30);
@@ -472,6 +497,53 @@ function RecipeModal({
                 )}
               </FieldLabel>
             </details>
+
+            <details
+              data-testid="recipe-organization-section"
+              className="rounded-sm border border-border-light bg-surface-card p-3"
+            >
+              <summary className="cursor-pointer text-sm font-medium text-text-primary">
+                Organization
+                {curatedOrgTagCount > 0 ? ` · ${curatedOrgTagCount} tags` : ""}
+              </summary>
+              <p className="mt-2 text-xs text-text-muted">
+                Optional hints for browsing and suggestions. Does not change how the recipe cooks.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-1.5" data-testid="recipe-tag-chips">
+                {CURATED_RECIPE_TAGS.map(({ value, label }) => {
+                  const selected = recipeHasTag(recipe, value);
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      className="rounded-pill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                      onClick={() => {
+                        if (selected) {
+                          const target = normalizeRecipeTagForCurated(value);
+                          const next = (recipe.tags ?? []).filter(
+                            (t) => normalizeRecipeTagForCurated(t) !== target,
+                          );
+                          onChange({
+                            ...recipe,
+                            tags: next.length > 0 ? next : undefined,
+                          });
+                        } else {
+                          onChange({
+                            ...recipe,
+                            tags: [...(recipe.tags ?? []), value],
+                          });
+                        }
+                      }}
+                      data-testid={`recipe-tag-chip-${value}`}
+                    >
+                      <Chip variant={selected ? "info" : "neutral"} className="text-xs">
+                        {label}
+                      </Chip>
+                    </button>
+                  );
+                })}
+              </div>
+            </details>
           </section>
         </div>
 
@@ -562,6 +634,7 @@ export default function RecipeLibrary() {
   const [loaded, setLoaded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [recipeSort, setRecipeSort] = useState(RECIPE_SORT_OPTIONS[0]!.value);
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
 
@@ -607,10 +680,16 @@ export default function RecipeLibrary() {
   }, [householdId, loaded, recipes, ingredients]);
 
   const filteredRecipes = useMemo(() => {
-    if (!searchQuery.trim()) return recipes;
-    const q = searchQuery.toLowerCase();
-    return recipes.filter((r) => r.name.toLowerCase().includes(q));
-  }, [recipes, searchQuery]);
+    let list = recipes;
+    if (tagFilter) {
+      list = list.filter((r) => recipeMatchesCuratedFilter(r, tagFilter));
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((r) => r.name.toLowerCase().includes(q));
+    }
+    return list;
+  }, [recipes, searchQuery, tagFilter]);
 
   const sortedRecipes = useMemo(() => {
     const opt =
@@ -620,8 +699,8 @@ export default function RecipeLibrary() {
   }, [filteredRecipes, recipeSort]);
 
   const resetDeps = useMemo(
-    () => [searchQuery, recipeSort] as const,
-    [searchQuery, recipeSort],
+    () => [searchQuery, recipeSort, tagFilter] as const,
+    [searchQuery, recipeSort, tagFilter],
   );
   const {
     visibleItems: visibleRecipes,
@@ -705,6 +784,39 @@ export default function RecipeLibrary() {
         </div>
       </Card>
 
+      <Card className="mb-4 py-3" data-testid="recipe-tag-filter-bar">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-text-muted">Tag</span>
+          {CURATED_RECIPE_TAGS.map(({ value, label }) => {
+            const active = tagFilter === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                className="rounded-pill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                onClick={() => setTagFilter(active ? null : value)}
+                data-testid={`recipe-tag-filter-${value}`}
+              >
+                <Chip variant={active ? "info" : "neutral"} className="text-[10px]">
+                  {label}
+                </Chip>
+              </button>
+            );
+          })}
+          {tagFilter && (
+            <Button
+              small
+              variant="ghost"
+              className="text-xs"
+              onClick={() => setTagFilter(null)}
+              data-testid="recipe-tag-filter-clear"
+            >
+              Clear tag
+            </Button>
+          )}
+        </div>
+      </Card>
+
       <h2
         className="mb-3 text-sm font-medium text-text-secondary"
         data-testid="recipe-list-summary"
@@ -733,7 +845,9 @@ export default function RecipeLibrary() {
           </EmptyState>
         </div>
       ) : filteredRecipes.length === 0 ? (
-        <EmptyState>No recipes match your search.</EmptyState>
+        <div data-testid="recipe-library-no-matches">
+          <EmptyState>No recipes match your search or tag filter.</EmptyState>
+        </div>
       ) : (
         <div className="space-y-1.5" data-testid="recipe-list">
           {visibleRecipes.map((r) => (

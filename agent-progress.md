@@ -978,5 +978,15 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Tests:** `tests/f065-ingredient-aliases.test.tsx` (normalization, validation, merge, matcher tiers, `parseRecipeText`, `parsePaprikaLineFromRaw`, storage round-trip, Ingredient Manager RTL). Catalog delete flow in `f044` targets **Tortillas** (`cat-wraps`) explicitly. Household round-trip expectations in `f002`/`f039` include `suppressedCatalogIds: []`.
 - **Verification:** `npx tsc --noEmit`, `npx vitest run` — 1194 passed, 13 skipped (72 files).
 
+### F066 — Lightweight recipe organization tags (2026-03-26)
+- **PRD:** F066; milestone M5; P2 functional; depends on F057, F058; acceptance refs S002, S004, S007 (also listed on S010 for recipe-ingredient surfaces).
+- **Scope (not a taxonomy product):** Curated optional tags only (`quick`, `batch-prep`, `freezer-friendly`, `rescue`, `side`, `sauce`, `kid-friendly`, `prep-ahead`); `Recipe.tags` remains optional `string[]`; legacy aliases `batch-friendly` / `rescue-friendly` normalize for filter/UI; unknown tags preserved on load.
+- **Library:** `src/lib/recipeTags.ts` — `CURATED_RECIPE_TAGS`, `recipeTagLabel`, `recipeHasTag`, `recipeMatchesCuratedFilter`, `computeTagBoost`, `recipeTypeContextScore`, `compareRecipesForSuggestion`. Recipe library page: tag filter chip row + clear; list rows show up to 3 small tag labels when present.
+- **Editor:** `RecipeLibrary` modal — collapsed Organization `<details>` with tappable chips (info when selected); no required tags.
+- **Attach recipe:** `ComponentRecipePicker` — optional `contextRole` / `rescueMode`; within-group sort by name/type/tag weak boost; up to 2 tag chips on recipe rows. Wired from `ComponentForm` and `Planner` with `component.role`.
+- **Seed:** H001 `rec-roasted-broccoli` +`prep-ahead`; `rec-cheese-sauce` +`kid-friendly`; `npm run db:seed` → `src/seed-data.json`.
+- **Tests:** `tests/f066-recipe-tags.test.tsx` — 15 tests (model, filter, UI, persistence, modal chip, ranking dominance, visual gating).
+- **Verification:** `npx tsc --noEmit`, `npx vitest run` — 1209 passed, 13 skipped (73 files).
+
 ## Next Task
-- Continue from `PRD.json` implementation order after F065, or open a new scoped feature if product priorities shift.
+- Continue from `PRD.json` implementation order after F066, or open a new scoped feature if product priorities shift.

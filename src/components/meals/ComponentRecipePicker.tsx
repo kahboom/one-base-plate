@@ -3,6 +3,7 @@ import type { BaseMeal, ComponentRecipeRef, MealComponent, Recipe, RecipeRef } f
 import AppModal from "../AppModal";
 import { Button, FieldLabel, Input, Chip } from "../ui";
 import { useListKeyNav } from "../../hooks/useListKeyNav";
+import { compareRecipesForSuggestion, recipeTagLabel } from "../../lib/recipeTags";
 
 export type ComponentRecipePickerMode = "default" | "tonight" | "meal";
 
@@ -20,6 +21,10 @@ interface ComponentRecipePickerProps {
   /** Callback for meal-level RecipeRef (used when mode="meal"). */
   onSaveMealRef?: (ref: RecipeRef) => void;
   onRemove?: () => void;
+  /** Soft ranking hint: component role (e.g. sauce) for tag boost. */
+  contextRole?: string;
+  /** Soft ranking hint for rescue/quick tag nudge. */
+  rescueMode?: boolean;
 }
 
 type CandidateRow = {
@@ -41,12 +46,19 @@ export default function ComponentRecipePicker({
   onSave,
   onSaveMealRef,
   onRemove,
+  contextRole,
+  rescueMode = false,
 }: ComponentRecipePickerProps) {
   const [search, setSearch] = useState("");
   const [url, setUrl] = useState("");
   const [note, setNote] = useState("");
 
   const isMealMode = mode === "meal";
+
+  const boostContext = useMemo(
+    () => ({ componentRole: contextRole, rescueMode }),
+    [contextRole, rescueMode],
+  );
 
   const candidates = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -81,20 +93,31 @@ export default function ComponentRecipePicker({
       }
     }
 
-    rows.sort((a, b) => {
-      const order = { recipe: 0, imported: 1, meal: 2 };
-      return order[a.group] - order[b.group];
-    });
+    const sortRecipeRows = (list: CandidateRow[]) =>
+      [...list].sort((a, b) => {
+        if (a.recipe && b.recipe) {
+          return compareRecipesForSuggestion(a.recipe, b.recipe, search, boostContext);
+        }
+        return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+      });
 
-    return rows.slice(0, 16);
-  }, [baseMeals, recipes, excludeMealId, search]);
+    const recipeRows = sortRecipeRows(rows.filter((c) => c.group === "recipe"));
+    const importedRows = sortRecipeRows(rows.filter((c) => c.group === "imported"));
+    const mealRows = [...rows.filter((c) => c.group === "meal")].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+    );
+
+    return [...recipeRows, ...importedRows, ...mealRows].slice(0, 16);
+  }, [baseMeals, recipes, excludeMealId, search, boostContext]);
 
   const recipeRows = candidates.filter((c) => c.group === "recipe");
   const importedRows = candidates.filter((c) => c.group === "imported");
   const mealRows = candidates.filter((c) => c.group === "meal");
 
   const handleCandidateSelect = useCallback(
-    (index: number) => { pickRow(candidates[index]!); },
+    (index: number) => {
+      pickRow(candidates[index]!);
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [candidates],
   );
@@ -180,6 +203,21 @@ export default function ComponentRecipePicker({
     meal: "Base meals",
   };
 
+  function renderRecipeTagChips(recipe: Recipe | undefined) {
+    const tags = recipe?.tags ?? [];
+    if (tags.length === 0) return null;
+    const shown = tags.slice(0, 2);
+    return (
+      <span className="flex max-w-[40%] shrink-0 flex-wrap justify-end gap-0.5" data-testid="recipe-picker-row-tags">
+        {shown.map((t) => (
+          <Chip key={t} variant="neutral" className="max-w-[5.5rem] truncate text-[9px] font-normal opacity-90">
+            {recipeTagLabel(t)}
+          </Chip>
+        ))}
+      </span>
+    );
+  }
+
   function renderGroup(rows: CandidateRow[], group: CandidateRow["group"], flatOffset: number) {
     if (rows.length === 0) return null;
     return (
@@ -193,7 +231,7 @@ export default function ComponentRecipePicker({
             <button
               key={`${group}-${row.id}`}
               type="button"
-              className={`flex w-full items-center justify-between rounded-sm border px-2 py-2 text-left text-sm transition-colors ${
+              className={`flex w-full items-center justify-between gap-1 rounded-sm border px-2 py-2 text-left text-sm transition-colors ${
                 keyNav.activeIndex === flatIndex
                   ? "border-brand bg-bg ring-1 ring-brand"
                   : "border-border-light hover:bg-bg"
@@ -202,17 +240,20 @@ export default function ComponentRecipePicker({
               onMouseEnter={() => keyNav.setActiveIndex(flatIndex)}
               data-testid={`pick-recipe-${group}-${row.id}`}
             >
-              <span className="truncate font-medium text-text-primary">{row.name}</span>
-              {row.recipe?.recipeType && (
-                <Chip variant="neutral" className="shrink-0 text-[10px] ml-1">
-                  {row.recipe.recipeType}
-                </Chip>
-              )}
-              {row.group === "imported" && (
-                <Chip variant="info" className="shrink-0 text-[10px] ml-1">
-                  Imported
-                </Chip>
-              )}
+              <span className="min-w-0 truncate font-medium text-text-primary">{row.name}</span>
+              <span className="flex shrink-0 items-center gap-0.5">
+                {renderRecipeTagChips(row.recipe)}
+                {row.recipe?.recipeType && (
+                  <Chip variant="neutral" className="ml-1 shrink-0 text-[10px]">
+                    {row.recipe.recipeType}
+                  </Chip>
+                )}
+                {row.group === "imported" && (
+                  <Chip variant="info" className="shrink-0 text-[10px] ml-1">
+                    Imported
+                  </Chip>
+                )}
+              </span>
             </button>
           );
         })}
@@ -247,7 +288,10 @@ export default function ComponentRecipePicker({
           <Input
             type="search"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); keyNav.setActiveIndex(-1); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              keyNav.setActiveIndex(-1);
+            }}
             onKeyDown={keyNav.onKeyDown}
             placeholder="Search…"
             data-testid="component-recipe-search"

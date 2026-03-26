@@ -754,7 +754,7 @@
       "id": "rec-roasted-broccoli",
       "name": "Roasted broccoli",
       "recipeType": "component",
-      "tags": ["quick", "batch-friendly"],
+      "tags": ["quick", "batch-friendly", "prep-ahead"],
       "components": [
         {
           "id": "mc-rrb-1",
@@ -812,7 +812,7 @@
       "id": "rec-cheese-sauce",
       "name": "Simple cheese sauce",
       "recipeType": "sauce",
-      "tags": ["quick", "rescue-friendly"],
+      "tags": ["quick", "rescue-friendly", "kid-friendly"],
       "components": [
         {
           "id": "mc-rcs-1",
