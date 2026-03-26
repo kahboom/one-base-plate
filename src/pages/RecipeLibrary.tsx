@@ -283,6 +283,54 @@ function RecipeModal({
         </div>
 
         <div className="flex-1 min-h-0 space-y-6 overflow-y-auto px-4 py-5 sm:px-6">
+          <details
+            open
+            data-testid="recipe-organization-section"
+            className="rounded-sm border border-border-light bg-surface-card p-3"
+          >
+            <summary className="cursor-pointer text-sm font-medium text-text-primary">
+              Organization
+              {curatedOrgTagCount > 0 ? ` · ${curatedOrgTagCount} tags` : ""}
+            </summary>
+            <p className="mt-2 text-xs text-text-muted">
+              Optional hints for browsing and suggestions. Does not change how the recipe cooks.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-1.5" data-testid="recipe-tag-chips">
+              {CURATED_RECIPE_TAGS.map(({ value, label }) => {
+                const selected = recipeHasTag(recipe, value);
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    className="rounded-pill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                    onClick={() => {
+                      if (selected) {
+                        const target = normalizeRecipeTagForCurated(value);
+                        const next = (recipe.tags ?? []).filter(
+                          (t) => normalizeRecipeTagForCurated(t) !== target,
+                        );
+                        onChange({
+                          ...recipe,
+                          tags: next.length > 0 ? next : undefined,
+                        });
+                      } else {
+                        onChange({
+                          ...recipe,
+                          tags: [...(recipe.tags ?? []), value],
+                        });
+                      }
+                    }}
+                    data-testid={`recipe-tag-chip-${value}`}
+                  >
+                    <Chip variant={selected ? "info" : "neutral"} className="text-xs">
+                      {label}
+                    </Chip>
+                  </button>
+                );
+              })}
+            </div>
+          </details>
+
           <section className="space-y-3">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
               1. Recipe identity
@@ -496,53 +544,6 @@ function RecipeModal({
                   />
                 )}
               </FieldLabel>
-            </details>
-
-            <details
-              data-testid="recipe-organization-section"
-              className="rounded-sm border border-border-light bg-surface-card p-3"
-            >
-              <summary className="cursor-pointer text-sm font-medium text-text-primary">
-                Organization
-                {curatedOrgTagCount > 0 ? ` · ${curatedOrgTagCount} tags` : ""}
-              </summary>
-              <p className="mt-2 text-xs text-text-muted">
-                Optional hints for browsing and suggestions. Does not change how the recipe cooks.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-1.5" data-testid="recipe-tag-chips">
-                {CURATED_RECIPE_TAGS.map(({ value, label }) => {
-                  const selected = recipeHasTag(recipe, value);
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      className="rounded-pill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                      onClick={() => {
-                        if (selected) {
-                          const target = normalizeRecipeTagForCurated(value);
-                          const next = (recipe.tags ?? []).filter(
-                            (t) => normalizeRecipeTagForCurated(t) !== target,
-                          );
-                          onChange({
-                            ...recipe,
-                            tags: next.length > 0 ? next : undefined,
-                          });
-                        } else {
-                          onChange({
-                            ...recipe,
-                            tags: [...(recipe.tags ?? []), value],
-                          });
-                        }
-                      }}
-                      data-testid={`recipe-tag-chip-${value}`}
-                    >
-                      <Chip variant={selected ? "info" : "neutral"} className="text-xs">
-                        {label}
-                      </Chip>
-                    </button>
-                  );
-                })}
-              </div>
             </details>
           </section>
         </div>
