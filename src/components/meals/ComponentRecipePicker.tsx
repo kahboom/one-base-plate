@@ -243,11 +243,6 @@ export default function ComponentRecipePicker({
               <span className="min-w-0 truncate font-medium text-text-primary">{row.name}</span>
               <span className="flex shrink-0 items-center gap-0.5">
                 {renderRecipeTagChips(row.recipe)}
-                {row.recipe?.recipeType && (
-                  <Chip variant="neutral" className="ml-1 shrink-0 text-[10px]">
-                    {row.recipe.recipeType}
-                  </Chip>
-                )}
                 {row.group === "imported" && (
                   <Chip variant="info" className="shrink-0 text-[10px] ml-1">
                     Imported
@@ -262,7 +257,7 @@ export default function ComponentRecipePicker({
   }
 
   const title = isMealMode
-    ? "Attach whole-meal recipe"
+    ? "Attach entree recipe"
     : mode === "tonight"
       ? "Tonight override"
       : "Attach recipe";

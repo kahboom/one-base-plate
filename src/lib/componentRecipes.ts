@@ -6,6 +6,7 @@ import type {
   MealComponent,
   Recipe,
 } from "../types";
+import { recipeHasTag } from "./recipeTags";
 
 export function getDefaultRecipeRef(
   component: MealComponent,
@@ -106,10 +107,10 @@ export function resolveFullCookingRef(
       componentId: cid ?? "",
       sourceType: "internal-meal",
       recipeId: primary.recipeId || undefined,
-      label: primary.label ?? "Whole-meal recipe",
+      label: primary.label ?? "Entree recipe",
       notes: primary.notes,
     };
-    return { effective: synth, source: "meal", sourceLabel: "Whole-meal recipe" };
+    return { effective: synth, source: "meal", sourceLabel: "Entree recipe" };
   }
 
   const ingredient = ingredients.find((i) => i.id === component.ingredientId);
@@ -232,13 +233,13 @@ export function hasBatchPrepRecipe(
   for (const ref of meal.recipeRefs ?? []) {
     if (ref.role === "batch-prep") return true;
     const r = recipes.find((x) => x.id === ref.recipeId);
-    if (r?.recipeType === "batch-prep") return true;
+    if (r && recipeHasTag(r, "batch-prep")) return true;
   }
   for (const c of meal.components) {
     for (const cr of c.recipeRefs ?? []) {
       if (cr.recipeId) {
         const r = recipes.find((x) => x.id === cr.recipeId);
-        if (r?.recipeType === "batch-prep") return true;
+        if (r && recipeHasTag(r, "batch-prep")) return true;
       }
     }
   }
@@ -254,7 +255,7 @@ export function hasPrepAheadRecipe(
     for (const cr of c.recipeRefs ?? []) {
       if (cr.recipeId) {
         const r = recipes.find((x) => x.id === cr.recipeId);
-        if (r?.recipeType === "batch-prep") return true;
+        if (r && recipeHasTag(r, "batch-prep")) return true;
       }
     }
   }
@@ -301,7 +302,7 @@ export function findPrepAheadOpportunities(
     const ing = ingredients.find((i) => i.id === ingId);
     const batchRecipe = recipes.find(
       (r) =>
-        r.recipeType === "batch-prep" &&
+        recipeHasTag(r, "batch-prep") &&
         r.components.some((c) => c.ingredientId === ingId),
     );
     const ingDefault = ing?.defaultRecipeRefs?.find((r) => r.role === "batch-prep");

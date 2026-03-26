@@ -134,7 +134,7 @@ describe("F058 — resolveFullCookingRef priority chain", () => {
     const bareComp = makeComponent({ id: "comp-bare", ingredientId: "ing-chicken" });
     const result = resolveFullCookingRef(bareComp, meal, ingredients, {});
     expect(result.source).toBe("meal");
-    expect(result.sourceLabel).toBe("Whole-meal recipe");
+    expect(result.sourceLabel).toBe("Entree recipe");
     expect(result.effective?.label).toBe("Full dinner recipe");
   });
 
@@ -275,7 +275,7 @@ describe("F058 — hasBatchPrepRecipe", () => {
       name: "Test",
       recipeRefs: [{ recipeId: "r1", role: "primary" }],
     });
-    const recipes = [makeRecipe({ id: "r1", name: "Batch", recipeType: "batch-prep" })];
+    const recipes = [makeRecipe({ id: "r1", name: "Batch", tags: ["batch-prep"] })];
     expect(hasBatchPrepRecipe(meal, recipes)).toBe(true);
   });
 
@@ -285,7 +285,7 @@ describe("F058 — hasBatchPrepRecipe", () => {
       name: "Test",
       recipeRefs: [{ recipeId: "r1", role: "primary" }],
     });
-    const recipes = [makeRecipe({ id: "r1", name: "Normal", recipeType: "whole-meal" })];
+    const recipes = [makeRecipe({ id: "r1", name: "Normal", tags: ["whole-meal"] })];
     expect(hasBatchPrepRecipe(meal, recipes)).toBe(false);
   });
 });
@@ -303,7 +303,7 @@ describe("F058 — hasPrepAheadRecipe", () => {
         }),
       ],
     });
-    const recipes = [makeRecipe({ id: "r-batch", name: "Batch prep", recipeType: "batch-prep" })];
+    const recipes = [makeRecipe({ id: "r-batch", name: "Batch prep", tags: ["batch-prep"] })];
     expect(hasPrepAheadRecipe(meal, recipes)).toBe(true);
   });
 });
@@ -326,7 +326,7 @@ describe("F058 — findPrepAheadOpportunities", () => {
     const batchRecipe = makeRecipe({
       id: "batch-chicken",
       name: "Batch chicken",
-      recipeType: "batch-prep",
+      tags: ["batch-prep"],
       components: [makeComponent({ ingredientId: "ing-chicken" })],
     });
     const days: DayPlan[] = [

@@ -1,4 +1,5 @@
 import type { ComponentRecipeRef, Household, Ingredient, MealComponent, Recipe, RecipeRef } from "./types";
+import { normalizeRecipeTagForCurated } from "./lib/recipeTags";
 import seedData from "./seed-data.json";
 import {
   DEFAULT_HOUSEHOLD_KEY,
@@ -8,6 +9,8 @@ import {
   RECIPE_REF_MIGRATION_KEY,
   SEEDED_KEY,
   STORAGE_KEY,
+  STRIP_WHOLE_MEAL_TAGS_KEY,
+  STRIP_THEME_RECIPE_TAGS_KEY,
 } from "./storage/constants";
 import { getAppDb, recreateAppDb } from "./storage/dexie-db";
 import { migrateLegacyIntoDexieIfNeeded } from "./storage/migrate-v3";
@@ -20,6 +23,8 @@ export {
   SEEDED_KEY,
   MIGRATION_KEY,
   RECIPE_REF_MIGRATION_KEY,
+  STRIP_WHOLE_MEAL_TAGS_KEY,
+  STRIP_THEME_RECIPE_TAGS_KEY,
   DEFAULT_HOUSEHOLD_KEY,
 } from "./storage/constants";
 
@@ -43,19 +48,42 @@ export function ensureHouseholdComponentIds(household: Household): Household {
   return { ...household, baseMeals };
 }
 
+/** Strip removed Recipe fields from persisted JSON and map legacy `recipeType` into tags. */
+export function sanitizeRecipe(recipe: Recipe): Recipe {
+  const r = recipe as Recipe & { recipeType?: string; parentRecipeId?: string };
+  const { recipeType, parentRecipeId: _parent, ...rest } = r;
+  let tags = [...(rest.tags ?? [])];
+  const typeToTag: Record<string, string> = {
+    "whole-meal": "whole-meal",
+    sauce: "sauce",
+    "batch-prep": "batch-prep",
+  };
+  if (recipeType && typeToTag[recipeType]) {
+    const t = typeToTag[recipeType];
+    if (!tags.some((x) => normalizeRecipeTagForCurated(x) === t)) tags.push(t);
+  }
+  return { ...rest, tags: tags.length > 0 ? tags : undefined };
+}
+
+function hadLegacyRecipeFields(recipe: Recipe): boolean {
+  const o = recipe as unknown as Record<string, unknown>;
+  return "recipeType" in o || "parentRecipeId" in o;
+}
+
 function ensureRecipeComponentIds(household: Household): Household {
   let changed = false;
   const recipeList = household.recipes ?? [];
   const recipes = recipeList.map((recipe) => {
-    let recipeChanged = false;
-    const components = recipe.components.map((c) => {
+    const needsSanitize = hadLegacyRecipeFields(recipe);
+    const working = needsSanitize ? sanitizeRecipe(recipe) : recipe;
+    const components = working.components.map((c) => {
       if (c.id) return c;
-      recipeChanged = true;
       return { ...c, id: crypto.randomUUID() };
     });
-    if (!recipeChanged) return recipe;
+    const compsChanged = components.some((c, i) => c !== working.components[i]);
+    if (!needsSanitize && !compsChanged) return recipe;
     changed = true;
-    return { ...recipe, components };
+    return { ...working, components };
   });
   if (!changed && recipeList === household.recipes) return household;
   return { ...household, recipes };
@@ -593,14 +621,14 @@ export function migrateHouseholdIngredients(household: Household): MigrationResu
 export interface RecipeRefMigrationResult {
   recipeRefsBackfilled: number;
   componentRecipeIdsSet: number;
-  recipeTypesInferred: number;
+  wholeMealTagsAdded: number;
 }
 
 export function migrateHouseholdRecipeRefs(household: Household): RecipeRefMigrationResult {
   const result: RecipeRefMigrationResult = {
     recipeRefsBackfilled: 0,
     componentRecipeIdsSet: 0,
-    recipeTypesInferred: 0,
+    wholeMealTagsAdded: 0,
   };
 
   const recipeIds = new Set((household.recipes ?? []).map((r) => r.id));
@@ -627,15 +655,10 @@ export function migrateHouseholdRecipeRefs(household: Household): RecipeRefMigra
     }
   }
 
-  for (const recipe of household.recipes ?? []) {
-    if (!recipe.recipeType) {
-      if (recipe.provenance) {
-        recipe.recipeType = "whole-meal";
-        result.recipeTypesInferred++;
-      }
-    }
+  household.recipes = (household.recipes ?? []).map((recipe) => {
+    const r = sanitizeRecipe(recipe);
 
-    for (const comp of recipe.components) {
+    for (const comp of r.components) {
       if (!comp.recipeRefs) continue;
       for (const cRef of comp.recipeRefs) {
         if (!cRef.recipeId && cRef.importedRecipeSourceId) {
@@ -644,36 +667,116 @@ export function migrateHouseholdRecipeRefs(household: Household): RecipeRefMigra
         }
       }
     }
-  }
+    return r;
+  });
 
   return result;
 }
 
 export function runRecipeRefMigrationIfNeeded(): RecipeRefMigrationResult {
   if (localStorage.getItem(RECIPE_REF_MIGRATION_KEY)) {
-    return { recipeRefsBackfilled: 0, componentRecipeIdsSet: 0, recipeTypesInferred: 0 };
+    return { recipeRefsBackfilled: 0, componentRecipeIdsSet: 0, wholeMealTagsAdded: 0 };
   }
   const households = loadHouseholds();
   if (households.length === 0) {
     localStorage.setItem(RECIPE_REF_MIGRATION_KEY, "1");
-    return { recipeRefsBackfilled: 0, componentRecipeIdsSet: 0, recipeTypesInferred: 0 };
+    return { recipeRefsBackfilled: 0, componentRecipeIdsSet: 0, wholeMealTagsAdded: 0 };
   }
 
   const totals: RecipeRefMigrationResult = {
     recipeRefsBackfilled: 0,
     componentRecipeIdsSet: 0,
-    recipeTypesInferred: 0,
+    wholeMealTagsAdded: 0,
   };
   for (const household of households) {
     const r = migrateHouseholdRecipeRefs(household);
     totals.recipeRefsBackfilled += r.recipeRefsBackfilled;
     totals.componentRecipeIdsSet += r.componentRecipeIdsSet;
-    totals.recipeTypesInferred += r.recipeTypesInferred;
+    totals.wholeMealTagsAdded += r.wholeMealTagsAdded;
   }
 
   saveHouseholds(households);
   localStorage.setItem(RECIPE_REF_MIGRATION_KEY, "1");
   return totals;
+}
+
+/**
+ * One-time: removes stored `whole-meal` tags from every recipe. Older builds inferred this tag on
+ * import/migration; changing the code does not rewrite already-saved households. Users can add
+ * "Entree" again under Recipe Library → Organization when it applies.
+ */
+export function runStripWholeMealTagsIfNeeded(): number {
+  if (localStorage.getItem(STRIP_WHOLE_MEAL_TAGS_KEY)) return 0;
+  const households = loadHouseholds();
+  if (households.length === 0) {
+    localStorage.setItem(STRIP_WHOLE_MEAL_TAGS_KEY, "1");
+    return 0;
+  }
+  let recipesUpdated = 0;
+  for (const h of households) {
+    const list = h.recipes ?? [];
+    if (list.length === 0) continue;
+    h.recipes = list.map((recipe) => {
+      const tags = recipe.tags;
+      if (!tags?.length) return recipe;
+      const next = tags.filter((t) => normalizeRecipeTagForCurated(t) !== "whole-meal");
+      if (next.length === tags.length) return recipe;
+      recipesUpdated++;
+      return { ...recipe, tags: next.length > 0 ? next : undefined };
+    });
+  }
+  saveHouseholds(households);
+  localStorage.setItem(STRIP_WHOLE_MEAL_TAGS_KEY, "1");
+  return recipesUpdated;
+}
+
+const THEME_TAGS_REMOVED = new Set(["taco", "pizza", "pasta"]);
+
+function stripThemeTagsFromStringList(tags: string[] | undefined): string[] | undefined {
+  if (!tags?.length) return tags;
+  const next = tags.filter((t) => !THEME_TAGS_REMOVED.has(t));
+  if (next.length === tags.length) return tags;
+  return next.length > 0 ? next : undefined;
+}
+
+/**
+ * One-time: removes theme-style tags (taco, pizza, pasta) from recipes and base meals. Seed data no
+ * longer uses these; existing saved households are updated on first load after upgrade.
+ */
+export function runStripThemeRecipeTagsIfNeeded(): {
+  recipesUpdated: number;
+  baseMealsUpdated: number;
+} {
+  if (localStorage.getItem(STRIP_THEME_RECIPE_TAGS_KEY)) {
+    return { recipesUpdated: 0, baseMealsUpdated: 0 };
+  }
+  const households = loadHouseholds();
+  if (households.length === 0) {
+    localStorage.setItem(STRIP_THEME_RECIPE_TAGS_KEY, "1");
+    return { recipesUpdated: 0, baseMealsUpdated: 0 };
+  }
+  let recipesUpdated = 0;
+  let baseMealsUpdated = 0;
+  for (const h of households) {
+    const list = h.recipes ?? [];
+    if (list.length > 0) {
+      h.recipes = list.map((recipe) => {
+        const next = stripThemeTagsFromStringList(recipe.tags);
+        if (next === recipe.tags) return recipe;
+        recipesUpdated++;
+        return { ...recipe, tags: next };
+      });
+    }
+    for (const meal of h.baseMeals) {
+      const next = stripThemeTagsFromStringList(meal.tags);
+      if (next === meal.tags) continue;
+      meal.tags = next;
+      baseMealsUpdated++;
+    }
+  }
+  saveHouseholds(households);
+  localStorage.setItem(STRIP_THEME_RECIPE_TAGS_KEY, "1");
+  return { recipesUpdated, baseMealsUpdated };
 }
 
 export function runMigrationIfNeeded(): MigrationResult {

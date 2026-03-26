@@ -456,8 +456,7 @@
     {
       "id": "rec-taco-chicken",
       "name": "Grilled taco chicken",
-      "recipeType": "component",
-      "tags": ["batch-friendly", "freezer-friendly", "taco"],
+      "tags": ["batch-friendly", "freezer-friendly"],
       "components": [
         {
           "id": "mc-rtc-1",
@@ -506,8 +505,7 @@
     {
       "id": "rec-black-bean-filling",
       "name": "Black bean taco filling",
-      "recipeType": "component",
-      "tags": ["batch-friendly", "quick", "taco"],
+      "tags": ["batch-friendly", "quick"],
       "components": [
         {
           "id": "mc-rbb-1",
@@ -556,8 +554,7 @@
     {
       "id": "rec-yogurt-lime-sauce",
       "name": "Quick yogurt-lime sauce",
-      "recipeType": "sauce",
-      "tags": ["quick", "taco"],
+      "tags": ["quick", "sauce"],
       "components": [
         {
           "id": "mc-ryls-1",
@@ -587,8 +584,7 @@
     {
       "id": "rec-pizza-dough",
       "name": "Basic pizza dough",
-      "recipeType": "component",
-      "tags": ["batch-friendly", "freezer-friendly", "pizza"],
+      "tags": ["batch-friendly", "freezer-friendly"],
       "components": [
         {
           "id": "mc-rpd-1",
@@ -626,8 +622,7 @@
     {
       "id": "rec-pizza-sauce",
       "name": "Quick pizza sauce",
-      "recipeType": "sauce",
-      "tags": ["quick", "batch-friendly", "freezer-friendly", "pizza"],
+      "tags": ["quick", "batch-friendly", "freezer-friendly", "sauce"],
       "components": [
         {
           "id": "mc-rps-1",
@@ -664,8 +659,7 @@
     {
       "id": "rec-tray-pizza",
       "name": "Simple tray pizza",
-      "recipeType": "whole-meal",
-      "tags": ["batch-friendly", "pizza"],
+      "tags": ["whole-meal", "batch-friendly"],
       "components": [
         {
           "id": "mc-rtp-1",
@@ -709,8 +703,7 @@
     {
       "id": "rec-pasta-bake-sauce",
       "name": "Basic pasta bake sauce",
-      "recipeType": "sauce",
-      "tags": ["batch-friendly", "freezer-friendly", "pasta"],
+      "tags": ["batch-friendly", "freezer-friendly", "sauce"],
       "components": [
         {
           "id": "mc-rpbs-1",
@@ -753,7 +746,6 @@
     {
       "id": "rec-roasted-broccoli",
       "name": "Roasted broccoli",
-      "recipeType": "component",
       "tags": ["quick", "batch-friendly", "prep-ahead"],
       "components": [
         {
@@ -785,7 +777,6 @@
     {
       "id": "rec-seasoned-rice",
       "name": "Plain seasoned rice",
-      "recipeType": "component",
       "tags": ["quick", "batch-friendly", "bowl"],
       "components": [
         {
@@ -811,8 +802,7 @@
     {
       "id": "rec-cheese-sauce",
       "name": "Simple cheese sauce",
-      "recipeType": "sauce",
-      "tags": ["quick", "rescue-friendly", "kid-friendly"],
+      "tags": ["quick", "rescue-friendly", "kid-friendly", "sauce"],
       "components": [
         {
           "id": "mc-rcs-1",
@@ -850,6 +840,49 @@
       "defaultPrep": "Make a roux with butter and flour, whisk in milk, melt cheese.",
       "prepTimeMinutes": 2,
       "cookTimeMinutes": 8,
+      "servings": "4"
+    },
+    {
+      "id": "rec-tomato-soup",
+      "name": "Simple tomato soup",
+      "tags": ["quick", "soup", "batch-friendly", "freezer-friendly"],
+      "components": [
+        {
+          "id": "mc-rts-1",
+          "ingredientId": "ing-tinned-tomatoes",
+          "role": "veg",
+          "quantity": "2 tins"
+        },
+        {
+          "id": "mc-rts-2",
+          "ingredientId": "ing-onion",
+          "role": "veg",
+          "quantity": "1 medium"
+        },
+        {
+          "id": "mc-rts-3",
+          "ingredientId": "ing-garlic",
+          "role": "veg",
+          "quantity": "2 cloves"
+        },
+        {
+          "id": "mc-rts-4",
+          "ingredientId": "ing-olive-oil",
+          "role": "sauce",
+          "quantity": "1 tbsp"
+        },
+        {
+          "id": "mc-rts-5",
+          "ingredientId": "ing-italian-seasoning",
+          "role": "sauce",
+          "quantity": "1 tsp"
+        }
+      ],
+      "ingredientsText": "2 tins tinned tomatoes\n1 medium onion, diced\n2 cloves garlic, minced\n1 tbsp olive oil\n1 tsp italian seasoning\n750ml water or vegetable stock\nSalt and pepper",
+      "directions": "1. Heat olive oil in a saucepan over medium heat.\n2. Sauté onion until soft, about 5 minutes.\n3. Add garlic and italian seasoning; cook 1 minute.\n4. Pour in tomatoes and water or stock; bring to a simmer.\n5. Cook 15-20 minutes, then blend until smooth.\n6. Season with salt and pepper.",
+      "defaultPrep": "Sauté onion and garlic, simmer tomatoes, blend.",
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 25,
       "servings": "4"
     }
   ],
@@ -940,7 +973,6 @@
     {
       "id": "bm-taco-night",
       "name": "Taco night",
-      "tags": ["taco"],
       "components": [
         {
           "id": "mc-bm-tn-1",
@@ -1022,7 +1054,6 @@
     {
       "id": "bm-pizza-night",
       "name": "Pizza night",
-      "tags": ["pizza"],
       "components": [
         {
           "id": "mc-bm-pn-1",
@@ -1100,7 +1131,6 @@
     {
       "id": "bm-pasta-bake",
       "name": "Pasta bake",
-      "tags": ["pasta"],
       "components": [
         {
           "id": "mc-bm-pb-1",

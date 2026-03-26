@@ -293,7 +293,8 @@ function RecipeModal({
               {curatedOrgTagCount > 0 ? ` · ${curatedOrgTagCount} tags` : ""}
             </summary>
             <p className="mt-2 text-xs text-text-muted">
-              Optional hints for browsing and suggestions. Does not change how the recipe cooks.
+              Optional hints for browsing, filtering, and attach-recipe suggestions. Does not change
+              how the recipe cooks.
             </p>
             <div className="mt-3 flex flex-wrap gap-1.5" data-testid="recipe-tag-chips">
               {CURATED_RECIPE_TAGS.map(({ value, label }) => {

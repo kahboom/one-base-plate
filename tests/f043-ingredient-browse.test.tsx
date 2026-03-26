@@ -248,6 +248,25 @@ describe("F043: Modal editing", () => {
     expect(screen.getByText("Aardvark roast")).toBeInTheDocument();
   });
 
+  it("pressing Enter in the name field saves and closes the modal", async () => {
+    seedWithIngredients([
+      makeIngredient({ name: "Chicken", category: "protein" }),
+    ]);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByTestId("ingredient-row-ing-chicken"));
+    const modal = screen.getByTestId("ingredient-modal");
+    const nameInput = within(modal).getByTestId("modal-ingredient-name");
+    await user.clear(nameInput);
+    await user.type(nameInput, "Turkey roast");
+    await user.keyboard("{Enter}");
+
+    expect(screen.queryByTestId("ingredient-modal")).not.toBeInTheDocument();
+    await user.type(screen.getByTestId("ingredient-search"), "Turkey roast");
+    expect(screen.getByText("Turkey roast")).toBeInTheDocument();
+  });
+
   it("does not show a remove ingredient action in browse or modal", async () => {
     seedWithIngredients([
       makeIngredient({ name: "Chicken", category: "protein" }),

@@ -14,6 +14,8 @@ import {
   normalizeHousehold,
   migrateHouseholdRecipeRefs,
   runRecipeRefMigrationIfNeeded,
+  runStripWholeMealTagsIfNeeded,
+  runStripThemeRecipeTagsIfNeeded,
 } from "../src/storage";
 import { promoteRecipeToBaseMeal } from "../src/lib/promoteRecipe";
 import {
@@ -82,13 +84,11 @@ beforeEach(() => {
 
 /* ========== Recipe entity persistence ========== */
 describe("F057: Recipe entity persistence", () => {
-  it("round-trips a recipe with all new fields through save/load", () => {
+  it("round-trips a recipe with tags and provenance through save/load", () => {
     const recipe = makeRecipe({
       id: "rec-1",
       name: "Tomato Sauce",
-      recipeType: "sauce",
-      parentRecipeId: "rec-parent",
-      tags: ["italian", "base-sauce"],
+      tags: ["italian", "base-sauce", "sauce"],
       directions: "Simmer tomatoes with garlic for 30 minutes.",
       components: [makeComponent({ id: "c1", ingredientId: "ing-1" })],
       provenance: {
@@ -105,24 +105,22 @@ describe("F057: Recipe entity persistence", () => {
     const loaded = loadHousehold("h-f057")!;
     expect(loaded.recipes).toHaveLength(1);
     const r = loaded.recipes![0]!;
-    expect(r.recipeType).toBe("sauce");
-    expect(r.parentRecipeId).toBe("rec-parent");
-    expect(r.tags).toEqual(["italian", "base-sauce"]);
+    expect(r.tags).toEqual(["italian", "base-sauce", "sauce"]);
     expect(r.directions).toBe("Simmer tomatoes with garlic for 30 minutes.");
     expect(r.provenance?.sourceSystem).toBe("paprika");
   });
 
-  it("round-trips a batch-prep recipe", () => {
+  it("round-trips a batch-prep tagged recipe", () => {
     const recipe = makeRecipe({
       id: "rec-batch",
       name: "Weekly Rice Prep",
-      recipeType: "batch-prep",
+      tags: ["batch-prep"],
       directions: "Cook 4 cups of rice.",
     });
     const h = makeHousehold({ recipes: [recipe] });
     saveHousehold(h);
     const loaded = loadHousehold("h-f057")!;
-    expect(loaded.recipes![0]!.recipeType).toBe("batch-prep");
+    expect(loaded.recipes![0]!.tags).toContain("batch-prep");
   });
 
   it("persists recipes without new fields (backward compat shape)", () => {
@@ -131,8 +129,6 @@ describe("F057: Recipe entity persistence", () => {
     saveHousehold(h);
     const loaded = loadHousehold("h-f057")!;
     const r = loaded.recipes![0]!;
-    expect(r.recipeType).toBeUndefined();
-    expect(r.parentRecipeId).toBeUndefined();
     expect(r.directions).toBeUndefined();
     expect(r.tags).toBeUndefined();
   });
@@ -140,7 +136,7 @@ describe("F057: Recipe entity persistence", () => {
 
 /* ========== Backward compatibility ========== */
 describe("F057: Backward compatibility", () => {
-  it("normalizeHousehold handles old data without recipeRefs or recipeType", () => {
+  it("normalizeHousehold handles old data without recipeRefs", () => {
     const raw: Household = {
       id: "h-old",
       name: "Legacy Household",
@@ -281,7 +277,7 @@ describe("F057: Migration safety (migrateHouseholdRecipeRefs)", () => {
     expect(h.baseMeals[0]!.components[0]!.recipeRefs![0]!.recipeId).toBe("rec-already-set");
   });
 
-  it("infers recipeType as whole-meal for recipes with provenance", () => {
+  it("does not add whole-meal tag for provenance recipes during migration", () => {
     const h = makeHousehold({
       recipes: [
         makeRecipe({
@@ -295,27 +291,29 @@ describe("F057: Migration safety (migrateHouseholdRecipeRefs)", () => {
       ],
     });
     const result = migrateHouseholdRecipeRefs(h);
-    expect(result.recipeTypesInferred).toBe(1);
-    expect(h.recipes![0]!.recipeType).toBe("whole-meal");
+    expect(result.wholeMealTagsAdded).toBe(0);
+    expect(h.recipes![0]!.tags ?? []).not.toContain("whole-meal");
   });
 
-  it("does not overwrite existing recipeType during migration", () => {
+  it("does not add whole-meal when legacy recipeType was set during migration", () => {
     const h = makeHousehold({
       recipes: [
-        makeRecipe({
-          id: "rec-1",
-          name: "Sauce",
+        {
+          ...makeRecipe({
+            id: "rec-1",
+            name: "Sauce",
+            provenance: {
+              sourceSystem: "manual",
+              importTimestamp: "2026-01-01T00:00:00.000Z",
+            },
+          }),
           recipeType: "sauce",
-          provenance: {
-            sourceSystem: "manual",
-            importTimestamp: "2026-01-01T00:00:00.000Z",
-          },
-        }),
+        } as Recipe,
       ],
     });
     const result = migrateHouseholdRecipeRefs(h);
-    expect(result.recipeTypesInferred).toBe(0);
-    expect(h.recipes![0]!.recipeType).toBe("sauce");
+    expect(result.wholeMealTagsAdded).toBe(0);
+    expect(h.recipes![0]!.tags).toContain("sauce");
   });
 
   it("also migrates ComponentRecipeRefs on recipe components", () => {
@@ -362,7 +360,57 @@ describe("F057: runRecipeRefMigrationIfNeeded", () => {
     const result = runRecipeRefMigrationIfNeeded();
     expect(result.recipeRefsBackfilled).toBe(0);
     expect(result.componentRecipeIdsSet).toBe(0);
-    expect(result.recipeTypesInferred).toBe(0);
+    expect(result.wholeMealTagsAdded).toBe(0);
+  });
+});
+
+describe("F057: runStripThemeRecipeTagsIfNeeded", () => {
+  it("removes taco, pizza, and pasta tags from recipes and base meals once", () => {
+    const h = makeHousehold({
+      recipes: [
+        makeRecipe({
+          id: "rec-1",
+          name: "X",
+          tags: ["quick", "taco"],
+        }),
+      ],
+      baseMeals: [
+        makeBaseMeal({
+          id: "bm-1",
+          name: "Night",
+          tags: ["pizza"],
+          components: [],
+        }),
+      ],
+    });
+    saveHousehold(h);
+    const r = runStripThemeRecipeTagsIfNeeded();
+    expect(r.recipesUpdated).toBe(1);
+    expect(r.baseMealsUpdated).toBe(1);
+    const after = loadHousehold("h-f057")!;
+    expect(after.recipes![0]!.tags).toEqual(["quick"]);
+    expect(after.baseMeals[0]!.tags).toBeUndefined();
+    expect(runStripThemeRecipeTagsIfNeeded().recipesUpdated).toBe(0);
+  });
+});
+
+describe("F057: runStripWholeMealTagsIfNeeded", () => {
+  it("removes whole-meal from stored recipes once and is idempotent", () => {
+    const h = makeHousehold({
+      recipes: [
+        makeRecipe({
+          id: "rec-1",
+          name: "Sauce",
+          tags: ["whole-meal", "sauce"],
+        }),
+      ],
+    });
+    saveHousehold(h);
+    const n = runStripWholeMealTagsIfNeeded();
+    expect(n).toBe(1);
+    const after = loadHousehold("h-f057")!;
+    expect(after.recipes![0]!.tags).toEqual(["sauce"]);
+    expect(runStripWholeMealTagsIfNeeded()).toBe(0);
   });
 });
 
@@ -406,7 +454,7 @@ describe("F057: Imported recipe provenance persistence", () => {
     const recipe = makeRecipe({
       id: "rec-imp",
       name: "Paprika Chicken",
-      recipeType: "whole-meal",
+      tags: ["quick"],
       directions: "Bake at 350F for 40 minutes.",
       provenance: {
         sourceSystem: "paprika",
@@ -423,7 +471,7 @@ describe("F057: Imported recipe provenance persistence", () => {
     expect(r.provenance?.externalId).toBe("pap-uid-123");
     expect(r.provenance?.sourceUrl).toBe("https://example.com/chicken");
     expect(r.directions).toBe("Bake at 350F for 40 minutes.");
-    expect(r.recipeType).toBe("whole-meal");
+    expect(r.tags).toContain("quick");
   });
 });
 
@@ -433,7 +481,7 @@ describe("F057: promoteRecipeToBaseMeal populates recipeRefs", () => {
     const recipe = makeRecipe({
       id: "rec-promote",
       name: "Stir Fry",
-      recipeType: "whole-meal",
+      tags: ["batch-prep"],
       directions: "Stir fry everything.",
       components: [makeComponent({ id: "c1", ingredientId: "ing-1" })],
     });
@@ -496,17 +544,15 @@ describe("F057: Ingredient.defaultRecipeRefs", () => {
   });
 });
 
-/* ========== Recipe sorting with recipeType ========== */
-describe("F057: sortRecipes by recipeType", () => {
-  it("sorts recipes by recipeType ascending", () => {
+/* ========== Recipe sorting ========== */
+describe("F057: sortRecipes by name", () => {
+  it("sorts recipes by name ascending", () => {
     const recipes = [
-      makeRecipe({ id: "r1", name: "B", recipeType: "sauce" }),
-      makeRecipe({ id: "r2", name: "A", recipeType: "batch-prep" }),
-      makeRecipe({ id: "r3", name: "C", recipeType: "whole-meal" }),
+      makeRecipe({ id: "r1", name: "Bravo" }),
+      makeRecipe({ id: "r2", name: "Alpha" }),
+      makeRecipe({ id: "r3", name: "Charlie" }),
     ];
-    const sorted = sortRecipes(recipes, "recipeType", "asc");
-    expect(sorted[0]!.recipeType).toBe("batch-prep");
-    expect(sorted[1]!.recipeType).toBe("sauce");
-    expect(sorted[2]!.recipeType).toBe("whole-meal");
+    const sorted = sortRecipes(recipes, "name", "asc");
+    expect(sorted.map((r) => r.name)).toEqual(["Alpha", "Bravo", "Charlie"]);
   });
 });

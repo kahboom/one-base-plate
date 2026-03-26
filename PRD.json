@@ -289,9 +289,7 @@
         "fields": [
           "id",
           "name",
-          "recipeType (whole-meal|component|sauce|sub-recipe|batch-prep) (optional)",
-          "parentRecipeId (optional; sub-recipe relationship)",
-          "tags[] (optional)",
+          "tags[] (optional; curated hints include whole-meal, quick, batch-prep, sauce, etc.)",
           "components[] (MealComponent)",
           "ingredientsText (optional)",
           "directions (optional; step-by-step cooking instructions)",
@@ -1790,14 +1788,14 @@
       "category": "functional",
       "description": "First-class Recipe model: typed recipe categories, RecipeRef pointers on BaseMeal/Ingredient, explicit recipeId on ComponentRecipeRef, migration for existing data",
       "steps": [
-        "Add RecipeType union (whole-meal, component, sauce, sub-recipe, batch-prep) and optional recipeType, parentRecipeId, directions, tags fields on Recipe.",
+        "Optional Recipe.tags for classification and browsing (including whole-meal, sauce, batch-prep); optional directions on Recipe.",
         "Add RecipeRef type (recipeId, label, role, notes) as a lightweight pointer to a Recipe library entry.",
         "Add recipeRefs on BaseMeal for whole-meal/assembly/shortcut recipe references alongside existing recipeLinks.",
         "Add recipeId on ComponentRecipeRef for explicit FK to Recipe, formalizing the F055 cooking-first flow.",
         "Add defaultRecipeRefs on Ingredient as an optional fallback (not the primary resolution model).",
-        "Add v2 storage migration: backfill recipeRefs from sourceRecipeId, copy importedRecipeSourceId to recipeId on ComponentRecipeRef, infer recipeType for imported recipes, carry Paprika directions.",
+        "Add v2 storage migration: backfill recipeRefs from sourceRecipeId, copy importedRecipeSourceId to recipeId on ComponentRecipeRef, add whole-meal tag for provenance recipes when needed, carry Paprika directions.",
         "Update promoteRecipeToBaseMeal to populate recipeRefs on promoted meals.",
-        "Update Paprika import to set recipeType and directions on Recipe.",
+        "Update Paprika import to set tags (e.g. whole-meal) and directions on Recipe.",
         "Add tests covering recipe persistence, backward compatibility, migration safety, component recipe refs, imported provenance, and planner flow."
       ],
       "passes": true,
@@ -2052,11 +2050,11 @@
       "category": "functional",
       "description": "Lightweight recipe organization tags: curated optional tags on Recipe, compact library filter, soft ranking in attach-recipe picker — not a broad social/discovery taxonomy",
       "steps": [
-        "Define a small curated tag set (quick, batch-prep, freezer-friendly, rescue, side, sauce, kid-friendly, prep-ahead) with legacy alias mapping (e.g. batch-friendly → batch-prep) for existing seed/import data.",
+        "Define a small curated tag set (whole-meal, quick, batch-prep, freezer-friendly, rescue, side, sauce, kid-friendly, prep-ahead) with legacy alias mapping (e.g. batch-friendly → batch-prep) for existing seed/import data.",
         "Keep Recipe.tags as optional string[]; preserve unknown/custom tags in storage; expose only curated values in the quick-pick chip UI.",
         "Recipe library: compact tag filter row; filter by one tag at a time with clear; name search and sort remain primary.",
         "Recipe editor: collapsed Organization section with tappable chips; no required tags; no freeform tag sprawl in the main path.",
-        "ComponentRecipePicker: show up to two tag chips on recipe rows; soft tag + recipeType-context ranking within groups; recipeType remains stronger than tag-only hints.",
+        "ComponentRecipePicker: show up to two tag chips on recipe rows; tagContextScore (e.g. sauce tag on sauce row) plus soft tag boost for ranking within groups.",
         "Tests: filter, modal chips, persistence, unknown tags safe, ranking/tie-break behavior.",
         "Update PRD screen mappings and changelog; optional seed tweaks only."
       ],

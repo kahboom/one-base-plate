@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, type FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import type { Ingredient, IngredientCategory, Household } from "../types";
 import {
@@ -349,6 +349,16 @@ function IngredientModal({
     });
   }
 
+  function handleModalSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (aliasValidation.blockingReason || aliasCommitError) return;
+    if (duplicates.length > 0) {
+      onDuplicateFound(ingredient, duplicates[0]!);
+    } else {
+      onDone();
+    }
+  }
+
   return (
     <AppModal
       open
@@ -375,6 +385,7 @@ function IngredientModal({
           </div>
         )}
 
+        <form onSubmit={handleModalSubmit}>
         <div className="space-y-4">
           <FieldLabel label="Name">
             <Input
@@ -642,20 +653,14 @@ function IngredientModal({
         <div className="mt-6 flex items-center justify-between border-t border-border-light pt-4">
           {isNewIngredient ? <span /> : <Button variant="danger" onClick={onDelete} data-testid="delete-ingredient-btn">Delete</Button>}
           <Button
+            type="submit"
             variant="primary"
             data-testid="ingredient-modal-done"
-            onClick={() => {
-              if (aliasValidation.blockingReason || aliasCommitError) return;
-              if (duplicates.length > 0) {
-                onDuplicateFound(ingredient, duplicates[0]!);
-              } else {
-                onDone();
-              }
-            }}
           >
             Done
           </Button>
         </div>
+        </form>
     </AppModal>
   );
 }

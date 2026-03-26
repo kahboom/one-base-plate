@@ -103,13 +103,6 @@ export interface RecipeLink {
   url: string;
 }
 
-export type RecipeType =
-  | "whole-meal"
-  | "component"
-  | "sauce"
-  | "sub-recipe"
-  | "batch-prep";
-
 /**
  * Imported or hand-entered recipe in the household library. Not directly scheduled;
  * promote to a {@link BaseMeal} for planning and groceries.
@@ -118,10 +111,7 @@ export interface Recipe {
   id: string;
   name: string;
   description?: string;
-  recipeType?: RecipeType;
-  /** Parent recipe id for sub-recipe / sauce relationships. */
-  parentRecipeId?: string;
-  /** Optional tags for search/filter (parallels BaseMeal.tags). */
+  /** Optional tags for search/filter and classification (parallels BaseMeal.tags). */
   tags?: string[];
   components: MealComponent[];
   /** Original ingredients block from import (e.g. Paprika or pasted text). */

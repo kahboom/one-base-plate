@@ -1,12 +1,18 @@
-import type { Recipe, RecipeType } from "../types";
+import type { Recipe } from "../types";
 
 /** Curated recipe tags for quick-pick UI; unknown tags in stored data are preserved but not listed here. */
 export const CURATED_RECIPE_TAGS: readonly { value: string; label: string }[] = [
+  { value: "whole-meal", label: "Entree" },
   { value: "quick", label: "Quick" },
   { value: "batch-prep", label: "Batch prep" },
   { value: "freezer-friendly", label: "Freezer friendly" },
   { value: "rescue", label: "Rescue" },
   { value: "side", label: "Side" },
+  { value: "salad", label: "Salad" },
+  { value: "snack", label: "Snack" },
+  { value: "bread", label: "Bread" },
+  { value: "seafood", label: "Seafood" },
+  { value: "soup", label: "Soup" },
   { value: "sauce", label: "Sauce" },
   { value: "kid-friendly", label: "Kid friendly" },
   { value: "prep-ahead", label: "Prep ahead" },
@@ -40,7 +46,7 @@ export function recipeTagLabel(tag: string): string {
 
 /**
  * Weak tie-breaker boost for recipe suggestion ordering (0–0.15).
- * Stronger signals (name match, recipeType) should be applied separately with larger weights.
+ * Stronger signals (name match, tagContextScore) should be applied separately with larger weights.
  */
 const MAX_BOOST = 0.15;
 const PER_MATCH = 0.04;
@@ -55,18 +61,6 @@ export function recipeMatchesCuratedFilter(recipe: Recipe, curatedFilterValue: s
   return recipeHasTag(recipe, curatedFilterValue);
 }
 
-function recipeTypeMatchesRole(
-  recipeType: RecipeType | undefined,
-  role: string | undefined,
-): boolean {
-  if (!recipeType || !role) return false;
-  const r = role.toLowerCase();
-  if (recipeType === "sauce" && (r === "sauce" || r === "condiment")) return true;
-  if (recipeType === "batch-prep" && (r === "carb" || r === "protein" || r === "starch"))
-    return true;
-  return false;
-}
-
 export interface TagBoostContext {
   /** Meal component role (e.g. protein, sauce) for soft alignment. */
   componentRole?: string;
@@ -75,8 +69,24 @@ export interface TagBoostContext {
 }
 
 /**
+ * Strong alignment score: curated tags vs component role (e.g. sauce tag on a sauce row).
+ * Used alongside name match in suggestion ordering.
+ */
+export function tagContextScore(recipe: Recipe, context: TagBoostContext): number {
+  const role = context.componentRole?.toLowerCase();
+  if (!role) return 0;
+  if ((role === "sauce" || role === "condiment") && recipeHasTag(recipe, "sauce")) return 28;
+  if (
+    (role === "carb" || role === "starch" || role === "protein") &&
+    recipeHasTag(recipe, "batch-prep")
+  )
+    return 12;
+  return 0;
+}
+
+/**
  * Returns a small non-negative boost for ordering. Intended as tie-breaker only.
- * recipeType alignment should use separate, larger scores in callers.
+ * Role alignment uses {@link tagContextScore} in callers.
  */
 export function computeTagBoost(recipe: Recipe, context: TagBoostContext = {}): number {
   let boost = 0;
@@ -89,10 +99,6 @@ export function computeTagBoost(recipe: Recipe, context: TagBoostContext = {}): 
 
   if (role === "sauce" || role === "condiment") {
     if (recipeHasTag(recipe, "sauce")) boost += PER_MATCH;
-    if (recipe.recipeType === "sauce") {
-      /* recipeType dominates; tags add little on top */
-      boost += PER_MATCH * 0.25;
-    }
   }
 
   if (role === "side" || role === "veg") {
@@ -111,33 +117,12 @@ export function computeTagBoost(recipe: Recipe, context: TagBoostContext = {}): 
     boost += PER_MATCH * 0.25;
   }
 
-  /* Weak alignment when recipeType already matches role — tags should not override */
-  if (recipeTypeMatchesRole(recipe.recipeType, role)) {
-    boost += PER_MATCH * 0.2;
-  }
-
   return Math.min(boost, MAX_BOOST);
 }
 
 /**
- * Stronger than tag boost: aligns library recipeType with the component role (e.g. sauce row).
- */
-export function recipeTypeContextScore(recipe: Recipe, context: TagBoostContext): number {
-  const role = context.componentRole?.toLowerCase();
-  const rt = recipe.recipeType;
-  if (!role || !rt) return 0;
-  if ((role === "sauce" || role === "condiment") && rt === "sauce") return 28;
-  if (
-    (role === "carb" || role === "starch" || role === "protein") &&
-    rt === "batch-prep"
-  )
-    return 12;
-  return 0;
-}
-
-/**
  * Compare two recipes for suggestion ordering within a group:
- * higher score wins. Name match and recipeType context dominate tag boosts.
+ * higher score wins. Name match and tagContextScore dominate tag boosts.
  */
 export function compareRecipesForSuggestion(
   a: Recipe,
@@ -154,16 +139,8 @@ export function compareRecipesForSuggestion(
     if (n.includes(q)) return 60;
     return 0;
   };
-  const typeScore = (r: Recipe) => {
-    const t = r.recipeType ?? "";
-    if (!q) return 0;
-    return t.toLowerCase().includes(q) ? 5 : 0;
-  };
   const score = (r: Recipe) =>
-    nameScore(r) +
-    typeScore(r) +
-    recipeTypeContextScore(r, context) +
-    computeTagBoost(r, context) * 100;
+    nameScore(r) + tagContextScore(r, context) + computeTagBoost(r, context) * 100;
   const sa = score(a);
   const sb = score(b);
   if (sa !== sb) return sb - sa;

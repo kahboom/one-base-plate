@@ -3,6 +3,10 @@ export const STORAGE_KEY = "onebaseplate_households";
 export const SEEDED_KEY = "onebaseplate_seeded";
 export const MIGRATION_KEY = "onebaseplate_migrated_v1";
 export const RECIPE_REF_MIGRATION_KEY = "onebaseplate_migrated_v2";
+/** One-time: remove stored `whole-meal` tags after defaults were removed from import/migration. */
+export const STRIP_WHOLE_MEAL_TAGS_KEY = "onebaseplate_strip_whole_meal_tags_v1";
+/** One-time: remove theme tags (taco, pizza, pasta) from recipes and base meals. */
+export const STRIP_THEME_RECIPE_TAGS_KEY = "onebaseplate_strip_theme_recipe_tags_v1";
 export const DEFAULT_HOUSEHOLD_KEY = "onebaseplate_default_household_id";
 /** Legacy: households blob lived in idb `kv` when localStorage quota was exceeded. */
 export const HOUSEHOLDS_IDB_META = "onebaseplate_households_in_idb";

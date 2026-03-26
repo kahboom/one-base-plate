@@ -906,7 +906,6 @@ export function buildDraftRecipe(
   const libraryRecipe: Recipe = {
     id: crypto.randomUUID(),
     name: paprikaRecipe.name,
-    recipeType: "whole-meal",
     components,
     ingredientsText: ingredientsPlain || paprikaRecipe.ingredients || undefined,
     directions: directionsPlain || undefined,

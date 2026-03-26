@@ -331,7 +331,7 @@ function MealModal({
             className="rounded-sm border border-border-light bg-surface-card p-3"
           >
             <summary className="cursor-pointer text-sm font-medium text-text-primary">
-              Whole-meal recipes ({(meal.recipeRefs ?? []).length})
+              Entree recipes ({(meal.recipeRefs ?? []).length})
             </summary>
             <div className="mt-3 space-y-2">
               {(meal.recipeRefs ?? []).length > 0 ? (
@@ -373,7 +373,7 @@ function MealModal({
                 </div>
               ) : (
                 <p className="text-xs text-text-muted">
-                  No whole-meal recipes attached yet.
+                  No entree recipes attached yet.
                 </p>
               )}
               <Button

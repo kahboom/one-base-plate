@@ -13,7 +13,7 @@ import {
   recipeHasTag,
   recipeMatchesCuratedFilter,
   recipeTagLabel,
-  recipeTypeContextScore,
+  tagContextScore,
 } from "../src/lib/recipeTags";
 import RecipeLibrary from "../src/pages/RecipeLibrary";
 
@@ -58,11 +58,17 @@ describe("F066: curated tag model", () => {
   it("exposes the expected curated values", () => {
     const values = CURATED_RECIPE_TAGS.map((t) => t.value);
     expect(values).toEqual([
+      "whole-meal",
       "quick",
       "batch-prep",
       "freezer-friendly",
       "rescue",
       "side",
+      "salad",
+      "snack",
+      "bread",
+      "seafood",
+      "soup",
       "sauce",
       "kid-friendly",
       "prep-ahead",
@@ -73,6 +79,7 @@ describe("F066: curated tag model", () => {
     expect(isCuratedTag("quick")).toBe(true);
     expect(isCuratedTag("taco")).toBe(false);
     expect(recipeTagLabel("quick")).toBe("Quick");
+    expect(recipeTagLabel("whole-meal")).toBe("Entree");
     expect(recipeTagLabel("unknown-custom")).toBe("unknown-custom");
   });
 
@@ -122,23 +129,21 @@ describe("F066: computeTagBoost (weak)", () => {
   });
 });
 
-describe("F066: recipeTypeContextScore dominates tag boost in compareRecipesForSuggestion", () => {
-  it("prefers recipeType=sauce over a component recipe with tag sauce when names match", () => {
-    const sauce = makeRecipe({
+describe("F066: tagContextScore and compareRecipesForSuggestion", () => {
+  it("prefers recipe with sauce tag for sauce role when names match", () => {
+    const withSauce = makeRecipe({
       id: "a",
       name: "Tomato dip",
-      recipeType: "sauce",
-      tags: [],
-    });
-    const taggedComponent = makeRecipe({
-      id: "b",
-      name: "Tomato dip",
-      recipeType: "component",
       tags: ["sauce"],
     });
+    const withoutSauce = makeRecipe({
+      id: "b",
+      name: "Tomato dip",
+      tags: [],
+    });
     const order = compareRecipesForSuggestion(
-      sauce,
-      taggedComponent,
+      withSauce,
+      withoutSauce,
       "tomato",
       { componentRole: "sauce" },
     );
@@ -150,13 +155,11 @@ describe("F066: recipeTypeContextScore dominates tag boost in compareRecipesForS
     const quick = makeRecipe({
       id: "a",
       name: "Same",
-      recipeType: "component",
       tags: ["quick", "rescue"],
     });
     const plain = makeRecipe({
       id: "b",
       name: "Same",
-      recipeType: "component",
       tags: [],
     });
     const order = compareRecipesForSuggestion(quick, plain, "", { rescueMode: true });
@@ -164,15 +167,15 @@ describe("F066: recipeTypeContextScore dominates tag boost in compareRecipesForS
   });
 });
 
-describe("F066: recipeTypeContextScore", () => {
-  it("scores sauce type for sauce role", () => {
-    const r = makeRecipe({ id: "1", name: "S", recipeType: "sauce" });
-    expect(recipeTypeContextScore(r, { componentRole: "sauce" })).toBe(28);
+describe("F066: tagContextScore", () => {
+  it("scores sauce tag for sauce role", () => {
+    const r = makeRecipe({ id: "1", name: "S", tags: ["sauce"] });
+    expect(tagContextScore(r, { componentRole: "sauce" })).toBe(28);
   });
 
-  it("does not score component type as sauce for sauce role", () => {
-    const r = makeRecipe({ id: "1", name: "S", recipeType: "component" });
-    expect(recipeTypeContextScore(r, { componentRole: "sauce" })).toBe(0);
+  it("does not score recipe without sauce tag for sauce role", () => {
+    const r = makeRecipe({ id: "1", name: "S", tags: ["quick"] });
+    expect(tagContextScore(r, { componentRole: "sauce" })).toBe(0);
   });
 });
 
@@ -280,3 +283,4 @@ describe("F066: recipe edit tags persistence", () => {
     expect(loaded.recipes![0]!.tags).toContain("quick");
   });
 });
+
