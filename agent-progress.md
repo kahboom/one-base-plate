@@ -988,5 +988,13 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Tests:** `tests/f066-recipe-tags.test.tsx` — 15 tests (model, filter, UI, persistence, modal chip, ranking dominance, visual gating).
 - **Verification:** `npx tsc --noEmit`, `npx vitest run` — 1209 passed, 13 skipped (73 files).
 
+### F067 — Paprika category-to-tag import (2026-03-26)
+- **PRD:** F067; milestone M5; P2 functional; depends on F048, F066; acceptance refs S007, S010.
+- **Data model:** `RecipeProvenance.rawCategories?: string[]` — original Paprika category strings (not user-facing tags). `Recipe.tags` receives only values from the curated map after normalization.
+- **Logic:** `src/lib/paprikaCategoryMap.ts` — lowercase/trim/collapse space/edge punctuation strip, conservative `-es`/`-s` singularization (skips `-us`/`-ss`/`-is`), alias table aligned with F066 curated set; `isCuratedTag` guards map targets.
+- **Import:** `buildDraftRecipe` calls `mapPaprikaCategories`; no automatic `whole-meal` or theme tags. `PaprikaImport` shows mapped tag chips + unmapped metadata note on select; collapsible per-recipe summary on review.
+- **Tests:** `tests/f067-paprika-category-tags.test.ts` — 13 tests (table validation, aliases, plurals, dedupe, mixed/unmapped, forbidden theme strings, `buildDraftRecipe`, tag helpers).
+- **Verification:** `npx tsc --noEmit`, `npx vitest run` — full suite green.
+
 ## Next Task
-- Continue from `PRD.json` implementation order after F066, or open a new scoped feature if product priorities shift.
+- Continue from `PRD.json` implementation order after F067, or open a new scoped feature if product priorities shift.

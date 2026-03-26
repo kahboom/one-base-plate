@@ -33,6 +33,8 @@ import type {
   PaprikaCreateDraft,
 } from "../paprika-parser";
 import { findNearDuplicates, searchCatalog } from "../catalog";
+import { mapPaprikaCategories } from "../lib/paprikaCategoryMap";
+import { recipeTagLabel } from "../lib/recipeTags";
 import PaprikaIngredientPicker from "../components/PaprikaIngredientPicker";
 import TagSuggestInput from "../components/TagSuggestInput";
 import { useListKeyNav } from "../hooks/useListKeyNav";
@@ -858,6 +860,10 @@ export default function PaprikaImport() {
             {parsedRecipes.slice(selectPaging.start, selectPaging.end).map((recipe, localIdx) => {
               const i = selectPaging.start + localIdx;
               const cats = recipe.raw.categories;
+              const {
+                tags: previewMappedTags,
+                unmappedCount: previewUnmappedCount,
+              } = mapPaprikaCategories(cats);
               return (
                 <Card
                   key={i}
@@ -906,6 +912,29 @@ export default function PaprikaImport() {
                           <span className="text-text-muted">+{cats.length - 2}</span>
                         )}
                       </p>
+                      {(previewMappedTags.length > 0 || previewUnmappedCount > 0) && (
+                        <div
+                          className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] leading-snug"
+                          data-testid={`paprika-category-tag-preview-${i}`}
+                        >
+                          {previewMappedTags.length > 0 && (
+                            <>
+                              <span className="shrink-0 text-text-muted">Library tags:</span>
+                              {previewMappedTags.map((t) => (
+                                <Chip key={t} variant="neutral" className="text-[10px]">
+                                  {recipeTagLabel(t)}
+                                </Chip>
+                              ))}
+                            </>
+                          )}
+                          {previewUnmappedCount > 0 && (
+                            <span className="text-text-muted">
+                              {previewMappedTags.length > 0 ? "· " : ""}
+                              {previewUnmappedCount} unmapped — kept as import metadata only
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -941,6 +970,47 @@ export default function PaprikaImport() {
             <Card className="mb-4 border-danger bg-danger/5">
               <p className="text-sm text-danger" data-testid="paprika-error">{error}</p>
             </Card>
+          )}
+          {selectedRecipes.some((r) => (r.raw.categories?.length ?? 0) > 0) && (
+            <details
+              className="mb-4 rounded-md border border-border-subtle bg-surface-raised/40 px-3 py-2 text-xs text-text-muted"
+              data-testid="paprika-review-category-tag-summary"
+            >
+              <summary className="cursor-pointer select-none text-text-secondary">
+                Paprika categories → library tags (selected recipes)
+              </summary>
+              <ul className="mt-2 list-inside list-disc space-y-1 pl-1">
+                {selectedRecipes
+                  .map((r, idx) => ({ r, idx }))
+                  .filter(({ r }) => (r.raw.categories?.length ?? 0) > 0)
+                  .map(({ r, idx }) => {
+                    const { tags: sumTags, unmappedCount: sumUnmapped } = mapPaprikaCategories(
+                      r.raw.categories,
+                    );
+                    return (
+                      <li key={r.raw.uid || `paprika-sel-${idx}`}>
+                        <span className="font-medium text-text-primary">{r.raw.name}</span>
+                        {sumTags.length > 0 && (
+                          <>
+                            {": "}
+                            {sumTags.map((t) => (
+                              <Chip key={t} variant="neutral" className="mx-0.5 text-[10px]">
+                                {recipeTagLabel(t)}
+                              </Chip>
+                            ))}
+                          </>
+                        )}
+                        {sumUnmapped > 0 && (
+                          <span className="text-text-muted">
+                            {sumTags.length > 0 ? " · " : ": "}
+                            {sumUnmapped} unmapped (metadata only)
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+              </ul>
+            </details>
           )}
           <Section title="Bulk ingredient review">
             <div className="mb-4 flex flex-wrap gap-2" data-testid="bulk-summary">

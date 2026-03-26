@@ -186,7 +186,7 @@
           "optionalSauces[]",
           "flavorUpgrades[]",
           "recipeLinks[]",
-          "recipeRefs[] (RecipeRef, optional; whole-meal / assembly / shortcut recipe references)",
+          "recipeRefs[] (RecipeRef, optional; library / assembly / shortcut recipe references to Recipe library rows)",
           "provenance (RecipeProvenance, optional)",
           "prepTimeMinutes (optional)",
           "cookTimeMinutes (optional)",
@@ -289,7 +289,7 @@
         "fields": [
           "id",
           "name",
-          "tags[] (optional; curated hints include whole-meal, quick, batch-prep, sauce, etc.)",
+          "tags[] (optional; curated quick-picks include quick, batch-prep, freezer-friendly, rescue, side, salad, snack, bread, seafood, soup, sauce, kid-friendly, prep-ahead; legacy stored values may include whole-meal and deprecated theme tags)",
           "components[] (MealComponent)",
           "ingredientsText (optional)",
           "directions (optional; step-by-step cooking instructions)",
@@ -332,7 +332,8 @@
           "externalId (optional)",
           "sourceUrl (optional)",
           "importTimestamp",
-          "syncTimestamp (optional)"
+          "syncTimestamp (optional)",
+          "rawCategories[] (optional; original Paprika category strings, provenance only)"
         ]
       },
       {
@@ -1788,14 +1789,14 @@
       "category": "functional",
       "description": "First-class Recipe model: typed recipe categories, RecipeRef pointers on BaseMeal/Ingredient, explicit recipeId on ComponentRecipeRef, migration for existing data",
       "steps": [
-        "Optional Recipe.tags for classification and browsing (including whole-meal, sauce, batch-prep); optional directions on Recipe.",
+        "Optional Recipe.tags for classification and browsing (curated quick-picks + optional custom strings); optional directions on Recipe.",
         "Add RecipeRef type (recipeId, label, role, notes) as a lightweight pointer to a Recipe library entry.",
-        "Add recipeRefs on BaseMeal for whole-meal/assembly/shortcut recipe references alongside existing recipeLinks.",
+        "Add recipeRefs on BaseMeal for library-level / assembly / shortcut recipe references alongside existing recipeLinks.",
         "Add recipeId on ComponentRecipeRef for explicit FK to Recipe, formalizing the F055 cooking-first flow.",
         "Add defaultRecipeRefs on Ingredient as an optional fallback (not the primary resolution model).",
-        "Add v2 storage migration: backfill recipeRefs from sourceRecipeId, copy importedRecipeSourceId to recipeId on ComponentRecipeRef, add whole-meal tag for provenance recipes when needed, carry Paprika directions.",
+        "Add v2 storage migration: backfill recipeRefs from sourceRecipeId, copy importedRecipeSourceId to recipeId on ComponentRecipeRef; sanitizeRecipe maps legacy recipeType to tags; carry Paprika directions. Follow-up one-time migrations may strip obsolete default tags (e.g. whole-meal, theme tags) from saved households.",
         "Update promoteRecipeToBaseMeal to populate recipeRefs on promoted meals.",
-        "Update Paprika import to set tags (e.g. whole-meal) and directions on Recipe.",
+        "Update Paprika import to set directions on Recipe; tags only when implied by data or user (no default whole-meal tag).",
         "Add tests covering recipe persistence, backward compatibility, migration safety, component recipe refs, imported provenance, and planner flow."
       ],
       "passes": true,
@@ -1816,17 +1817,17 @@
       "phase": 2,
       "priority": "P1",
       "category": "functional",
-      "description": "Recipe attachment and suggestion UX: contextual recipe search, whole-meal recipe refs, alt-protein recipes, full cooking resolution chain, recipe cues on weekly planner, prep-ahead opportunities, and enhanced meal detail",
+      "description": "Recipe attachment and suggestion UX: contextual recipe search, library recipe refs on BaseMeal, alt-protein recipes, full cooking resolution chain, recipe cues on weekly planner, prep-ahead opportunities, and enhanced meal detail",
       "steps": [
         "Extend ComponentRecipePicker to accept and search household.recipes with priority: household recipes first, imported recipes second, URL/note fallback last.",
-        "Add whole-meal RecipeRef attachment UI in BaseMealManager MealModal section 4 (attach/remove recipe refs on BaseMeal.recipeRefs).",
+        "Add library recipe RecipeRef attachment UI in BaseMealManager MealModal section 4 (attach/remove recipe refs on BaseMeal.recipeRefs).",
         "Add alternative-protein recipe attachment in ComponentForm per alternative ingredient using alt: prefix convention.",
         "Thread household.recipes through BaseMealManager, MealModal, ComponentForm, and ComponentRecipePicker.",
-        "Implement resolveFullCookingRef with full priority chain: session override, DayPlan override, component default, whole-meal recipe, ingredient default, prepNote/recipeLinks fallback.",
-        "Update Planner How to make tonight section: group by component role, show whole-meal recipe refs, display resolution source labels.",
+        "Implement resolveFullCookingRef with full priority chain: session override, DayPlan override, component default, base meal library recipe (recipeRefs), ingredient default, prepNote/recipeLinks fallback.",
+        "Update Planner How to make tonight section: group by component role, show library recipe refs, display resolution source labels.",
         "Add subtle recipe cue chips on WeeklyPlanner DayCard: recipe count, prep-ahead, batch-friendly indicators.",
         "Implement findPrepAheadOpportunities to detect repeated ingredients across week days with batch-prep recipes, surface in Weekly Planner effort bar.",
-        "Enhance MealDetailContent to show whole-meal recipeRefs, component-level recipes, and alternative-protein recipe indicators.",
+        "Enhance MealDetailContent to show base meal library recipeRefs, component-level recipes, and alternative-protein recipe indicators.",
         "Add subtle recipe count cue on MealCard stats line.",
         "Recipe suggestions appear only at: component editing in Base Meal Editor, meal selection in Planner, assigned meal details in Weekly Planner, repeated-component prep-ahead detection.",
         "Add tests covering resolution chain priority, recipe attachment flows, tonight override vs saved default, alt-protein handling, recipe counting, batch-prep detection, and prep-ahead opportunities."
@@ -1853,7 +1854,7 @@
         "Expand MASTER_CATALOG with taco, pizza, pasta bake, rice bowl, sauce, and pantry-basic ingredients.",
         "Add optional aliases field to CatalogIngredient for future matching and import quality; update searchCatalog to match aliases.",
         "Add household-level ingredients to H001 seed data for all ingredients referenced by new recipes and meals.",
-        "Seed 10 example recipes (component, sauce, whole-meal types) covering taco, pizza, pasta bake, rice bowl, and rescue use cases.",
+        "Seed example recipes (components, sauces, tray-style assembly, soup, rice bowl, rescue) covering varied use cases; avoid cuisine theme tags on recipes.",
         "Seed 5 example base meals (Taco night, Pizza night, Pasta bake, Rice bowl, Cheesy pasta rescue) with recipeRefs and component-level ComponentRecipeRefs wired to seeded recipes.",
         "Include alternative protein options (black beans for taco, tofu for bowl) to demonstrate the one-base-meal-many-plates concept.",
         "Include a rescue-eligible meal (Cheesy pasta) with pantry staples to demonstrate rescue mode.",
@@ -2050,7 +2051,7 @@
       "category": "functional",
       "description": "Lightweight recipe organization tags: curated optional tags on Recipe, compact library filter, soft ranking in attach-recipe picker — not a broad social/discovery taxonomy",
       "steps": [
-        "Define a small curated tag set (whole-meal, quick, batch-prep, freezer-friendly, rescue, side, sauce, kid-friendly, prep-ahead) with legacy alias mapping (e.g. batch-friendly → batch-prep) for existing seed/import data.",
+        "Define a small curated tag set (quick, batch-prep, freezer-friendly, rescue, side, salad, snack, bread, seafood, soup, sauce, kid-friendly, prep-ahead) with legacy alias mapping (e.g. batch-friendly → batch-prep) and optional display-only labels for deprecated stored values (e.g. whole-meal). Optional one-time migrations strip obsolete defaults from saved households.",
         "Keep Recipe.tags as optional string[]; preserve unknown/custom tags in storage; expose only curated values in the quick-pick chip UI.",
         "Recipe library: compact tag filter row; filter by one tag at a time with clear; name search and sort remain primary.",
         "Recipe editor: collapsed Organization section with tappable chips; no required tags; no freeform tag sprawl in the main path.",
@@ -2067,6 +2068,29 @@
         "S002",
         "S004",
         "S007"
+      ]
+    },
+    {
+      "id": "F067",
+      "phase": 2,
+      "priority": "P2",
+      "category": "functional",
+      "description": "Paprika category-to-tag import: normalize and map Paprika categories[] to curated Recipe.tags; preserve unmapped categories on provenance only",
+      "steps": [
+        "Add normalizePaprikaCategory + alias map (curated targets only) in src/lib/paprikaCategoryMap.ts; mapPaprikaCategories returns deduped tags, raw category list, and unmapped count.",
+        "Extend RecipeProvenance with optional rawCategories[]; buildDraftRecipe sets Recipe.tags from mapped tags and provenance.rawCategories from originals.",
+        "Paprika import UI: lightweight preview of mapped tags and unmapped count on select step; optional collapsible summary on review step.",
+        "Tests: f067-paprika-category-tags.test.ts (mapping, dedupe, mixed mapped/unmapped, no theme/whole-meal reintroduction, buildDraftRecipe + recipeTags helpers).",
+        "Update PRD data model, CHANGELOG, agent-progress."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F048",
+        "F066"
+      ],
+      "acceptanceRefs": [
+        "S007",
+        "S010"
       ]
     }
   ],
@@ -2161,7 +2185,8 @@
         "F060",
         "F064",
         "F065",
-        "F066"
+        "F066",
+        "F067"
       ]
     },
     {
@@ -2253,6 +2278,7 @@
     "F064",
     "F065",
     "F066",
+    "F067",
     "F020",
     "F037",
     "F038",
@@ -2673,7 +2699,8 @@
       "F059",
       "F064",
       "F065",
-      "F066"
+      "F066",
+      "F067"
     ],
     "S008": [
       "F011",
@@ -2703,7 +2730,8 @@
       "F061",
       "F064",
       "F065",
-      "F066"
+      "F066",
+      "F067"
     ]
   },
   "agentExecutionRules": [

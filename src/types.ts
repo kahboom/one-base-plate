@@ -96,6 +96,8 @@ export interface RecipeProvenance {
   sourceUrl?: string;
   importTimestamp: string;
   syncTimestamp?: string;
+  /** Original Paprika category strings from export (provenance only; not user-facing tags). */
+  rawCategories?: string[];
 }
 
 export interface RecipeLink {

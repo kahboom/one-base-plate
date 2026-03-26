@@ -10,6 +10,7 @@ import type {
   Recipe,
 } from "./types";
 import { promoteRecipeToBaseMeal } from "./lib/promoteRecipe";
+import { mapPaprikaCategories } from "./lib/paprikaCategoryMap";
 import { matchIngredient, parseIngredientLine, guessComponentRole, isInstructionLine } from "./recipe-parser";
 import type { ParsedIngredientLine } from "./recipe-parser";
 import type { MatchConfidenceBand } from "./recipe-parser";
@@ -877,11 +878,16 @@ export function buildDraftRecipe(
   const prepTime = parseTimeToMinutes(paprikaRecipe.prep_time);
   const cookTime = parseTimeToMinutes(paprikaRecipe.cook_time);
 
+  const { tags: paprikaMappedTags, rawCategories: paprikaRawCategories } = mapPaprikaCategories(
+    paprikaRecipe.categories ?? [],
+  );
+
   const provenance: RecipeProvenance = {
     sourceSystem: "paprika",
     externalId: paprikaRecipe.uid || undefined,
     sourceUrl: paprikaRecipe.source_url || undefined,
     importTimestamp: new Date().toISOString(),
+    rawCategories: paprikaRawCategories.length > 0 ? paprikaRawCategories : undefined,
   };
 
   const recipeLinks: RecipeLink[] = [];
@@ -918,6 +924,7 @@ export function buildDraftRecipe(
     cookTimeMinutes: cookTime || undefined,
     servings: paprikaRecipe.servings || undefined,
     importMappings: compactMappingsForStorage(mappings),
+    tags: paprikaMappedTags.length > 0 ? paprikaMappedTags : undefined,
   };
 
   return { recipe: libraryRecipe, newIngredients };
