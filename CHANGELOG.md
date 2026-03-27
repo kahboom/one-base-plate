@@ -1,3 +1,11 @@
+### 2026-03-27 — Supabase sync hardening (F068 follow-up)
+- **Auth / queue:** `setCurrentUserId` clears the in-memory incremental queue and timers on sign-out or user switch so pending work cannot flush under a different account. **`flushQueuedSync`** snapshots the user id at flush start and **aborts** the rest of the batch if the session changes mid-flush (discards remaining remote ops for that batch; local Dexie data unchanged).
+- **Payloads:** `console.warn` when a household JSON snapshot is **≥ 256 KiB**; per-household `console.debug` payload size only **≥ 64 KiB** (quieter normal flushes).
+- **Cleanup:** Removed no-op **`setLoadHouseholdsRef(loadHouseholds)`** from `main.tsx`; **`syncAfterSave`** JSDoc marked test/legacy-only. PRD F063 step + F068 steps updated; tests: sign-out clears queue, mid-flush sign-out, backoff retry, duplicate `online` events.
+
+### 2026-03-27 — Safer Supabase sync (incremental queue, F068)
+- **Cloud sync** no longer upserts every household on each local save. Edits queue **only the changed household**, coalesce rapid changes (~1s debounce), and **serialize** remote flushes so small Supabase instances are not overwhelmed. Reconnect flushes the **queued** set; transient failures use **backoff** instead of tight retries. JSON import, hydrate-from-remote, and one-time migrations stay **local-only** unless you use **Manual sync** or first-login push. Optional local-only mode when Supabase is not configured is unchanged.
+
 ### 2026-03-26 — Paprika category → curated recipe tags (F067)
 - Requestor: product owner
 - Reason: Paprika exports carry freeform `categories[]`; only a controlled subset should become `Recipe.tags` so the library stays aligned with the curated taxonomy, while originals remain available for provenance and re-import.

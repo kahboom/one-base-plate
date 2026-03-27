@@ -24,7 +24,7 @@ import {
 import { getAppDb, recreateAppDb } from "./storage/dexie-db";
 import { migrateLegacyIntoDexieIfNeeded } from "./storage/migrate-v3";
 import { setPaprikaImportSessionMemory } from "./storage/paprika-session-store";
-import { syncAfterSave, syncDeleteHousehold, isAuthenticated } from "./sync/sync-engine";
+import { queueHouseholdSync, queueHouseholdDeleteSync, isAuthenticated } from "./sync/sync-engine";
 import { isRemoteHouseholdRowId, remoteRowIdForHousehold } from "./sync/remote-repository";
 
 export {
@@ -169,7 +169,6 @@ export async function persistHouseholdsNow(households: Household[]): Promise<voi
   householdsCache = households;
   localStorage.removeItem(STORAGE_KEY);
   await dexieSetHouseholds(households);
-  if (isAuthenticated()) void syncAfterSave(households);
 }
 
 export function saveHouseholds(households: Household[]): void {
@@ -178,12 +177,11 @@ export function saveHouseholds(households: Household[]): void {
   void dexieSetHouseholds(households).catch((err) => {
     console.error("Failed to persist households:", err);
   });
-  if (isAuthenticated()) void syncAfterSave(households);
 }
 
 /**
  * Persist households without enqueueing cloud sync (used when sync assigns `cloudHouseholdId`
- * so we do not re-enter `syncAfterSave`).
+ * so we do not re-enter the incremental queue).
  */
 export function saveHouseholdsLocalOnly(households: Household[]): void {
   householdsCache = households;
@@ -204,6 +202,7 @@ export async function saveHouseholdAsync(household: Household): Promise<void> {
     households.push(toStore);
   }
   await persistHouseholdsNow(households);
+  if (isAuthenticated()) queueHouseholdSync(toStore);
 }
 
 export function loadHousehold(id: string): Household | undefined {
@@ -231,6 +230,7 @@ export function saveHousehold(household: Household): void {
     households.push(toStore);
   }
   saveHouseholds(households);
+  if (isAuthenticated()) queueHouseholdSync(toStore);
 }
 
 export function deleteHousehold(id: string): void {
@@ -238,7 +238,7 @@ export function deleteHousehold(id: string): void {
   const target = households.find((h) => h.id === id);
   const remotePk = target ? remoteRowIdForHousehold(target) : isRemoteHouseholdRowId(id) ? id : null;
   saveHouseholds(households.filter((h) => h.id !== id));
-  if (isAuthenticated() && remotePk) void syncDeleteHousehold(remotePk);
+  if (isAuthenticated() && remotePk) queueHouseholdDeleteSync(remotePk);
 }
 
 export function loadDefaultHouseholdId(): string | null {
@@ -311,6 +311,7 @@ export function clearHouseholdBaseMealsAndPlanning(householdId: string): void {
     mealOutcomes: [],
   };
   saveHouseholds(households);
+  if (isAuthenticated()) queueHouseholdSync(households[idx]!);
 }
 
 /** Clears the recipe library and strips library-linked recipe refs from meals, ingredients, and plan overrides. */
@@ -330,6 +331,7 @@ export function clearHouseholdRecipes(householdId: string): void {
     })),
   };
   saveHouseholds(households);
+  if (isAuthenticated()) queueHouseholdSync(households[idx]!);
 }
 
 /** How many recipe rows ship in bundled seed data for this household id (0 if none). */
@@ -368,6 +370,7 @@ export function mergeSeedRecipesForHousehold(householdId: string): boolean {
 
   households[idx] = { ...h, recipes: merged };
   saveHouseholds(households);
+  if (isAuthenticated()) queueHouseholdSync(households[idx]!);
   return true;
 }
 

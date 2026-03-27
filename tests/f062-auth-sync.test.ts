@@ -19,6 +19,7 @@ import {
   detectFirstLoginContext,
   syncAfterSave,
   syncDeleteHousehold,
+  flushQueuedSync,
   __testOnly_resetSyncEngine,
   __testOnly_setRemoteRepo,
   type RemoteRepoAdapter,
@@ -123,10 +124,9 @@ describe("F062: Authenticated save triggers remote sync", () => {
 
     const h = makeHousehold({ id: "sync-1", name: "Synced" });
     saveHousehold(h);
+    await flushQueuedSync();
 
-    await vi.waitFor(() => {
-      expect(mockRepo.upsertRemoteHousehold).toHaveBeenCalled();
-    });
+    expect(mockRepo.upsertRemoteHousehold).toHaveBeenCalled();
   });
 
   it("deleteHousehold calls remote delete when signed in", async () => {
@@ -136,10 +136,9 @@ describe("F062: Authenticated save triggers remote sync", () => {
     const delId = crypto.randomUUID();
     saveHousehold(makeHousehold({ id: delId }));
     deleteHousehold(delId);
+    await flushQueuedSync();
 
-    await vi.waitFor(() => {
-      expect(mockRepo.deleteRemoteHousehold).toHaveBeenCalledWith(delId);
-    });
+    expect(mockRepo.deleteRemoteHousehold).toHaveBeenCalledWith(delId);
   });
 
   it("failed sync logs error but does not break local save", async () => {
@@ -150,10 +149,9 @@ describe("F062: Authenticated save triggers remote sync", () => {
 
     const h = makeHousehold({ id: "fail-sync", name: "Survives" });
     saveHousehold(h);
+    await flushQueuedSync();
 
-    await vi.waitFor(() => {
-      expect(mockRepo.upsertRemoteHousehold).toHaveBeenCalled();
-    });
+    expect(mockRepo.upsertRemoteHousehold).toHaveBeenCalled();
 
     expect(loadHouseholds()[0]!.name).toBe("Survives");
     expect(getSyncState().status).toBe("error");

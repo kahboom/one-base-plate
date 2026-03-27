@@ -473,7 +473,7 @@
       "tests": "Vitest + Playwright",
       "deployment": "Local/private first; optional Vercel later",
       "auth": "Supabase Auth (email/password); optional — app works fully local when env vars are absent",
-      "remotePersistence": "Supabase Postgres with household-aggregate JSONB snapshots; sync is best-effort after local save"
+      "remotePersistence": "Supabase Postgres with household-aggregate JSONB snapshots; incremental debounced per-household sync after local save (F068), with explicit full push for first-login/manual recovery"
     },
     "architectureNotes": [
       "Prefer local-first storage for rapid MVP delivery and privacy.",
@@ -1946,7 +1946,7 @@
         "Define remote data model: households table (id, JSONB data, owner_id, updated_at, version), household_memberships (access control), and profiles (user metadata). Provide SQL migration reference file.",
         "Create remote repository module for CRUD against Supabase households and memberships tables.",
         "Create sync engine that coordinates local-first Dexie saves with remote Supabase upserts. Strategy: household-level last-write-wins using updatedAt.",
-        "Wire sync into existing storage.ts: after every local Dexie write, if authenticated, fire-and-forget remote sync. Keep local save as the fast path.",
+        "Wire sync into storage.ts: if authenticated, queue per-household upserts (debounced) after targeted saves; bulk Dexie writes stay local-only unless explicitly synced. See F068 for the incremental queue.",
         "Add safe first-login migration: detect local-only, remote-only, or both-sides scenarios. When both have data, show explicit chooser dialog (keep local, keep remote, merge by household ID).",
         "Add minimal auth UI in Settings: sign-in/sign-up form, current session display, sync status badge (local-only vs cloud-synced), sign-out button.",
         "Preserve all existing local-only behavior when signed out: seed, planner, import/export, Paprika, pins, outcomes, anchors unchanged.",
@@ -1969,9 +1969,9 @@
         "Create invite service module (createInvite, acceptInvite, revokeInvite, listInvites) using random 8-char alphanumeric codes with configurable expiry and usage limits.",
         "Add remote repository functions: fetchHouseholdMembers (joins memberships with profiles), removeHouseholdMember, fetchRemoteHouseholdById.",
         "Extend SyncState with hasPendingChanges dirty flag, online boolean, and errorKind classification (auth_expired, remote_unavailable, unknown).",
-        "Enhance sync engine: offline detection via navigator.onLine, auto-retry on reconnect, manualSync with remote comparison, compareWithRemote for conflict detection.",
+        "Enhance sync engine: offline detection via navigator.onLine, auto-retry on reconnect (flush queued households via F068), manualSync with remote comparison, compareWithRemote for conflict detection.",
         "Fix session restore: call setCurrentUserId in AuthProvider when existing session is found on mount and on auth state changes, so sync works after page refresh.",
-        "Wire initOnlineListeners and setLoadHouseholdsRef in main.tsx at app startup.",
+        "Wire initOnlineListeners in main.tsx at app startup.",
         "Add /invite/:code route and AcceptInvite page: shows sign-in prompt if not authenticated, accepts invite and hydrates shared household locally on success.",
         "Add HouseholdSharingPanel component on Settings: member list with roles, generate invite link, copy link, revoke invite, remove member (owner), leave household (editor).",
         "Add SyncRecoveryPanel component on Settings: rich sync status chips (synced/syncing/pending/offline/error), last synced time, manual sync button, export backup, re-download from cloud with explicit confirm, conflict resolution dialog for remote-newer scenarios.",
@@ -1982,6 +1982,27 @@
       "passes": true,
       "dependencies": [
         "F062"
+      ],
+      "acceptanceRefs": []
+    },
+    {
+      "id": "F068",
+      "phase": 2,
+      "priority": "P0",
+      "category": "platform",
+      "description": "Safe incremental Supabase sync: debounced per-household queue, serialized flushes, backoff on transient errors, no full-array upsert storms on normal edits",
+      "steps": [
+        "Refactor sync-engine: queueHouseholdSync, queueHouseholdDeleteSync, flushQueuedSync with Map dedupe, delete-before-upsert batch, mutex + follow-up flush, exponential backoff for remote_unavailable.",
+        "persistNewCloudHouseholdIds uses saveHouseholdsLocalOnly to avoid re-entry; legacy syncAfterSave(full[]) only for explicit/tests; offline syncAfterSave enqueues households for reconnect.",
+        "storage: saveHouseholds / persistHouseholdsNow local-only; saveHousehold(Async), targeted clears, mergeSeedRecipes queue one household; import/hydrate/migrations do not auto-sync.",
+        "Reconnect and debug logging for queue/flush/payload size; tests in f068-sync-queue.test.ts; update F062/F063 expectations.",
+        "CHANGELOG + agent-progress note; optional Supabase-off behavior unchanged.",
+        "Hardening: clear incremental queue on sign-out or user switch; snapshot flush user id and abort mid-batch if session changes; warn on very large household JSON; remove dead setLoadHouseholdsRef wiring from main."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F062",
+        "F063"
       ],
       "acceptanceRefs": []
     },
@@ -2201,7 +2222,8 @@
       "name": "Accounts and cross-browser sync",
       "includes": [
         "F062",
-        "F063"
+        "F063",
+        "F068"
       ]
     }
   ],
@@ -2275,6 +2297,7 @@
     "F061",
     "F062",
     "F063",
+    "F068",
     "F064",
     "F065",
     "F066",

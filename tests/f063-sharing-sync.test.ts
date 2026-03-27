@@ -20,7 +20,7 @@ import {
   compareWithRemote,
   pullRemoteHouseholds,
   initOnlineListeners,
-  setLoadHouseholdsRef,
+  flushQueuedSync,
   __testOnly_resetSyncEngine,
   __testOnly_setRemoteRepo,
   type RemoteRepoAdapter,
@@ -185,7 +185,7 @@ describe("F063: Offline dirty-state behavior", () => {
 });
 
 describe("F063: Sync retry after reconnect", () => {
-  it("triggers syncAfterSave when online event fires with pending changes", async () => {
+  it("triggers flushQueuedSync when online event fires with pending queue", async () => {
     await initStorage();
 
     const h = makeHousehold({ id: "retry-1", name: "Retry" });
@@ -197,7 +197,6 @@ describe("F063: Sync retry after reconnect", () => {
     mockRepo = createMockRepo();
     __testOnly_setRemoteRepo(mockRepo);
     setCurrentUserId("user-1");
-    setLoadHouseholdsRef(loadHouseholds);
 
     await syncAfterSave(loadHouseholds());
     expect(getSyncState().hasPendingChanges).toBe(true);
@@ -446,10 +445,9 @@ describe("F063: Household data integrity through sync", () => {
     });
 
     saveHousehold(h);
+    await flushQueuedSync();
 
-    await vi.waitFor(() => {
-      expect(mockRepo.upsertRemoteHousehold).toHaveBeenCalled();
-    });
+    expect(mockRepo.upsertRemoteHousehold).toHaveBeenCalled();
 
     const upsertedData = mockRepo.upsertRemoteHousehold.mock.calls[0]![0] as Household;
     expect(upsertedData.members).toHaveLength(1);

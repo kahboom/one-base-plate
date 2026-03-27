@@ -9,11 +9,10 @@ import {
   runRecipeRefMigrationIfNeeded,
   runStripWholeMealTagsIfNeeded,
   runStripThemeRecipeTagsIfNeeded,
-  loadHouseholds,
 } from "./storage";
 import { initTheme } from "./theme";
 import { AuthProvider } from "./auth/AuthContext";
-import { initOnlineListeners, setLoadHouseholdsRef } from "./sync/sync-engine";
+import { initOnlineListeners } from "./sync/sync-engine";
 import "./app.css";
 
 initTheme();
@@ -26,7 +25,6 @@ void (async () => {
   runStripWholeMealTagsIfNeeded();
   runStripThemeRecipeTagsIfNeeded();
 
-  setLoadHouseholdsRef(loadHouseholds);
   initOnlineListeners();
 
   createRoot(document.getElementById("root")!).render(

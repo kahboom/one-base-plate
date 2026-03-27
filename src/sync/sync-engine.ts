@@ -3,6 +3,10 @@
  *
  * Conflict strategy (v1): household-level last-write-wins using `updatedAt`.
  * The local Dexie store is always written first; remote sync is best-effort async.
+ *
+ * Normal edits use a debounced per-household queue (`queueHouseholdSync`) so we do not
+ * upsert the entire household list on every save. Full-array sync remains for explicit
+ * flows: first-login push, manual sync, and legacy `syncAfterSave` (tests / rare use).
  */
 
 import type { Household } from '../types';
@@ -22,12 +26,27 @@ export interface RemoteRepoAdapter {
   deleteRemoteHousehold: typeof defaultRemoteRepo.deleteRemoteHousehold;
 }
 
+const SYNC_QUEUE_LOG_PREFIX = '[sync-queue]';
+
+/** Coalesce rapid edits before flushing to Supabase (ms). */
+const QUEUE_DEBOUNCE_MS = 1000;
+
+/** Initial backoff after transient remote failure (ms); doubles each failure, capped. */
+const BACKOFF_BASE_MS = 2000;
+const BACKOFF_MAX_MS = 60_000;
+
+/** Log `console.warn` when a single household JSON snapshot exceeds this size (bytes). */
+const PAYLOAD_WARN_BYTES = 256 * 1024;
+
+/** Log `console.debug` per-household payload size only at or above this threshold (reduces noise). */
+const PAYLOAD_DEBUG_LOG_BYTES = 64 * 1024;
+
 /** Persist `cloudHouseholdId` after first Supabase row is created for seed-style local ids (avoid sync↔storage import cycle). */
 async function persistNewCloudHouseholdIds(
   updates: Array<{ localId: string; cloudHouseholdId: string }>,
 ): Promise<void> {
   if (updates.length === 0) return;
-  const { loadHouseholds, saveHouseholds } = await import('../storage');
+  const { loadHouseholds, saveHouseholdsLocalOnly } = await import('../storage');
   const list = loadHouseholds();
   let changed = false;
   for (const { localId, cloudHouseholdId } of updates) {
@@ -37,8 +56,26 @@ async function persistNewCloudHouseholdIds(
       changed = true;
     }
   }
-  if (changed) saveHouseholds(list);
+  if (changed) saveHouseholdsLocalOnly(list);
 }
+
+function approxHouseholdPayloadBytes(h: Household): number {
+  try {
+    return JSON.stringify(h).length;
+  } catch {
+    return 0;
+  }
+}
+
+// --- Queue state (incremental sync) ---
+
+let pendingUpserts = new Map<string, Household>();
+let pendingDeletes = new Set<string>();
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+let flushInProgress = false;
+let flushAgainAfterCurrent = false;
+let backoffTimer: ReturnType<typeof setTimeout> | null = null;
+let consecutiveTransientFailures = 0;
 
 let repo: RemoteRepoAdapter = defaultRemoteRepo;
 let currentUserId: string | null = null;
@@ -53,10 +90,296 @@ const DEFAULT_SYNC_STATE: SyncState = {
 let syncState: SyncState = { ...DEFAULT_SYNC_STATE };
 let listeners: Array<(state: SyncState) => void> = [];
 let onlineListenersBound = false;
-let loadHouseholdsRef: (() => Household[]) | null = null;
 
 function notify() {
   for (const fn of listeners) fn(syncState);
+}
+
+function clearFlushTimer(): void {
+  if (flushTimer !== null) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+}
+
+function clearBackoffTimer(): void {
+  if (backoffTimer !== null) {
+    clearTimeout(backoffTimer);
+    backoffTimer = null;
+  }
+}
+
+function queueHasWork(): boolean {
+  return pendingUpserts.size > 0 || pendingDeletes.size > 0;
+}
+
+function updatePendingFlagFromQueue(): void {
+  const pending = queueHasWork();
+  if (syncState.hasPendingChanges !== pending) {
+    syncState = { ...syncState, hasPendingChanges: pending };
+    notify();
+  }
+}
+
+/** Remove any pending upsert that targets the same remote row as this delete. */
+function cancelPendingUpsertsForRemotePk(remotePk: string): void {
+  for (const [id, h] of pendingUpserts) {
+    const rowId = defaultRemoteRepo.remoteRowIdForHousehold(h);
+    if (rowId === remotePk || h.id === remotePk) {
+      pendingUpserts.delete(id);
+      console.debug(`${SYNC_QUEUE_LOG_PREFIX} cancelled pending upsert (delete wins): ${id}`);
+    }
+  }
+}
+
+function scheduleDebouncedFlush(): void {
+  clearFlushTimer();
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    void flushQueuedSync();
+  }, QUEUE_DEBOUNCE_MS);
+}
+
+/**
+ * Queue a single household for cloud upsert after debounce. Latest version per id wins.
+ */
+export function queueHouseholdSync(household: Household): void {
+  if (!currentUserId) return;
+
+  pendingUpserts.set(household.id, household);
+  console.debug(`${SYNC_QUEUE_LOG_PREFIX} queued upsert: ${household.id}`);
+  syncState = { ...syncState, hasPendingChanges: true };
+  notify();
+
+  const online = checkOnline();
+  if (!online) {
+    syncState = { ...syncState, status: 'offline', online: false, hasPendingChanges: true };
+    notify();
+    return;
+  }
+
+  scheduleDebouncedFlush();
+}
+
+/**
+ * Queue a remote household row delete (Supabase `households.id` UUID).
+ */
+export function queueHouseholdDeleteSync(remotePk: string): void {
+  if (!currentUserId) return;
+
+  cancelPendingUpsertsForRemotePk(remotePk);
+  pendingDeletes.add(remotePk);
+  console.debug(`${SYNC_QUEUE_LOG_PREFIX} queued delete: ${remotePk}`);
+  syncState = { ...syncState, hasPendingChanges: true };
+  notify();
+
+  const online = checkOnline();
+  if (!online) {
+    syncState = { ...syncState, status: 'offline', online: false, hasPendingChanges: true };
+    notify();
+    return;
+  }
+
+  scheduleDebouncedFlush();
+}
+
+function scheduleBackoffRetry(): void {
+  clearBackoffTimer();
+  const exp = Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** consecutiveTransientFailures);
+  console.debug(
+    `${SYNC_QUEUE_LOG_PREFIX} scheduling backoff retry in ${exp}ms (failures=${consecutiveTransientFailures})`,
+  );
+  backoffTimer = setTimeout(() => {
+    backoffTimer = null;
+    void flushQueuedSync();
+  }, exp);
+}
+
+/**
+ * Flush queued upserts and deletes immediately. Serialized: concurrent calls coalesce into one follow-up flush.
+ */
+export async function flushQueuedSync(): Promise<void> {
+  if (!currentUserId) return;
+
+  clearFlushTimer();
+
+  if (flushInProgress) {
+    flushAgainAfterCurrent = true;
+    console.debug(`${SYNC_QUEUE_LOG_PREFIX} flush skipped (in progress, will run follow-up after)`);
+    return;
+  }
+
+  if (!queueHasWork()) {
+    updatePendingFlagFromQueue();
+    return;
+  }
+
+  const online = checkOnline();
+  if (!online) {
+    syncState = { ...syncState, status: 'offline', online: false, hasPendingChanges: true };
+    notify();
+    return;
+  }
+
+  flushInProgress = true;
+  flushAgainAfterCurrent = false;
+
+  const flushUserId = currentUserId;
+  if (!flushUserId) {
+    flushInProgress = false;
+    return;
+  }
+
+  const upsertBatch = new Map(pendingUpserts);
+  const deleteBatch = new Set(pendingDeletes);
+  pendingUpserts = new Map();
+  pendingDeletes = new Set();
+  updatePendingFlagFromQueue();
+
+  const deleteIds = [...deleteBatch];
+
+  const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  console.debug(
+    `${SYNC_QUEUE_LOG_PREFIX} flush start: ${upsertBatch.size} upserts, ${deleteBatch.size} deletes`,
+  );
+  for (const h of upsertBatch.values()) {
+    const bytes = approxHouseholdPayloadBytes(h);
+    if (bytes >= PAYLOAD_WARN_BYTES) {
+      console.warn(
+        `${SYNC_QUEUE_LOG_PREFIX} large household snapshot ~${bytes} bytes (${h.id}); consider trimming recipes/ingredients or future granular sync`,
+      );
+    } else if (bytes >= PAYLOAD_DEBUG_LOG_BYTES) {
+      console.debug(
+        `${SYNC_QUEUE_LOG_PREFIX} flush payload ~${bytes} bytes for household ${h.id}`,
+      );
+    }
+  }
+
+  syncState = {
+    ...syncState,
+    status: 'syncing',
+    error: null,
+    errorKind: null,
+    hasPendingChanges: queueHasWork() || upsertBatch.size > 0 || deleteBatch.size > 0,
+    online: true,
+  };
+  notify();
+
+  try {
+    for (let di = 0; di < deleteIds.length; di++) {
+      if (currentUserId !== flushUserId) {
+        console.debug(
+          `${SYNC_QUEUE_LOG_PREFIX} flush aborted mid-delete (auth/session changed); discarding remaining remote ops for this batch`,
+        );
+        syncState = {
+          ...syncState,
+          status: 'idle',
+          error: null,
+          errorKind: null,
+          hasPendingChanges: queueHasWork(),
+          online: checkOnline(),
+        };
+        notify();
+        return;
+      }
+      await repo.deleteRemoteHousehold(deleteIds[di]!);
+    }
+
+    const cloudPatches: Array<{ localId: string; cloudHouseholdId: string }> = [];
+    const upsertEntries = [...upsertBatch.entries()];
+    for (let ui = 0; ui < upsertEntries.length; ui++) {
+      if (currentUserId !== flushUserId) {
+        console.debug(
+          `${SYNC_QUEUE_LOG_PREFIX} flush aborted mid-upsert (auth/session changed); discarding remaining remote ops for this batch`,
+        );
+        await persistNewCloudHouseholdIds(cloudPatches);
+        syncState = {
+          ...syncState,
+          status: 'idle',
+          error: null,
+          errorKind: null,
+          hasPendingChanges: queueHasWork(),
+          online: checkOnline(),
+        };
+        notify();
+        return;
+      }
+      const [, h] = upsertEntries[ui]!;
+      const { newCloudHouseholdId } = await repo.upsertRemoteHousehold(h, flushUserId);
+      if (newCloudHouseholdId)
+        cloudPatches.push({ localId: h.id, cloudHouseholdId: newCloudHouseholdId });
+    }
+    await persistNewCloudHouseholdIds(cloudPatches);
+
+    consecutiveTransientFailures = 0;
+    clearBackoffTimer();
+
+    const t1 = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    console.debug(`${SYNC_QUEUE_LOG_PREFIX} flush complete in ${Math.round(t1 - t0)}ms`);
+
+    syncState = {
+      ...syncState,
+      status: 'idle',
+      lastSyncedAt: new Date().toISOString(),
+      error: null,
+      errorKind: null,
+      hasPendingChanges: queueHasWork(),
+    };
+    notify();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Sync failed';
+    const kind = classifyError(err);
+    console.error(`${SYNC_QUEUE_LOG_PREFIX} flush failed: ${kind} - ${msg}`);
+
+    for (const [id, h] of upsertBatch) {
+      const existing = pendingUpserts.get(id);
+      pendingUpserts.set(id, existing ? existing : h);
+    }
+    for (const pk of deleteIds) {
+      pendingDeletes.add(pk);
+    }
+
+    syncState = {
+      ...syncState,
+      status: 'error',
+      error: msg,
+      errorKind: kind,
+      hasPendingChanges: true,
+      online: checkOnline(),
+    };
+    notify();
+
+    if (kind === 'remote_unavailable') {
+      consecutiveTransientFailures += 1;
+      scheduleBackoffRetry();
+    } else {
+      consecutiveTransientFailures = 0;
+      clearBackoffTimer();
+    }
+  } finally {
+    flushInProgress = false;
+    const needImmediateFollowUp = flushAgainAfterCurrent;
+    flushAgainAfterCurrent = false;
+    // Run follow-up on a microtask when another flush was requested while this one held the mutex,
+    // so `finally` finishes (and clears `flushInProgress`) before re-entry — avoids synchronous re-entry races.
+    if (needImmediateFollowUp && queueHasWork() && checkOnline() && currentUserId) {
+      queueMicrotask(() => {
+        void flushQueuedSync();
+      });
+    } else if (queueHasWork() && checkOnline() && currentUserId) {
+      scheduleDebouncedFlush();
+    }
+  }
+}
+
+/** Clear incremental queue and timers (after full push paths that synced everything). */
+function clearIncrementalQueue(): void {
+  clearFlushTimer();
+  clearBackoffTimer();
+  pendingUpserts = new Map();
+  pendingDeletes = new Set();
+  consecutiveTransientFailures = 0;
+  flushAgainAfterCurrent = false;
 }
 
 function classifyError(err: unknown): SyncErrorKind {
@@ -105,7 +428,12 @@ export function onSyncStateChange(fn: (state: SyncState) => void): () => void {
 }
 
 export function setCurrentUserId(userId: string | null): void {
+  const prev = currentUserId;
+  if (prev !== null && prev !== userId) {
+    clearIncrementalQueue();
+  }
   currentUserId = userId;
+  updatePendingFlagFromQueue();
 }
 
 export function getCurrentUserId(): string | null {
@@ -117,11 +445,11 @@ export function isAuthenticated(): boolean {
 }
 
 /**
- * Provide a reference to loadHouseholds so the engine can read local state
- * for manualSync / reconnect without a circular import.
+ * @deprecated No-op. Incremental sync uses an in-memory queue; reconnect flushes via `flushQueuedSync`.
+ * Kept for backward compatibility with older tests or forks.
  */
-export function setLoadHouseholdsRef(fn: () => Household[]): void {
-  loadHouseholdsRef = fn;
+export function setLoadHouseholdsRef(_fn: () => Household[]): void {
+  void _fn;
 }
 
 /**
@@ -138,8 +466,8 @@ export function initOnlineListeners(): void {
       syncState = { ...syncState, status: 'idle' };
     }
     notify();
-    if (syncState.hasPendingChanges && currentUserId && loadHouseholdsRef) {
-      // void syncAfterSave(loadHouseholdsRef());
+    if (currentUserId && queueHasWork()) {
+      void flushQueuedSync();
     }
   });
 
@@ -154,14 +482,18 @@ function checkOnline(): boolean {
 }
 
 /**
- * Called after every local save. Upserts each changed household to remote.
- * Errors are caught and surfaced via syncState, never thrown to the caller.
+ * **Test / legacy only** — full-array upsert of every household. Production saves must use
+ * `queueHouseholdSync` + debounced `flushQueuedSync` (see F068). Do not call from app UI or storage.
+ * Still used by tests and intentional bulk scenarios (e.g. offline queue seed + reconnect tests).
  */
 export async function syncAfterSave(households: Household[]): Promise<void> {
   if (!currentUserId) return;
 
   const online = checkOnline();
   if (!online) {
+    for (const h of households) {
+      pendingUpserts.set(h.id, h);
+    }
     syncState = { ...syncState, status: 'offline', online: false, hasPendingChanges: true };
     notify();
     return;
@@ -184,13 +516,14 @@ export async function syncAfterSave(households: Household[]): Promise<void> {
         cloudPatches.push({ localId: h.id, cloudHouseholdId: newCloudHouseholdId });
     }
     await persistNewCloudHouseholdIds(cloudPatches);
+    clearIncrementalQueue();
     syncState = {
       ...syncState,
       status: 'idle',
       lastSyncedAt: new Date().toISOString(),
       error: null,
       errorKind: null,
-      hasPendingChanges: false,
+      hasPendingChanges: queueHasWork(),
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Sync failed';
@@ -255,13 +588,14 @@ export async function pushLocalHouseholds(households: Household[]): Promise<void
         cloudPatches.push({ localId: h.id, cloudHouseholdId: newCloudHouseholdId });
     }
     await persistNewCloudHouseholdIds(cloudPatches);
+    clearIncrementalQueue();
     syncState = {
       ...syncState,
       status: 'idle',
       lastSyncedAt: new Date().toISOString(),
       error: null,
       errorKind: null,
-      hasPendingChanges: false,
+      hasPendingChanges: queueHasWork(),
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Push failed';
@@ -348,13 +682,14 @@ export async function manualSync(
         cloudPatches.push({ localId: h.id, cloudHouseholdId: newCloudHouseholdId });
     }
     await persistNewCloudHouseholdIds(cloudPatches);
+    clearIncrementalQueue();
     syncState = {
       ...syncState,
       status: 'idle',
       lastSyncedAt: new Date().toISOString(),
       error: null,
       errorKind: null,
-      hasPendingChanges: false,
+      hasPendingChanges: queueHasWork(),
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Manual sync failed';
@@ -432,7 +767,7 @@ export async function resolveFirstLogin(
   return merged;
 }
 
-/** Delete a remote household (called when local delete happens while signed in). */
+/** Delete a remote household immediately (bypass queue). Prefer `queueHouseholdDeleteSync` from storage. */
 export async function syncDeleteHousehold(householdId: string): Promise<void> {
   if (!currentUserId) return;
   try {
@@ -450,9 +785,15 @@ export function __testOnly_setRemoteRepo(mock: RemoteRepoAdapter): void {
 /** Reset for tests. */
 export function __testOnly_resetSyncEngine(): void {
   currentUserId = null;
+  clearFlushTimer();
+  clearBackoffTimer();
+  pendingUpserts = new Map();
+  pendingDeletes = new Set();
+  flushInProgress = false;
+  flushAgainAfterCurrent = false;
+  consecutiveTransientFailures = 0;
   syncState = { ...DEFAULT_SYNC_STATE, online: checkOnline() };
   listeners = [];
   repo = defaultRemoteRepo;
-  loadHouseholdsRef = null;
   onlineListenersBound = false;
 }
