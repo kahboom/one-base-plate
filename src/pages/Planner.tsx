@@ -557,7 +557,7 @@ export default function Planner() {
 
             {(selectedMeal.recipeRefs ?? []).length > 0 && (
               <div className="mb-4 rounded-md border border-border-light bg-surface-card p-3" data-testid="whole-meal-recipe-refs">
-                <span className="text-sm font-medium text-text-primary">Entree</span>
+                <span className="text-sm font-medium text-text-primary">Library recipes</span>
                 <div className="mt-1 flex flex-wrap gap-2">
                   {(selectedMeal.recipeRefs ?? []).map((ref, i) => (
                     <Chip key={ref.recipeId || i} variant="info" data-testid={`whole-meal-planner-ref-${i}`}>

@@ -2,7 +2,6 @@ import type { Recipe } from "../types";
 
 /** Curated recipe tags for quick-pick UI; unknown tags in stored data are preserved but not listed here. */
 export const CURATED_RECIPE_TAGS: readonly { value: string; label: string }[] = [
-  { value: "whole-meal", label: "Entree" },
   { value: "quick", label: "Quick" },
   { value: "batch-prep", label: "Batch prep" },
   { value: "freezer-friendly", label: "Freezer friendly" },
@@ -24,6 +23,11 @@ const LABEL_BY_VALUE = new Map(
   CURATED_RECIPE_TAGS.map((t) => [t.value, t.label] as const),
 );
 
+/** Stored tag values no longer in {@link CURATED_RECIPE_TAGS}; still show a readable chip label. */
+const DEPRECATED_TAG_LABELS: Record<string, string> = {
+  "whole-meal": "Whole meal",
+};
+
 /** Legacy / seed aliases that should behave like curated tags for filtering and display. */
 const LEGACY_TAG_ALIASES: Record<string, string> = {
   "batch-friendly": "batch-prep",
@@ -41,7 +45,13 @@ export function isCuratedTag(tag: string): boolean {
 /** Display label for a tag; curated tags get friendly labels, others pass through. */
 export function recipeTagLabel(tag: string): string {
   const normalized = normalizeRecipeTagForCurated(tag);
-  return LABEL_BY_VALUE.get(normalized) ?? LABEL_BY_VALUE.get(tag) ?? tag;
+  return (
+    LABEL_BY_VALUE.get(normalized) ??
+    LABEL_BY_VALUE.get(tag) ??
+    DEPRECATED_TAG_LABELS[normalized] ??
+    DEPRECATED_TAG_LABELS[tag] ??
+    tag
+  );
 }
 
 /**

@@ -1,4 +1,13 @@
-import type { ComponentRecipeRef, Household, Ingredient, MealComponent, Recipe, RecipeRef } from "./types";
+import type {
+  BaseMeal,
+  ComponentRecipeRef,
+  DayPlan,
+  Household,
+  Ingredient,
+  MealComponent,
+  Recipe,
+  RecipeRef,
+} from "./types";
 import { normalizeRecipeTagForCurated } from "./lib/recipeTags";
 import seedData from "./seed-data.json";
 import {
@@ -51,8 +60,9 @@ export function ensureHouseholdComponentIds(household: Household): Household {
 /** Strip removed Recipe fields from persisted JSON and map legacy `recipeType` into tags. */
 export function sanitizeRecipe(recipe: Recipe): Recipe {
   const r = recipe as Recipe & { recipeType?: string; parentRecipeId?: string };
-  const { recipeType, parentRecipeId: _parent, ...rest } = r;
-  let tags = [...(rest.tags ?? [])];
+  const { recipeType, parentRecipeId, ...rest } = r;
+  void parentRecipeId;
+  const tags = [...(rest.tags ?? [])];
   const typeToTag: Record<string, string> = {
     "whole-meal": "whole-meal",
     sauce: "sauce",
@@ -248,7 +258,63 @@ export function clearAllHouseholdsAndDefault(): void {
   clearDefaultHouseholdId();
 }
 
-export function clearHouseholdMealsAndPlans(householdId: string): void {
+/** Component refs that resolve against the household {@link Household.recipes} library. */
+function componentRecipeRefTiesToRecipeLibrary(ref: ComponentRecipeRef): boolean {
+  if (ref.recipeId) return true;
+  if (ref.sourceType === "imported-recipe") return true;
+  if (ref.importedRecipeSourceId) return true;
+  return false;
+}
+
+function stripLibraryRecipeRefsFromComponent(component: MealComponent): MealComponent {
+  const raw = component.recipeRefs;
+  if (!raw?.length) return component;
+  const next = raw.filter((r) => !componentRecipeRefTiesToRecipeLibrary(r));
+  if (next.length === raw.length) return component;
+  return { ...component, recipeRefs: next.length ? next : undefined };
+}
+
+function stripLibraryRecipeDataFromBaseMeal(meal: BaseMeal): BaseMeal {
+  const next: BaseMeal = {
+    ...meal,
+    components: meal.components.map(stripLibraryRecipeRefsFromComponent),
+  };
+  delete next.sourceRecipeId;
+  delete next.recipeRefs;
+  return next;
+}
+
+function stripIngredientLibraryRecipeRefs(ingredient: Ingredient): Ingredient {
+  if (!ingredient.defaultRecipeRefs?.length) return ingredient;
+  return { ...ingredient, defaultRecipeRefs: undefined };
+}
+
+function stripPlanDayLibraryRecipeRefs(day: DayPlan): DayPlan {
+  const raw = day.componentRecipeOverrides;
+  if (!raw?.length) return day;
+  const next = raw.filter((r) => !componentRecipeRefTiesToRecipeLibrary(r));
+  if (next.length === raw.length) return day;
+  return { ...day, componentRecipeOverrides: next.length ? next : undefined };
+}
+
+/** Removes base meals, weekly plans, pins, and meal history; keeps the recipe library, members, and ingredients. */
+export function clearHouseholdBaseMealsAndPlanning(householdId: string): void {
+  const households = loadHouseholds();
+  const idx = households.findIndex((h) => h.id === householdId);
+  if (idx < 0) return;
+  const h = households[idx]!;
+  households[idx] = {
+    ...h,
+    baseMeals: [],
+    weeklyPlans: [],
+    pinnedMealIds: [],
+    mealOutcomes: [],
+  };
+  saveHouseholds(households);
+}
+
+/** Clears the recipe library and strips library-linked recipe refs from meals, ingredients, and plan overrides. */
+export function clearHouseholdRecipes(householdId: string): void {
   const households = loadHouseholds();
   const idx = households.findIndex((h) => h.id === householdId);
   if (idx < 0) return;
@@ -256,12 +322,53 @@ export function clearHouseholdMealsAndPlans(householdId: string): void {
   households[idx] = {
     ...h,
     recipes: [],
-    baseMeals: [],
-    weeklyPlans: [],
-    pinnedMealIds: [],
-    mealOutcomes: [],
+    baseMeals: (h.baseMeals ?? []).map(stripLibraryRecipeDataFromBaseMeal),
+    ingredients: (h.ingredients ?? []).map(stripIngredientLibraryRecipeRefs),
+    weeklyPlans: (h.weeklyPlans ?? []).map((wp) => ({
+      ...wp,
+      days: wp.days.map(stripPlanDayLibraryRecipeRefs),
+    })),
   };
   saveHouseholds(households);
+}
+
+/** How many recipe rows ship in bundled seed data for this household id (0 if none). */
+export function countSeedRecipesForHousehold(householdId: string): number {
+  const seedHouseholds = seedData as unknown as Household[];
+  const seedH = seedHouseholds.find((h) => h.id === householdId);
+  return seedH?.recipes?.length ?? 0;
+}
+
+/**
+ * Merges bundled seed recipes for this household id into the live library.
+ * Rows with the same id as seed are replaced with the seed copy; seed-only ids are appended; other recipes are kept.
+ */
+export function mergeSeedRecipesForHousehold(householdId: string): boolean {
+  const seedHouseholds = seedData as unknown as Household[];
+  const seedH = seedHouseholds.find((h) => h.id === householdId);
+  const seedRecipes = seedH?.recipes;
+  if (!seedRecipes?.length) return false;
+
+  const households = loadHouseholds();
+  const idx = households.findIndex((h) => h.id === householdId);
+  if (idx < 0) return false;
+
+  const h = households[idx]!;
+  const seedMap = new Map(seedRecipes.map((r) => [r.id, r]));
+  const existing = h.recipes ?? [];
+  const existingIds = new Set(existing.map((r) => r.id));
+
+  const merged: Recipe[] = [];
+  for (const r of existing) {
+    merged.push(seedMap.get(r.id) ?? r);
+  }
+  for (const sr of seedRecipes) {
+    if (!existingIds.has(sr.id)) merged.push(sr);
+  }
+
+  households[idx] = { ...h, recipes: merged };
+  saveHouseholds(households);
+  return true;
 }
 
 export function exportHouseholdsJSON(householdIds?: string[]): string {
@@ -382,8 +489,7 @@ export function sanitizeIngredientAliasesAgainstHousehold(ingredients: Ingredien
     );
     const next = normalizeIngredientAliasList(canon, kept);
     if (next) return { ...ing, aliases: next };
-    const { aliases: _a, ...rest } = ing;
-    return rest as Ingredient;
+    return { ...ing, aliases: undefined };
   });
 }
 
@@ -703,7 +809,7 @@ export function runRecipeRefMigrationIfNeeded(): RecipeRefMigrationResult {
 /**
  * One-time: removes stored `whole-meal` tags from every recipe. Older builds inferred this tag on
  * import/migration; changing the code does not rewrite already-saved households. Users can add
- * "Entree" again under Recipe Library → Organization when it applies.
+ * tags again under Recipe Library → Organization when it applies.
  */
 export function runStripWholeMealTagsIfNeeded(): number {
   if (localStorage.getItem(STRIP_WHOLE_MEAL_TAGS_KEY)) return 0;

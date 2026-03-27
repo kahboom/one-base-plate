@@ -9,10 +9,13 @@ import {
 import {
   clearAllHouseholdsAndDefault,
   clearDefaultHouseholdId,
-  clearHouseholdMealsAndPlans,
+  clearHouseholdBaseMealsAndPlanning,
+  clearHouseholdRecipes,
   exportHouseholdsJSON,
   importHouseholdsJSON,
+  countSeedRecipesForHousehold,
   loadDefaultHouseholdId,
+  mergeSeedRecipesForHousehold,
   saveDefaultHouseholdId,
 } from "../storage";
 import { clearImportSession } from "../paprika-parser";
@@ -29,10 +32,22 @@ export default function Settings() {
   const [dataImportMessage, setDataImportMessage] = useState<"success" | null>(null);
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
   const {
-    pending: pendingMeals,
-    requestConfirm: requestConfirmMeals,
-    confirm: confirmMeals,
-    cancel: cancelMeals,
+    pending: pendingBaseMeals,
+    requestConfirm: requestConfirmBaseMeals,
+    confirm: confirmBaseMeals,
+    cancel: cancelBaseMeals,
+  } = useConfirm();
+  const {
+    pending: pendingRecipes,
+    requestConfirm: requestConfirmRecipes,
+    confirm: confirmRecipes,
+    cancel: cancelRecipes,
+  } = useConfirm();
+  const {
+    pending: pendingSeedRecipes,
+    requestConfirm: requestConfirmSeedRecipes,
+    confirm: confirmSeedRecipes,
+    cancel: cancelSeedRecipes,
   } = useConfirm();
   const [themePreference, setThemePreference] = useState<ThemePreference>(() => loadThemePreference());
 
@@ -90,13 +105,33 @@ export default function Settings() {
     });
   }
 
-  function handleClearMealsClick() {
+  function handleClearBaseMealsClick() {
     if (!householdId) return;
-    requestConfirmMeals("", () => {
-      clearHouseholdMealsAndPlans(householdId);
+    requestConfirmBaseMeals("", () => {
+      clearHouseholdBaseMealsAndPlanning(householdId);
       clearImportSession();
     });
   }
+
+  function handleClearRecipesClick() {
+    if (!householdId) return;
+    requestConfirmRecipes("", () => {
+      clearHouseholdRecipes(householdId);
+      clearImportSession();
+    });
+  }
+
+  function handleRestoreSeedRecipesClick() {
+    if (!householdId) return;
+    requestConfirmSeedRecipes("", () => {
+      const ok = mergeSeedRecipesForHousehold(householdId);
+      if (!ok) {
+        alert("No bundled seed recipes are available for this household id.");
+      }
+    });
+  }
+
+  const seedRecipeCount = householdId ? countSeedRecipesForHousehold(householdId) : 0;
 
   return (
     <>
@@ -149,9 +184,9 @@ export default function Settings() {
       <Card className="mb-6">
         <h2 className="mb-3 text-sm font-semibold text-text-primary">Data</h2>
         <p className="mb-4 text-sm text-text-secondary">
-          Export or import all households (members, ingredients, base meals, weekly plans). Import merges with
-          existing data by household id. You can also remove only this household&apos;s meals and plans while
-          keeping members and ingredients.
+          Export or import all households (members, ingredients, recipe library, base meals, weekly plans). Import
+          merges with existing data by household id. You can remove only this household&apos;s base meals and plans,
+          or only its recipe library, while keeping members and ingredients.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button data-testid="settings-export-btn" onClick={handleExport}>
@@ -173,9 +208,17 @@ export default function Settings() {
             onChange={handleImportFile}
             data-testid="settings-import-file-input"
           />
-          <Button variant="danger" data-testid="settings-clear-meals-btn" onClick={handleClearMealsClick}>
-            Remove all meals
+          <Button variant="danger" data-testid="settings-clear-base-meals-btn" onClick={handleClearBaseMealsClick}>
+            Remove all base meals
           </Button>
+          <Button variant="danger" data-testid="settings-clear-recipes-btn" onClick={handleClearRecipesClick}>
+            Remove all recipes
+          </Button>
+          {seedRecipeCount > 0 && (
+            <Button data-testid="settings-restore-seed-recipes-btn" onClick={handleRestoreSeedRecipesClick}>
+              Restore seed recipes ({seedRecipeCount})
+            </Button>
+          )}
           <Button variant="danger" data-testid="settings-clear-all-btn" onClick={handleClearClick}>
             Clear all data
           </Button>
@@ -206,12 +249,28 @@ export default function Settings() {
         onCancel={cancel}
       />
       <ConfirmDialog
-        open={!!pendingMeals}
-        title="Remove all meals"
-        message="This removes all base meals, weekly plans, pinned meals, and meal history for this household. Members and ingredients are kept. In-progress Paprika imports are also cleared. This cannot be undone."
-        confirmLabel="Remove meals"
-        onConfirm={confirmMeals}
-        onCancel={cancelMeals}
+        open={!!pendingBaseMeals}
+        title="Remove all base meals"
+        message="This removes all base meals, weekly plans, pinned meals, and meal history for this household. The recipe library, members, and ingredients are kept. In-progress Paprika imports are also cleared. This cannot be undone."
+        confirmLabel="Remove base meals"
+        onConfirm={confirmBaseMeals}
+        onCancel={cancelBaseMeals}
+      />
+      <ConfirmDialog
+        open={!!pendingRecipes}
+        title="Remove all recipes"
+        message="This removes every recipe in the library for this household. Base meals stay, but links to those recipes (including promote-from-recipe traces) are removed from meals, ingredients, and planner overrides. In-progress Paprika imports are also cleared. This cannot be undone."
+        confirmLabel="Remove recipes"
+        onConfirm={confirmRecipes}
+        onCancel={cancelRecipes}
+      />
+      <ConfirmDialog
+        open={!!pendingSeedRecipes}
+        title="Restore seed recipes"
+        message="This adds (or refreshes) the app’s bundled seed recipes for this household. Recipes you added with other ids are kept. Matching ids are replaced with the seed copy. Base meal links to recipes are not changed—re-attach in the meal editor if needed."
+        confirmLabel="Restore recipes"
+        onConfirm={confirmSeedRecipes}
+        onCancel={cancelSeedRecipes}
       />
     </>
   );

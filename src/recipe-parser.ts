@@ -362,7 +362,7 @@ export function parseLeadingQuantityPrefix(
   };
 }
 
-function stripRedundantPackagingLead(name: string, _unitLower: string): string {
+function stripRedundantPackagingLead(name: string): string {
   let n = name.trim();
   if (!n) return n;
   if (PACKAGING_LEAD_STRIP.test(n)) {
@@ -572,7 +572,7 @@ function finalizeCanonicalName(
     prepNotes.push(...commaParts.map((part) => part.toLowerCase()));
   }
 
-  canonical = stripRedundantPackagingLead(canonical, unitRaw.toLowerCase());
+  canonical = stripRedundantPackagingLead(canonical);
   canonical = stripLeadingQualifiers(canonical, prepNotes);
   canonical = stripLeadingPrepDescriptors(canonical, prepNotes);
   canonical = stripLeadingSizeDescriptors(canonical, prepNotes);

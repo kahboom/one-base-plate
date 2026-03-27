@@ -116,6 +116,48 @@ function truncate(s: string, max: number): string {
   return s.slice(0, max) + "…";
 }
 
+/** HTTP(S) or data URLs work in `<img src>`; `file://` and bare paths do not in the browser. */
+function isUsableWebImageUrl(url: string): boolean {
+  const u = url.trim();
+  if (!u) return false;
+  if (u.startsWith("data:")) return true;
+  try {
+    const parsed = new URL(u);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Paprika stores local photos as base64 in `photo_data`, or occasionally as a full `data:` URL.
+ * JPEG base64 typically starts with `/9j/`; PNG with `iVBORw0KGgo`.
+ */
+export function paprikaPhotoDataToDataUrl(photoData: string | null | undefined): string | undefined {
+  if (!photoData?.trim()) return undefined;
+  const t = photoData.trim();
+  if (t.startsWith("data:")) return t;
+  const b64 = t.replace(/\s/g, "");
+  if (!b64) return undefined;
+  let mime = "image/jpeg";
+  if (b64.startsWith("iVBORw0KGgo")) mime = "image/png";
+  else if (b64.startsWith("/9j/")) mime = "image/jpeg";
+  return `data:${mime};base64,${b64}`;
+}
+
+/** Prefer a remote/data `image_url`; otherwise embed `photo_data` as a data URL. */
+export function paprikaRecipeImageUrl(
+  imageUrl: string | null | undefined,
+  photoData: string | null | undefined,
+): string | undefined {
+  const url = (imageUrl ?? "").trim();
+  if (isUsableWebImageUrl(url)) return url;
+  const fromPhoto = paprikaPhotoDataToDataUrl(photoData);
+  if (fromPhoto) return fromPhoto;
+  if (url) return url;
+  return undefined;
+}
+
 function compactMappingsForStorage(mappings: ImportMapping[]): ImportMapping[] {
   return mappings.map((m) => ({
     ...m,
@@ -128,6 +170,7 @@ function compactMappingsForStorage(mappings: ImportMapping[]): ImportMapping[] {
 
 function toSessionRecipeSnapshot(recipe: ParsedPaprikaRecipe): ParsedPaprikaRecipe {
   // Keep only fields needed to resume select/review/import flows.
+  const resolvedImage = paprikaRecipeImageUrl(recipe.raw.image_url, recipe.raw.photo_data);
   const raw: PaprikaRecipe = {
     name: recipe.raw.name ?? "",
     ingredients: "",
@@ -141,7 +184,8 @@ function toSessionRecipeSnapshot(recipe: ParsedPaprikaRecipe): ParsedPaprikaReci
     difficulty: recipe.raw.difficulty ?? "",
     servings: recipe.raw.servings ?? "",
     categories: Array.isArray(recipe.raw.categories) ? recipe.raw.categories : [],
-    image_url: recipe.raw.image_url ?? "",
+    // Fold embedded photos into `image_url` so we do not persist two copies; drop unusable file:// URLs.
+    image_url: resolvedImage ?? "",
     photo_data: null,
     uid: recipe.raw.uid ?? "",
   };
@@ -918,7 +962,7 @@ export function buildDraftRecipe(
     defaultPrep: prepText,
     recipeLinks: recipeLinks.length > 0 ? recipeLinks : undefined,
     notes: notesOut,
-    imageUrl: paprikaRecipe.image_url || undefined,
+    imageUrl: paprikaRecipeImageUrl(paprikaRecipe.image_url, paprikaRecipe.photo_data),
     provenance,
     prepTimeMinutes: prepTime || undefined,
     cookTimeMinutes: cookTime || undefined,

@@ -58,7 +58,6 @@ describe("F066: curated tag model", () => {
   it("exposes the expected curated values", () => {
     const values = CURATED_RECIPE_TAGS.map((t) => t.value);
     expect(values).toEqual([
-      "whole-meal",
       "quick",
       "batch-prep",
       "freezer-friendly",
@@ -79,7 +78,7 @@ describe("F066: curated tag model", () => {
     expect(isCuratedTag("quick")).toBe(true);
     expect(isCuratedTag("taco")).toBe(false);
     expect(recipeTagLabel("quick")).toBe("Quick");
-    expect(recipeTagLabel("whole-meal")).toBe("Entree");
+    expect(recipeTagLabel("whole-meal")).toBe("Whole meal");
     expect(recipeTagLabel("unknown-custom")).toBe("unknown-custom");
   });
 

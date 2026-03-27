@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import seedData from "../src/seed-data.json";
 import type { Household } from "../src/types";
 import {
+  countSeedRecipesForHousehold,
   initStorage,
   loadHouseholds,
+  mergeSeedRecipesForHousehold,
   resetAppStorageForTests,
   saveHousehold,
   STORAGE_KEY,
@@ -107,6 +109,47 @@ describe("F061: Seed bootstrap", () => {
     expect(list.length).toBeGreaterThan(0);
     const seed = seedData as unknown as Household[];
     expect(list.map((h) => h.id).sort()).toEqual(seed.map((h) => h.id).sort());
+  });
+});
+
+describe("mergeSeedRecipesForHousehold", () => {
+  it("merges bundled seed recipes for H001 and keeps custom recipe ids", async () => {
+    const seed = seedData as unknown as Household[];
+    const seedH001 = seed.find((h) => h.id === "H001")!;
+    expect(seedH001.recipes?.length).toBeGreaterThan(0);
+
+    await initStorage();
+    saveHousehold({
+      id: "H001",
+      name: "McG",
+      members: [],
+      ingredients: [],
+      recipes: [{ id: "custom-only", name: "Custom", components: [] }],
+      baseMeals: [],
+      weeklyPlans: [],
+    });
+
+    expect(countSeedRecipesForHousehold("H001")).toBe(seedH001.recipes!.length);
+    expect(mergeSeedRecipesForHousehold("H001")).toBe(true);
+
+    const h = loadHouseholds().find((x) => x.id === "H001")!;
+    expect(h.recipes!.some((r) => r.id === "custom-only")).toBe(true);
+    expect(h.recipes!.find((r) => r.id === "rec-taco-chicken")?.name).toBe("Grilled taco chicken");
+    expect(h.recipes!.length).toBe(seedH001.recipes!.length + 1);
+  });
+
+  it("returns false when bundled seed has no recipes for this household id", async () => {
+    await initStorage();
+    saveHousehold({
+      id: "h-no-seed",
+      name: "X",
+      members: [],
+      ingredients: [],
+      recipes: [],
+      baseMeals: [],
+      weeklyPlans: [],
+    });
+    expect(mergeSeedRecipesForHousehold("h-no-seed")).toBe(false);
   });
 });
 

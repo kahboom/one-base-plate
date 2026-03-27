@@ -107,10 +107,10 @@ export function resolveFullCookingRef(
       componentId: cid ?? "",
       sourceType: "internal-meal",
       recipeId: primary.recipeId || undefined,
-      label: primary.label ?? "Entree recipe",
+      label: primary.label ?? "Library recipe",
       notes: primary.notes,
     };
-    return { effective: synth, source: "meal", sourceLabel: "Entree recipe" };
+    return { effective: synth, source: "meal", sourceLabel: "Library recipe" };
   }
 
   const ingredient = ingredients.find((i) => i.id === component.ingredientId);

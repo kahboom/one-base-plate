@@ -134,7 +134,7 @@ describe("F058 — resolveFullCookingRef priority chain", () => {
     const bareComp = makeComponent({ id: "comp-bare", ingredientId: "ing-chicken" });
     const result = resolveFullCookingRef(bareComp, meal, ingredients, {});
     expect(result.source).toBe("meal");
-    expect(result.sourceLabel).toBe("Entree recipe");
+    expect(result.sourceLabel).toBe("Library recipe");
     expect(result.effective?.label).toBe("Full dinner recipe");
   });
 

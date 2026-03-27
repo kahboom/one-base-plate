@@ -9,6 +9,8 @@ import {
   detectDuplicateMeal,
   parsePaprikaRecipes,
   buildDraftMeal,
+  paprikaPhotoDataToDataUrl,
+  paprikaRecipeImageUrl,
 } from "../src/paprika-parser";
 import type { PaprikaRecipe, PaprikaReviewLine } from "../src/paprika-parser";
 import type { Household, BaseMeal, Recipe } from "../src/types";
@@ -78,11 +80,59 @@ function makePaprikaRecipe(overrides: Partial<PaprikaRecipe> = {}): PaprikaRecip
   };
 }
 
+/** 1×1 transparent PNG (raw base64, no data: prefix). */
+const TINY_PNG_B64 =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
 beforeEach(() => {
   localStorage.clear();
 });
 
 describe("F048 - Paprika parser engine", () => {
+  describe("paprika local images (photo_data)", () => {
+    it("paprikaPhotoDataToDataUrl wraps raw PNG base64", () => {
+      expect(paprikaPhotoDataToDataUrl(TINY_PNG_B64)).toBe(
+        `data:image/png;base64,${TINY_PNG_B64}`,
+      );
+    });
+
+    it("paprikaPhotoDataToDataUrl leaves full data URLs unchanged", () => {
+      const full = `data:image/png;base64,${TINY_PNG_B64}`;
+      expect(paprikaPhotoDataToDataUrl(full)).toBe(full);
+    });
+
+    it("paprikaRecipeImageUrl prefers https image_url over photo_data", () => {
+      expect(
+        paprikaRecipeImageUrl("https://example.com/a.jpg", TINY_PNG_B64),
+      ).toBe("https://example.com/a.jpg");
+    });
+
+    it("paprikaRecipeImageUrl uses photo_data when image_url is empty", () => {
+      expect(paprikaRecipeImageUrl("", TINY_PNG_B64)).toBe(
+        `data:image/png;base64,${TINY_PNG_B64}`,
+      );
+    });
+
+    it("paprikaRecipeImageUrl uses photo_data when image_url is file://", () => {
+      expect(paprikaRecipeImageUrl("file:///Users/me/photo.jpg", TINY_PNG_B64)).toBe(
+        `data:image/png;base64,${TINY_PNG_B64}`,
+      );
+    });
+
+    it("buildDraftMeal sets meal imageUrl from photo_data when no web image_url", () => {
+      const h = makeHousehold();
+      const recipe = makePaprikaRecipe({
+        image_url: "",
+        photo_data: TINY_PNG_B64,
+        source_url: "",
+        source: "",
+      });
+      const lines = parseRecipeIngredients(recipe, h.ingredients);
+      const { meal } = buildDraftMeal(recipe, lines as PaprikaReviewLine[], h.ingredients);
+      expect(meal.imageUrl).toBe(`data:image/png;base64,${TINY_PNG_B64}`);
+    });
+  });
+
   describe("parseRecipeIngredients", () => {
     it("matches household ingredients from Paprika recipe text", () => {
       const h = makeHousehold();

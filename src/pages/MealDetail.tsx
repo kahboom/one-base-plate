@@ -156,7 +156,7 @@ export function MealDetailContent({
         <Section title="Recipes">
           {(meal.recipeRefs ?? []).length > 0 && (
             <div data-testid="meal-recipe-refs" className="mb-4">
-              <h4 className="mb-1 text-sm font-semibold text-text-secondary">Entree recipes</h4>
+              <h4 className="mb-1 text-sm font-semibold text-text-secondary">Library recipes</h4>
               <div className="space-y-2">
                 {(meal.recipeRefs ?? []).map((ref, i) => {
                   const recipe = (household.recipes ?? []).find((r) => r.id === ref.recipeId);

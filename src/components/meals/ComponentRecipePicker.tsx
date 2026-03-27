@@ -257,7 +257,7 @@ export default function ComponentRecipePicker({
   }
 
   const title = isMealMode
-    ? "Attach entree recipe"
+    ? "Attach library recipe"
     : mode === "tonight"
       ? "Tonight override"
       : "Attach recipe";
