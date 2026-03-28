@@ -1106,6 +1106,12 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Tests:** `tests/f050-settings.test.tsx`, `tests/f062-storage-layer.test.ts`.
 - **Verification:** `npm run typecheck`, `npm test`.
 
+### Settings — reset to default state (2026-03-28)
+
+- **Storage:** `resetToDefaultState()` in `src/storage.ts` — clears households + default id, removes `onebaseplate_seeded`, awaits `seedIfNeeded()` (bundled `seed-data.json`), sets default household to the first seed household.
+- **UI:** `src/pages/Settings.tsx` — Data section “Reset to default state” (danger) with confirm; clears Paprika import session; navigates to `/households`. `data-testid="settings-reset-default-btn"`.
+- **Verification:** `npm run typecheck`, `npm test`.
+
 ## Next Task
 
 - Continue from `PRD.json` implementation order after F068, or open a new scoped feature if product priorities shift.

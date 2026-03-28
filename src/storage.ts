@@ -262,6 +262,17 @@ export function clearAllHouseholdsAndDefault(): void {
   clearDefaultHouseholdId();
 }
 
+/** Clear all households, drop the seeded flag, and repopulate from bundled `seed-data.json`. */
+export async function resetToDefaultState(): Promise<void> {
+  clearAllHouseholdsAndDefault();
+  localStorage.removeItem(SEEDED_KEY);
+  await seedIfNeeded();
+  const households = loadHouseholds();
+  if (households.length > 0) {
+    saveDefaultHouseholdId(households[0]!.id);
+  }
+}
+
 /** Component refs that resolve against the household {@link Household.recipes} library. */
 function componentRecipeRefTiesToRecipeLibrary(ref: ComponentRecipeRef): boolean {
   if (ref.recipeId) return true;

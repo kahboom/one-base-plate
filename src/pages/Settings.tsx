@@ -14,6 +14,7 @@ import {
   loadDefaultHouseholdId,
   mergeSeedRecipesForHousehold,
   resetHouseholdIngredientsToSeed,
+  resetToDefaultState,
   saveDefaultHouseholdId,
 } from '../storage';
 import { clearImportSession } from '../paprika-parser';
@@ -52,6 +53,12 @@ export default function Settings() {
     requestConfirm: requestConfirmSeedIngredients,
     confirm: confirmSeedIngredients,
     cancel: cancelSeedIngredients,
+  } = useConfirm();
+  const {
+    pending: pendingResetDefault,
+    requestConfirm: requestConfirmResetDefault,
+    confirm: confirmResetDefault,
+    cancel: cancelResetDefault,
   } = useConfirm();
   const [themePreference, setThemePreference] = useState<ThemePreference>(() =>
     loadThemePreference(),
@@ -106,6 +113,14 @@ export default function Settings() {
   function handleClearClick() {
     requestConfirm('', () => {
       clearAllHouseholdsAndDefault();
+      clearImportSession();
+      navigate('/households');
+    });
+  }
+
+  function handleResetToDefaultClick() {
+    requestConfirmResetDefault('', async () => {
+      await resetToDefaultState();
       clearImportSession();
       navigate('/households');
     });
@@ -258,6 +273,13 @@ export default function Settings() {
               Reset ingredients to defaults ({seedIngredientCount})
             </Button>
           )}
+          <Button
+            variant="danger"
+            data-testid="settings-reset-default-btn"
+            onClick={handleResetToDefaultClick}
+          >
+            Reset to default state
+          </Button>
           <Button variant="danger" data-testid="settings-clear-all-btn" onClick={handleClearClick}>
             Clear all data
           </Button>
@@ -279,6 +301,14 @@ export default function Settings() {
         </Button>
       </Card>
 
+      <ConfirmDialog
+        open={!!pendingResetDefault}
+        title="Reset to default state"
+        message="This will delete all your data and restore the app to its initial state with the default sample households. In-progress Paprika imports are also cleared. This cannot be undone."
+        confirmLabel="Reset to default"
+        onConfirm={confirmResetDefault}
+        onCancel={cancelResetDefault}
+      />
       <ConfirmDialog
         open={!!pending}
         title="Clear all data"
