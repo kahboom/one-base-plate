@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import type {
   Household,
   WeeklyPlan,
@@ -9,8 +9,8 @@ import type {
   MealOutcomeResult,
   ComponentRecipeRef,
   WeeklyAnchor,
-} from "../types";
-import { loadHousehold, saveHousehold } from "../storage";
+} from '../types';
+import { loadHousehold, saveHousehold } from '../storage';
 import {
   generateWeeklyPlan,
   computeMealOverlap,
@@ -20,24 +20,24 @@ import {
   formatPlanForExport,
   rankWeeklySuggestedMeals,
   learnCompatibilityPatterns,
-} from "../planner";
-import type { LearnedPatterns } from "../planner";
-import MealCard from "../components/MealCard";
-import BrowseMealsModal from "../components/planner/BrowseMealsModal";
-import { useSuggestedTrayCap } from "../hooks/useSuggestedTrayCap";
-import { PageHeader, Button, Select, Section, EmptyState, Chip, Input } from "../components/ui";
-import { getWeeklyAnchorForWeekday } from "../lib/weeklyPlanOps";
+} from '../planner';
+import type { LearnedPatterns } from '../planner';
+import MealCard from '../components/MealCard';
+import BrowseMealsModal from '../components/planner/BrowseMealsModal';
+import { useSuggestedTrayCap } from '../hooks/useSuggestedTrayCap';
+import { PageHeader, Button, Select, Section, EmptyState, Chip, Input } from '../components/ui';
+import { getWeeklyAnchorForWeekday } from '../lib/weeklyPlanOps';
 import {
   countMealRecipes,
   hasBatchPrepRecipe,
   hasPrepAheadRecipe,
   findPrepAheadOpportunities,
-} from "../lib/componentRecipes";
-import WeeklyThemeNightsCollapsible from "../components/WeeklyThemeNightsCollapsible";
-import AppModal from "../components/AppModal";
-import { MealDetailContent } from "./MealDetail";
+} from '../lib/componentRecipes';
+import WeeklyThemeNightsCollapsible from '../components/WeeklyThemeNightsCollapsible';
+import AppModal from '../components/AppModal';
+import { MealDetailContent } from './MealDetail';
 
-const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export default function WeeklyPlanner() {
   const { householdId } = useParams<{ householdId: string }>();
@@ -59,26 +59,28 @@ export default function WeeklyPlanner() {
     if (!shareRef.current || !plan || plan.days.length === 0) return;
     setSharing(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
+      const html2canvas = (await import('html2canvas')).default;
       const canvas = await html2canvas(shareRef.current, {
-        backgroundColor: "#ffffff",
+        backgroundColor: '#ffffff',
         scale: 2,
         useCORS: true,
       });
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png")
-      );
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
       if (!blob) return;
 
-      const file = new File([blob], `meal-plan-${household?.name.toLowerCase().replace(/\s+/g, "-") ?? "plan"}.png`, {
-        type: "image/png",
-      });
+      const file = new File(
+        [blob],
+        `meal-plan-${household?.name.toLowerCase().replace(/\s+/g, '-') ?? 'plan'}.png`,
+        {
+          type: 'image/png',
+        },
+      );
 
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Weekly Meal Plan" });
+        await navigator.share({ files: [file], title: 'Weekly Meal Plan' });
       } else {
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
+        const a = document.createElement('a');
         a.href = url;
         a.download = file.name;
         a.click();
@@ -120,11 +122,7 @@ export default function WeeklyPlanner() {
     } | null;
     if (!st?.preselectAssignMealId || !st.assignTargetDay) return;
     processedNavState.current = true;
-    assignMealToDay(
-      st.preselectAssignMealId,
-      st.assignTargetDay,
-      st.assignComponentOverrides,
-    );
+    assignMealToDay(st.preselectAssignMealId, st.assignTargetDay, st.assignComponentOverrides);
     navigate(location.pathname, { replace: true, state: {} });
   }, [household, location.state, location.pathname, navigate]);
 
@@ -145,7 +143,7 @@ export default function WeeklyPlanner() {
       days,
       selectedBaseMeals: [...new Set(days.map((d) => d.baseMealId))],
       generatedGroceryList: [],
-      notes: "",
+      notes: '',
     };
 
     setPlan(newPlan);
@@ -171,9 +169,7 @@ export default function WeeklyPlanner() {
       day: dayLabel,
       baseMealId: mealId,
       variants,
-      ...(componentRecipeOverrides?.length
-        ? { componentRecipeOverrides }
-        : {}),
+      ...(componentRecipeOverrides?.length ? { componentRecipeOverrides } : {}),
     };
 
     setPlan((prev) => {
@@ -185,7 +181,7 @@ export default function WeeklyPlanner() {
         days: updatedDays,
         selectedBaseMeals: [...new Set(updatedDays.map((d) => d.baseMealId))],
         generatedGroceryList: prev?.generatedGroceryList ?? [],
-        notes: prev?.notes ?? "",
+        notes: prev?.notes ?? '',
       };
     });
 
@@ -213,9 +209,7 @@ export default function WeeklyPlanner() {
   function handleSave() {
     if (!household || !plan) return;
 
-    const existingIndex = household.weeklyPlans.findIndex(
-      (p) => p.id === plan.id,
-    );
+    const existingIndex = household.weeklyPlans.findIndex((p) => p.id === plan.id);
     const updatedPlans = [...household.weeklyPlans];
     if (existingIndex >= 0) {
       updatedPlans[existingIndex] = plan;
@@ -228,7 +222,12 @@ export default function WeeklyPlanner() {
     setHousehold(updatedHousehold);
   }
 
-  function recordOutcome(baseMealId: string, day: string, outcome: MealOutcomeResult, notes: string) {
+  function recordOutcome(
+    baseMealId: string,
+    day: string,
+    outcome: MealOutcomeResult,
+    notes: string,
+  ) {
     if (!household) return;
     const newOutcome: MealOutcome = {
       id: crypto.randomUUID(),
@@ -253,14 +252,10 @@ export default function WeeklyPlanner() {
   }
 
   function getMealOverlapLabel(mealId: string): string {
-    if (!household) return "";
+    if (!household) return '';
     const meal = household.baseMeals.find((m) => m.id === mealId);
-    if (!meal) return "";
-    const overlap = computeMealOverlap(
-      meal,
-      household.members,
-      household.ingredients,
-    );
+    if (!meal) return '';
+    const overlap = computeMealOverlap(meal, household.members, household.ingredients);
     return `${overlap.score}/${overlap.total}`;
   }
 
@@ -294,10 +289,7 @@ export default function WeeklyPlanner() {
     );
   }, [household]);
 
-  const trayRows = useMemo(
-    () => suggestionRows.slice(0, trayCap),
-    [suggestionRows, trayCap],
-  );
+  const trayRows = useMemo(() => suggestionRows.slice(0, trayCap), [suggestionRows, trayCap]);
 
   const mealDetailModalMeal = useMemo(() => {
     if (!household || !mealDetailModalId) return null;
@@ -306,11 +298,7 @@ export default function WeeklyPlanner() {
 
   const mealDetailModalOverlap = useMemo(() => {
     if (!household || !mealDetailModalMeal) return null;
-    return computeMealOverlap(
-      mealDetailModalMeal,
-      household.members,
-      household.ingredients,
-    );
+    return computeMealOverlap(mealDetailModalMeal, household.members, household.ingredients);
   }, [household, mealDetailModalMeal]);
 
   function handleTogglePinFromDetailModal() {
@@ -342,10 +330,20 @@ export default function WeeklyPlanner() {
 
       {household.baseMeals.length === 0 ? (
         <EmptyState>
-          No base meals available.{" "}
-          <Link to={`/household/${householdId}/ingredients`} className="font-medium text-brand hover:underline">Add ingredients</Link>{" "}
-          and{" "}
-          <Link to={`/household/${householdId}/meals`} className="font-medium text-brand hover:underline">add base meals</Link>{" "}
+          No base meals available.{' '}
+          <Link
+            to={`/household/${householdId}/ingredients`}
+            className="font-medium text-brand hover:underline"
+          >
+            Add ingredients
+          </Link>{' '}
+          and{' '}
+          <Link
+            to={`/household/${householdId}/meals`}
+            className="font-medium text-brand hover:underline"
+          >
+            add base meals
+          </Link>{' '}
           before generating a plan.
         </EmptyState>
       ) : (
@@ -369,115 +367,152 @@ export default function WeeklyPlanner() {
       )}
 
       <div ref={shareRef}>
-      {plan && plan.days.length > 0 && household && (() => {
-        const balance = computeWeekEffortBalance(plan.days, household.baseMeals);
-        const groceryPreview = computeGroceryPreview(plan.days, household.baseMeals, household.ingredients);
-        return (
-          <div data-testid="effort-balance" className="mt-4 mb-4 rounded-md border border-border-light bg-surface p-4 shadow-card">
-            <div className="flex flex-wrap items-center gap-4">
-              <span className="text-sm font-semibold text-text-primary">Week effort</span>
-              <span className="text-sm text-text-secondary" data-testid="total-prep-time">
-                {balance.totalPrepMinutes} min total
-              </span>
-              <div className="flex gap-2">
-                {balance.effortCounts.easy > 0 && (
-                  <Chip variant="success" data-testid="effort-easy">{balance.effortCounts.easy} easy</Chip>
-                )}
-                {balance.effortCounts.medium > 0 && (
-                  <Chip variant="warning" data-testid="effort-medium">{balance.effortCounts.medium} medium</Chip>
-                )}
-                {balance.effortCounts.hard > 0 && (
-                  <Chip variant="danger" data-testid="effort-hard">{balance.effortCounts.hard} hard</Chip>
-                )}
-              </div>
-              {balance.highEffortDays.length > 0 && (
-                <span className="text-xs text-text-muted" data-testid="high-effort-warning">
-                  Higher effort: {balance.highEffortDays.join(", ")}
-                </span>
-              )}
-            </div>
-            {groceryPreview.uniqueIngredientCount > 0 && (
-              <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border-light pt-3" data-testid="grocery-preview">
-                <span className="text-sm font-semibold text-text-primary">Grocery preview</span>
-                <span className="text-sm text-text-secondary" data-testid="grocery-count">
-                  {groceryPreview.uniqueIngredientCount} ingredient{groceryPreview.uniqueIngredientCount !== 1 ? "s" : ""}
-                </span>
-                <div className="flex gap-2">
-                  {Object.entries(groceryPreview.categoryBreakdown)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([cat, count]) => (
-                      <Chip key={cat} variant="neutral" data-testid={`grocery-cat-${cat}`}>
-                        {count} {cat}
+        {plan &&
+          plan.days.length > 0 &&
+          household &&
+          (() => {
+            const balance = computeWeekEffortBalance(plan.days, household.baseMeals);
+            const groceryPreview = computeGroceryPreview(
+              plan.days,
+              household.baseMeals,
+              household.ingredients,
+            );
+            return (
+              <div
+                data-testid="effort-balance"
+                className="mt-4 mb-4 rounded-md border border-border-light bg-surface p-4 shadow-card"
+              >
+                <div className="flex flex-wrap items-center gap-4">
+                  <span className="text-sm font-semibold text-text-primary">Week effort</span>
+                  <span className="text-sm text-text-secondary" data-testid="total-prep-time">
+                    {balance.totalPrepMinutes} min total
+                  </span>
+                  <div className="flex gap-2">
+                    {balance.effortCounts.easy > 0 && (
+                      <Chip variant="success" data-testid="effort-easy">
+                        {balance.effortCounts.easy} easy
                       </Chip>
-                    ))}
-                </div>
-              </div>
-            )}
-            {(() => {
-              const prepOps = findPrepAheadOpportunities(
-                plan.days,
-                household.baseMeals,
-                household.recipes ?? [],
-                household.ingredients,
-              );
-              if (prepOps.length === 0) return null;
-              return (
-                <div className="mt-3 border-t border-border-light pt-3" data-testid="prep-ahead-opportunities">
-                  <span className="text-sm font-semibold text-text-primary">Prep-ahead opportunities</span>
-                  <div className="mt-1 space-y-1">
-                    {prepOps.map((op) => (
-                      <p key={op.ingredientId} className="text-xs text-text-secondary" data-testid={`prep-ahead-${op.ingredientId}`}>
-                        <span className="font-medium">{op.ingredientName}</span> appears on {op.dayLabels.join(", ")}
-                        {op.recipeName && (
-                          <> &mdash; batch-prep recipe: <span className="text-brand">{op.recipeName}</span></>
-                        )}
-                      </p>
-                    ))}
+                    )}
+                    {balance.effortCounts.medium > 0 && (
+                      <Chip variant="warning" data-testid="effort-medium">
+                        {balance.effortCounts.medium} medium
+                      </Chip>
+                    )}
+                    {balance.effortCounts.hard > 0 && (
+                      <Chip variant="danger" data-testid="effort-hard">
+                        {balance.effortCounts.hard} hard
+                      </Chip>
+                    )}
                   </div>
+                  {balance.highEffortDays.length > 0 && (
+                    <span className="text-xs text-text-muted" data-testid="high-effort-warning">
+                      Higher effort: {balance.highEffortDays.join(', ')}
+                    </span>
+                  )}
                 </div>
-              );
-            })()}
-          </div>
-        );
-      })()}
+                {groceryPreview.uniqueIngredientCount > 0 && (
+                  <div
+                    className="mt-3 flex flex-wrap items-center gap-3 border-t border-border-light pt-3"
+                    data-testid="grocery-preview"
+                  >
+                    <span className="text-sm font-semibold text-text-primary">Grocery preview</span>
+                    <span className="text-sm text-text-secondary" data-testid="grocery-count">
+                      {groceryPreview.uniqueIngredientCount} ingredient
+                      {groceryPreview.uniqueIngredientCount !== 1 ? 's' : ''}
+                    </span>
+                    <div className="flex gap-2">
+                      {Object.entries(groceryPreview.categoryBreakdown)
+                        .sort(([, a], [, b]) => b - a)
+                        .map(([cat, count]) => (
+                          <Chip key={cat} variant="neutral" data-testid={`grocery-cat-${cat}`}>
+                            {count} {cat}
+                          </Chip>
+                        ))}
+                    </div>
+                  </div>
+                )}
+                {(() => {
+                  const prepOps = findPrepAheadOpportunities(
+                    plan.days,
+                    household.baseMeals,
+                    household.recipes ?? [],
+                    household.ingredients,
+                  );
+                  if (prepOps.length === 0) return null;
+                  return (
+                    <div
+                      className="mt-3 border-t border-border-light pt-3"
+                      data-testid="prep-ahead-opportunities"
+                    >
+                      <span className="text-sm font-semibold text-text-primary">
+                        Prep-ahead opportunities
+                      </span>
+                      <div className="mt-1 space-y-1">
+                        {prepOps.map((op) => (
+                          <p
+                            key={op.ingredientId}
+                            className="text-xs text-text-secondary"
+                            data-testid={`prep-ahead-${op.ingredientId}`}
+                          >
+                            <span className="font-medium">{op.ingredientName}</span> appears on{' '}
+                            {op.dayLabels.join(', ')}
+                            {op.recipeName && (
+                              <>
+                                {' '}
+                                &mdash; batch-prep recipe:{' '}
+                                <span className="text-brand">{op.recipeName}</span>
+                              </>
+                            )}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            );
+          })()}
 
-      <div data-testid="day-cards" className="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {daySlots.map((dayLabel) => {
-          const dayIndex = plan?.days.findIndex((d) => d.day === dayLabel) ?? -1;
-          const dayPlan = dayIndex >= 0 ? plan!.days[dayIndex]! : null;
-          const suggested = !dayPlan ? getSuggestedMeal(dayLabel) : null;
-          const dayTheme = getWeeklyAnchorForWeekday(household, dayLabel);
+        <div
+          data-testid="day-cards"
+          className="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        >
+          {daySlots.map((dayLabel) => {
+            const dayIndex = plan?.days.findIndex((d) => d.day === dayLabel) ?? -1;
+            const dayPlan = dayIndex >= 0 ? plan!.days[dayIndex]! : null;
+            const suggested = !dayPlan ? getSuggestedMeal(dayLabel) : null;
+            const dayTheme = getWeeklyAnchorForWeekday(household, dayLabel);
 
-          return (
-            <DayCard
-              key={dayLabel}
-              dayLabel={dayLabel}
-              dayTheme={dayTheme}
-              dayPlan={dayPlan}
-              dayIndex={dayIndex}
-              suggestedMeal={suggested}
-              mealName={dayPlan ? getMealName(dayPlan.baseMealId) : null}
-              overlapLabel={dayPlan ? getMealOverlapLabel(dayPlan.baseMealId) : null}
-              meal={dayPlan ? getMeal(dayPlan.baseMealId) : undefined}
-              household={household}
-              existingOutcome={(household.mealOutcomes ?? []).find(
-                (o) => o.baseMealId === dayPlan?.baseMealId && o.day === dayLabel
-              )}
-              onRecordOutcome={(outcome, notes) => {
-                if (dayPlan) recordOutcome(dayPlan.baseMealId, dayLabel, outcome, notes);
-              }}
-              onClear={dayIndex >= 0 ? () => handleClearDay(dayIndex) : undefined}
-              onDrop={(mealId) => assignMealToDay(mealId, dayLabel)}
-              isAssignTarget={selectedMealId !== null}
-              onTapAssign={() => {
-                if (selectedMealId) assignMealToDay(selectedMealId, dayLabel);
-              }}
-              onOpenSuggestedMealDetails={(mealId) => setMealDetailModalId(mealId)}
-              onAddSuggestedMeal={(mealId) => assignMealToDay(mealId, dayLabel)}
-            />
-          );
-        })}
-      </div>
+            return (
+              <DayCard
+                key={dayLabel}
+                dayLabel={dayLabel}
+                dayTheme={dayTheme}
+                dayPlan={dayPlan}
+                dayIndex={dayIndex}
+                suggestedMeal={suggested}
+                mealName={dayPlan ? getMealName(dayPlan.baseMealId) : null}
+                overlapLabel={dayPlan ? getMealOverlapLabel(dayPlan.baseMealId) : null}
+                meal={dayPlan ? getMeal(dayPlan.baseMealId) : undefined}
+                household={household}
+                existingOutcome={(household.mealOutcomes ?? []).find(
+                  (o) => o.baseMealId === dayPlan?.baseMealId && o.day === dayLabel,
+                )}
+                onRecordOutcome={(outcome, notes) => {
+                  if (dayPlan) recordOutcome(dayPlan.baseMealId, dayLabel, outcome, notes);
+                }}
+                onClear={dayIndex >= 0 ? () => handleClearDay(dayIndex) : undefined}
+                onDrop={(mealId) => assignMealToDay(mealId, dayLabel)}
+                isAssignTarget={selectedMealId !== null}
+                onTapAssign={() => {
+                  if (selectedMealId) assignMealToDay(selectedMealId, dayLabel);
+                }}
+                onOpenSuggestedMealDetails={(mealId) => setMealDetailModalId(mealId)}
+                onAddSuggestedMeal={(mealId) => assignMealToDay(mealId, dayLabel)}
+              />
+            );
+          })}
+        </div>
       </div>
 
       {plan && (
@@ -489,12 +524,18 @@ export default function WeeklyPlanner() {
             <>
               <Button
                 onClick={() => {
-                  const text = formatPlanForExport(plan.days, household.baseMeals, household.members, household.ingredients, household.name);
-                  const blob = new Blob([text], { type: "text/plain" });
+                  const text = formatPlanForExport(
+                    plan.days,
+                    household.baseMeals,
+                    household.members,
+                    household.ingredients,
+                    household.name,
+                  );
+                  const blob = new Blob([text], { type: 'text/plain' });
                   const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
+                  const a = document.createElement('a');
                   a.href = url;
-                  a.download = `meal-plan-${household.name.toLowerCase().replace(/\s+/g, "-")}.txt`;
+                  a.download = `meal-plan-${household.name.toLowerCase().replace(/\s+/g, '-')}.txt`;
                   a.click();
                   URL.revokeObjectURL(url);
                 }}
@@ -502,18 +543,11 @@ export default function WeeklyPlanner() {
               >
                 Export
               </Button>
-              <Button
-                onClick={() => window.print()}
-                data-testid="print-btn"
-              >
+              <Button onClick={() => window.print()} data-testid="print-btn">
                 Print
               </Button>
-              <Button
-                onClick={handleShare}
-                disabled={sharing}
-                data-testid="share-btn"
-              >
-                {sharing ? "Sharing\u2026" : "Share"}
+              <Button onClick={handleShare} disabled={sharing} data-testid="share-btn">
+                {sharing ? 'Sharing\u2026' : 'Share'}
               </Button>
             </>
           )}
@@ -526,8 +560,13 @@ export default function WeeklyPlanner() {
             <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold text-text-primary">Suggested meals</h2>
-                <p className="mt-1 text-sm text-text-secondary" data-testid="suggested-tray-summary" aria-live="polite">
-                  Top {trayRows.length} of {household.baseMeals.length} meal{household.baseMeals.length !== 1 ? "s" : ""} for this week
+                <p
+                  className="mt-1 text-sm text-text-secondary"
+                  data-testid="suggested-tray-summary"
+                  aria-live="polite"
+                >
+                  Top {trayRows.length} of {household.baseMeals.length} meal
+                  {household.baseMeals.length !== 1 ? 's' : ''} for this week
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -542,8 +581,15 @@ export default function WeeklyPlanner() {
             </div>
             {selectedMealId && (
               <p className="mb-3 text-sm text-brand font-medium" data-testid="assign-prompt">
-                Tap a day to assign {household.baseMeals.find((m) => m.id === selectedMealId)?.name ?? "meal"}.{" "}
-                <button type="button" className="underline cursor-pointer" onClick={() => setSelectedMealId(null)}>Cancel</button>
+                Tap a day to assign{' '}
+                {household.baseMeals.find((m) => m.id === selectedMealId)?.name ?? 'meal'}.{' '}
+                <button
+                  type="button"
+                  className="underline cursor-pointer"
+                  onClick={() => setSelectedMealId(null)}
+                >
+                  Cancel
+                </button>
               </p>
             )}
             <div
@@ -620,7 +666,7 @@ export default function WeeklyPlanner() {
         <div data-testid="meal-details-modal">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-text-primary">
-              {mealDetailModalMeal?.name ?? "Meal details"}
+              {mealDetailModalMeal?.name ?? 'Meal details'}
             </h2>
             <Button
               variant="ghost"
@@ -653,27 +699,27 @@ export default function WeeklyPlanner() {
 }
 
 const outcomeLabels: Record<string, string> = {
-  success: "Worked well",
-  partial: "Partly worked",
+  success: 'Worked well',
+  partial: 'Partly worked',
   failure: "Didn't work",
 };
 
-const outcomeChipVariant: Record<string, "success" | "warning" | "danger"> = {
-  success: "success",
-  partial: "warning",
-  failure: "danger",
+const outcomeChipVariant: Record<string, 'success' | 'warning' | 'danger'> = {
+  success: 'success',
+  partial: 'warning',
+  failure: 'danger',
 };
 
 const effortLabel: Record<string, string> = {
-  easy: "Low effort",
-  medium: "Medium effort",
-  hard: "Higher effort",
+  easy: 'Low effort',
+  medium: 'Medium effort',
+  hard: 'Higher effort',
 };
 
-const effortChipVariant: Record<string, "success" | "warning" | "danger"> = {
-  easy: "success",
-  medium: "warning",
-  hard: "danger",
+const effortChipVariant: Record<string, 'success' | 'warning' | 'danger'> = {
+  easy: 'success',
+  medium: 'warning',
+  hard: 'danger',
 };
 
 function DayCard({
@@ -718,13 +764,13 @@ function DayCard({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showOutcomeForm, setShowOutcomeForm] = useState(false);
   const [outcomeSelection, setOutcomeSelection] = useState<MealOutcomeResult | null>(null);
-  const [outcomeNotes, setOutcomeNotes] = useState("");
+  const [outcomeNotes, setOutcomeNotes] = useState('');
   const isEmpty = !dayPlan;
-  const isHighEffort = meal?.difficulty === "hard";
+  const isHighEffort = meal?.difficulty === 'hard';
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+    e.dataTransfer.dropEffect = 'move';
     setDragOver(true);
   }
 
@@ -742,7 +788,7 @@ function DayCard({
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setDragOver(false);
-    const mealId = e.dataTransfer.getData("application/meal-id");
+    const mealId = e.dataTransfer.getData('application/meal-id');
     if (mealId && onDrop) {
       onDrop(mealId);
       triggerAssignFeedback();
@@ -763,24 +809,21 @@ function DayCard({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={handleTapAssign}
-      role={isAssignTarget ? "button" : undefined}
+      role={isAssignTarget ? 'button' : undefined}
       className={`relative rounded-md p-4 shadow-card transition-all duration-200 ${
         justAssigned
-          ? "border-2 border-brand bg-brand/5 scale-[1.02]"
+          ? 'border-2 border-brand bg-brand/5 scale-[1.02]'
           : dragOver
-            ? "border-2 border-brand border-dashed bg-brand/5"
+            ? 'border-2 border-brand border-dashed bg-brand/5'
             : isEmpty
-              ? `border border-dashed bg-bg ${isAssignTarget ? "border-brand cursor-pointer hover:bg-brand/5" : "border-border-default"}`
-              : `border bg-surface ${isAssignTarget ? "border-brand cursor-pointer hover:bg-brand/5" : isHighEffort ? "border-danger" : "border-border-light"}`
+              ? `border border-dashed bg-bg ${isAssignTarget ? 'border-brand cursor-pointer hover:bg-brand/5' : 'border-border-default'}`
+              : `border bg-surface ${isAssignTarget ? 'border-brand cursor-pointer hover:bg-brand/5' : isHighEffort ? 'border-danger' : 'border-border-light'}`
       }`}
     >
       <strong className="text-base font-semibold text-text-primary">{dayLabel}</strong>
       {dayTheme && dayTheme.enabled !== false && (
-        <p
-          className="mt-1 text-xs text-text-muted"
-          data-testid={`day-theme-line-${dayLabel}`}
-        >
-          {dayLabel} theme: {dayTheme.icon ? `${dayTheme.icon} ` : ""}
+        <p className="mt-1 text-xs text-text-muted" data-testid={`day-theme-line-${dayLabel}`}>
+          {dayLabel} theme: {dayTheme.icon ? `${dayTheme.icon} ` : ''}
           {dayTheme.label}
         </p>
       )}
@@ -803,42 +846,58 @@ function DayCard({
             <small className="text-xs text-text-muted">Overlap: {overlapLabel}</small>
             {meal && (
               <>
-                <small className="text-xs text-text-muted" data-testid={`prep-time-${dayLabel.toLowerCase()}`}>
+                <small
+                  className="text-xs text-text-muted"
+                  data-testid={`prep-time-${dayLabel.toLowerCase()}`}
+                >
                   {meal.estimatedTimeMinutes} min
                 </small>
                 <Chip
-                  variant={effortChipVariant[meal.difficulty] ?? "neutral"}
+                  variant={effortChipVariant[meal.difficulty] ?? 'neutral'}
                   data-testid={`effort-${dayLabel.toLowerCase()}`}
                 >
                   {effortLabel[meal.difficulty] ?? meal.difficulty}
                 </Chip>
               </>
             )}
-            {meal && (() => {
-              const recipeCount = countMealRecipes(meal);
-              const batchPrep = hasBatchPrepRecipe(meal, (household.recipes ?? []));
-              const prepAhead = hasPrepAheadRecipe(meal, (household.recipes ?? []));
-              if (recipeCount === 0 && !batchPrep && !prepAhead) return null;
-              return (
-                <>
-                  {recipeCount > 0 && (
-                    <Chip variant="neutral" className="text-[10px]" data-testid={`recipe-count-${dayLabel.toLowerCase()}`}>
-                      {recipeCount} recipe{recipeCount !== 1 ? "s" : ""}
-                    </Chip>
-                  )}
-                  {prepAhead && (
-                    <Chip variant="info" className="text-[10px]" data-testid={`prep-ahead-chip-${dayLabel.toLowerCase()}`}>
-                      prep-ahead
-                    </Chip>
-                  )}
-                  {batchPrep && (
-                    <Chip variant="info" className="text-[10px]" data-testid={`batch-prep-chip-${dayLabel.toLowerCase()}`}>
-                      batch-friendly
-                    </Chip>
-                  )}
-                </>
-              );
-            })()}
+            {meal &&
+              (() => {
+                const recipeCount = countMealRecipes(meal);
+                const batchPrep = hasBatchPrepRecipe(meal, household.recipes ?? []);
+                const prepAhead = hasPrepAheadRecipe(meal, household.recipes ?? []);
+                if (recipeCount === 0 && !batchPrep && !prepAhead) return null;
+                return (
+                  <>
+                    {recipeCount > 0 && (
+                      <Chip
+                        variant="neutral"
+                        className="text-[10px]"
+                        data-testid={`recipe-count-${dayLabel.toLowerCase()}`}
+                      >
+                        {recipeCount} recipe{recipeCount !== 1 ? 's' : ''}
+                      </Chip>
+                    )}
+                    {prepAhead && (
+                      <Chip
+                        variant="info"
+                        className="text-[10px]"
+                        data-testid={`prep-ahead-chip-${dayLabel.toLowerCase()}`}
+                      >
+                        prep-ahead
+                      </Chip>
+                    )}
+                    {batchPrep && (
+                      <Chip
+                        variant="info"
+                        className="text-[10px]"
+                        data-testid={`batch-prep-chip-${dayLabel.toLowerCase()}`}
+                      >
+                        batch-friendly
+                      </Chip>
+                    )}
+                  </>
+                );
+              })()}
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <Button
@@ -846,7 +905,7 @@ function DayCard({
               onClick={() => setExpanded(!expanded)}
               data-testid={`toggle-${dayLabel.toLowerCase()}`}
             >
-              {expanded ? "Hide details" : "Show details"}
+              {expanded ? 'Hide details' : 'Show details'}
             </Button>
             {onClear && (
               <Button
@@ -862,19 +921,19 @@ function DayCard({
           {expanded && (
             <div data-testid={`details-${dayLabel.toLowerCase()}`} className="mt-2">
               {dayPlan.variants.map((variant) => {
-                const member = household.members.find(
-                  (m) => m.id === variant.memberId,
-                );
+                const member = household.members.find((m) => m.id === variant.memberId);
                 if (!member) return null;
                 return (
                   <div key={variant.id} className="mt-2">
                     <em className="text-sm text-text-secondary">
                       {member.name} ({member.role})
-                      {variant.requiresExtraPrep && " \u2014 extra prep"}
+                      {variant.requiresExtraPrep && ' \u2014 extra prep'}
                     </em>
                     <ul className="mt-1 space-y-0.5 pl-5">
                       {variant.instructions.map((instr, i) => (
-                        <li key={i} className="text-xs">{instr}</li>
+                        <li key={i} className="text-xs">
+                          {instr}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -882,7 +941,10 @@ function DayCard({
               })}
 
               {existingOutcome ? (
-                <div className="mt-3 rounded-md border border-border-light bg-bg p-2" data-testid={`outcome-${dayLabel.toLowerCase()}`}>
+                <div
+                  className="mt-3 rounded-md border border-border-light bg-bg p-2"
+                  data-testid={`outcome-${dayLabel.toLowerCase()}`}
+                >
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-text-secondary">Outcome:</span>
                     <Chip variant={outcomeChipVariant[existingOutcome.outcome]}>
@@ -905,14 +967,19 @@ function DayCard({
               ) : null}
 
               {showOutcomeForm && !existingOutcome && onRecordOutcome && (
-                <div className="mt-3 rounded-md border border-border-light bg-bg p-3" data-testid={`outcome-form-${dayLabel.toLowerCase()}`}>
-                  <p className="mb-2 text-xs font-medium text-text-secondary">How did this meal go?</p>
+                <div
+                  className="mt-3 rounded-md border border-border-light bg-bg p-3"
+                  data-testid={`outcome-form-${dayLabel.toLowerCase()}`}
+                >
+                  <p className="mb-2 text-xs font-medium text-text-secondary">
+                    How did this meal go?
+                  </p>
                   <div className="flex flex-wrap gap-2">
-                    {(["success", "partial", "failure"] as MealOutcomeResult[]).map((o) => (
+                    {(['success', 'partial', 'failure'] as MealOutcomeResult[]).map((o) => (
                       <Button
                         key={o}
                         small
-                        variant={outcomeSelection === o ? "primary" : "default"}
+                        variant={outcomeSelection === o ? 'primary' : 'default'}
                         onClick={() => setOutcomeSelection(o)}
                         data-testid={`outcome-btn-${o}`}
                       >
@@ -942,7 +1009,14 @@ function DayCard({
                     >
                       Save
                     </Button>
-                    <Button small onClick={() => { setShowOutcomeForm(false); setOutcomeSelection(null); setOutcomeNotes(""); }}>
+                    <Button
+                      small
+                      onClick={() => {
+                        setShowOutcomeForm(false);
+                        setOutcomeSelection(null);
+                        setOutcomeNotes('');
+                      }}
+                    >
                       Cancel
                     </Button>
                   </div>

@@ -1,5 +1,5 @@
-import Dexie, { type Table } from "dexie";
-import { DEXIE_DB_NAME } from "./constants";
+import Dexie, { type Table } from 'dexie';
+import { DEXIE_DB_NAME } from './constants';
 
 export interface MetaRow {
   key: string;
@@ -16,7 +16,7 @@ export class OneBasePlateDexie extends Dexie {
   constructor() {
     super(DEXIE_DB_NAME);
     this.version(1).stores({
-      meta: "key",
+      meta: 'key',
     });
   }
 }

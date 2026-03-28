@@ -190,10 +190,7 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'celery stalks',
     'celery stalk',
   ]),
-  c('cat-garlic', 'Garlic', 'veg', ['staple'], false, false, [
-    'garlic',
-    'garlic cloves',
-  ]),
+  c('cat-garlic', 'Garlic', 'veg', ['staple'], false, false, ['garlic', 'garlic cloves']),
   c('cat-mushrooms', 'Mushrooms', 'veg', ['quick'], false, false),
   c('cat-avocado', 'Avocado', 'veg', ['quick', 'mashable'], false, true),
   c('cat-leek', 'Leek', 'veg', ['quick'], false, true, ['leeks', 'baby leeks']),

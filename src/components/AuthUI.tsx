@@ -1,35 +1,35 @@
-import { useState } from "react";
-import * as authService from "../auth/auth-service";
-import { useAuth } from "../auth/useAuth";
-import { Button, Input, Card, Chip } from "./ui";
-import FirstLoginMigrationDialog from "./FirstLoginMigrationDialog";
-import { loadHouseholds, hydrateFromRemote } from "../storage";
+import { useState } from 'react';
+import * as authService from '../auth/auth-service';
+import { useAuth } from '../auth/useAuth';
+import { Button, Input, Card, Chip } from './ui';
+import FirstLoginMigrationDialog from './FirstLoginMigrationDialog';
+import { loadHouseholds, hydrateFromRemote } from '../storage';
 import {
   setCurrentUserId,
   detectFirstLoginContext,
   resolveFirstLogin,
   getSyncState,
   onSyncStateChange,
-} from "../sync/sync-engine";
-import type { FirstLoginContext, ConflictChoice, SyncState } from "../sync/types";
-import { useEffect } from "react";
+} from '../sync/sync-engine';
+import type { FirstLoginContext, ConflictChoice, SyncState } from '../sync/types';
+import { useEffect } from 'react';
 
-type AuthTab = "signin" | "signup";
+type AuthTab = 'signin' | 'signup';
 
 function isEmailNotConfirmedMessage(message: string): boolean {
   const m = message.toLowerCase();
   return (
-    m.includes("email not confirmed") ||
-    m.includes("email address not confirmed") ||
-    m.includes("signup requires email confirmation")
+    m.includes('email not confirmed') ||
+    m.includes('email address not confirmed') ||
+    m.includes('signup requires email confirmation')
   );
 }
 
 export default function AuthUI() {
   const { user, loading, configured, signIn, signUp, signOut } = useAuth();
-  const [tab, setTab] = useState<AuthTab>("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [tab, setTab] = useState<AuthTab>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [resendBusy, setResendBusy] = useState(false);
@@ -48,11 +48,13 @@ export default function AuthUI() {
       <Card className="mb-6">
         <h2 className="mb-3 text-sm font-semibold text-text-primary">Account</h2>
         <p className="text-sm text-text-muted">
-          Cloud sync is not configured. Set <code>VITE_SUPABASE_URL</code> and{" "}
+          Cloud sync is not configured. Set <code>VITE_SUPABASE_URL</code> and{' '}
           <code>VITE_SUPABASE_ANON_KEY</code> environment variables to enable accounts.
         </p>
         <div className="mt-2">
-          <Chip variant="neutral" data-testid="sync-mode-badge">Local only</Chip>
+          <Chip variant="neutral" data-testid="sync-mode-badge">
+            Local only
+          </Chip>
         </div>
       </Card>
     );
@@ -69,18 +71,26 @@ export default function AuthUI() {
 
   if (user) {
     const chipVariant =
-      syncState.status === "error" ? "danger" as const
-        : !syncState.online ? "neutral" as const
-          : syncState.hasPendingChanges ? "warning" as const
-            : syncState.status === "syncing" ? "info" as const
-              : "success" as const;
+      syncState.status === 'error'
+        ? ('danger' as const)
+        : !syncState.online
+          ? ('neutral' as const)
+          : syncState.hasPendingChanges
+            ? ('warning' as const)
+            : syncState.status === 'syncing'
+              ? ('info' as const)
+              : ('success' as const);
 
     const chipLabel =
-      syncState.status === "syncing" ? "Syncing..."
-        : !syncState.online ? "Offline"
-          : syncState.status === "error" ? "Sync error"
-            : syncState.hasPendingChanges ? "Local changes pending"
-              : "Cloud synced";
+      syncState.status === 'syncing'
+        ? 'Syncing...'
+        : !syncState.online
+          ? 'Offline'
+          : syncState.status === 'error'
+            ? 'Sync error'
+            : syncState.hasPendingChanges
+              ? 'Local changes pending'
+              : 'Cloud synced';
 
     return (
       <Card className="mb-6" data-testid="auth-signed-in">
@@ -116,9 +126,7 @@ export default function AuthUI() {
     setResendMessage(null);
     setBusy(true);
 
-    const result = tab === "signup"
-      ? await signUp(email, password)
-      : await signIn(email, password);
+    const result = tab === 'signup' ? await signUp(email, password) : await signIn(email, password);
 
     if (result.error) {
       setError(result.error);
@@ -126,10 +134,10 @@ export default function AuthUI() {
       return;
     }
 
-    const authState = await import("../auth/auth-service").then((m) => m.getSession());
+    const authState = await import('../auth/auth-service').then((m) => m.getSession());
     const userId = authState.session?.user?.id;
     if (!userId) {
-      setError("Sign-in succeeded but no user session found");
+      setError('Sign-in succeeded but no user session found');
       setBusy(false);
       return;
     }
@@ -152,12 +160,12 @@ export default function AuthUI() {
         await hydrateFromRemote(resolved);
       }
     } catch (err) {
-      console.error("[AuthUI] first-login sync failed:", err);
+      console.error('[AuthUI] first-login sync failed:', err);
     }
 
     setBusy(false);
-    setEmail("");
-    setPassword("");
+    setEmail('');
+    setPassword('');
   }
 
   async function handleMigrationResolve(choice: ConflictChoice) {
@@ -165,18 +173,18 @@ export default function AuthUI() {
 
     try {
       const resolved = await resolveFirstLogin(migrationContext, choice);
-      if (choice === "keep-remote" || choice === "merge") {
+      if (choice === 'keep-remote' || choice === 'merge') {
         await hydrateFromRemote(resolved);
       }
     } catch (err) {
-      console.error("[AuthUI] migration resolve failed:", err);
+      console.error('[AuthUI] migration resolve failed:', err);
     }
 
     setShowMigration(false);
     setMigrationContext(null);
     setBusy(false);
-    setEmail("");
-    setPassword("");
+    setEmail('');
+    setPassword('');
   }
 
   function handleMigrationCancel() {
@@ -198,27 +206,35 @@ export default function AuthUI() {
         <div className="mb-4 flex gap-2" role="tablist">
           <button
             role="tab"
-            aria-selected={tab === "signin"}
+            aria-selected={tab === 'signin'}
             className={`rounded-sm px-3 py-1.5 text-sm font-medium transition-colors ${
-              tab === "signin"
-                ? "bg-brand-light text-brand"
-                : "text-text-secondary hover:text-text-primary"
+              tab === 'signin'
+                ? 'bg-brand-light text-brand'
+                : 'text-text-secondary hover:text-text-primary'
             }`}
             data-testid="auth-tab-signin"
-            onClick={() => { setTab("signin"); setError(null); setResendMessage(null); }}
+            onClick={() => {
+              setTab('signin');
+              setError(null);
+              setResendMessage(null);
+            }}
           >
             Sign in
           </button>
           <button
             role="tab"
-            aria-selected={tab === "signup"}
+            aria-selected={tab === 'signup'}
             className={`rounded-sm px-3 py-1.5 text-sm font-medium transition-colors ${
-              tab === "signup"
-                ? "bg-brand-light text-brand"
-                : "text-text-secondary hover:text-text-primary"
+              tab === 'signup'
+                ? 'bg-brand-light text-brand'
+                : 'text-text-secondary hover:text-text-primary'
             }`}
             data-testid="auth-tab-signup"
-            onClick={() => { setTab("signup"); setError(null); setResendMessage(null); }}
+            onClick={() => {
+              setTab('signup');
+              setError(null);
+              setResendMessage(null);
+            }}
           >
             Create account
           </button>
@@ -248,11 +264,11 @@ export default function AuthUI() {
               {isEmailNotConfirmedMessage(error) && (
                 <div className="rounded-sm border border-border-light bg-bg p-3 text-xs text-text-secondary">
                   <p className="mb-2">
-                    If you already clicked the link, your app URL must match Supabase: open{" "}
-                    <strong>Authentication → URL Configuration</strong> and set{" "}
-                    <strong>Site URL</strong> to this origin (e.g.{" "}
+                    If you already clicked the link, your app URL must match Supabase: open{' '}
+                    <strong>Authentication → URL Configuration</strong> and set{' '}
+                    <strong>Site URL</strong> to this origin (e.g.{' '}
                     <code className="text-text-primary">http://localhost:5173</code>
-                    ), and add the same under <strong>Redirect URLs</strong>. Then use{" "}
+                    ), and add the same under <strong>Redirect URLs</strong>. Then use{' '}
                     <strong>Resend</strong> below or confirm the user in the Supabase dashboard.
                   </p>
                   <Button
@@ -271,11 +287,11 @@ export default function AuthUI() {
                       if (resendErr) {
                         setResendMessage(resendErr);
                       } else {
-                        setResendMessage("Check your inbox for a new confirmation link.");
+                        setResendMessage('Check your inbox for a new confirmation link.');
                       }
                     }}
                   >
-                    {resendBusy ? "Sending…" : "Resend confirmation email"}
+                    {resendBusy ? 'Sending…' : 'Resend confirmation email'}
                   </Button>
                   {resendMessage && (
                     <p className="mt-2 text-text-primary" data-testid="auth-resend-message">
@@ -287,12 +303,14 @@ export default function AuthUI() {
             </div>
           )}
           <Button variant="primary" type="submit" disabled={busy} data-testid="auth-submit-btn">
-            {busy ? "Working..." : tab === "signup" ? "Create account" : "Sign in"}
+            {busy ? 'Working...' : tab === 'signup' ? 'Create account' : 'Sign in'}
           </Button>
         </form>
 
         <div className="mt-3">
-          <Chip variant="neutral" data-testid="sync-mode-badge">Local only</Chip>
+          <Chip variant="neutral" data-testid="sync-mode-badge">
+            Local only
+          </Chip>
         </div>
       </Card>
 

@@ -5,19 +5,17 @@ import type {
   Ingredient,
   MealComponent,
   Recipe,
-} from "../types";
-import { recipeHasTag } from "./recipeTags";
+} from '../types';
+import { recipeHasTag } from './recipeTags';
 
-export function getDefaultRecipeRef(
-  component: MealComponent,
-): ComponentRecipeRef | undefined {
+export function getDefaultRecipeRef(component: MealComponent): ComponentRecipeRef | undefined {
   const refs = component.recipeRefs;
   if (!refs?.length) return undefined;
   const def = refs.find((r) => r.isDefault);
   return def ?? refs[0];
 }
 
-export type RecipeResolutionSource = "session" | "plan" | "default" | "none";
+export type RecipeResolutionSource = 'session' | 'plan' | 'default' | 'none';
 
 export function resolveComponentEffectiveRef(
   component: MealComponent,
@@ -30,24 +28,24 @@ export function resolveComponentEffectiveRef(
   if (cid && options.sessionOverrides?.has(cid)) {
     return {
       effective: options.sessionOverrides.get(cid),
-      source: "session",
+      source: 'session',
     };
   }
   const plan = options.planOverrides?.find((r) => r.componentId === cid);
-  if (plan) return { effective: plan, source: "plan" };
+  if (plan) return { effective: plan, source: 'plan' };
   const def = getDefaultRecipeRef(component);
-  if (def) return { effective: def, source: "default" };
-  return { effective: undefined, source: "none" };
+  if (def) return { effective: def, source: 'default' };
+  return { effective: undefined, source: 'none' };
 }
 
 export type FullResolutionSource =
-  | "session"
-  | "plan"
-  | "component"
-  | "meal"
-  | "ingredient"
-  | "prepNote"
-  | "none";
+  | 'session'
+  | 'plan'
+  | 'component'
+  | 'meal'
+  | 'ingredient'
+  | 'prepNote'
+  | 'none';
 
 export interface FullCookingResolution {
   effective: ComponentRecipeRef | undefined;
@@ -80,37 +78,37 @@ export function resolveFullCookingRef(
   if (cid && options.sessionOverrides?.has(cid)) {
     return {
       effective: options.sessionOverrides.get(cid),
-      source: "session",
-      sourceLabel: "Tonight override",
+      source: 'session',
+      sourceLabel: 'Tonight override',
     };
   }
 
   const plan = options.planOverrides?.find((r) => r.componentId === cid);
   if (plan) {
-    return { effective: plan, source: "plan", sourceLabel: "Day plan override" };
+    return { effective: plan, source: 'plan', sourceLabel: 'Day plan override' };
   }
 
   const compDefault = getDefaultRecipeRef(component);
   if (compDefault) {
     return {
       effective: compDefault,
-      source: "component",
-      sourceLabel: "Component default",
+      source: 'component',
+      sourceLabel: 'Component default',
     };
   }
 
   const mealRefs = meal.recipeRefs ?? [];
   if (mealRefs.length > 0) {
-    const primary = mealRefs.find((r) => r.role === "primary") ?? mealRefs[0]!;
+    const primary = mealRefs.find((r) => r.role === 'primary') ?? mealRefs[0]!;
     const synth: ComponentRecipeRef = {
       id: `meal-ref-${primary.recipeId}`,
-      componentId: cid ?? "",
-      sourceType: "internal-meal",
+      componentId: cid ?? '',
+      sourceType: 'internal-meal',
       recipeId: primary.recipeId || undefined,
-      label: primary.label ?? "Library recipe",
+      label: primary.label ?? 'Library recipe',
       notes: primary.notes,
     };
-    return { effective: synth, source: "meal", sourceLabel: "Library recipe" };
+    return { effective: synth, source: 'meal', sourceLabel: 'Library recipe' };
   }
 
   const ingredient = ingredients.find((i) => i.id === component.ingredientId);
@@ -119,47 +117,47 @@ export function resolveFullCookingRef(
     const first = ingredientRefs[0]!;
     const synth: ComponentRecipeRef = {
       id: `ing-ref-${first.recipeId}`,
-      componentId: cid ?? "",
-      sourceType: "internal-meal",
+      componentId: cid ?? '',
+      sourceType: 'internal-meal',
       recipeId: first.recipeId || undefined,
       label: first.label ?? ingredient!.name,
       notes: first.notes,
     };
     return {
       effective: synth,
-      source: "ingredient",
-      sourceLabel: "Ingredient default",
+      source: 'ingredient',
+      sourceLabel: 'Ingredient default',
     };
   }
 
   if (component.prepNote) {
     const synth: ComponentRecipeRef = {
       id: `prep-note-${cid}`,
-      componentId: cid ?? "",
-      sourceType: "note",
-      label: "Prep note",
+      componentId: cid ?? '',
+      sourceType: 'note',
+      label: 'Prep note',
       notes: component.prepNote,
     };
-    return { effective: synth, source: "prepNote", sourceLabel: "Prep note" };
+    return { effective: synth, source: 'prepNote', sourceLabel: 'Prep note' };
   }
 
   if (meal.recipeLinks && meal.recipeLinks.length > 0) {
     const link = meal.recipeLinks[0]!;
     const synth: ComponentRecipeRef = {
       id: `recipe-link-${cid}`,
-      componentId: cid ?? "",
-      sourceType: "external-url",
+      componentId: cid ?? '',
+      sourceType: 'external-url',
       label: link.label,
       url: link.url,
     };
     return {
       effective: synth,
-      source: "prepNote",
-      sourceLabel: "Recipe link",
+      source: 'prepNote',
+      sourceLabel: 'Recipe link',
     };
   }
 
-  return { effective: undefined, source: "none", sourceLabel: "" };
+  return { effective: undefined, source: 'none', sourceLabel: '' };
 }
 
 /** Human-readable line for cooking UI (not full recipe). */
@@ -167,21 +165,21 @@ export function summarizeRecipeRef(
   ref: ComponentRecipeRef | undefined,
   opts: { linkedMealName?: string } = {},
 ): string {
-  if (!ref) return "";
-  if (ref.sourceType === "note") {
-    return ref.notes?.trim() || ref.label || "Prep note";
+  if (!ref) return '';
+  if (ref.sourceType === 'note') {
+    return ref.notes?.trim() || ref.label || 'Prep note';
   }
-  if (ref.sourceType === "external-url") {
-    return ref.label || ref.url || "Link";
+  if (ref.sourceType === 'external-url') {
+    return ref.label || ref.url || 'Link';
   }
   if (ref.linkedBaseMealId && opts.linkedMealName) {
     return ref.label || opts.linkedMealName;
   }
-  return ref.label || "Recipe";
+  return ref.label || 'Recipe';
 }
 
 export function createComponentRecipeRef(
-  partial: Omit<ComponentRecipeRef, "id"> & { id?: string },
+  partial: Omit<ComponentRecipeRef, 'id'> & { id?: string },
 ): ComponentRecipeRef {
   return {
     ...partial,
@@ -218,28 +216,23 @@ export function countMealRecipes(meal: BaseMeal): number {
   const mealLevel = (meal.recipeRefs ?? []).length;
   let componentLevel = 0;
   for (const c of meal.components) {
-    componentLevel += (c.recipeRefs ?? []).filter(
-      (r) => !r.notes?.startsWith("alt:"),
-    ).length;
+    componentLevel += (c.recipeRefs ?? []).filter((r) => !r.notes?.startsWith('alt:')).length;
   }
   return mealLevel + componentLevel;
 }
 
 /** Check whether any recipe ref on a meal has batch-prep characteristics. */
-export function hasBatchPrepRecipe(
-  meal: BaseMeal,
-  recipes: Recipe[],
-): boolean {
+export function hasBatchPrepRecipe(meal: BaseMeal, recipes: Recipe[]): boolean {
   for (const ref of meal.recipeRefs ?? []) {
-    if (ref.role === "batch-prep") return true;
+    if (ref.role === 'batch-prep') return true;
     const r = recipes.find((x) => x.id === ref.recipeId);
-    if (r && recipeHasTag(r, "batch-prep")) return true;
+    if (r && recipeHasTag(r, 'batch-prep')) return true;
   }
   for (const c of meal.components) {
     for (const cr of c.recipeRefs ?? []) {
       if (cr.recipeId) {
         const r = recipes.find((x) => x.id === cr.recipeId);
-        if (r && recipeHasTag(r, "batch-prep")) return true;
+        if (r && recipeHasTag(r, 'batch-prep')) return true;
       }
     }
   }
@@ -247,15 +240,12 @@ export function hasBatchPrepRecipe(
 }
 
 /** Check if any component has a prep-ahead recipe. */
-export function hasPrepAheadRecipe(
-  meal: BaseMeal,
-  recipes: Recipe[],
-): boolean {
+export function hasPrepAheadRecipe(meal: BaseMeal, recipes: Recipe[]): boolean {
   for (const c of meal.components) {
     for (const cr of c.recipeRefs ?? []) {
       if (cr.recipeId) {
         const r = recipes.find((x) => x.id === cr.recipeId);
-        if (r && recipeHasTag(r, "batch-prep")) return true;
+        if (r && recipeHasTag(r, 'batch-prep')) return true;
       }
     }
   }
@@ -301,11 +291,9 @@ export function findPrepAheadOpportunities(
     if (dayLabels.length < 2) continue;
     const ing = ingredients.find((i) => i.id === ingId);
     const batchRecipe = recipes.find(
-      (r) =>
-        recipeHasTag(r, "batch-prep") &&
-        r.components.some((c) => c.ingredientId === ingId),
+      (r) => recipeHasTag(r, 'batch-prep') && r.components.some((c) => c.ingredientId === ingId),
     );
-    const ingDefault = ing?.defaultRecipeRefs?.find((r) => r.role === "batch-prep");
+    const ingDefault = ing?.defaultRecipeRefs?.find((r) => r.role === 'batch-prep');
 
     if (batchRecipe || ingDefault) {
       opportunities.push({

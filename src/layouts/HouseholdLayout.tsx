@@ -1,5 +1,5 @@
-import { Outlet, useParams } from "react-router-dom";
-import { AppHeader, HouseholdNavStack } from "../components/ui";
+import { Outlet, useParams } from 'react-router-dom';
+import { AppHeader, HouseholdNavStack } from '../components/ui';
 
 /**
  * Shared shell for all /household/:householdId/* screens (PRD F053).

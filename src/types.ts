@@ -1,6 +1,6 @@
-export type MemberRole = "adult" | "toddler" | "baby" | "pet";
+export type MemberRole = 'adult' | 'toddler' | 'baby' | 'pet';
 
-export type TextureLevel = "regular" | "soft" | "mashable" | "pureed";
+export type TextureLevel = 'regular' | 'soft' | 'mashable' | 'pureed';
 
 export interface PreparationRule {
   ingredient: string;
@@ -20,19 +20,19 @@ export interface HouseholdMember {
 }
 
 export type IngredientCategory =
-  | "protein"
-  | "carb"
-  | "veg"
-  | "fruit"
-  | "dairy"
-  | "snack"
-  | "freezer"
-  | "pantry";
+  | 'protein'
+  | 'carb'
+  | 'veg'
+  | 'fruit'
+  | 'dairy'
+  | 'snack'
+  | 'freezer'
+  | 'pantry';
 
 export interface RecipeRef {
   recipeId: string;
   label?: string;
-  role?: "primary" | "assembly" | "shortcut" | "component" | "sub-recipe" | "batch-prep";
+  role?: 'primary' | 'assembly' | 'shortcut' | 'component' | 'sub-recipe' | 'batch-prep';
   notes?: string;
 }
 
@@ -48,16 +48,16 @@ export interface Ingredient {
   babySafeWithAdaptation: boolean;
   imageUrl?: string;
   catalogId?: string;
-  source?: "manual" | "catalog" | "pending-import";
+  source?: 'manual' | 'catalog' | 'pending-import';
   /** Optional fallback recipe refs; not the primary model for recipe resolution. */
   defaultRecipeRefs?: RecipeRef[];
 }
 
 export type ComponentRecipeSourceType =
-  | "internal-meal"
-  | "imported-recipe"
-  | "external-url"
-  | "note";
+  | 'internal-meal'
+  | 'imported-recipe'
+  | 'external-url'
+  | 'note';
 
 /** Optional per-component “how to make this” source; backwards-compatible when absent. */
 export interface ComponentRecipeRef {
@@ -80,13 +80,13 @@ export interface MealComponent {
   id?: string;
   ingredientId: string;
   alternativeIngredientIds?: string[];
-  role: "protein" | "carb" | "veg" | "sauce" | "topping";
+  role: 'protein' | 'carb' | 'veg' | 'sauce' | 'topping';
   quantity: string;
   unit?: string;
   prepNote?: string;
   recipeRefs?: ComponentRecipeRef[];
   originalSourceLine?: string;
-  matchType?: "existing" | "new" | "ignored";
+  matchType?: 'existing' | 'new' | 'ignored';
   confidence?: number;
 }
 
@@ -141,7 +141,7 @@ export interface BaseMeal {
   components: MealComponent[];
   defaultPrep: string;
   estimatedTimeMinutes: number;
-  difficulty: "easy" | "medium" | "hard";
+  difficulty: 'easy' | 'medium' | 'hard';
   rescueEligible: boolean;
   wasteReuseHints: string[];
   recipeLinks?: RecipeLink[];
@@ -163,14 +163,14 @@ export interface ImportMapping {
   parsedQuantityValue?: number;
   parsedQuantityUnit?: string;
   prepNotes?: string[];
-  action: "use" | "create" | "ignore";
-  chosenAction?: "use" | "create" | "ignore";
+  action: 'use' | 'create' | 'ignore';
+  chosenAction?: 'use' | 'create' | 'ignore';
   ingredientId?: string;
   finalMatchedIngredientId?: string;
-  matchType?: "existing" | "new" | "ignored";
+  matchType?: 'existing' | 'new' | 'ignored';
   /** Paprika / import audit */
   matchScore?: number;
-  confidenceBand?: "exact" | "strong" | "low";
+  confidenceBand?: 'exact' | 'strong' | 'low';
   parserSuggestedIngredientId?: string;
   parserSuggestedCatalogId?: string;
   /** User-edited canonical name when creating a new ingredient from import */
@@ -212,7 +212,7 @@ export interface WeeklyPlan {
   notes: string;
 }
 
-export type MealOutcomeResult = "success" | "partial" | "failure";
+export type MealOutcomeResult = 'success' | 'partial' | 'failure';
 
 export interface MealOutcome {
   id: string;

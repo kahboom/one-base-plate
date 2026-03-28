@@ -1,8 +1,8 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
-import type { WeeklySuggestedMealRow } from "../../planner";
-import { useIncrementalList } from "../../hooks/useIncrementalList";
-import { Button, Select, Input } from "../ui";
-import AppModal from "../AppModal";
+import { useMemo, useRef, useState, type ReactNode } from 'react';
+import type { WeeklySuggestedMealRow } from '../../planner';
+import { useIncrementalList } from '../../hooks/useIncrementalList';
+import { Button, Select, Input } from '../ui';
+import AppModal from '../AppModal';
 
 export const BROWSE_MEALS_PAGE_SIZE = 48;
 
@@ -19,13 +19,13 @@ export default function BrowseMealsModal({
   rows,
   renderMealCard,
 }: BrowseMealsModalProps) {
-  const [browseQuery, setBrowseQuery] = useState("");
-  const [browseEffort, setBrowseEffort] = useState<"all" | "easy" | "medium" | "hard">("all");
+  const [browseQuery, setBrowseQuery] = useState('');
+  const [browseEffort, setBrowseEffort] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
 
   const browseFilteredRows = useMemo(() => {
     const q = browseQuery.trim().toLowerCase();
     return rows.filter((row) => {
-      if (browseEffort !== "all" && row.meal.difficulty !== browseEffort) return false;
+      if (browseEffort !== 'all' && row.meal.difficulty !== browseEffort) return false;
       if (!q) return true;
       return row.meal.name.toLowerCase().includes(q);
     });
@@ -95,14 +95,17 @@ export default function BrowseMealsModal({
           </Select>
         </label>
         <p className="text-xs text-text-muted" data-testid="browse-meals-count">
-          {browseFilteredTotal} meal{browseFilteredTotal !== 1 ? "s" : ""}
+          {browseFilteredTotal} meal{browseFilteredTotal !== 1 ? 's' : ''}
           {browseFilteredTotal > 0 && visibleCount < browseFilteredTotal
             ? ` · showing ${visibleCount} of ${browseFilteredTotal}`
-            : ""}
+            : ''}
         </p>
       </div>
       <div ref={scrollRootRef} className="min-h-0 flex-1 overflow-y-auto p-4">
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" data-testid="browse-meals-grid">
+        <div
+          className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          data-testid="browse-meals-grid"
+        >
           {browseVisibleRows.map((row) => (
             <div key={row.meal.id} className="flex h-full min-h-0 flex-col">
               {renderMealCard(row)}
@@ -113,7 +116,12 @@ export default function BrowseMealsModal({
       </div>
       {browseHasMore && (
         <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 border-t border-border-light p-4">
-          <Button type="button" variant="default" onClick={browseLoadMore} data-testid="browse-meals-load-more">
+          <Button
+            type="button"
+            variant="default"
+            onClick={browseLoadMore}
+            data-testid="browse-meals-load-more"
+          >
             Load more
           </Button>
         </div>

@@ -1,21 +1,21 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { MEAL_STRUCTURE_TYPE_OPTIONS } from "../planner";
+import { useEffect, useId, useRef, useState } from 'react';
+import { MEAL_STRUCTURE_TYPE_OPTIONS } from '../planner';
 
 const STRUCTURE_TYPES_HELP =
-  "Each base meal is tagged as single-protein (one protein component) or multi-protein (more than one). Choosing types here lets this theme night gently prefer matching meals in weekly suggestions—after household fit.";
+  'Each base meal is tagged as single-protein (one protein component) or multi-protein (more than one). Choosing types here lets this theme night gently prefer matching meals in weekly suggestions—after household fit.';
 
 function formatOptionLabel(value: string): string {
-  return value.replace(/-/g, " ");
+  return value.replace(/-/g, ' ');
 }
 
 export function AnchorStructureTypesField({
   selected,
   onChange,
-  "data-testid": testId = "anchor-structure",
+  'data-testid': testId = 'anchor-structure',
 }: {
   selected: string[];
   onChange: (next: string[]) => void;
-  "data-testid"?: string;
+  'data-testid'?: string;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -29,8 +29,8 @@ export function AnchorStructureTypesField({
       setMenuOpen(false);
       setHelpOpen(false);
     }
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, []);
 
   function toggleValue(value: string) {
@@ -41,9 +41,7 @@ export function AnchorStructureTypesField({
   }
 
   const summary =
-    selected.length === 0
-      ? "None selected"
-      : selected.map(formatOptionLabel).join(", ");
+    selected.length === 0 ? 'None selected' : selected.map(formatOptionLabel).join(', ');
 
   return (
     <div ref={rootRef} className="relative">
@@ -84,7 +82,7 @@ export function AnchorStructureTypesField({
           setHelpOpen(false);
         }}
       >
-        <span className={selected.length === 0 ? "text-text-muted" : ""}>{summary}</span>
+        <span className={selected.length === 0 ? 'text-text-muted' : ''}>{summary}</span>
         <span className="text-text-muted" aria-hidden>
           ▾
         </span>

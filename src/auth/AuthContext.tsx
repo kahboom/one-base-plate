@@ -1,8 +1,8 @@
-import { createContext, useEffect, useState, useCallback, type ReactNode } from "react";
-import type { User, Session } from "@supabase/supabase-js";
-import * as authService from "./auth-service";
-import { isSupabaseConfigured } from "../config";
-import { setCurrentUserId } from "../sync/sync-engine";
+import { createContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import type { User, Session } from '@supabase/supabase-js';
+import * as authService from './auth-service';
+import { isSupabaseConfigured } from '../config';
+import { setCurrentUserId } from '../sync/sync-engine';
 
 export interface AuthState {
   user: User | null;
@@ -19,9 +19,9 @@ const defaultState: AuthState = {
   session: null,
   loading: true,
   configured: false,
-  signUp: async () => ({ error: "Not initialized" }),
-  signIn: async () => ({ error: "Not initialized" }),
-  signOut: async () => ({ error: "Not initialized" }),
+  signUp: async () => ({ error: 'Not initialized' }),
+  signIn: async () => ({ error: 'Not initialized' }),
+  signOut: async () => ({ error: 'Not initialized' }),
 };
 
 export const AuthContext = createContext<AuthState>(defaultState);

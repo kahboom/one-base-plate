@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import type { BaseMeal, MealComponent, Ingredient, Recipe, RecipeRef } from "../types";
-import { loadHousehold, saveHousehold, toSentenceCase } from "../storage";
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import type { BaseMeal, MealComponent, Ingredient, Recipe, RecipeRef } from '../types';
+import { loadHousehold, saveHousehold, toSentenceCase } from '../storage';
 import {
   PageHeader,
   Card,
@@ -13,20 +13,16 @@ import {
   Chip,
   ConfirmDialog,
   useConfirm,
-} from "../components/ui";
-import AppModal from "../components/AppModal";
-import MealImageSlot from "../components/MealImageSlot";
-import { useIncrementalList } from "../hooks/useIncrementalList";
-import {
-  sortBaseMeals,
-  type BaseMealSortKey,
-  type SortDir,
-} from "../lib/listSort";
-import ComponentForm from "../components/meals/ComponentForm";
-import RecipeLinksEditor from "../components/meals/RecipeLinksEditor";
-import ComponentRecipePicker from "../components/meals/ComponentRecipePicker";
-import { resolveMealImageUrl } from "../lib/mealImage";
-import TagSuggestInput from "../components/TagSuggestInput";
+} from '../components/ui';
+import AppModal from '../components/AppModal';
+import MealImageSlot from '../components/MealImageSlot';
+import { useIncrementalList } from '../hooks/useIncrementalList';
+import { sortBaseMeals, type BaseMealSortKey, type SortDir } from '../lib/listSort';
+import ComponentForm from '../components/meals/ComponentForm';
+import RecipeLinksEditor from '../components/meals/RecipeLinksEditor';
+import ComponentRecipePicker from '../components/meals/ComponentRecipePicker';
+import { resolveMealImageUrl } from '../lib/mealImage';
+import TagSuggestInput from '../components/TagSuggestInput';
 
 const MEAL_SORT_OPTIONS: {
   value: string;
@@ -34,54 +30,51 @@ const MEAL_SORT_OPTIONS: {
   key: BaseMealSortKey;
   dir: SortDir;
 }[] = [
-  { value: "name-asc", label: "Name (A–Z)", key: "name", dir: "asc" },
-  { value: "name-desc", label: "Name (Z–A)", key: "name", dir: "desc" },
+  { value: 'name-asc', label: 'Name (A–Z)', key: 'name', dir: 'asc' },
+  { value: 'name-desc', label: 'Name (Z–A)', key: 'name', dir: 'desc' },
   {
-    value: "time-asc",
-    label: "Time (short → long)",
-    key: "estimatedTimeMinutes",
-    dir: "asc",
+    value: 'time-asc',
+    label: 'Time (short → long)',
+    key: 'estimatedTimeMinutes',
+    dir: 'asc',
   },
   {
-    value: "time-desc",
-    label: "Time (long → short)",
-    key: "estimatedTimeMinutes",
-    dir: "desc",
+    value: 'time-desc',
+    label: 'Time (long → short)',
+    key: 'estimatedTimeMinutes',
+    dir: 'desc',
   },
   {
-    value: "difficulty-asc",
-    label: "Difficulty (easy → hard)",
-    key: "difficulty",
-    dir: "asc",
+    value: 'difficulty-asc',
+    label: 'Difficulty (easy → hard)',
+    key: 'difficulty',
+    dir: 'asc',
   },
   {
-    value: "difficulty-desc",
-    label: "Difficulty (hard → easy)",
-    key: "difficulty",
-    dir: "desc",
+    value: 'difficulty-desc',
+    label: 'Difficulty (hard → easy)',
+    key: 'difficulty',
+    dir: 'desc',
   },
   {
-    value: "components-asc",
-    label: "Components (few → many)",
-    key: "componentCount",
-    dir: "asc",
+    value: 'components-asc',
+    label: 'Components (few → many)',
+    key: 'componentCount',
+    dir: 'asc',
   },
   {
-    value: "components-desc",
-    label: "Components (many → few)",
-    key: "componentCount",
-    dir: "desc",
+    value: 'components-desc',
+    label: 'Components (many → few)',
+    key: 'componentCount',
+    dir: 'desc',
   },
 ];
 
-const DIFFICULTY_OPTIONS: BaseMeal["difficulty"][] = ["easy", "medium", "hard"];
-const DIFFICULTY_CHIP_VARIANT: Record<
-  BaseMeal["difficulty"],
-  "success" | "warning" | "danger"
-> = {
-  easy: "success",
-  medium: "warning",
-  hard: "danger",
+const DIFFICULTY_OPTIONS: BaseMeal['difficulty'][] = ['easy', 'medium', 'hard'];
+const DIFFICULTY_CHIP_VARIANT: Record<BaseMeal['difficulty'], 'success' | 'warning' | 'danger'> = {
+  easy: 'success',
+  medium: 'warning',
+  hard: 'danger',
 };
 
 const EMPTY_MEAL_TAGS: string[] = [];
@@ -94,16 +87,16 @@ function normalizeBaseMealTag(raw: string): string {
 function createEmptyMeal(): BaseMeal {
   return {
     id: crypto.randomUUID(),
-    name: "",
+    name: '',
     tags: [],
     components: [],
-    defaultPrep: "",
+    defaultPrep: '',
     estimatedTimeMinutes: 30,
-    difficulty: "easy",
+    difficulty: 'easy',
     rescueEligible: false,
     wasteReuseHints: [],
     recipeLinks: [],
-    notes: "",
+    notes: '',
   };
 }
 
@@ -126,11 +119,9 @@ function MealModal({
   onRemove: () => void;
   onAddIngredient: (ingredient: Ingredient) => void;
 }) {
-  const [openComponentIndexes, setOpenComponentIndexes] = useState<number[]>(
-    [],
-  );
+  const [openComponentIndexes, setOpenComponentIndexes] = useState<number[]>([]);
   const [mealRecipePickerOpen, setMealRecipePickerOpen] = useState(false);
-  const [mealTagInput, setMealTagInput] = useState("");
+  const [mealTagInput, setMealTagInput] = useState('');
 
   const mealTags = meal.tags ?? EMPTY_MEAL_TAGS;
   const mealTagSuggestions = useMemo(() => {
@@ -149,7 +140,7 @@ function MealModal({
     if (!normalized) return;
     if (mealTags.includes(normalized)) return;
     onChange({ ...meal, tags: [...mealTags, normalized] });
-    setMealTagInput("");
+    setMealTagInput('');
   }
 
   function removeMealTag(tag: string) {
@@ -160,9 +151,9 @@ function MealModal({
   function addComponent() {
     const newComponent: MealComponent = {
       id: crypto.randomUUID(),
-      ingredientId: "",
-      role: "protein",
-      quantity: "",
+      ingredientId: '',
+      role: 'protein',
+      quantity: '',
     };
     onChange({ ...meal, components: [...meal.components, newComponent] });
     setOpenComponentIndexes((prev) => [...prev, meal.components.length]);
@@ -180,9 +171,7 @@ function MealModal({
       components: meal.components.filter((_, i) => i !== index),
     });
     setOpenComponentIndexes((prev) =>
-      prev
-        .filter((item) => item !== index)
-        .map((item) => (item > index ? item - 1 : item)),
+      prev.filter((item) => item !== index).map((item) => (item > index ? item - 1 : item)),
     );
   }
 
@@ -206,7 +195,7 @@ function MealModal({
             />
             <div className="min-w-0">
               <h2 className="truncate text-xl font-bold text-text-primary">
-                {toSentenceCase(meal.name) || "New meal"}
+                {toSentenceCase(meal.name) || 'New meal'}
               </h2>
               <span className="text-xs text-text-muted">
                 Build one shared meal structure with clear component choices
@@ -217,16 +206,11 @@ function MealModal({
             Close
           </Button>
         </div>
-        <div
-          className="mt-3 flex flex-wrap gap-2"
-          data-testid="meal-summary-chips"
-        >
+        <div className="mt-3 flex flex-wrap gap-2" data-testid="meal-summary-chips">
           <Chip variant="info">{meal.estimatedTimeMinutes} min</Chip>
-          <Chip variant={DIFFICULTY_CHIP_VARIANT[meal.difficulty]}>
-            {meal.difficulty}
-          </Chip>
-          <Chip variant={meal.rescueEligible ? "success" : "neutral"}>
-            {meal.rescueEligible ? "Rescue eligible" : "Not rescue"}
+          <Chip variant={DIFFICULTY_CHIP_VARIANT[meal.difficulty]}>{meal.difficulty}</Chip>
+          <Chip variant={meal.rescueEligible ? 'success' : 'neutral'}>
+            {meal.rescueEligible ? 'Rescue eligible' : 'Not rescue'}
           </Chip>
         </div>
         {mealTags.length > 0 ? (
@@ -234,9 +218,7 @@ function MealModal({
             className="mt-2 flex flex-wrap items-center gap-2"
             data-testid="meal-theme-tag-chips"
           >
-            <span className="text-xs font-medium text-text-muted">
-              Theme tags
-            </span>
+            <span className="text-xs font-medium text-text-muted">Theme tags</span>
             {mealTags.map((tag) => (
               <Chip key={tag} variant="neutral" className="text-xs">
                 {tag}
@@ -274,8 +256,8 @@ function MealModal({
           </div>
           {meal.components.length === 0 ? (
             <div className="rounded-sm border border-dashed border-border-default bg-bg p-3 text-sm text-text-muted">
-              No components yet. Add protein, carb, veg, sauce, or topping
-              components to define this meal.
+              No components yet. Add protein, carb, veg, sauce, or topping components to define this
+              meal.
             </div>
           ) : (
             <div className="space-y-2">
@@ -307,9 +289,7 @@ function MealModal({
               <Input
                 type="text"
                 value={meal.defaultPrep}
-                onChange={(e) =>
-                  onChange({ ...meal, defaultPrep: e.target.value })
-                }
+                onChange={(e) => onChange({ ...meal, defaultPrep: e.target.value })}
                 placeholder="e.g. stir-fry, roast"
               />
             </FieldLabel>
@@ -333,7 +313,7 @@ function MealModal({
                 onChange={(e) =>
                   onChange({
                     ...meal,
-                    difficulty: e.target.value as BaseMeal["difficulty"],
+                    difficulty: e.target.value as BaseMeal['difficulty'],
                   })
                 }
               >
@@ -349,20 +329,15 @@ function MealModal({
                 type="checkbox"
                 className="h-5 w-5 accent-brand"
                 checked={meal.rescueEligible}
-                onChange={(e) =>
-                  onChange({ ...meal, rescueEligible: e.target.checked })
-                }
+                onChange={(e) => onChange({ ...meal, rescueEligible: e.target.checked })}
               />
               Rescue eligible
             </label>
           </div>
           <div className="space-y-2 border-t border-border-light pt-4">
-            <span className="block text-sm font-medium text-text-secondary">
-              Theme tags
-            </span>
+            <span className="block text-sm font-medium text-text-secondary">Theme tags</span>
             <p className="text-xs text-text-muted">
-              Used for weekly theme nights (match tags on Household → Weekly
-              theme nights).
+              Used for weekly theme nights (match tags on Household → Weekly theme nights).
             </p>
             <div className="flex flex-wrap gap-1">
               {mealTags.map((tag) => (
@@ -440,9 +415,7 @@ function MealModal({
                 <div className="flex flex-wrap gap-2">
                   {(meal.recipeRefs ?? []).map((ref, i) => {
                     const recipeName =
-                      ref.label ??
-                      recipes.find((r) => r.id === ref.recipeId)?.name ??
-                      ref.recipeId;
+                      ref.label ?? recipes.find((r) => r.id === ref.recipeId)?.name ?? ref.recipeId;
                     return (
                       <span
                         key={ref.recipeId || i}
@@ -460,9 +433,7 @@ function MealModal({
                           small
                           className="text-text-muted hover:text-danger"
                           onClick={() => {
-                            const next = (meal.recipeRefs ?? []).filter(
-                              (_, idx) => idx !== i,
-                            );
+                            const next = (meal.recipeRefs ?? []).filter((_, idx) => idx !== i);
                             onChange({ ...meal, recipeRefs: next });
                           }}
                           data-testid={`remove-whole-meal-ref-${i}`}
@@ -474,9 +445,7 @@ function MealModal({
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-text-muted">
-                  No library recipes attached yet.
-                </p>
+                <p className="text-xs text-text-muted">No library recipes attached yet.</p>
               )}
               <Button
                 small
@@ -499,9 +468,8 @@ function MealModal({
               onSave={() => {}}
               onSaveMealRef={(ref: RecipeRef) => {
                 const existing = meal.recipeRefs ?? [];
-                const alreadyLinked = ref.recipeId && existing.some(
-                  (r) => r.recipeId === ref.recipeId,
-                );
+                const alreadyLinked =
+                  ref.recipeId && existing.some((r) => r.recipeId === ref.recipeId);
                 if (!alreadyLinked) {
                   onChange({ ...meal, recipeRefs: [...existing, ref] });
                 }
@@ -521,7 +489,7 @@ function MealModal({
               <textarea
                 className="w-full rounded-lg border border-border-light bg-surface p-3 text-sm text-text-primary placeholder-text-muted focus:border-brand focus:outline-none"
                 rows={3}
-                value={meal.notes ?? ""}
+                value={meal.notes ?? ''}
                 onChange={(e) => onChange({ ...meal, notes: e.target.value })}
                 placeholder="e.g. Gousto version works well, blend toddler sauce"
                 data-testid="meal-notes"
@@ -540,10 +508,8 @@ function MealModal({
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Input
                   type="url"
-                  value={meal.imageUrl ?? ""}
-                  onChange={(e) =>
-                    onChange({ ...meal, imageUrl: e.target.value || undefined })
-                  }
+                  value={meal.imageUrl ?? ''}
+                  onChange={(e) => onChange({ ...meal, imageUrl: e.target.value || undefined })}
                   placeholder="Image URL"
                   data-testid="meal-image-url"
                 />
@@ -575,7 +541,7 @@ function MealModal({
                 <MealImageSlot
                   variant="editorPreview"
                   imageUrl={meal.imageUrl}
-                  alt={meal.name || "Meal"}
+                  alt={meal.name || 'Meal'}
                   imageTestId="meal-image-preview"
                   placeholderTestId="meal-image-preview-placeholder"
                 />
@@ -586,12 +552,7 @@ function MealModal({
       </div>
 
       <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border-light bg-surface px-4 py-3 sm:px-6">
-        <Button
-          variant="ghost"
-          small
-          className="text-danger hover:text-danger"
-          onClick={onRemove}
-        >
+        <Button variant="ghost" small className="text-danger hover:text-danger" onClick={onRemove}>
           Remove meal
         </Button>
         <div className="flex items-center gap-3">
@@ -607,14 +568,22 @@ function MealModal({
   );
 }
 
-function MealRow({ meal, recipes, onClick }: { meal: BaseMeal; recipes: Recipe[]; onClick: () => void }) {
+function MealRow({
+  meal,
+  recipes,
+  onClick,
+}: {
+  meal: BaseMeal;
+  recipes: Recipe[];
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
       className="flex w-full items-center gap-3 rounded-md border border-border-light bg-surface px-3 py-2.5 text-left transition-colors hover:bg-bg hover:shadow-card cursor-pointer min-h-[48px]"
       onClick={onClick}
       data-testid={`meal-row-${meal.id}`}
-      aria-label={`Edit ${meal.name || "unnamed meal"}`}
+      aria-label={`Edit ${meal.name || 'unnamed meal'}`}
     >
       <MealImageSlot
         variant="row"
@@ -632,16 +601,12 @@ function MealRow({ meal, recipes, onClick }: { meal: BaseMeal; recipes: Recipe[]
           )}
         </span>
         <span className="block text-xs text-text-muted truncate">
-          {meal.defaultPrep ? toSentenceCase(meal.defaultPrep) : "No prep set"}{" "}
-          · {meal.estimatedTimeMinutes} min · {meal.components.length}{" "}
-          components
+          {meal.defaultPrep ? toSentenceCase(meal.defaultPrep) : 'No prep set'} ·{' '}
+          {meal.estimatedTimeMinutes} min · {meal.components.length} components
         </span>
       </span>
       <span className="flex flex-shrink-0 items-center gap-1.5">
-        <Chip
-          variant={DIFFICULTY_CHIP_VARIANT[meal.difficulty]}
-          className="text-[10px]"
-        >
+        <Chip variant={DIFFICULTY_CHIP_VARIANT[meal.difficulty]} className="text-[10px]">
           {meal.difficulty}
         </Chip>
         {meal.rescueEligible && (
@@ -662,10 +627,10 @@ export default function BaseMealManager() {
   const [meals, setMeals] = useState<BaseMeal[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [householdName, setHouseholdName] = useState("");
+  const [householdName, setHouseholdName] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [mealSort, setMealSort] = useState(MEAL_SORT_OPTIONS[0]!.value);
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
 
@@ -682,15 +647,15 @@ export default function BaseMealManager() {
   }, [householdId]);
 
   useEffect(() => {
-    const edit = searchParams.get("edit") || searchParams.get("meal");
+    const edit = searchParams.get('edit') || searchParams.get('meal');
     if (!edit || meals.length === 0) return;
     if (!meals.some((m) => m.id === edit)) return;
     setEditingId(edit);
     setSearchParams(
       (p) => {
         const next = new URLSearchParams(p);
-        next.delete("edit");
-        next.delete("meal");
+        next.delete('edit');
+        next.delete('meal');
         return next;
       },
       { replace: true },
@@ -713,16 +678,11 @@ export default function BaseMealManager() {
   }, [meals, searchQuery]);
 
   const sortedMeals = useMemo(() => {
-    const opt =
-      MEAL_SORT_OPTIONS.find((o) => o.value === mealSort) ??
-      MEAL_SORT_OPTIONS[0]!;
+    const opt = MEAL_SORT_OPTIONS.find((o) => o.value === mealSort) ?? MEAL_SORT_OPTIONS[0]!;
     return sortBaseMeals(filteredMeals, opt.key, opt.dir);
   }, [filteredMeals, mealSort]);
 
-  const resetDeps = useMemo(
-    () => [searchQuery, mealSort] as const,
-    [searchQuery, mealSort],
-  );
+  const resetDeps = useMemo(() => [searchQuery, mealSort] as const, [searchQuery, mealSort]);
   const {
     visibleItems: visibleMeals,
     hasMore: mealListHasMore,
@@ -730,9 +690,7 @@ export default function BaseMealManager() {
     sentinelRef: mealListSentinelRef,
   } = useIncrementalList(sortedMeals, { resetDeps: [...resetDeps] });
 
-  const editingMeal = editingId
-    ? (meals.find((meal) => meal.id === editingId) ?? null)
-    : null;
+  const editingMeal = editingId ? (meals.find((meal) => meal.id === editingId) ?? null) : null;
 
   function addMeal() {
     const newMeal = createEmptyMeal();
@@ -748,7 +706,7 @@ export default function BaseMealManager() {
 
   function removeMeal(mealId: string) {
     const meal = meals.find((item) => item.id === mealId);
-    const mealName = meal?.name || "Unnamed meal";
+    const mealName = meal?.name || 'Unnamed meal';
     requestConfirm(mealName, () => {
       setMeals((prev) => prev.filter((item) => item.id !== mealId));
       setEditingId((prev) => (prev === mealId ? null : prev));
@@ -797,22 +755,17 @@ export default function BaseMealManager() {
           <Button
             type="button"
             data-testid="import-recipe-btn"
-            onClick={() =>
-              householdId && navigate(`/household/${householdId}/import-recipe`)
-            }
+            onClick={() => householdId && navigate(`/household/${householdId}/import-recipe`)}
           >
             Import recipe
           </Button>
         </div>
       </Card>
 
-      <h2
-        className="mb-3 text-sm font-medium text-text-secondary"
-        data-testid="meal-list-summary"
-      >
+      <h2 className="mb-3 text-sm font-medium text-text-secondary" data-testid="meal-list-summary">
         <span>Meals ({meals.length})</span>
         {filteredMeals.length !== meals.length && (
-          <span>{` · ${filteredMeals.length} match${filteredMeals.length !== 1 ? "es" : ""}`}</span>
+          <span>{` · ${filteredMeals.length} match${filteredMeals.length !== 1 ? 'es' : ''}`}</span>
         )}
         {sortedMeals.length > 0 && visibleMeals.length < sortedMeals.length && (
           <span>{` · showing ${visibleMeals.length} of ${sortedMeals.length}`}</span>

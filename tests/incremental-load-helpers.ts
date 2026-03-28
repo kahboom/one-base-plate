@@ -1,4 +1,4 @@
-import { screen, fireEvent } from "@testing-library/react";
+import { screen, fireEvent } from '@testing-library/react';
 
 /**
  * Legacy helper: clicks "Load more" until gone (infinite scroll).
@@ -7,7 +7,7 @@ import { screen, fireEvent } from "@testing-library/react";
  */
 export function loadAllIngredientListRows(maxClicks = 100) {
   for (let i = 0; i < maxClicks; i++) {
-    const btn = screen.queryByTestId("ingredient-list-load-more");
+    const btn = screen.queryByTestId('ingredient-list-load-more');
     if (!btn) break;
     fireEvent.click(btn);
   }
@@ -18,9 +18,9 @@ export function loadAllIngredientListRows(maxClicks = 100) {
  * For lists > 100, navigate additional pages.
  */
 export function showAllIngredientRows() {
-  const pageSizeSelect = screen.queryByTestId("ingredient-page-size");
+  const pageSizeSelect = screen.queryByTestId('ingredient-page-size');
   if (pageSizeSelect) {
-    fireEvent.change(pageSizeSelect, { target: { value: "100" } });
+    fireEvent.change(pageSizeSelect, { target: { value: '100' } });
   }
 }
 
@@ -31,15 +31,18 @@ export function showAllIngredientRows() {
 export function ingredientTextExistsOnAnyPage(text: string): boolean {
   showAllIngredientRows();
   if (screen.queryByText(text)) return true;
-  const nextBtn = screen.queryByTestId("pagination-next");
+  const nextBtn = screen.queryByTestId('pagination-next');
   if (!nextBtn) return false;
   let found = false;
   for (let i = 0; i < 20; i++) {
     if ((nextBtn as HTMLButtonElement).disabled) break;
     fireEvent.click(nextBtn);
-    if (screen.queryByText(text)) { found = true; break; }
+    if (screen.queryByText(text)) {
+      found = true;
+      break;
+    }
   }
-  const firstBtn = screen.queryByTestId("pagination-first");
+  const firstBtn = screen.queryByTestId('pagination-first');
   if (firstBtn) fireEvent.click(firstBtn);
   return found;
 }

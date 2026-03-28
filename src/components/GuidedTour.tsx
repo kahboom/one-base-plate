@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { Button } from "./ui";
-import AppModal from "./AppModal";
+import { useState, useEffect } from 'react';
+import { Button } from './ui';
+import AppModal from './AppModal';
 
-const TOUR_STORAGE_KEY = "onebase-tour-completed";
+const TOUR_STORAGE_KEY = 'onebase-tour-completed';
 
 export interface TourStep {
   title: string;
@@ -11,38 +11,38 @@ export interface TourStep {
 
 const TOUR_STEPS: TourStep[] = [
   {
-    title: "Home",
+    title: 'Home',
     description:
       "Your household hub. See tonight's top meal suggestions, your weekly plan at a glance, and jump into rescue mode when things get hectic.",
   },
   {
-    title: "Household Setup",
+    title: 'Household Setup',
     description:
-      "Add your family members, set their roles (adult, toddler, baby), and define food preferences, safe foods, and hard-no foods.",
+      'Add your family members, set their roles (adult, toddler, baby), and define food preferences, safe foods, and hard-no foods.',
   },
   {
-    title: "Weekly Planner",
+    title: 'Weekly Planner',
     description:
-      "Plan your week by assigning meals to days. Drag or tap to assign, and see effort balance and grocery previews update in real time.",
+      'Plan your week by assigning meals to days. Drag or tap to assign, and see effort balance and grocery previews update in real time.',
   },
   {
-    title: "Meal Cards",
+    title: 'Meal Cards',
     description:
-      "Each meal shows overlap scores, per-member compatibility chips, and prep estimates so you can pick the best fit at a glance.",
+      'Each meal shows overlap scores, per-member compatibility chips, and prep estimates so you can pick the best fit at a glance.',
   },
   {
-    title: "Grocery List",
+    title: 'Grocery List',
     description:
-      "One merged shopping list from your weekly plan, grouped by category. Mark items you already have and export or print when ready.",
+      'One merged shopping list from your weekly plan, grouped by category. Mark items you already have and export or print when ready.',
   },
 ];
 
 export function isTourCompleted(): boolean {
-  return localStorage.getItem(TOUR_STORAGE_KEY) === "true";
+  return localStorage.getItem(TOUR_STORAGE_KEY) === 'true';
 }
 
 export function markTourCompleted(): void {
-  localStorage.setItem(TOUR_STORAGE_KEY, "true");
+  localStorage.setItem(TOUR_STORAGE_KEY, 'true');
 }
 
 export function resetTour(): void {
@@ -109,12 +109,12 @@ export default function GuidedTour() {
           {TOUR_STEPS.map((_, i) => (
             <span
               key={i}
-              className={`block h-1.5 w-6 rounded-pill ${i === stepIndex ? "bg-brand" : "bg-border-default"}`}
+              className={`block h-1.5 w-6 rounded-pill ${i === stepIndex ? 'bg-brand' : 'bg-border-default'}`}
             />
           ))}
         </div>
         <Button variant="primary" onClick={handleNext} data-testid="tour-next">
-          {isLast ? "Get started" : "Next"}
+          {isLast ? 'Get started' : 'Next'}
         </Button>
       </div>
     </AppModal>

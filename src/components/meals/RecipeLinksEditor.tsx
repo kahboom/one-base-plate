@@ -1,6 +1,6 @@
-import { useState } from "react";
-import type { RecipeLink } from "../../types";
-import { Button, Input, Chip } from "../ui";
+import { useState } from 'react';
+import type { RecipeLink } from '../../types';
+import { Button, Input, Chip } from '../ui';
 
 export default function RecipeLinksEditor({
   links,
@@ -9,16 +9,16 @@ export default function RecipeLinksEditor({
   links: RecipeLink[];
   onChange: (links: RecipeLink[]) => void;
 }) {
-  const [newLabel, setNewLabel] = useState("");
-  const [newUrl, setNewUrl] = useState("");
+  const [newLabel, setNewLabel] = useState('');
+  const [newUrl, setNewUrl] = useState('');
 
   function addLink() {
     const trimmedUrl = newUrl.trim();
     const trimmedLabel = newLabel.trim() || trimmedUrl;
     if (!trimmedUrl) return;
     onChange([...links, { label: trimmedLabel, url: trimmedUrl }]);
-    setNewLabel("");
-    setNewUrl("");
+    setNewLabel('');
+    setNewUrl('');
   }
 
   function removeLink(index: number) {
@@ -33,11 +33,7 @@ export default function RecipeLinksEditor({
       {links.length > 0 && (
         <div className="mb-3 space-y-2">
           {links.map((link, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-2"
-              data-testid={`recipe-link-${i}`}
-            >
+            <div key={i} className="flex items-center gap-2" data-testid={`recipe-link-${i}`}>
               <a
                 href={link.url}
                 target="_blank"

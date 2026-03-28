@@ -1,19 +1,19 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import type { Household } from "../types";
-import { loadHousehold } from "../storage";
-import { PageHeader, Card, Chip, EmptyState, Section } from "../components/ui";
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import type { Household } from '../types';
+import { loadHousehold } from '../storage';
+import { PageHeader, Card, Chip, EmptyState, Section } from '../components/ui';
 
 const outcomeLabels: Record<string, string> = {
-  success: "Worked well",
-  partial: "Partly worked",
+  success: 'Worked well',
+  partial: 'Partly worked',
   failure: "Didn't work",
 };
 
-const outcomeChipVariant: Record<string, "success" | "warning" | "danger"> = {
-  success: "success",
-  partial: "warning",
-  failure: "danger",
+const outcomeChipVariant: Record<string, 'success' | 'warning' | 'danger'> = {
+  success: 'success',
+  partial: 'warning',
+  failure: 'danger',
 };
 
 export default function MealHistory() {
@@ -46,7 +46,9 @@ export default function MealHistory() {
       />
 
       {outcomes.length === 0 ? (
-        <EmptyState>No meal outcomes recorded yet. Record how meals went from the weekly planner.</EmptyState>
+        <EmptyState>
+          No meal outcomes recorded yet. Record how meals went from the weekly planner.
+        </EmptyState>
       ) : (
         <Section>
           <div className="space-y-3" data-testid="outcome-list">

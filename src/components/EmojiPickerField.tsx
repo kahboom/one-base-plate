@@ -1,23 +1,19 @@
-import { useEffect, useRef, useState } from "react";
-import EmojiPicker, {
-  EmojiClickData,
-  EmojiStyle,
-  Theme,
-} from "emoji-picker-react";
-import { Button } from "./ui";
+import { useEffect, useRef, useState } from 'react';
+import EmojiPicker, { EmojiClickData, EmojiStyle, Theme } from 'emoji-picker-react';
+import { Button } from './ui';
 
 type EmojiPickerFieldProps = {
   value: string;
   onChange: (next: string) => void;
   placeholder?: string;
-  "data-testid"?: string;
+  'data-testid'?: string;
 };
 
 export function EmojiPickerField({
   value,
   onChange,
-  placeholder = "Choose emoji",
-  "data-testid": dataTestId,
+  placeholder = 'Choose emoji',
+  'data-testid': dataTestId,
 }: EmojiPickerFieldProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -29,9 +25,8 @@ export function EmojiPickerField({
       }
     }
     if (open) {
-      document.addEventListener("pointerdown", handlePointerDown);
-      return () =>
-        document.removeEventListener("pointerdown", handlePointerDown);
+      document.addEventListener('pointerdown', handlePointerDown);
+      return () => document.removeEventListener('pointerdown', handlePointerDown);
     }
   }, [open]);
 
@@ -59,12 +54,7 @@ export function EmojiPickerField({
           )}
         </button>
         {value ? (
-          <Button
-            type="button"
-            small
-            variant="ghost"
-            onClick={() => onChange("")}
-          >
+          <Button type="button" small variant="ghost" onClick={() => onChange('')}>
             Clear
           </Button>
         ) : null}

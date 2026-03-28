@@ -8,15 +8,15 @@
     <script>
       (function () {
         try {
-          var k = "onebaseplate-theme";
+          var k = 'onebaseplate-theme';
           var v = localStorage.getItem(k);
-          if (v !== "light" && v !== "dark" && v !== "system") v = "system";
+          if (v !== 'light' && v !== 'dark' && v !== 'system') v = 'system';
           document.documentElement.dataset.theme = v;
           document.documentElement.style.colorScheme =
-            v === "light" ? "light" : v === "dark" ? "dark" : "light dark";
+            v === 'light' ? 'light' : v === 'dark' ? 'dark' : 'light dark';
         } catch (e) {
-          document.documentElement.dataset.theme = "system";
-          document.documentElement.style.colorScheme = "light dark";
+          document.documentElement.dataset.theme = 'system';
+          document.documentElement.style.colorScheme = 'light dark';
         }
       })();
     </script>

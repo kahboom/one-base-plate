@@ -1,37 +1,35 @@
-import type { Recipe } from "../types";
+import type { Recipe } from '../types';
 
 /** Curated recipe tags for quick-pick UI; unknown tags in stored data are preserved but not listed here. */
 export const CURATED_RECIPE_TAGS: readonly { value: string; label: string }[] = [
-  { value: "quick", label: "Quick" },
-  { value: "batch-prep", label: "Batch prep" },
-  { value: "freezer-friendly", label: "Freezer friendly" },
-  { value: "rescue", label: "Rescue" },
-  { value: "side", label: "Side" },
-  { value: "salad", label: "Salad" },
-  { value: "snack", label: "Snack" },
-  { value: "bread", label: "Bread" },
-  { value: "seafood", label: "Seafood" },
-  { value: "soup", label: "Soup" },
-  { value: "sauce", label: "Sauce" },
-  { value: "kid-friendly", label: "Kid friendly" },
-  { value: "prep-ahead", label: "Prep ahead" },
+  { value: 'quick', label: 'Quick' },
+  { value: 'batch-prep', label: 'Batch prep' },
+  { value: 'freezer-friendly', label: 'Freezer friendly' },
+  { value: 'rescue', label: 'Rescue' },
+  { value: 'side', label: 'Side' },
+  { value: 'salad', label: 'Salad' },
+  { value: 'snack', label: 'Snack' },
+  { value: 'bread', label: 'Bread' },
+  { value: 'seafood', label: 'Seafood' },
+  { value: 'soup', label: 'Soup' },
+  { value: 'sauce', label: 'Sauce' },
+  { value: 'kid-friendly', label: 'Kid friendly' },
+  { value: 'prep-ahead', label: 'Prep ahead' },
 ] as const;
 
 const CURATED_SET = new Set(CURATED_RECIPE_TAGS.map((t) => t.value));
 
-const LABEL_BY_VALUE = new Map(
-  CURATED_RECIPE_TAGS.map((t) => [t.value, t.label] as const),
-);
+const LABEL_BY_VALUE = new Map(CURATED_RECIPE_TAGS.map((t) => [t.value, t.label] as const));
 
 /** Stored tag values no longer in {@link CURATED_RECIPE_TAGS}; still show a readable chip label. */
 const DEPRECATED_TAG_LABELS: Record<string, string> = {
-  "whole-meal": "Whole meal",
+  'whole-meal': 'Whole meal',
 };
 
 /** Legacy / seed aliases that should behave like curated tags for filtering and display. */
 const LEGACY_TAG_ALIASES: Record<string, string> = {
-  "batch-friendly": "batch-prep",
-  "rescue-friendly": "rescue",
+  'batch-friendly': 'batch-prep',
+  'rescue-friendly': 'rescue',
 };
 
 export function normalizeRecipeTagForCurated(tag: string): string {
@@ -85,10 +83,10 @@ export interface TagBoostContext {
 export function tagContextScore(recipe: Recipe, context: TagBoostContext): number {
   const role = context.componentRole?.toLowerCase();
   if (!role) return 0;
-  if ((role === "sauce" || role === "condiment") && recipeHasTag(recipe, "sauce")) return 28;
+  if ((role === 'sauce' || role === 'condiment') && recipeHasTag(recipe, 'sauce')) return 28;
   if (
-    (role === "carb" || role === "starch" || role === "protein") &&
-    recipeHasTag(recipe, "batch-prep")
+    (role === 'carb' || role === 'starch' || role === 'protein') &&
+    recipeHasTag(recipe, 'batch-prep')
   )
     return 12;
   return 0;
@@ -103,27 +101,27 @@ export function computeTagBoost(recipe: Recipe, context: TagBoostContext = {}): 
   const role = context.componentRole?.toLowerCase();
 
   if (context.rescueMode) {
-    if (recipeHasTag(recipe, "rescue")) boost += PER_MATCH;
-    if (recipeHasTag(recipe, "quick")) boost += PER_MATCH * 0.75;
+    if (recipeHasTag(recipe, 'rescue')) boost += PER_MATCH;
+    if (recipeHasTag(recipe, 'quick')) boost += PER_MATCH * 0.75;
   }
 
-  if (role === "sauce" || role === "condiment") {
-    if (recipeHasTag(recipe, "sauce")) boost += PER_MATCH;
+  if (role === 'sauce' || role === 'condiment') {
+    if (recipeHasTag(recipe, 'sauce')) boost += PER_MATCH;
   }
 
-  if (role === "side" || role === "veg") {
-    if (recipeHasTag(recipe, "side")) boost += PER_MATCH;
+  if (role === 'side' || role === 'veg') {
+    if (recipeHasTag(recipe, 'side')) boost += PER_MATCH;
   }
 
-  if (recipeHasTag(recipe, "batch-prep") || recipeHasTag(recipe, "prep-ahead")) {
+  if (recipeHasTag(recipe, 'batch-prep') || recipeHasTag(recipe, 'prep-ahead')) {
     boost += PER_MATCH * 0.5;
   }
 
-  if (recipeHasTag(recipe, "kid-friendly")) {
+  if (recipeHasTag(recipe, 'kid-friendly')) {
     boost += PER_MATCH * 0.25;
   }
 
-  if (recipeHasTag(recipe, "freezer-friendly")) {
+  if (recipeHasTag(recipe, 'freezer-friendly')) {
     boost += PER_MATCH * 0.25;
   }
 
@@ -154,5 +152,5 @@ export function compareRecipesForSuggestion(
   const sa = score(a);
   const sb = score(b);
   if (sa !== sb) return sb - sa;
-  return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+  return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
 }

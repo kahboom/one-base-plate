@@ -13,6 +13,7 @@ Reduce grocery stress, separate cooking events, takeaway reliance, and food wast
 ```
 
 This script will:
+
 1. Install dependencies (`npm install`)
 2. Run type check (`npx tsc --noEmit`)
 3. Run tests (`npm test`)
@@ -36,23 +37,23 @@ On the **household home** screen, **Top suggestions** lists up to **three** meal
 
 ### Base meal theme tags
 
-On **Base Meals**, each meal’s edit modal includes optional **theme tags** under *Planning metadata*. Tags are stored lowercase and are used as a **soft tie-break** when a day has a **weekly theme anchor** whose *match tags* overlap (configure anchors under **Household → Weekly theme nights**). They are separate from recipe library tags.
+On **Base Meals**, each meal’s edit modal includes optional **theme tags** under _Planning metadata_. Tags are stored lowercase and are used as a **soft tie-break** when a day has a **weekly theme anchor** whose _match tags_ overlap (configure anchors under **Household → Weekly theme nights**). They are separate from recipe library tags.
 
 ---
 
 ## Manual Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm install` | Install dependencies |
-| `npm run dev` | Start Vite dev server |
-| `npm run build` | TypeScript build + Vite production build |
-| `npm run preview` | Preview production build |
-| `npm test` | Run Vitest tests (single run) |
-| `npm run test:watch` | Run Vitest in watch mode |
-| `npm run typecheck` | TypeScript type check only |
-| `npm run lint` | Run ESLint |
-| `npm run db:seed` | Regenerate `src/seed-data.json` from fixture households |
+| Command                                         | Description                                                   |
+| ----------------------------------------------- | ------------------------------------------------------------- |
+| `npm install`                                   | Install dependencies                                          |
+| `npm run dev`                                   | Start Vite dev server                                         |
+| `npm run build`                                 | TypeScript build + Vite production build                      |
+| `npm run preview`                               | Preview production build                                      |
+| `npm test`                                      | Run Vitest tests (single run)                                 |
+| `npm run test:watch`                            | Run Vitest in watch mode                                      |
+| `npm run typecheck`                             | TypeScript type check only                                    |
+| `npm run lint`                                  | Run ESLint                                                    |
+| `npm run db:seed`                               | Regenerate `src/seed-data.json` from fixture households       |
 | `npm run db:migrate-ingredients -- --in <file>` | Normalize + dedupe ingredient data in exported household JSON |
 
 ---

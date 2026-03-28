@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type RefObject,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 
 export const DEFAULT_INCREMENTAL_PAGE_SIZE = 48;
 
@@ -39,9 +32,7 @@ export function useIncrementalList<T>(
 
   const depsStr = JSON.stringify(resetDeps);
 
-  const [visibleCount, setVisibleCount] = useState(() =>
-    Math.min(pageSize, items.length),
-  );
+  const [visibleCount, setVisibleCount] = useState(() => Math.min(pageSize, items.length));
 
   /** Reset to first page when filters/sort/search (resetDeps) or page size changes — not when list grows from add/save. */
   useEffect(() => {
@@ -65,10 +56,7 @@ export function useIncrementalList<T>(
     });
   }, [pageSize, items.length]);
 
-  const visibleItems = useMemo(
-    () => items.slice(0, visibleCount),
-    [items, visibleCount],
-  );
+  const visibleItems = useMemo(() => items.slice(0, visibleCount), [items, visibleCount]);
   const hasMore = visibleCount < items.length;
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -85,7 +73,7 @@ export function useIncrementalList<T>(
         const hit = entries.some((e) => e.isIntersecting);
         if (hit) loadMoreRef.current();
       },
-      { root, rootMargin: "80px", threshold: 0 },
+      { root, rootMargin: '80px', threshold: 0 },
     );
     obs.observe(sentinel);
     return () => obs.disconnect();

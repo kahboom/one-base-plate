@@ -1,12 +1,8 @@
-import type { Household } from "../types";
+import type { Household } from '../types';
 
-export type SyncStatus = "idle" | "syncing" | "error" | "offline";
+export type SyncStatus = 'idle' | 'syncing' | 'error' | 'offline';
 
-export type SyncErrorKind =
-  | "auth_expired"
-  | "remote_unavailable"
-  | "schema_missing"
-  | "unknown";
+export type SyncErrorKind = 'auth_expired' | 'remote_unavailable' | 'schema_missing' | 'unknown';
 
 export interface SyncState {
   status: SyncStatus;
@@ -25,7 +21,7 @@ export interface RemoteHousehold {
   version: number;
 }
 
-export type ConflictChoice = "keep-local" | "keep-remote" | "merge";
+export type ConflictChoice = 'keep-local' | 'keep-remote' | 'merge';
 
 export interface FirstLoginContext {
   localHouseholds: Household[];
@@ -45,7 +41,7 @@ export interface HouseholdMember {
   userId: string;
   email: string | null;
   displayName: string | null;
-  role: "owner" | "editor";
+  role: 'owner' | 'editor';
   joinedAt: string;
 }
 

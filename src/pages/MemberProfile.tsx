@@ -1,9 +1,21 @@
-import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import type { HouseholdMember, Ingredient, PreparationRule } from "../types";
-import { loadHousehold, normalizeIngredientName, saveHousehold } from "../storage";
-import { PageHeader, Card, Button, Input, Section, FormRow, Chip, ConfirmDialog, useConfirm } from "../components/ui";
-import IngredientCombobox, { type IngredientComboboxHandle } from "../components/IngredientCombobox";
+import { useEffect, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import type { HouseholdMember, Ingredient, PreparationRule } from '../types';
+import { loadHousehold, normalizeIngredientName, saveHousehold } from '../storage';
+import {
+  PageHeader,
+  Card,
+  Button,
+  Input,
+  Section,
+  FormRow,
+  Chip,
+  ConfirmDialog,
+  useConfirm,
+} from '../components/ui';
+import IngredientCombobox, {
+  type IngredientComboboxHandle,
+} from '../components/IngredientCombobox';
 
 function norm(s: string): string {
   return normalizeIngredientName(s);
@@ -16,13 +28,13 @@ export default function MemberProfile() {
   }>();
   const [member, setMember] = useState<HouseholdMember | null>(null);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [householdName, setHouseholdName] = useState("");
+  const [householdName, setHouseholdName] = useState('');
   const [loaded, setLoaded] = useState(false);
 
-  const [safeFoodInput, setSafeFoodInput] = useState("");
-  const [hardNoInput, setHardNoInput] = useState("");
-  const [ruleIngredient, setRuleIngredient] = useState("");
-  const [ruleText, setRuleText] = useState("");
+  const [safeFoodInput, setSafeFoodInput] = useState('');
+  const [hardNoInput, setHardNoInput] = useState('');
+  const [ruleIngredient, setRuleIngredient] = useState('');
+  const [ruleText, setRuleText] = useState('');
 
   const safeCombRef = useRef<IngredientComboboxHandle>(null);
   const hardCombRef = useRef<IngredientComboboxHandle>(null);
@@ -57,7 +69,7 @@ export default function MemberProfile() {
     const n = norm(trimmed);
     if (member.safeFoods.some((f) => norm(f) === n)) return;
     setMember({ ...member, safeFoods: [...member.safeFoods, trimmed] });
-    setSafeFoodInput("");
+    setSafeFoodInput('');
   }
 
   function commitSafeFromIngredient(ing: Ingredient) {
@@ -65,7 +77,7 @@ export default function MemberProfile() {
     const n = norm(ing.name);
     if (member.safeFoods.some((f) => norm(f) === n)) return;
     setMember({ ...member, safeFoods: [...member.safeFoods, ing.name] });
-    setSafeFoodInput("");
+    setSafeFoodInput('');
   }
 
   function commitSafeCreate(ing: Ingredient) {
@@ -74,7 +86,7 @@ export default function MemberProfile() {
     if (member.safeFoods.some((f) => norm(f) === n)) return;
     setIngredients((prev) => [...prev, ing]);
     setMember({ ...member, safeFoods: [...member.safeFoods, ing.name] });
-    setSafeFoodInput("");
+    setSafeFoodInput('');
   }
 
   function removeSafeFood(food: string) {
@@ -90,7 +102,7 @@ export default function MemberProfile() {
     const n = norm(trimmed);
     if (member.hardNoFoods.some((f) => norm(f) === n)) return;
     setMember({ ...member, hardNoFoods: [...member.hardNoFoods, trimmed] });
-    setHardNoInput("");
+    setHardNoInput('');
   }
 
   function commitHardFromIngredient(ing: Ingredient) {
@@ -98,7 +110,7 @@ export default function MemberProfile() {
     const n = norm(ing.name);
     if (member.hardNoFoods.some((f) => norm(f) === n)) return;
     setMember({ ...member, hardNoFoods: [...member.hardNoFoods, ing.name] });
-    setHardNoInput("");
+    setHardNoInput('');
   }
 
   function commitHardCreate(ing: Ingredient) {
@@ -107,7 +119,7 @@ export default function MemberProfile() {
     if (member.hardNoFoods.some((f) => norm(f) === n)) return;
     setIngredients((prev) => [...prev, ing]);
     setMember({ ...member, hardNoFoods: [...member.hardNoFoods, ing.name] });
-    setHardNoInput("");
+    setHardNoInput('');
   }
 
   function removeHardNo(food: string) {
@@ -140,8 +152,8 @@ export default function MemberProfile() {
       ...member,
       preparationRules: [...member.preparationRules, newRule],
     });
-    setRuleIngredient("");
-    setRuleText("");
+    setRuleIngredient('');
+    setRuleText('');
   }
 
   function removePreparationRule(index: number) {
@@ -288,7 +300,7 @@ export default function MemberProfile() {
               onChange={(e) => setRuleText(e.target.value)}
               placeholder="Preparation rule"
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (e.key === 'Enter') {
                   e.preventDefault();
                   addPreparationRule();
                 }
@@ -301,7 +313,7 @@ export default function MemberProfile() {
       <ConfirmDialog
         open={!!pending}
         title="Remove food"
-        message={`Are you sure you want to remove "${pending?.entityName ?? ""}" from this profile?`}
+        message={`Are you sure you want to remove "${pending?.entityName ?? ''}" from this profile?`}
         confirmLabel="Remove"
         onConfirm={confirm}
         onCancel={cancel}

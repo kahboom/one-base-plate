@@ -1,6 +1,7 @@
 # OneBasePlate Agent Progress
 
 ## Conventions
+
 - Work on one feature at a time per the PRD implementation order
 - Run tests before marking any feature as passing
 - Commit after each completed feature
@@ -8,6 +9,7 @@
 ## Completed Features
 
 ### F001 - Repository scaffold (2026-03-12)
+
 - Created Vite + React + TypeScript project scaffold (package.json, tsconfig, vite.config, eslint.config)
 - Defined TypeScript types in src/types.ts matching all PRD data model entities
 - Created 3 household fixture files (H001, H002, H003) covering all persona types
@@ -18,6 +20,7 @@
 - Verified: tsc --noEmit passes, vitest passes, vite build succeeds
 
 ### F002 - Household setup with multiple members (2026-03-12)
+
 - Created localStorage storage layer (src/storage.ts) with CRUD operations for households
 - Created HouseholdList page showing saved households with create/delete actions
 - Created HouseholdSetup page with member management (add/remove members, set name/role/texture)
@@ -27,6 +30,7 @@
 - Verified: tsc --noEmit passes, vitest passes (15 tests), vite build succeeds
 
 ### F003 - Member profile constraints (2026-03-12)
+
 - Created MemberProfile page (src/pages/MemberProfile.tsx) for editing safe foods, hard-no foods, and preparation rules
 - Safe foods and hard-no foods: add/remove list with text input
 - Preparation rules: ingredient + rule pairs with add/remove
@@ -36,6 +40,7 @@
 - Verified: tsc --noEmit passes, vitest passes (22 tests), all F003 steps satisfied
 
 ### F004 - Household ingredients (2026-03-12)
+
 - Created IngredientManager page (src/pages/IngredientManager.tsx) for adding/removing ingredients
 - Supports all 8 category types (protein, carb, veg, fruit, dairy, snack, freezer, pantry)
 - Common tag quick-add buttons (quick, mashable, rescue, staple, batch-friendly) plus custom tags
@@ -46,6 +51,7 @@
 - Verified: tsc --noEmit passes, vitest passes (27 tests), all F004 steps satisfied
 
 ### F005 - Base meal creation (2026-03-12)
+
 - Created BaseMealManager page (src/pages/BaseMealManager.tsx) for creating/editing base meals
 - Meals built from household ingredients as components with role (protein/carb/veg/sauce/topping) and quantity
 - Supports time estimate, difficulty level, rescue eligibility, and default prep method
@@ -55,6 +61,7 @@
 - Verified: tsc --noEmit passes, vitest passes (32 tests), all F005 steps satisfied
 
 ### F006 - Planner generates per-person assembly variants (2026-03-12)
+
 - Created assembly variant engine (src/planner.ts) with deterministic per-member variant generation
 - Engine handles: hard-no food exclusion, preparation rule instructions, texture-level adaptations (soft/mashable/pureed), safe food detection, and fallback suggestions for toddlers/babies
 - Created Planner page (src/pages/Planner.tsx) with meal selection dropdown showing shared base and per-person assembly sections
@@ -65,6 +72,7 @@
 - Verified: tsc --noEmit passes, vitest passes (44 tests), all F006 steps satisfied
 
 ### F007 - Baby texture-safe adaptations (2026-03-13)
+
 - Enhanced assembly engine to exclude obviously unsafe ingredients for babies (babySafeWithAdaptation=false) instead of just warning
 - Added role-specific texture transformation guidance: protein→shred/blend, carb→cook very soft/finger-safe pieces, veg→steam very soft/mash/finger-safe strips, sauce→ensure smooth, topping→omit or blend
 - Baby-unsafe ingredients shown as "Not suitable for baby — skip: X" while adaptable components get specific texture instructions
@@ -75,6 +83,7 @@
 - Verified: tsc --noEmit passes, vitest passes (52 tests), all F007 steps satisfied
 
 ### F008 - Toddler plate safe food guarantee (2026-03-13)
+
 - Enhanced assembly engine to explicitly name which safe foods are included for toddlers/babies ("Includes safe food: pasta, cheese")
 - When no safe food matches, provides explicit fallback: "No safe food in this meal — add on the side: pasta, bread, cheese"
 - Toddler compatibility is never silently omitted — every toddler/baby variant has an explicit safe food status instruction
@@ -84,6 +93,7 @@
 - Verified: tsc --noEmit passes, vitest passes (60 tests), all F008 steps satisfied
 
 ### F019 - Quick member edit from planner (2026-03-13)
+
 - Added "Quick edit {name}" links to each member variant in the Planner page
 - MemberProfile now supports `?returnTo=` query param to navigate back to the planner (or any page) after saving/cancelling
 - Without returnTo, MemberProfile defaults to household setup (preserving existing behavior)
@@ -93,6 +103,7 @@
 - Verified: tsc --noEmit passes, vitest passes (66 tests), all F019 steps satisfied
 
 ### F009 - Overlap score for ingredients and meals (2026-03-13)
+
 - Added `computeIngredientOverlap` and `computeMealOverlap` functions to planner engine
 - Per-member compatibility tracked as "direct", "with-adaptation", or "conflict" with specific conflict reasons
 - Hard-no foods and baby-unsafe ingredients produce conflicts; texture/prep rules produce adaptations
@@ -103,6 +114,7 @@
 - Verified: tsc --noEmit passes, vitest passes (76 tests), all F009 steps satisfied
 
 ### F018 - Meal explanation with trade-offs (2026-03-13)
+
 - Added `generateMealExplanation` function producing a brief summary and trade-off list
 - Summary states household fit: "Works for everyone", "Works for X/Y members — Z has conflicts", etc.
 - Trade-offs surface: specific member conflicts with reasons, extra prep needed for adaptations, toddler/baby missing safe food warnings
@@ -112,6 +124,7 @@
 - Verified: tsc --noEmit passes, vitest passes (86 tests), all F018 steps satisfied
 
 ### F010 - Weekly plan generation (2026-03-13)
+
 - Added `generateWeeklyPlan` function to planner engine with overlap-ranked meal selection and ingredient reuse bonus
 - Algorithm avoids consecutive-day meal repeats, favors shared ingredients across the week
 - Created WeeklyPlanner page (src/pages/WeeklyPlanner.tsx) with day card layout (visual mini-calendar, not table)
@@ -124,6 +137,7 @@
 - Verified: tsc --noEmit passes, vitest passes (100 tests), all F010 steps satisfied
 
 ### F021 - Weekly mini-calendar layout (2026-03-13)
+
 - Enhanced WeeklyPlanner to always show 7 (or 5) day cards before and after plan generation
 - Empty day cards display suggested meals (ranked by overlap) with italic styling and dashed borders
 - Added "Clear" button per day to remove a meal and show suggestion again
@@ -137,6 +151,7 @@
 - Verified: tsc --noEmit passes, vitest passes (111 tests), all F021 steps satisfied
 
 ### F023 - Meal cards with compatibility indicators (2026-03-13)
+
 - Created reusable MealCard component (src/components/MealCard.tsx) with card-based layout
 - Displays: meal name, prep time, effort level (difficulty), overlap score (X/Y)
 - Per-member compatibility chips with color-coded backgrounds (green=direct, yellow=adaptation, red=conflict)
@@ -150,6 +165,7 @@
 - Verified: tsc --noEmit passes, vitest passes (123 tests), all F023 steps satisfied
 
 ### F024 - Visual overlap indicators and trade-offs in planner (2026-03-13)
+
 - Replaced dropdown meal selector in Planner with MealCard grid — meals shown as visual cards ranked by overlap
 - Clicking a card selects it (blue outline) and shows detailed plan below
 - Overlap indicators rendered as color-coded chips (green=compatible, yellow=adaptation, red=conflict) with conflict details on hover
@@ -160,6 +176,7 @@
 - Verified: tsc --noEmit passes, vitest passes (130 tests), all F024 steps satisfied
 
 ### F032 - Shared styling foundation with Tailwind CSS (2026-03-13)
+
 - Installed Tailwind CSS v4 with `@tailwindcss/vite` plugin for zero-config Vite integration
 - Configured custom theme in `src/app.css` using `@theme` directive with design tokens matching uiSpec designSystemDirection (colors, radii, shadows)
 - Created shared UI primitives in `src/components/ui.tsx`: PageShell, Card, CardGrid, Button (4 variants), Input, Select, Chip (5 variants), EmptyState, Section, NavBar, FormRow, ActionGroup
@@ -170,6 +187,7 @@
 - Verified: tsc --noEmit passes, vitest passes (130 tests), vite build succeeds
 
 ### F025 - Core screens apply styling foundation for hierarchy, contrast, and fast scanning (2026-03-13)
+
 - Audited all 8 user-facing pages (HouseholdList, HouseholdSetup, MemberProfile, IngredientManager, BaseMealManager, Planner, WeeklyPlanner, Home)
 - Replaced manual h1/p heading combos with `PageHeader` component across all pages for consistent title + subtitle hierarchy (text-3xl bold with tracking-tight)
 - Replaced inline flex `label` patterns with stacked `FieldLabel` components on HouseholdSetup (member forms), IngredientManager (name, category), BaseMealManager (meal fields, component fields) for better scanning
@@ -182,6 +200,7 @@
 - Verified: tsc --noEmit passes, vitest passes (145 tests), vite build succeeds
 
 ### F033 - Core screens are mobile-friendly with touch-first responsive layouts (2026-03-13)
+
 - Reviewed all styled screens and shared primitives for mobile width issues
 - **ui.tsx touch targets**: Bumped Button min-h from 40px→44px, small buttons from 32px→36px with wider padding (px-3 py-1.5). Input/Select min-h bumped to 44px for finger-friendly tapping
 - **ui.tsx responsive PageHeader**: Title uses `text-2xl sm:text-3xl` for smaller mobile headings
@@ -207,6 +226,7 @@ Audited all completed UI features against uiSpec screen acceptance criteria. PRD
 #### Screen Audit Results
 
 **S001 (Home) — mapped features: F010✅ F012❌ F021✅ F032✅ F025✅ F033✅**
+
 - ✅ Headline "What should we eat tonight?"
 - ✅ Top 3 high-confidence meal cards with short reason
 - ✅ Mini weekly strip (horizontal scroll, touch-friendly)
@@ -216,6 +236,7 @@ Audited all completed UI features against uiSpec screen acceptance criteria. PRD
 - ⏳ Recent wins or pinned meals row — blocked on F013/F014
 
 **S002 (Meal Cards) — mapped features: F006✅ F009✅ F018✅ F023✅ F024✅ F025✅ F032✅ F033✅**
+
 - ✅ Meal title, prep time, effort level, overlap score
 - ✅ Compatibility chips (adult/toddler/baby, color-coded)
 - ✅ Short reason text
@@ -226,6 +247,7 @@ Audited all completed UI features against uiSpec screen acceptance criteria. PRD
 - ⏳ Drag-to-assign — blocked on F022
 
 **S003 (Weekly Planner) — mapped features: F010✅ F021✅ F022❌ F026❌ F027❌ F032✅ F025✅ F033✅**
+
 - ✅ Seven day cards in responsive grid
 - ✅ Assigned meal or empty state per day with suggestions
 - ✅ Suggested meal tray below the week
@@ -237,6 +259,7 @@ Audited all completed UI features against uiSpec screen acceptance criteria. PRD
 - ⏳ Grocery preview summary — blocked on F022/F011
 
 **S006 (Household Setup) — mapped features: F002✅ F003✅ F019✅ F032✅ F025✅ F033✅**
+
 - ✅ Member cards with card-based layout
 - ✅ Safe foods, hard-no foods, preparation rules inputs (via MemberProfile)
 - ✅ Role selector, texture level selector
@@ -246,6 +269,7 @@ Audited all completed UI features against uiSpec screen acceptance criteria. PRD
 - ✅ Avoids giant forms (card-based, stacked on mobile)
 
 **S007 (Base Meal Editor) — mapped features: F005✅ F028❌ F029❌ F032✅ F025✅ F033✅**
+
 - ✅ Meal name, effort level selector, rescue eligible toggle
 - ✅ Protein/carb/veg/sauce/topping component roles
 - ✅ Multi-protein meal in one editor flow
@@ -258,9 +282,11 @@ Audited all completed UI features against uiSpec screen acceptance criteria. PRD
 **S004 (Meal Detail), S005 (Rescue Mode), S008 (Grocery List) — not yet started, blocked on unimplemented features**
 
 #### Summary
+
 All completed features satisfy their referenced screen acceptance criteria for the currently implemented scope. Remaining gaps are exclusively blocked on features not yet in the implementation queue (F012, F014, F022, F026, F027, F028, F029, F011, F020). No visual gaps or regressions from the styling/mobile refactor.
 
 ### F028 - Planner supports multi-protein base meals under one shared meal structure (2026-03-13)
+
 - Added `alternativeIngredientIds?: string[]` to `MealComponent` type for multi-protein support
 - Added `getAllIngredientIds` and `pickBestIngredient` helpers to planner engine
 - `pickBestIngredient` scores each protein option per member: compatibility (direct/adaptation/conflict) + safe food bonus
@@ -275,6 +301,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (168 tests), all F028 steps satisfied
 
 ### F029 - Base meals can store recipe links and preparation notes (2026-03-13)
+
 - Added `RecipeLink` interface (`{ label: string; url: string }`) and optional `recipeLinks`/`notes` fields to `BaseMeal` type
 - Fields are optional to support existing saved data without migration (UI handles `undefined` with `??` defaults)
 - Created `RecipeLinksEditor` component in BaseMealManager with add/remove UI for multiple recipe links
@@ -289,6 +316,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (179 tests), vite build succeeds
 
 ### F022 - User can drag meal cards into the weekly plan calendar (2026-03-13)
+
 - Added HTML5 drag-and-drop to MealCard: `draggable` prop, `onDragStart` handler setting `application/meal-id` data
 - Added `selected` prop to MealCard for visual highlight during tap-to-assign flow (brand border + ring)
 - Updated WeeklyPlanner DayCard with drop zone handlers (`onDragOver`, `onDragLeave`, `onDrop`) and visual feedback
@@ -303,6 +331,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (192 tests), vite build succeeds
 
 ### F026 - Weekly planner displays preparation effort balance across the week (2026-03-13)
+
 - Added `computeWeekEffortBalance` function to planner engine returning effort counts (easy/medium/hard), total prep minutes, and high-effort day names
 - Added week-level effort balance summary bar to WeeklyPlanner showing total prep time, color-coded effort count chips (green=easy, yellow=medium, red=hard), and high-effort day warnings
 - Updated DayCard component to display per-day effort label chip ("Low effort", "Medium effort", "Higher effort") and prep time in minutes
@@ -312,6 +341,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (204 tests), all F026 steps satisfied
 
 ### F027 - Planner provides satisfying visual feedback when meals are added to the week (2026-03-13)
+
 - Added CSS `@keyframes meal-assigned` animation in app.css with scale-in, hold, and fade-out phases (800ms ease-out)
 - Added "Meal added" confirmation overlay to DayCard that appears on both drag-and-drop and tap-to-assign, with animated pill badge over a translucent brand-colored backdrop
 - Confirmation automatically disappears after 800ms; existing justAssigned scale/border highlight reverts after 600ms for layered feedback
@@ -322,6 +352,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (217 tests), all F027 steps satisfied
 
 ### F011 - App produces one merged grocery list from the weekly plan (2026-03-13)
+
 - Added `generateGroceryList` function to planner engine producing `GroceryListItem[]` with consolidated quantities, category grouping, and per-item meal linkback (`usedInMeals`)
 - Ingredients sorted by category order (protein → carb → veg → fruit → dairy → snack → freezer → pantry), then alphabetically within each category
 - Repeated ingredients across multiple days/meals merged into single entries with `×N` quantity labels
@@ -335,6 +366,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (233 tests), all F011 steps satisfied
 
 ### F012 - Rescue mode generates the fastest acceptable meal using household staples first (2026-03-13)
+
 - Added `generateRescueMeals` function to planner engine with scenario-aware scoring algorithm
 - Three rescue scenarios: low-energy (easiest first), low-time (fastest first), everyone-melting-down (safe food coverage first)
 - Algorithm filters rescue-eligible meals first, falls back to all meals if none are rescue-eligible
@@ -355,6 +387,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (256 tests), all F012 steps satisfied
 
 ### F017 - All critical planning flows covered by deterministic fixtures and e2e tests (2026-03-13)
+
 - Enriched H001 fixture (`fixtures/households/H001-conflicting-baseline.json`) with 12 ingredients and 3 base meals (pasta-chicken-broccoli, salmon-rice-peas, fish-fingers-beans-bread) to support full planning flows
 - Ingredients span protein, carb, veg, dairy, freezer, and pantry categories with appropriate tags and baby-safe flags
 - Meals include rescue-eligible and non-rescue entries with different difficulty levels
@@ -368,6 +401,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (284 tests)
 
 ### F016 - App loads quickly and supports same-session editing without noticeable lag (2026-03-13)
+
 - Added `useMemo` to expensive inline computations across three key pages to prevent unnecessary recalculation on re-renders:
   - **Planner.tsx**: Memoized `mealOverlaps` map, `rankedMeals` sorted list, and `selectedExplanation` computation; moved hooks before early returns to satisfy Rules of Hooks
   - **Home.tsx**: Memoized `topMeals` overlap computation and ranking; moved hook before early returns
@@ -381,6 +415,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (308 tests), vite build succeeds
 
 ### F013 - User can pin household-approved meals into a rotation (2026-03-13)
+
 - Added optional `pinnedMealIds` field to `Household` type (backwards-compatible with existing saved data via `?? []`)
 - Updated `generateWeeklyPlan` to accept optional `pinnedMealIds` parameter — pinned meals receive a +2 scoring bonus during plan generation
 - Added pin/unpin button to `MealCard` component with `onPin` and `pinned` props, showing "Pinned" chip in state chips
@@ -394,6 +429,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (326 tests), all F013 steps satisfied
 
 ### F014 - User can mark meals as success, partial success, or failure and capture quick notes (2026-03-13)
+
 - Added `MealOutcome` type with `MealOutcomeResult` union (`success | partial | failure`) and optional `mealOutcomes` array on `Household`
 - Added outcome recording UI to WeeklyPlanner DayCard expanded view: "Record outcome" button opens inline form with three outcome buttons (Worked well, Partly worked, Didn't work), optional notes input, save/cancel
 - Existing outcomes display as a chip with notes inline on the day card, replacing the record button
@@ -405,6 +441,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes (pre-existing unused import in f013), vitest passes (340 tests), vite build succeeds
 
 ### F015 - Planner learns from meal outcomes to rank reliable meals higher (2026-03-13)
+
 - Added `computeOutcomeScore` function to planner engine scoring meals based on outcome history: +2 per success, +0.5 per partial, -3 per failure
 - Human-readable labels: "household favorite" (3+ successes), "reliable choice" (successes, no failures), "mixed results", "often doesn't work", "repeated failures"
 - Updated `generateWeeklyPlan` to accept optional `outcomes` parameter — outcome scores are added to per-meal scoring alongside overlap, reuse, pinned, and repeat-penalty factors
@@ -419,6 +456,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (361 tests), all F015 steps satisfied
 
 ### F030 - Planner learns household compatibility patterns from outcomes and quick edits (2026-03-13)
+
 - Added `learnCompatibilityPatterns` function to planner engine that analyzes outcome history to extract:
   - **Ingredient-level scores**: Each ingredient gets +1 per success, -1 per failure, +0.25 per partial across all meals using it
   - **Prep rule success patterns**: Detects when meals with prep rules (e.g. "sauce separate") consistently succeed (≥70% rate with ≥2 samples) and applies a +1.5 boost
@@ -436,6 +474,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (388 tests), all F030 steps satisfied
 
 ### F020 - User can export or print the weekly plan and grocery list (2026-03-13)
+
 - Added `formatPlanForExport` function to planner engine generating structured plain-text output with:
   - Household name header with separator
   - Per-day meal entries with base meal name, prep time, and difficulty
@@ -453,6 +492,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (406 tests), all F020 steps satisfied
 
 ### F034 - Guided tour or interactive walkthrough explains how the app works end-to-end (2026-03-13)
+
 - Created `GuidedTour` component (`src/components/GuidedTour.tsx`) with 5-step modal walkthrough
 - Steps cover: Home, Household Setup, Weekly Planner, Meal Cards, and Grocery List flows
 - Each step has a short, scannable description with title
@@ -469,6 +509,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (425 tests, 1 pre-existing f033 failure unrelated to F034), all F034 steps satisfied
 
 ### F035 - Warning confirmation before deleting a household or other entities (2026-03-13)
+
 - Created `ConfirmDialog` component in `src/components/ui.tsx` with accessible modal overlay (`role="dialog"`, `aria-label`)
 - Created `useConfirm` hook for managing pending confirmation state with `requestConfirm`, `confirm`, and `cancel` callbacks
 - Dialog surfaces entity name in the warning message ("Are you sure you want to delete/remove X?") and states the action cannot be undone
@@ -484,6 +525,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (441 tests, 1 pre-existing f033 failure unrelated to F035), all F035 steps satisfied
 
 ### F036 - Consistent navigation and household hub wayfinding (2026-03-13)
+
 - Created shared `HouseholdNav` component in `src/components/ui.tsx` with consistent link set: Home, Weekly planner, Meal planner, Grocery list, Rescue mode, Meal history, Household setup, All households
 - Replaced all ad-hoc NavBar contents across 10 pages (Home, Planner, WeeklyPlanner, GroceryList, RescueMode, MealDetail, IngredientManager, BaseMealManager, MealHistory, HouseholdSetup) with the shared `HouseholdNav` component
 - Removed all "Back to household" buttons — Planner and WeeklyPlanner now use `HouseholdNav` instead of standalone Button navigation
@@ -498,6 +540,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (462 tests, 1 pre-existing f033 failure unrelated to F036), all F036 steps satisfied
 
 ### F037 - User can add photos to ingredients and base meals via URL or upload (2026-03-13)
+
 - Added optional `imageUrl?: string` field to `Ingredient` and `BaseMeal` types in data model
 - Fields are optional to support existing saved data without migration (UI handles `undefined` with `?? ""` defaults)
 - **Ingredient Manager**: Added image URL text input and file upload button per ingredient; file uploads converted to data URL via FileReader for local-first storage; shows thumbnail preview (80x80px, rounded, object-cover) when imageUrl is set
@@ -510,6 +553,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (483 tests, 3 pre-existing f033 failures unrelated to F037), all F037 steps satisfied
 
 ### F038 - Add ingredient or component inline or via modal with discoverable navigation (2026-03-14)
+
 - Created `InlineIngredientForm` component in BaseMealManager with name and category fields for quick ingredient creation without leaving the meal editor
 - Added "+ Add new ingredient" ghost button in each `ComponentForm` that toggles the inline form open/closed
 - Inline form creates ingredient with unique ID, adds it to the local ingredients state, and auto-selects it in the component's ingredient dropdown
@@ -523,6 +567,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes (pre-existing errors in f035/f036 tests only), vitest passes (497 tests, 2 pre-existing f033 failures unrelated to F038), all F038 steps satisfied
 
 ### F039 - User can import and export data as JSON for backup and seeding (2026-03-14)
+
 - Added `exportHouseholdsJSON` function to storage layer — exports all households (or filtered by IDs) as formatted JSON string
 - Added `importHouseholdsJSON` function with `replace` (clears existing) and `merge` (keeps existing, updates matching IDs, adds new) modes
 - Validates input is a JSON array; throws on invalid or non-array input
@@ -537,6 +582,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes (pre-existing errors in f035/f036 only), vitest passes (512 tests, 2 pre-existing f033 failures unrelated to F039), all F039 steps satisfied
 
 ### F040 - Database cleared and repopulated each build with McGeever family seed (2026-03-14)
+
 - Extended `MemberRole` type to include `"pet"` alongside `"adult"`, `"toddler"`, and `"baby"`
 - Added `isHumanMember` helper to planner engine that filters out pet members (role !== "pet")
 - Applied pet filtering to all 9 exported planner functions: `generateAssemblyVariants`, `computeMealOverlap`, `computeIngredientOverlap`, `generateMealExplanation`, `generateShortReason`, `generateWeeklyPlan` (via sub-functions), `generateRescueMeals`, `learnCompatibilityPatterns`, `computePatternScore`
@@ -552,6 +598,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes (pre-existing f035/f036 errors only), vitest passes (530 tests, 2 pre-existing f033 failures unrelated to F040), all F040 steps satisfied
 
 ### F041 - Clicking a household navigates to Edit setup; remove Household setup from nav (2026-03-14)
+
 - Changed HouseholdList: clicking household card/name now navigates to `/household/:id` (HouseholdSetup) instead of `/household/:id/home`
 - Removed redundant "Setup" button from household cards in HouseholdList — the card name link is now the sole click target for editing
 - Removed "Household setup" link from `HouseholdNav` in `src/components/ui.tsx`
@@ -561,6 +608,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes (pre-existing f035/f036 errors only), vitest passes (538 tests, 2 pre-existing f033 failures unrelated to F041), all F041 steps satisfied
 
 ### F042 - User can share a mobile-friendly screenshot of the weekly plan via text (2026-03-14)
+
 - Installed `html2canvas` dependency for DOM-to-image capture
 - Added `handleShare` async function to WeeklyPlanner that captures the day cards + effort balance area as a PNG image at 2x scale for retina quality
 - When `navigator.share` is available and supports file sharing (`canShare`), uses the Web Share API to share the image as a PNG file with title "Weekly Meal Plan"
@@ -573,6 +621,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes (pre-existing f035/f036 errors only), vitest passes (549 tests, 2 pre-existing f033 failures unrelated to F042), all F042 steps satisfied
 
 ### F036 - Revamp household navigation into a polished integrated app shell (2026-03-14)
+
 - Replaced plain-text link row `HouseholdNav` with a polished pill-based navigation bar component
 - Navigation renders as a rounded card container (`rounded-md border bg-surface shadow-card`) with pill-shaped links inside
 - Added `useLocation` from react-router-dom for active page detection
@@ -591,6 +640,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes (pre-existing test file errors only), vitest passes (555 tests, 2 pre-existing f033 failures unrelated to F036), all F036 steps satisfied
 
 ### F043 - Ingredient Manager becomes a compact browse-first list with modal editing (2026-03-14)
+
 - Replaced permanently expanded ingredient cards with a browse-first compact list layout
 - Added control bar with search input, category filter dropdown, and tag filter dropdown above the list
 - Ingredients render as compact clickable rows (`IngredientRow` component) showing name, category chip, tag chips, freezer-friendly/baby-safe flag icons, and optional thumbnail — all at a glance
@@ -608,6 +658,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: vitest passes (571 tests, 2 pre-existing f033 failures unrelated to F043), all F043 steps satisfied
 
 ### F044 - App ships with a seeded ingredient catalog and add-from-catalog flow (2026-03-14)
+
 - Created `src/catalog.ts` with `MASTER_CATALOG` containing 70 common ingredients across all 8 categories (protein, carb, veg, fruit, dairy, snack, freezer, pantry)
 - Each catalog entry has: id, name, category, tags, freezerFriendly, babySafeWithAdaptation
 - Added `searchCatalog` function for case-insensitive name search, `getCatalogByCategory` for category filtering
@@ -622,6 +673,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (588 tests, 2 pre-existing f033 failures unrelated to F044), all F044 steps satisfied
 
 ### F045 - Household ingredients support catalog linkage, lightweight customization, and duplicate handling (2026-03-14)
+
 - Added optional `catalogId?: string` and `source?: "manual" | "catalog"` fields to `Ingredient` type (backward-compatible, existing data works without migration)
 - Updated `catalogIngredientToHousehold` to store `catalogId` (referencing catalog entry ID) and `source: "catalog"` on created ingredients
 - Added `findNearDuplicates` function to catalog module for case-insensitive exact name matching with self-exclusion support
@@ -635,6 +687,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (607 tests, 2 pre-existing f033 failures unrelated to F045), all F045 steps satisfied
 
 ### F046 - Recipe import parses ingredients and builds a reviewable base-meal draft (2026-03-14)
+
 - Created `src/recipe-parser.ts` with ingredient line parser (`parseIngredientLine`), fuzzy matcher (`matchIngredient`), full recipe text parser (`parseRecipeText`), and component role guesser (`guessComponentRole`)
 - Parser handles: quantity extraction (units like g, kg, cups, tbsp, etc.), bullet/dash/number prefix stripping, case-insensitive fuzzy matching against household ingredients and master catalog
 - Matching priority: household ingredients first (score ≥ 0.5), then catalog, then unmatched
@@ -650,6 +703,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes (pre-existing test file errors only), vitest passes (638 tests, 2 pre-existing f033 failures unrelated to F046), all F046 steps satisfied
 
 ### F047 - Run legacy ingredient migration to normalize existing records and safely merge duplicates (2026-03-15)
+
 - Added `normalizeIngredientName` function to storage layer: lowercases, trims, collapses internal spaces, strips trailing punctuation
 - Added `toSentenceCase` function for UI display: capitalizes first letter while keeping stored name lowercase
 - Added `migrateHouseholdIngredients` function that normalizes all ingredient names, detects duplicates by normalized name, picks the most complete record as survivor (scoring by tags, imageUrl, catalogId, flags), merges metadata from duplicates into survivor, and reassigns all references
@@ -665,6 +719,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (652 tests, 3 pre-existing f033 failures unrelated to F047), all F047 steps satisfied
 
 ### F048 - App can import Paprika .paprikarecipes exports, preserve recipe provenance, and convert recipes into reviewable base-meal drafts (2026-03-16)
+
 - Installed `jszip` dependency for parsing .paprikarecipes zip archive format
 - Added `RecipeProvenance` interface to types (sourceSystem, externalId, sourceUrl, importTimestamp, syncTimestamp) and optional `provenance`, `prepTimeMinutes`, `cookTimeMinutes`, `servings`, `importMappings` fields on `BaseMeal`
 - Added `ImportMapping` interface to types (originalLine, parsedName, action, ingredientId, matchType) for preserving import decision records
@@ -694,6 +749,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes, vitest passes (684 tests, 9 pre-existing f035 failures unrelated to F048), all F048 steps satisfied
 
 ### F049 - Paprika import supports bulk ingredient review and robust ingredient-line parsing (2026-03-16)
+
 - Enhanced `parseIngredientLine` in `recipe-parser.ts` to handle decimal quantities (1.5), fractions (1/2), "of" phrasing ("1 pinch of salt"), parenthetical notes ("quinoa (any color)"), and preparation suffixes ("lime, zested and squeezed")
 - Fixed numbered-list stripping regex (`\d+[.)]\s*` → `\d+[.)]\s+`) so decimal quantities like `1.5` are no longer truncated
 - Added word-boundary assertions to unit pattern to prevent single-letter units (like `l` for liter) from matching partial words (like `lime`)
@@ -714,6 +770,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verified: tsc --noEmit passes (pre-existing f035/f036/f042/f043/f045/f048 test errors only), vitest passes (721 tests, 9 pre-existing f035 failures unrelated to F049), all F049 steps satisfied
 
 ### F049 (reopened) - Paprika import supports bulk ingredient review, resumable sessions, and robust ingredient-line parsing at scale (2026-03-17)
+
 - Reopened F049 in `PRD.json` as unfinished (`passes=false`) with expanded acceptance scope for high-volume Paprika imports.
 - Updated F049 steps to require summary-first review, grouped status counts (matched/ambiguous/create-new/ignored), batch actions, resumable import sessions, explicit saved-draft UI state, and stronger parsing/audit requirements.
 - Kept F049 in milestone M5 and in implementation order directly after F048; preserved dependencies and existing Paprika provenance model expectations.
@@ -748,6 +805,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
   - `npm run test` still reports pre-existing failures in `tests/f035-delete-confirmation.test.tsx` (9 failures), unrelated to Paprika import changes.
 
 ### PRD import-priority rewrite - F049/F050 scope realignment (2026-03-18)
+
 - Updated `PRD.json` so recipe import is explicitly treated as a high-priority product problem (manual cleanup reduction at scale), not only parser correctness.
 - Refined feature boundaries:
   - `F048` now focuses on Paprika archive ingest, metadata/provenance retention, duplicate meal handling, and draft creation entry into ingredient-resolution review.
@@ -761,6 +819,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Rationale: current bulk Paprika imports still require too much manual intervention, so import cleanup and grouped bulk resolution are now explicit near-term priorities.
 
 ### F051 - Base Meal Editor (S007) focused UX refactor in place (2026-03-18)
+
 - Added new S007-specific UX feature `F051` to `PRD.json` and mapped it to `S007`; included in milestone `M5` and implementation order for explicit tracking.
 - Updated `CHANGELOG.md` with a dedicated 2026-03-18 PRD-alignment entry documenting the new S007 polish feature scope.
 - Refactored `src/pages/BaseMealManager.tsx` in place (no parallel editor) into a clearer meal-building flow:
@@ -783,6 +842,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
   - `ReadLints` reports no linter errors on touched files.
 
 ### F052 - Create Household (S006) focused UX polish in place (2026-03-18)
+
 - Added new S006-specific UX feature `F052` to `PRD.json` and mapped it to `S006`; included in milestone `M5` and implementation order for explicit tracking.
 - Updated `CHANGELOG.md` with a dedicated 2026-03-18 PRD-alignment entry documenting the new Create Household polish feature scope.
 - Refactored `src/pages/HouseholdSetup.tsx` in place (no new flow, no data model changes):
@@ -803,6 +863,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
   - `ReadLints` reports no linter errors on touched files.
 
 ### F053 - Global vs section navigation consistency (2026-03-18)
+
 - Added explicit PRD feature `F053` to define and track a two-level navigation hierarchy:
   - Global nav for top-level app pages only (Home, Weekly planner, Meal planner, Grocery list, Rescue mode, Meal history).
   - Section tabs for section-level pages (Households, Ingredients, Base meals).
@@ -827,6 +888,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
   - `ReadLints` reports no linter errors on touched files.
 
 ### Navigation regression fix — shared household shell + secondary nav (2026-03-19)
+
 - **PRD:** F036, F038, F041, F053; screens S001, S003, S005, S006, S008, S010.
 - Centralized nav items and active-state rules in `src/nav/householdNavConfig.ts` (global vs secondary; “All households”; meal detail → Base meals active; setup index → All households active; Home global active only on `/home`).
 - Added `src/layouts/HouseholdLayout.tsx` rendering `AppHeader`, `HouseholdNavStack` (global + visually distinct secondary row), and `<Outlet />` for all `/household/:householdId/*` routes.
@@ -838,6 +900,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verification: `npx vitest run` (796 tests), `tests/household-nav-config.test.ts` passes.
 
 ### F050 — Paprika bulk import exception-first grouped review (2026-03-20)
+
 - **PRD:** F050; screens S007/S010 Paprika import path.
 - Confidence bands + scores on `matchIngredient`; `PaprikaReviewLine` gains `resolutionStatus`, `groupKey`, `manualIngredientId`, `createDraft`, `parserSuggested*` ids, etc.
 - `parseRecipeIngredients` sets pending for unmatched/low-confidence matches; `canFinalizePaprikaImport` gates save; `buildDraftMeal` takes `householdIngredients` for manual match resolution; `ImportMapping` extended for audit fields.
@@ -847,6 +910,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verification: `npx tsc --noEmit`, `npx vitest run` (836 passed).
 
 ### PRD reconciliation — spec matches shipped F051 + F055/F056 data model (2026-03-22)
+
 - **Corrected:** `PRD.json` marked **F051** `passes=true` (implementation and tests were already recorded in this log on 2026-03-18; only the PRD flag was stale).
 - **Corrected:** `dataModel.entities` updated to match current `src/types.ts` and shipped behavior: **ComponentRecipeRef**, **DayPlan.componentRecipeOverrides**, **WeeklyAnchor** / **Household.weeklyAnchors**, **Recipe** library rows, **Household** aggregate, **GroceryItem**, **MealOutcome**, **RecipeLink**, **RecipeProvenance**, **ImportMapping**; **MealComponent** / **Ingredient** / **BaseMeal** field lists aligned with code; flattened mistaken nested entity array; **AssemblyVariant** documents canonical app fields first with optional legacy persist keys.
 - **Explicit mismatches resolved:** PRD `passes` for F051 vs codebase; PRD `catalogItemId` vs code `catalogId`; PRD `importedRecipeSource` vs code `provenance`; obsolete PRD-only `ImportedRecipeSource` / `ImportedIngredientMatch` vs code `RecipeProvenance` / `ImportMapping`.
@@ -854,6 +918,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Verification:** `npx tsc --noEmit` passes; `npx vitest run tests/f005-base-meals.test.tsx tests/f028-multi-protein.test.tsx tests/f029-recipe-links-notes.test.tsx tests/f021-weekly-calendar.test.tsx tests/f056-theme-anchors.test.tsx` — 5 files, 47 tests passed.
 
 ### F057 — First-class Recipe model with RecipeRef and typed categories (2026-03-22)
+
 - **PRD:** F057; screens S002, S004, S007, S010.
 - Added `RecipeType` union (`whole-meal | component | sauce | sub-recipe | batch-prep`) and `RecipeRef` type (`recipeId, label?, role?, notes?`) to `src/types.ts`.
 - Enhanced `Recipe` with optional `recipeType`, `parentRecipeId` (sub-recipe relationships), `directions` (step-by-step cooking instructions carried from Paprika), `tags`.
@@ -869,6 +934,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verification: `npx tsc --noEmit`, `npx vitest run tests/f057-recipe-model.test.ts` (24 passed).
 
 ## F058 — Recipe attachment and suggestion UX (2026-03-22)
+
 - Extended `ComponentRecipePicker` to accept optional `recipes: Recipe[]` prop; renders results in three groups (household recipes, imported recipes, base meals) with correct search priority. Added `mode="meal"` for whole-meal RecipeRef attachment with `onSaveMealRef` callback.
 - Added whole-meal RecipeRef attachment UI in `BaseMealManager` `MealModal` section 4: `<details>` block with recipe chips, remove buttons, and "Attach recipe" button opening the picker in meal mode.
 - Added per-alternative-protein recipe attachment in `ComponentForm`: each alternative ingredient shows "Attach recipe" link opening the picker; stores refs with `notes: "alt:{ingredientId}"` convention; shows recipe label chip on alternatives list.
@@ -885,6 +951,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Verification: `npx tsc --noEmit` clean, `npx vitest run` — 963 passed, 0 failed (63 test files).
 
 ### F059 — Expanded seed content: broader catalog, example recipes, and wired base meals (2026-03-22)
+
 - Added `aliases?: string[]` to `CatalogIngredient` interface and updated `c()` helper and `searchCatalog()` to support alias matching.
 - Added ~30 new `MASTER_CATALOG` entries covering taco ingredients (black beans, corn tortillas, cilantro, lime, jalapeño, cumin, chili powder, sour cream, taco seasoning, lettuce), pizza ingredients (mozzarella, yeast, Italian seasoning, oregano, basil, tomato paste, sugar), pasta bake ingredients (ricotta, heavy cream), bowl ingredients (sesame oil, sriracha, ginger, edamame, sesame seeds), and pantry basics (honey, paprika, vinegar, mustard, cornstarch, mayonnaise).
 - Added aliases to existing catalog entries: "Wraps / tortillas" (flour tortillas, soft tortillas), "Tinned tomatoes" (canned tomatoes, diced tomatoes), "Passata" (tomato puree, strained tomatoes), "Yogurt" (plain yogurt, greek yogurt).
@@ -896,6 +963,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - PRD: added F059 feature entry with 9 steps, dependencies F044/F057, acceptance refs S001/S002/S003/S004/S007/S010. Added to M5, implementationOrder, and screenToFeatureMap.
 
 ### F060 — Paginated ingredient table with bulk selection and safe bulk delete (2026-03-22)
+
 - Replaced infinite-scroll (`useIncrementalList`) with traditional pagination (`usePaginatedList`) for the Ingredients page.
 - Created `src/hooks/usePaginatedList.ts`: generic page-based list hook with page/totalPages/pageSize controls, reset-on-filter-change, and memoized page slices. Supports 25/50/100 items per page. The existing `useIncrementalList` hook is preserved for other pages (BaseMealManager, RecipeLibrary, BrowseMealsModal).
 - Created `src/lib/ingredientRefs.ts`: `findIngredientReferences()` utility that scans household baseMeals, recipes, weeklyPlans, and importMappings for ingredient ID references. Returns a map of ingredient ID to reference details (type + entity name). Pure function, no side effects.
@@ -920,6 +988,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Known limitations: page size maxes at 100; for libraries > 100 items, users must page through. The `useIncrementalList` hook is still used by other pages (not removed). Bulk tag/category actions are not implemented (future-safe slot in the bulk bar). Import mappings on meals/recipes may retain stale ingredient IDs after deletion (pre-existing behavior, not introduced by this change).
 
 ### F061 — Cross-platform local-first storage (Dexie + migration) (2026-03-23)
+
 - **PRD:** F061; milestone M6; `technicalApproach.suggestedStack.storage` and architecture notes updated for repository + IndexedDB + future Expo SQLite.
 - **Architecture:** Typed `HouseholdRepository` / `AppMetaStore` ports in `src/storage/ports.ts` (stable seam for native SQLite later). Web implementation: Dexie DB `onebaseplate_app`, `meta` table keyed rows for `households` (full `Household[]` JSON) and `paprika_import_session` (string). `src/storage/migrate-v3.ts` runs once (guard `storage_layer_migrated_v3`) and imports legacy `localStorage` `onebaseplate_households`, legacy `idb` `onebaseplate`/`kv` overflow payload, and migrates Paprika draft from `onebaseplate_paprika_session` localStorage into Dexie. Does not overwrite non-empty Dexie household data.
 - **Seed:** Unchanged source — `seed-data.json` / `seedIfNeeded()` writes into Dexie when empty and `onebaseplate_seeded` unset; idempotent with existing flag behavior.
@@ -929,6 +998,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Fixture / PRD alignment:** Scaffold and typecheck imports now reference `fixtures/households/H001-mcg.json`; f016 and e2e use `H002-two-adults-toddler-baby.json`; `fixtureHouseholds` trimmed to on-disk fixtures.
 
 ### F062 — Account-based cloud persistence with Supabase Auth and household snapshot sync (2026-03-23)
+
 - **PRD:** F062; milestone M7; `technicalApproach.suggestedStack` updated with `auth` and `remotePersistence` entries; architecture notes updated for Supabase cross-browser sync.
 - **Architecture:** Optional Supabase Auth (email/password) with env-based configuration (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). When env vars are absent, app works fully local (same as before). Supabase client singleton in `src/supabase/client.ts` returns null when not configured. Auth service in `src/auth/auth-service.ts` wraps sign-up, sign-in, sign-out, session restore. React `AuthContext` + `useAuth` hook in `src/auth/`. Remote data model: `households` table (id uuid, data JSONB, owner_id, updated_at, version), `household_memberships` (access control with owner/editor roles, unique on household+user), `profiles` (auto-created via trigger). SQL DDL + RLS policies in `supabase/migrations/001_households.sql` (reference only, not auto-run).
 - **Sync engine:** `src/sync/sync-engine.ts` coordinates local-first Dexie with remote Supabase. `syncAfterSave` upserts all households to remote after local Dexie write (fire-and-forget async). `pullRemoteHouseholds` fetches by user membership. `pushLocalHouseholds` uploads batch. `detectFirstLoginContext` + `resolveFirstLogin` handle three bootstrap scenarios. Injectable `RemoteRepoAdapter` for testability. Conflict strategy: household-level last-write-wins via `updatedAt`.
@@ -940,6 +1010,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Known limitations:** Household-level last-write-wins; no field-level merge or CRDT. No real-time subscription (pull on sign-in only). Full invite/share UX deferred. Auth UI is minimal (Settings page only, no dedicated auth pages). Supabase tables must be created manually via SQL editor or CLI.
 
 ### F063 — Shared household access, invite flow, and safer sync/recovery UX (2026-03-23)
+
 - **PRD:** F063; milestone M7 (after F062); depends on F062.
 - **Sharing model:** Builds on existing `household_memberships` (owner/editor). New `household_invites` table stores 8-char alphanumeric invite codes with expiry (default 72h) and max_uses (default 5). Invite codes are generated client-side using `crypto.getRandomValues`. RLS policies allow owners to manage invites, any authenticated user to look up an invite by code for acceptance.
 - **Invite flow:** Owner generates invite link from Settings > Household sharing panel. Link format: `{origin}/invite/{code}`. Recipient visits the link. If not signed in, they see a prompt to sign in first. If signed in, the app validates the code (not expired, not maxed), inserts an `editor` membership, increments `use_count`, fetches the household data, and hydrates it into local Dexie. New route `/invite/:code` + `AcceptInvite.tsx` page.
@@ -951,6 +1022,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Known limitations:** Invite acceptance requires the user to be signed in before visiting the link (no inline sign-up on the invite page). No real-time subscription — shared edits require manual sync or page refresh. Household-level last-write-wins still applies; no field-level merge. Invite codes are single-household; no batch invite across households. `002_invites.sql` must be applied manually (same pattern as `001_households.sql`).
 
 ### F064 — Paprika parser and matcher hardening for import quality (2026-03-24)
+
 - **PRD:** F064; milestone M5; P0 functional; depends on F049+F050; acceptance refs S007, S010.
 - **Root causes fixed:**
   1. `normalizeForMatch` destroyed non-ASCII chars via `[^a-z0-9\s]` → fixed with Unicode property escapes `\p{L}\p{N}`.
@@ -971,6 +1043,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Known limitations:** "Italian" is not stripped from canonical names (risk to "Italian seasoning"); matching handles it via style-stripped secondary path. "Hot" prefix not stripped from canonical names; handled via matching. Some complex multi-ingredient lines like "spinach and ricotta tortellini" preserve the full compound name rather than extracting individual components.
 
 ### F065 — Household-manageable ingredient aliases (2026-03-25)
+
 - **PRD:** F065; milestone M5; P1 functional; depends on F059, F064, F004, F060; acceptance refs S010, S007.
 - **Data model:** `Ingredient.aliases?: string[]` in `src/types.ts`. Normalization via `normalizeIngredientAliasList` / `normalizeIngredientForStorage` in `src/storage.ts`; `normalizeHouseholdIngredientNames` normalizes aliases on save; `mergeDuplicateMetadata` unions aliases across merges.
 - **Matching:** `matchIngredient` refactored to tiered candidates (household canonical → household alias → catalog canonical → catalog alias) with score-first selection and tier tie-break; shared `scoreMatchAgainstCandidate` helper preserves `HOUSEHOLD_MIN`, `CATALOG_MIN`, and veto behavior.
@@ -979,6 +1052,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Verification:** `npx tsc --noEmit`, `npx vitest run` — 1194 passed, 13 skipped (72 files).
 
 ### F066 — Lightweight recipe organization tags (2026-03-26)
+
 - **PRD:** F066; milestone M5; P2 functional; depends on F057, F058; acceptance refs S002, S004, S007 (also listed on S010 for recipe-ingredient surfaces).
 - **Scope (not a taxonomy product):** Curated optional tags only (`quick`, `batch-prep`, `freezer-friendly`, `rescue`, `side`, `sauce`, `kid-friendly`, `prep-ahead`); `Recipe.tags` remains optional `string[]`; legacy aliases `batch-friendly` / `rescue-friendly` normalize for filter/UI; unknown tags preserved on load.
 - **Library:** `src/lib/recipeTags.ts` — `CURATED_RECIPE_TAGS`, `recipeTagLabel`, `recipeHasTag`, `recipeMatchesCuratedFilter`, `computeTagBoost`, `recipeTypeContextScore`, `compareRecipesForSuggestion`. Recipe library page: tag filter chip row + clear; list rows show up to 3 small tag labels when present.
@@ -989,6 +1063,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Verification:** `npx tsc --noEmit`, `npx vitest run` — 1209 passed, 13 skipped (73 files).
 
 ### F067 — Paprika category-to-tag import (2026-03-26)
+
 - **PRD:** F067; milestone M5; P2 functional; depends on F048, F066; acceptance refs S007, S010.
 - **Data model:** `RecipeProvenance.rawCategories?: string[]` — original Paprika category strings (not user-facing tags). `Recipe.tags` receives only values from the curated map after normalization.
 - **Logic:** `src/lib/paprikaCategoryMap.ts` — lowercase/trim/collapse space/edge punctuation strip, conservative `-es`/`-s` singularization (skips `-us`/`-ss`/`-is`), alias table aligned with F066 curated set; `isCuratedTag` guards map targets.
@@ -997,6 +1072,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Verification:** `npx tsc --noEmit`, `npx vitest run` — full suite green.
 
 ### F068 hardening — sync queue + auth races (2026-03-27)
+
 - **PRD:** F068 step added (queue clear on user change, mid-flush abort, payload warn, main.tsx cleanup); F063 startup step now **initOnlineListeners only** (no `setLoadHouseholdsRef`).
 - **`src/sync/sync-engine.ts`:** `setCurrentUserId` calls `clearIncrementalQueue()` when `prev !== null && prev !== userId`, then `updatePendingFlagFromQueue()`. `flushQueuedSync` uses **`flushUserId`** for upserts and returns early (idle, no error) if `currentUserId !== flushUserId` during deletes or upserts — does **not** re-queue the batch (avoids wrong-account flush after sign-out/switch). **`PAYLOAD_WARN_BYTES` (256 KiB)** → `console.warn`; debug per-household size only **≥ 64 KiB**. Comment on `queueMicrotask` follow-up clarified.
 - **`src/main.tsx`:** Dropped `setLoadHouseholdsRef` import/call.
@@ -1005,6 +1081,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Risks (unchanged from F068):** in-memory queue lost if tab closes during debounce; household JSON blob LWW; no realtime.
 
 ### F068 — Safe incremental Supabase sync (debounced queue) (2026-03-27)
+
 - **PRD:** F068 (P0 platform); M7 now includes F068; F062/F063 step text updated; `remotePersistence` note reflects incremental sync.
 - **Problem fixed:** `saveHouseholds` / `persistHouseholdsNow` used to call `syncAfterSave(entireList)`, upserting every household on every save and risking re-entry when `persistNewCloudHouseholdIds` saved locally — heavy on tiny Supabase tiers.
 - **Sync engine (`src/sync/sync-engine.ts`):** `queueHouseholdSync` / `queueHouseholdDeleteSync` with `Map` dedupe (latest snapshot per id), `Set` of remote PK deletes (upserts cancelled when delete wins), **1000ms** debounce, **serialized** `flushQueuedSync` with `flushAgainAfterCurrent` + `queueMicrotask` follow-up (no synchronous re-entry). **`remote_unavailable`** → exponential backoff (2s → max 60s). **`persistNewCloudHouseholdIds`** → **`saveHouseholdsLocalOnly`**. Legacy **`syncAfterSave(households[])`** for explicit/tests; when **offline**, merges households into the incremental queue for reconnect. **`manualSync` / `pushLocalHouseholds` / successful `syncAfterSave`** clear the incremental queue after full push. Debug logs under **`[sync-queue]`** (flush start/end; large-payload debug/warn thresholds — see F068 hardening). **`setCurrentUserId`** clears the queue on user switch/sign-out; mid-flush auth change aborts the batch. **`setLoadHouseholdsRef`** remains a deprecated no-op for older tests/forks.
@@ -1014,6 +1091,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Risks / follow-ups:** In-memory queue is lost if the tab closes mid-debounce (local Dexie still has data; user can manual sync). Still **household JSON blob** upserts — future granular tables would shrink payloads further.
 
 ### F069 — Base meal theme tag editor (2026-03-27)
+
 - **PRD:** F069; milestone M5; P2 functional; depends on F005, F056; acceptance S007.
 - **UI:** [`src/pages/BaseMealManager.tsx`](src/pages/BaseMealManager.tsx) — `MealModal` Planning section: theme tag chips + remove, `TagSuggestInput` (suggestions from other meals’ tags) + Add tag; helper copy → Household → Weekly theme nights. Header row `meal-theme-tag-chips` (neutral chips + “Theme tags” label) when tags non-empty; `meal-summary-chips` unchanged (time / difficulty / rescue).
 - **Data:** `normalizeBaseMealTag` trim + lowercase on add; dedupe; `createEmptyMeal` includes `tags: []`; `EMPTY_MEAL_TAGS` stable ref for `useMemo`.
@@ -1022,10 +1100,12 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Verification:** `npm test` — f005 + weekly-suggested-ranking green.
 
 ### Settings — reset ingredients to bundled defaults (2026-03-28)
+
 - **Storage:** `countSeedIngredientsForHousehold`, `resetHouseholdIngredientsToSeed` in `src/storage.ts` — replaces the household ingredient list with a deep copy from `seed-data.json` when that household id exists in seed data.
 - **UI:** `src/pages/Settings.tsx` — destructive action in Data section (shown when seed ingredient count > 0, same household ids as seed recipes); confirmation explains full catalog replace and possible broken meal/recipe/plan references for custom ids.
 - **Tests:** `tests/f050-settings.test.tsx`, `tests/f062-storage-layer.test.ts`.
 - **Verification:** `npm run typecheck`, `npm test`.
 
 ## Next Task
+
 - Continue from `PRD.json` implementation order after F068, or open a new scoped feature if product priorities shift.

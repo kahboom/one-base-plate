@@ -1,22 +1,39 @@
-import { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import type { BaseMeal, Ingredient, MealComponent, IngredientCategory, Recipe } from "../types";
-import { normalizeIngredientName } from "../ingredient-migration";
-import { loadHousehold, saveHousehold, normalizeHousehold, toSentenceCase } from "../storage";
-import { catalogIngredientToHousehold } from "../catalog";
-import { parseRecipeText, guessComponentRole } from "../recipe-parser";
-import type { ParsedIngredientLine } from "../recipe-parser";
-import { PageHeader, Card, Button, Input, Select, ActionGroup, Chip, FieldLabel, EmptyState } from "../components/ui";
-import PostImportDestination from "../components/PostImportDestination";
+import { useEffect, useState, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import type { BaseMeal, Ingredient, MealComponent, IngredientCategory, Recipe } from '../types';
+import { normalizeIngredientName } from '../ingredient-migration';
+import { loadHousehold, saveHousehold, normalizeHousehold, toSentenceCase } from '../storage';
+import { catalogIngredientToHousehold } from '../catalog';
+import { parseRecipeText, guessComponentRole } from '../recipe-parser';
+import type { ParsedIngredientLine } from '../recipe-parser';
+import {
+  PageHeader,
+  Card,
+  Button,
+  Input,
+  Select,
+  ActionGroup,
+  Chip,
+  FieldLabel,
+  EmptyState,
+} from '../components/ui';
+import PostImportDestination from '../components/PostImportDestination';
 
-type Step = "input" | "review" | "draft" | "destination";
+type Step = 'input' | 'review' | 'draft' | 'destination';
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
-  "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
+  'protein',
+  'carb',
+  'veg',
+  'fruit',
+  'dairy',
+  'snack',
+  'freezer',
+  'pantry',
 ];
 
 interface ReviewLine extends ParsedIngredientLine {
-  action: "use" | "create" | "ignore";
+  action: 'use' | 'create' | 'ignore';
   newCategory: IngredientCategory;
 }
 
@@ -25,16 +42,16 @@ export default function RecipeImport() {
   const navigate = useNavigate();
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [householdName, setHouseholdName] = useState("");
+  const [householdName, setHouseholdName] = useState('');
   const [loaded, setLoaded] = useState(false);
 
-  const [step, setStep] = useState<Step>("input");
-  const [recipeText, setRecipeText] = useState("");
-  const [sourceUrl, setSourceUrl] = useState("");
+  const [step, setStep] = useState<Step>('input');
+  const [recipeText, setRecipeText] = useState('');
+  const [sourceUrl, setSourceUrl] = useState('');
   const [reviewLines, setReviewLines] = useState<ReviewLine[]>([]);
 
-  const [draftName, setDraftName] = useState("");
-  const [draftNotes, setDraftNotes] = useState("");
+  const [draftName, setDraftName] = useState('');
+  const [draftNotes, setDraftNotes] = useState('');
   const [draftTime, setDraftTime] = useState(30);
   const [draftComponents, setDraftComponents] = useState<MealComponent[]>([]);
 
@@ -56,31 +73,40 @@ export default function RecipeImport() {
     const result = parseRecipeText(recipeText, ingredients);
     const lines: ReviewLine[] = result.lines.map((line) => ({
       ...line,
-      action: line.status === "unmatched" ? "ignore" : line.status === "catalog" ? "create" : "use",
-      newCategory: line.matchedCatalog?.category ?? "pantry",
+      action: line.status === 'unmatched' ? 'ignore' : line.status === 'catalog' ? 'create' : 'use',
+      newCategory: line.matchedCatalog?.category ?? 'pantry',
     }));
     setReviewLines(lines);
-    setStep("review");
+    setStep('review');
   }
 
-  const matchedCount = useMemo(() => reviewLines.filter((l) => l.action === "use").length, [reviewLines]);
-  const createCount = useMemo(() => reviewLines.filter((l) => l.action === "create").length, [reviewLines]);
-  const ignoredCount = useMemo(() => reviewLines.filter((l) => l.action === "ignore").length, [reviewLines]);
+  const matchedCount = useMemo(
+    () => reviewLines.filter((l) => l.action === 'use').length,
+    [reviewLines],
+  );
+  const createCount = useMemo(
+    () => reviewLines.filter((l) => l.action === 'create').length,
+    [reviewLines],
+  );
+  const ignoredCount = useMemo(
+    () => reviewLines.filter((l) => l.action === 'ignore').length,
+    [reviewLines],
+  );
 
   function handleBuildDraft() {
     const newIngredients: Ingredient[] = [];
     const components: MealComponent[] = [];
 
     for (const line of reviewLines) {
-      if (line.action === "ignore") continue;
+      if (line.action === 'ignore') continue;
 
-      if (line.action === "use" && line.matchedIngredient) {
+      if (line.action === 'use' && line.matchedIngredient) {
         components.push({
           ingredientId: line.matchedIngredient.id,
           role: guessComponentRole(line.matchedIngredient.category),
           quantity: line.quantity,
         });
-      } else if (line.action === "create") {
+      } else if (line.action === 'create') {
         let ing: Ingredient;
         if (line.matchedCatalog) {
           ing = catalogIngredientToHousehold(line.matchedCatalog);
@@ -90,10 +116,10 @@ export default function RecipeImport() {
             name: normalizeIngredientName(line.name),
             category: line.newCategory,
             tags: [],
-            shelfLifeHint: "",
+            shelfLifeHint: '',
             freezerFriendly: false,
             babySafeWithAdaptation: false,
-            source: "manual",
+            source: 'manual',
           };
         }
         newIngredients.push(ing);
@@ -111,7 +137,7 @@ export default function RecipeImport() {
     }
 
     setDraftComponents(components);
-    setStep("draft");
+    setStep('draft');
   }
 
   function handleSaveDraft() {
@@ -124,12 +150,14 @@ export default function RecipeImport() {
       name: draftName,
       components: draftComponents,
       ingredientsText: recipeText.trim() || undefined,
-      defaultPrep: "",
-      recipeLinks: sourceUrl.trim() ? [{ label: sourceUrl.trim(), url: sourceUrl.trim() }] : undefined,
+      defaultPrep: '',
+      recipeLinks: sourceUrl.trim()
+        ? [{ label: sourceUrl.trim(), url: sourceUrl.trim() }]
+        : undefined,
       notes: draftNotes.trim() || undefined,
       prepTimeMinutes: draftTime > 0 ? draftTime : undefined,
       provenance: {
-        sourceSystem: "manual-text",
+        sourceSystem: 'manual-text',
         sourceUrl: sourceUrl.trim() || undefined,
         importTimestamp: new Date().toISOString(),
       },
@@ -143,7 +171,7 @@ export default function RecipeImport() {
     setSavedRecipe(newRecipe);
     setBaseMeals(norm.baseMeals);
     setAllRecipes(norm.recipes);
-    setStep("destination");
+    setStep('destination');
   }
 
   function updateReviewLine(index: number, updates: Partial<ReviewLine>) {
@@ -164,7 +192,7 @@ export default function RecipeImport() {
         subtitleTo={`/households?edit=${householdId}`}
       />
 
-      {step === "input" && (
+      {step === 'input' && (
         <div data-testid="import-input-step">
           <Card className="mb-4">
             <FieldLabel label="Recipe URL (optional)">
@@ -183,7 +211,9 @@ export default function RecipeImport() {
                 rows={10}
                 value={recipeText}
                 onChange={(e) => setRecipeText(e.target.value)}
-                placeholder={"Paste recipe ingredients here, one per line.\n\nExample:\n200g chicken breast\n1 cup rice\n2 carrots, diced\n1 tbsp olive oil"}
+                placeholder={
+                  'Paste recipe ingredients here, one per line.\n\nExample:\n200g chicken breast\n1 cup rice\n2 carrots, diced\n1 tbsp olive oil'
+                }
                 data-testid="import-recipe-text"
               />
             </FieldLabel>
@@ -203,7 +233,7 @@ export default function RecipeImport() {
         </div>
       )}
 
-      {step === "review" && (
+      {step === 'review' && (
         <div data-testid="import-review-step">
           <div className="mb-4 flex flex-wrap gap-2">
             <Chip variant="success">{matchedCount} matched</Chip>
@@ -213,12 +243,17 @@ export default function RecipeImport() {
 
           <div className="space-y-2" data-testid="review-lines">
             {reviewLines.map((line, i) => (
-              <Card key={i} data-testid={`review-line-${i}`} className={
-                line.action === "ignore" ? "opacity-50" : ""
-              }>
+              <Card
+                key={i}
+                data-testid={`review-line-${i}`}
+                className={line.action === 'ignore' ? 'opacity-50' : ''}
+              >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate" data-testid={`review-line-raw-${i}`}>
+                    <p
+                      className="text-sm font-medium text-text-primary truncate"
+                      data-testid={`review-line-raw-${i}`}
+                    >
                       {line.raw}
                     </p>
                     <p className="text-xs text-text-muted">
@@ -240,7 +275,9 @@ export default function RecipeImport() {
                   <div className="flex items-center gap-2">
                     <Select
                       value={line.action}
-                      onChange={(e) => updateReviewLine(i, { action: e.target.value as ReviewLine["action"] })}
+                      onChange={(e) =>
+                        updateReviewLine(i, { action: e.target.value as ReviewLine['action'] })
+                      }
                       className="w-28"
                       data-testid={`review-action-${i}`}
                     >
@@ -249,15 +286,19 @@ export default function RecipeImport() {
                       <option value="ignore">Ignore</option>
                     </Select>
 
-                    {line.action === "create" && !line.matchedCatalog && (
+                    {line.action === 'create' && !line.matchedCatalog && (
                       <Select
                         value={line.newCategory}
-                        onChange={(e) => updateReviewLine(i, { newCategory: e.target.value as IngredientCategory })}
+                        onChange={(e) =>
+                          updateReviewLine(i, { newCategory: e.target.value as IngredientCategory })
+                        }
                         className="w-28"
                         data-testid={`review-category-${i}`}
                       >
                         {CATEGORY_OPTIONS.map((c) => (
-                          <option key={c} value={c}>{c}</option>
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
                         ))}
                       </Select>
                     )}
@@ -273,16 +314,20 @@ export default function RecipeImport() {
 
           <div className="mt-4">
             <ActionGroup>
-              <Button variant="primary" onClick={handleBuildDraft} data-testid="import-build-draft-btn">
+              <Button
+                variant="primary"
+                onClick={handleBuildDraft}
+                data-testid="import-build-draft-btn"
+              >
                 Build recipe draft
               </Button>
-              <Button onClick={() => setStep("input")}>Back</Button>
+              <Button onClick={() => setStep('input')}>Back</Button>
             </ActionGroup>
           </div>
         </div>
       )}
 
-      {step === "draft" && (
+      {step === 'draft' && (
         <div data-testid="import-draft-step">
           <Card className="mb-4">
             <FieldLabel label="Recipe name">
@@ -321,7 +366,9 @@ export default function RecipeImport() {
             {sourceUrl.trim() && (
               <div className="mt-4">
                 <span className="text-sm font-medium text-text-secondary">Recipe link: </span>
-                <span className="text-sm text-brand" data-testid="draft-recipe-link">{sourceUrl}</span>
+                <span className="text-sm text-brand" data-testid="draft-recipe-link">
+                  {sourceUrl}
+                </span>
               </div>
             )}
           </Card>
@@ -343,8 +390,12 @@ export default function RecipeImport() {
                       data-testid={`draft-component-${i}`}
                     >
                       <Chip variant="info">{comp.role}</Chip>
-                      <span className="flex-1 text-sm text-text-primary">{ing?.name ?? comp.ingredientId}</span>
-                      {comp.quantity && <span className="text-xs text-text-muted">{comp.quantity}</span>}
+                      <span className="flex-1 text-sm text-text-primary">
+                        {ing?.name ?? comp.ingredientId}
+                      </span>
+                      {comp.quantity && (
+                        <span className="text-xs text-text-muted">{comp.quantity}</span>
+                      )}
                     </div>
                   );
                 })}
@@ -361,13 +412,13 @@ export default function RecipeImport() {
             >
               Save to library
             </Button>
-            <Button onClick={() => setStep("review")}>Back to review</Button>
+            <Button onClick={() => setStep('review')}>Back to review</Button>
             <Button onClick={() => navigate(`/household/${householdId}/recipes`)}>Cancel</Button>
           </ActionGroup>
         </div>
       )}
 
-      {step === "destination" && savedRecipe && householdId && (
+      {step === 'destination' && savedRecipe && householdId && (
         <PostImportDestination
           householdId={householdId}
           recipes={[savedRecipe]}

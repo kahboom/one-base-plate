@@ -1,18 +1,18 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
-import type { Household, Ingredient } from "../src/types";
-import { saveHousehold, loadHousehold } from "../src/storage";
-import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from "../src/catalog";
-import IngredientManager from "../src/pages/IngredientManager";
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, within, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import type { Household, Ingredient } from '../src/types';
+import { saveHousehold, loadHousehold } from '../src/storage';
+import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from '../src/catalog';
+import IngredientManager from '../src/pages/IngredientManager';
 
 function makeIngredient(overrides: Partial<Ingredient> & { name: string }): Ingredient {
   return {
-    id: `ing-${overrides.name.toLowerCase().replace(/\s+/g, "-")}`,
-    category: "pantry",
+    id: `ing-${overrides.name.toLowerCase().replace(/\s+/g, '-')}`,
+    category: 'pantry',
     tags: [],
-    shelfLifeHint: "",
+    shelfLifeHint: '',
     freezerFriendly: false,
     babySafeWithAdaptation: false,
     ...overrides,
@@ -21,10 +21,20 @@ function makeIngredient(overrides: Partial<Ingredient> & { name: string }): Ingr
 
 function seedHousehold(ingredients: Ingredient[] = []): Household {
   const household: Household = {
-    id: "h-f045",
-    name: "F045 Test Family",
+    id: 'h-f045',
+    name: 'F045 Test Family',
     members: [
-      { id: "m1", name: "Parent", role: "adult", safeFoods: [], hardNoFoods: [], preparationRules: [], textureLevel: "regular", allergens: [], notes: "" },
+      {
+        id: 'm1',
+        name: 'Parent',
+        role: 'adult',
+        safeFoods: [],
+        hardNoFoods: [],
+        preparationRules: [],
+        textureLevel: 'regular',
+        allergens: [],
+        notes: '',
+      },
     ],
     ingredients,
     baseMeals: [],
@@ -34,7 +44,7 @@ function seedHousehold(ingredients: Ingredient[] = []): Household {
   return household;
 }
 
-function renderPage(householdId = "h-f045") {
+function renderPage(householdId = 'h-f045') {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/ingredients`]}>
       <Routes>
@@ -49,24 +59,32 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-describe("F045: Catalog linkage stored on ingredients", () => {
+describe('F045: Catalog linkage stored on ingredients', () => {
   it("catalog-populated ingredients have catalogId and source='catalog'", () => {
     const catalogItem = MASTER_CATALOG[0]!;
     const ing = catalogIngredientToHousehold(catalogItem);
     expect(ing.catalogId).toBe(catalogItem.id);
-    expect(ing.source).toBe("catalog");
+    expect(ing.source).toBe('catalog');
   });
 
-  it("catalog-populated ingredients persist catalogId to storage on save", async () => {
+  it('catalog-populated ingredients persist catalogId to storage after saving from the modal', async () => {
     seedHousehold();
+    const user = userEvent.setup();
     renderPage();
 
-    // Auto-save persists; verify
-    const household = loadHousehold("h-f045")!;
-    const chicken = household.ingredients.find((i) => i.name === "chicken breast");
-    expect(chicken).toBeDefined();
-    expect(chicken!.catalogId).toBe("cat-chicken-breast");
-    expect(chicken!.source).toBe("catalog");
+    await user.type(screen.getByTestId('ingredient-search'), 'Chicken breast');
+    const rows = screen.getAllByTestId(/^ingredient-row-/);
+    await user.click(rows[0]!);
+    const modal = screen.getByTestId('ingredient-modal');
+    await user.click(within(modal).getByText('Done'));
+
+    await waitFor(() => {
+      const household = loadHousehold('h-f045')!;
+      const chicken = household.ingredients.find((i) => i.name === 'chicken breast');
+      expect(chicken).toBeDefined();
+      expect(chicken!.catalogId).toBe('cat-chicken-breast');
+      expect(chicken!.source).toBe('catalog');
+    });
   });
 
   it("manually created ingredients have source='manual' and no catalogId", async () => {
@@ -74,16 +92,16 @@ describe("F045: Catalog linkage stored on ingredients", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getAllByText("Add ingredient")[0]!);
-    const modal = screen.getByTestId("ingredient-modal");
-    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Unicorn meat");
-    await user.click(within(modal).getByText("Done"));
+    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    const modal = screen.getByTestId('ingredient-modal');
+    await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Unicorn meat');
+    await user.click(within(modal).getByText('Done'));
 
     // Auto-save persists; verify
-    const household = loadHousehold("h-f045")!;
-    const unicorn = household.ingredients.find((i) => i.name === "unicorn meat");
+    const household = loadHousehold('h-f045')!;
+    const unicorn = household.ingredients.find((i) => i.name === 'unicorn meat');
     expect(unicorn).toBeDefined();
-    expect(unicorn!.source).toBe("manual");
+    expect(unicorn!.source).toBe('manual');
     expect(unicorn!.catalogId).toBeUndefined();
   });
 
@@ -92,11 +110,11 @@ describe("F045: Catalog linkage stored on ingredients", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.type(screen.getByTestId("ingredient-search"), "Pasta");
+    await user.type(screen.getByTestId('ingredient-search'), 'Pasta');
     const rows = screen.getAllByTestId(/^ingredient-row-/);
     await user.click(rows[0]!);
 
-    expect(screen.getByTestId("ingredient-source-label")).toHaveTextContent("From catalog");
+    expect(screen.getByTestId('ingredient-source-label')).toHaveTextContent('From catalog');
   });
 
   it("source label shows 'Manual' for manually created items in modal", async () => {
@@ -104,187 +122,186 @@ describe("F045: Catalog linkage stored on ingredients", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getAllByText("Add ingredient")[0]!);
+    await user.click(screen.getAllByText('Add ingredient')[0]!);
 
-    expect(screen.getByTestId("ingredient-source-label")).toHaveTextContent("Manual");
+    expect(screen.getByTestId('ingredient-source-label')).toHaveTextContent('Manual');
   });
-
 });
 
-describe.skip("F045: Near-duplicate detection", () => {
-  it("findNearDuplicates detects exact case-insensitive name match", () => {
-    const existing = [makeIngredient({ name: "Pasta" })];
-    const dupes = findNearDuplicates("pasta", existing);
+describe.skip('F045: Near-duplicate detection', () => {
+  it('findNearDuplicates detects exact case-insensitive name match', () => {
+    const existing = [makeIngredient({ name: 'Pasta' })];
+    const dupes = findNearDuplicates('pasta', existing);
     expect(dupes).toHaveLength(1);
-    expect(dupes[0]!.name).toBe("Pasta");
+    expect(dupes[0]!.name).toBe('Pasta');
   });
 
-  it("findNearDuplicates excludes self by id", () => {
-    const existing = [makeIngredient({ name: "Pasta", id: "self-id" })];
-    const dupes = findNearDuplicates("Pasta", existing, "self-id");
+  it('findNearDuplicates excludes self by id', () => {
+    const existing = [makeIngredient({ name: 'Pasta', id: 'self-id' })];
+    const dupes = findNearDuplicates('Pasta', existing, 'self-id');
     expect(dupes).toHaveLength(0);
   });
 
-  it("findNearDuplicates returns empty for no match", () => {
-    const existing = [makeIngredient({ name: "Pasta" })];
-    expect(findNearDuplicates("Rice", existing)).toHaveLength(0);
+  it('findNearDuplicates returns empty for no match', () => {
+    const existing = [makeIngredient({ name: 'Pasta' })];
+    expect(findNearDuplicates('Rice', existing)).toHaveLength(0);
   });
 
-  it("findNearDuplicates returns empty for blank name", () => {
-    const existing = [makeIngredient({ name: "Pasta" })];
-    expect(findNearDuplicates("", existing)).toHaveLength(0);
-    expect(findNearDuplicates("   ", existing)).toHaveLength(0);
+  it('findNearDuplicates returns empty for blank name', () => {
+    const existing = [makeIngredient({ name: 'Pasta' })];
+    expect(findNearDuplicates('', existing)).toHaveLength(0);
+    expect(findNearDuplicates('   ', existing)).toHaveLength(0);
   });
 
-  it("inline warning shows when editing ingredient to match existing name", async () => {
+  it('inline warning shows when editing ingredient to match existing name', async () => {
     seedHousehold();
     const user = userEvent.setup();
     renderPage();
 
     // Add a new ingredient
-    await user.click(screen.getAllByText("Add ingredient")[0]!);
-    const modal = screen.getByTestId("ingredient-modal");
+    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    const modal = screen.getByTestId('ingredient-modal');
 
     // Type a name that matches a catalog-populated ingredient
-    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Pasta");
+    await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Pasta');
 
-    expect(screen.getByTestId("duplicate-inline-warning")).toBeInTheDocument();
+    expect(screen.getByTestId('duplicate-inline-warning')).toBeInTheDocument();
   });
 });
 
-describe.skip("F045: Merge or cancel duplicate additions", () => {
-  it("clicking Done on a duplicate ingredient shows the duplicate warning dialog", async () => {
+describe.skip('F045: Merge or cancel duplicate additions', () => {
+  it('clicking Done on a duplicate ingredient shows the duplicate warning dialog', async () => {
     seedHousehold();
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getAllByText("Add ingredient")[0]!);
-    const modal = screen.getByTestId("ingredient-modal");
-    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Pasta");
-    await user.click(within(modal).getByText("Done"));
+    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    const modal = screen.getByTestId('ingredient-modal');
+    await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Pasta');
+    await user.click(within(modal).getByText('Done'));
 
-    expect(screen.getByTestId("duplicate-warning-dialog")).toBeInTheDocument();
+    expect(screen.getByTestId('duplicate-warning-dialog')).toBeInTheDocument();
   });
 
-  it("Keep existing removes the duplicate and closes the modal", async () => {
+  it('Keep existing removes the duplicate and closes the modal', async () => {
     seedHousehold();
     const user = userEvent.setup();
     renderPage();
 
     const countBefore = MASTER_CATALOG.length;
-    await user.click(screen.getAllByText("Add ingredient")[0]!);
-    const modal = screen.getByTestId("ingredient-modal");
-    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Pasta");
-    await user.click(within(modal).getByText("Done"));
+    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    const modal = screen.getByTestId('ingredient-modal');
+    await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Pasta');
+    await user.click(within(modal).getByText('Done'));
 
-    await user.click(screen.getByTestId("duplicate-merge-btn"));
+    await user.click(screen.getByTestId('duplicate-merge-btn'));
 
     // Dialog and modal should be gone
-    expect(screen.queryByTestId("duplicate-warning-dialog")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("ingredient-modal")).not.toBeInTheDocument();
+    expect(screen.queryByTestId('duplicate-warning-dialog')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ingredient-modal')).not.toBeInTheDocument();
 
     // Only one Pasta should exist
     expect(screen.getByText(`Items (${countBefore})`)).toBeInTheDocument();
   });
 
-  it("Cancel on duplicate warning keeps both and returns to modal", async () => {
+  it('Cancel on duplicate warning keeps both and returns to modal', async () => {
     seedHousehold();
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getAllByText("Add ingredient")[0]!);
-    const modal = screen.getByTestId("ingredient-modal");
-    await user.type(within(modal).getByTestId("modal-ingredient-name"), "Pasta");
-    await user.click(within(modal).getByText("Done"));
+    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    const modal = screen.getByTestId('ingredient-modal');
+    await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Pasta');
+    await user.click(within(modal).getByText('Done'));
 
-    await user.click(screen.getByTestId("duplicate-cancel-btn"));
+    await user.click(screen.getByTestId('duplicate-cancel-btn'));
 
     // Dialog should be gone but modal stays open (ingredient wasn't removed)
-    expect(screen.queryByTestId("duplicate-warning-dialog")).not.toBeInTheDocument();
+    expect(screen.queryByTestId('duplicate-warning-dialog')).not.toBeInTheDocument();
   });
 });
 
-describe.skip("F045: Household-specific edits do not mutate catalog", () => {
-  it("editing a catalog-linked ingredient does not change the master catalog", async () => {
-    const catalogPastaBefore = MASTER_CATALOG.find((i) => i.name === "pasta")!;
+describe.skip('F045: Household-specific edits do not mutate catalog', () => {
+  it('editing a catalog-linked ingredient does not change the master catalog', async () => {
+    const catalogPastaBefore = MASTER_CATALOG.find((i) => i.name === 'pasta')!;
     const originalTags = [...catalogPastaBefore.tags];
 
     seedHousehold();
     const user = userEvent.setup();
     renderPage();
 
-    await user.type(screen.getByTestId("ingredient-search"), "Pasta");
+    await user.type(screen.getByTestId('ingredient-search'), 'Pasta');
     const rows = screen.getAllByTestId(/^ingredient-row-/);
     await user.click(rows[0]!);
 
-    const modal = screen.getByTestId("ingredient-modal");
+    const modal = screen.getByTestId('ingredient-modal');
     // Add a custom tag
-    const tagInput = within(modal).getByPlaceholderText("Custom tag");
-    await user.type(tagInput, "my-custom-tag");
-    await user.click(within(modal).getByText("Add tag"));
-    await user.click(within(modal).getByText("Done"));
+    const tagInput = within(modal).getByPlaceholderText('Custom tag');
+    await user.type(tagInput, 'my-custom-tag');
+    await user.click(within(modal).getByText('Add tag'));
+    await user.click(within(modal).getByText('Done'));
 
     // Auto-save persists; master catalog unchanged
-    const catalogPastaAfter = MASTER_CATALOG.find((i) => i.name === "pasta")!;
+    const catalogPastaAfter = MASTER_CATALOG.find((i) => i.name === 'pasta')!;
     expect(catalogPastaAfter.tags).toEqual(originalTags);
-    expect(catalogPastaAfter.tags).not.toContain("my-custom-tag");
+    expect(catalogPastaAfter.tags).not.toContain('my-custom-tag');
 
     // Household ingredient has the custom tag
-    const household = loadHousehold("h-f045")!;
-    const pasta = household.ingredients.find((i) => i.name === "pasta");
-    expect(pasta!.tags).toContain("my-custom-tag");
+    const household = loadHousehold('h-f045')!;
+    const pasta = household.ingredients.find((i) => i.name === 'pasta');
+    expect(pasta!.tags).toContain('my-custom-tag');
   });
 
-  it("editing freezerFriendly and babySafe on catalog item does not affect catalog", async () => {
+  it('editing freezerFriendly and babySafe on catalog item does not affect catalog', async () => {
     seedHousehold();
     const user = userEvent.setup();
     renderPage();
 
     // Find an ingredient that is not freezer-friendly in catalog
-    await user.type(screen.getByTestId("ingredient-search"), "Pasta");
+    await user.type(screen.getByTestId('ingredient-search'), 'Pasta');
     const rows = screen.getAllByTestId(/^ingredient-row-/);
     await user.click(rows[0]!);
 
-    const modal = screen.getByTestId("ingredient-modal");
-    const freezerCheckbox = within(modal).getByLabelText("Freezer friendly");
+    const modal = screen.getByTestId('ingredient-modal');
+    const freezerCheckbox = within(modal).getByLabelText('Freezer friendly');
     await user.click(freezerCheckbox);
-    await user.click(within(modal).getByText("Done"));
+    await user.click(within(modal).getByText('Done'));
 
     // Auto-save persists
-    const catalogPasta = MASTER_CATALOG.find((i) => i.name === "pasta")!;
+    const catalogPasta = MASTER_CATALOG.find((i) => i.name === 'pasta')!;
     expect(catalogPasta.freezerFriendly).toBe(false);
 
-    const household = loadHousehold("h-f045")!;
-    const pasta = household.ingredients.find((i) => i.name === "pasta");
+    const household = loadHousehold('h-f045')!;
+    const pasta = household.ingredients.find((i) => i.name === 'pasta');
     expect(pasta!.freezerFriendly).toBe(true);
   });
 });
 
-describe.skip("F045: Backward compatibility with existing manual ingredients", () => {
-  it("previously saved manual ingredients without source field work without migration", () => {
+describe.skip('F045: Backward compatibility with existing manual ingredients', () => {
+  it('previously saved manual ingredients without source field work without migration', () => {
     // Simulate old-format ingredient without source/catalogId
     const legacyIngredient: Ingredient = {
-      id: "ing-legacy",
-      name: "Legacy item",
-      category: "pantry",
-      tags: ["staple"],
-      shelfLifeHint: "long",
+      id: 'ing-legacy',
+      name: 'Legacy item',
+      category: 'pantry',
+      tags: ['staple'],
+      shelfLifeHint: 'long',
       freezerFriendly: false,
       babySafeWithAdaptation: false,
     };
     seedHousehold([legacyIngredient]);
     renderPage();
 
-    expect(screen.getByText("Legacy item")).toBeInTheDocument();
+    expect(screen.getByText('Legacy item')).toBeInTheDocument();
   });
 
-  it("old ingredients without source render correctly in modal", async () => {
+  it('old ingredients without source render correctly in modal', async () => {
     const legacyIngredient: Ingredient = {
-      id: "ing-legacy",
-      name: "Old cheese",
-      category: "dairy",
+      id: 'ing-legacy',
+      name: 'Old cheese',
+      category: 'dairy',
       tags: [],
-      shelfLifeHint: "",
+      shelfLifeHint: '',
       freezerFriendly: false,
       babySafeWithAdaptation: false,
     };
@@ -293,21 +310,21 @@ describe.skip("F045: Backward compatibility with existing manual ingredients", (
     renderPage();
 
     // Search for the legacy item
-    await user.type(screen.getByTestId("ingredient-search"), "Old cheese");
+    await user.type(screen.getByTestId('ingredient-search'), 'Old cheese');
     const rows = screen.getAllByTestId(/^ingredient-row-/);
     await user.click(rows[0]!);
 
     // Should show "Manual" since source is undefined (not "catalog")
-    expect(screen.getByTestId("ingredient-source-label")).toHaveTextContent("Manual");
+    expect(screen.getByTestId('ingredient-source-label')).toHaveTextContent('Manual');
   });
 
-  it("old ingredients can be saved and reloaded without errors", async () => {
+  it('old ingredients can be saved and reloaded without errors', async () => {
     const legacyIngredient: Ingredient = {
-      id: "ing-legacy",
-      name: "Old item",
-      category: "pantry",
-      tags: ["rescue"],
-      shelfLifeHint: "",
+      id: 'ing-legacy',
+      name: 'Old item',
+      category: 'pantry',
+      tags: ['rescue'],
+      shelfLifeHint: '',
       freezerFriendly: true,
       babySafeWithAdaptation: false,
     };
@@ -315,11 +332,11 @@ describe.skip("F045: Backward compatibility with existing manual ingredients", (
     renderPage();
 
     // Auto-save persists on load
-    const household = loadHousehold("h-f045")!;
-    const oldItem = household.ingredients.find((i) => i.name === "Old item");
+    const household = loadHousehold('h-f045')!;
+    const oldItem = household.ingredients.find((i) => i.name === 'Old item');
     expect(oldItem).toBeDefined();
-    expect(oldItem!.id).toBe("ing-legacy");
-    expect(oldItem!.tags).toContain("rescue");
+    expect(oldItem!.id).toBe('ing-legacy');
+    expect(oldItem!.tags).toContain('rescue');
     expect(oldItem!.freezerFriendly).toBe(true);
   });
 });

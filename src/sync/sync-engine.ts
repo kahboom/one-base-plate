@@ -249,9 +249,7 @@ export async function flushQueuedSync(): Promise<void> {
         `${SYNC_QUEUE_LOG_PREFIX} large household snapshot ~${bytes} bytes (${h.id}); consider trimming recipes/ingredients or future granular sync`,
       );
     } else if (bytes >= PAYLOAD_DEBUG_LOG_BYTES) {
-      console.debug(
-        `${SYNC_QUEUE_LOG_PREFIX} flush payload ~${bytes} bytes for household ${h.id}`,
-      );
+      console.debug(`${SYNC_QUEUE_LOG_PREFIX} flush payload ~${bytes} bytes for household ${h.id}`);
     }
   }
 

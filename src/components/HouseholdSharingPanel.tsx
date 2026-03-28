@@ -1,16 +1,16 @@
-import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, Button, Chip, ConfirmDialog } from "./ui";
-import { useAuth } from "../auth/useAuth";
-import { loadHousehold } from "../storage";
-import { getCurrentUserId } from "../sync/sync-engine";
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, Button, Chip, ConfirmDialog } from './ui';
+import { useAuth } from '../auth/useAuth';
+import { loadHousehold } from '../storage';
+import { getCurrentUserId } from '../sync/sync-engine';
 import {
   fetchHouseholdMembers,
   removeHouseholdMember,
   resolveRemoteHouseholdPk,
-} from "../sync/remote-repository";
-import { createInvite, listInvites, revokeInvite } from "../sync/invite-service";
-import type { HouseholdMember, HouseholdInvite } from "../sync/types";
+} from '../sync/remote-repository';
+import { createInvite, listInvites, revokeInvite } from '../sync/invite-service';
+import type { HouseholdMember, HouseholdInvite } from '../sync/types';
 
 interface Props {
   householdId: string;
@@ -32,7 +32,7 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
   const [leavingHousehold, setLeavingHousehold] = useState(false);
   const [remoteHouseholdPk, setRemoteHouseholdPk] = useState<string | null>(null);
 
-  const isOwner = members.some((m) => m.userId === currentUserId && m.role === "owner");
+  const isOwner = members.some((m) => m.userId === currentUserId && m.role === 'owner');
 
   const refresh = useCallback(async () => {
     setRemoteHouseholdPk(null);
@@ -40,7 +40,11 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
       const uid = getCurrentUserId();
       if (!uid) return;
 
-      const pk = await resolveRemoteHouseholdPk(householdId, uid, loadHousehold(householdId)?.cloudHouseholdId);
+      const pk = await resolveRemoteHouseholdPk(
+        householdId,
+        uid,
+        loadHousehold(householdId)?.cloudHouseholdId,
+      );
       setRemoteHouseholdPk(pk);
 
       if (!pk) {
@@ -58,7 +62,7 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
       setInvites(inviteData);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load sharing info");
+      setError(err instanceof Error ? err.message : 'Failed to load sharing info');
     } finally {
       setLoading(false);
     }
@@ -77,7 +81,7 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
       setInvites((prev) => [result.invite, ...prev]);
       await copyToClipboard(result.link, result.invite.code);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create invite");
+      setError(err instanceof Error ? err.message : 'Failed to create invite');
     } finally {
       setCreatingInvite(false);
     }
@@ -99,7 +103,7 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
       await revokeInvite(inviteId);
       setInvites((prev) => prev.filter((i) => i.id !== inviteId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to revoke invite");
+      setError(err instanceof Error ? err.message : 'Failed to revoke invite');
     }
   }
 
@@ -109,7 +113,7 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
       await removeHouseholdMember(remoteHouseholdPk, removingMember.userId);
       setMembers((prev) => prev.filter((m) => m.userId !== removingMember.userId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to remove member");
+      setError(err instanceof Error ? err.message : 'Failed to remove member');
     } finally {
       setRemovingMember(null);
     }
@@ -119,9 +123,9 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
     if (!currentUserId || !remoteHouseholdPk) return;
     try {
       await removeHouseholdMember(remoteHouseholdPk, currentUserId);
-      navigate("/households");
+      navigate('/households');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to leave household");
+      setError(err instanceof Error ? err.message : 'Failed to leave household');
     } finally {
       setLeavingHousehold(false);
     }
@@ -144,19 +148,23 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
         <h2 className="mb-4 text-sm font-semibold text-text-primary">Household sharing</h2>
 
         {error && (
-          <p className="mb-3 text-xs text-danger" data-testid="sharing-error">{error}</p>
+          <p className="mb-3 text-xs text-danger" data-testid="sharing-error">
+            {error}
+          </p>
         )}
 
         {!error && remoteHouseholdPk === null && (
           <p className="mb-4 text-xs text-text-muted" data-testid="sharing-not-cloud-linked">
-            This household isn’t on your cloud account yet. Use <strong>Sync now</strong> in the sync section
-            above while signed in; after the first successful sync, members and invites load here (your local
-            id such as H001 stays the same in the URL).
+            This household isn’t on your cloud account yet. Use <strong>Sync now</strong> in the
+            sync section above while signed in; after the first successful sync, members and invites
+            load here (your local id such as H001 stays the same in the URL).
           </p>
         )}
 
         <div className="mb-4">
-          <h3 className="mb-2 text-xs font-medium text-text-secondary uppercase tracking-wide">Members</h3>
+          <h3 className="mb-2 text-xs font-medium text-text-secondary uppercase tracking-wide">
+            Members
+          </h3>
           <div className="space-y-2" data-testid="member-list">
             {members.map((member) => (
               <div
@@ -166,11 +174,9 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-sm text-text-primary truncate">
-                    {member.displayName || member.email || "Unknown"}
+                    {member.displayName || member.email || 'Unknown'}
                   </span>
-                  <Chip variant={member.role === "owner" ? "info" : "neutral"}>
-                    {member.role}
-                  </Chip>
+                  <Chip variant={member.role === 'owner' ? 'info' : 'neutral'}>{member.role}</Chip>
                   {member.userId === currentUserId && (
                     <span className="text-xs text-text-muted">(you)</span>
                   )}
@@ -192,9 +198,12 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
 
         {isOwner && (
           <div className="mb-4">
-            <h3 className="mb-2 text-xs font-medium text-text-secondary uppercase tracking-wide">Invite</h3>
+            <h3 className="mb-2 text-xs font-medium text-text-secondary uppercase tracking-wide">
+              Invite
+            </h3>
             <p className="mb-3 text-xs text-text-muted">
-              Share an invite link so someone else can join this household. They'll need to sign in first.
+              Share an invite link so someone else can join this household. They'll need to sign in
+              first.
             </p>
             <Button
               small
@@ -203,7 +212,7 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
               data-testid="create-invite-btn"
               onClick={handleCreateInvite}
             >
-              {creatingInvite ? "Creating..." : "Generate invite link"}
+              {creatingInvite ? 'Creating...' : 'Generate invite link'}
             </Button>
 
             {invites.length > 0 && (
@@ -230,7 +239,7 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
                           data-testid={`copy-invite-${invite.code}`}
                           onClick={() => copyToClipboard(link, invite.code)}
                         >
-                          {isCopied ? "Copied!" : "Copy link"}
+                          {isCopied ? 'Copied!' : 'Copy link'}
                         </Button>
                         <Button
                           variant="ghost"
@@ -266,7 +275,7 @@ export default function HouseholdSharingPanel({ householdId }: Props) {
       <ConfirmDialog
         open={!!removingMember}
         title="Remove member"
-        message={`Remove ${removingMember?.displayName || removingMember?.email || "this member"} from the household? They will lose access to shared data.`}
+        message={`Remove ${removingMember?.displayName || removingMember?.email || 'this member'} from the household? They will lose access to shared data.`}
         confirmLabel="Remove"
         onConfirm={handleRemoveMember}
         onCancel={() => setRemovingMember(null)}

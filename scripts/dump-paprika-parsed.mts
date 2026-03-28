@@ -2,22 +2,22 @@
  * One-off: parse a .paprikarecipes file with app logic and write JSON.
  * Usage: npx tsx scripts/dump-paprika-parsed.mts <path-to-export.paprikarecipes> [out.json]
  */
-import { readFile, writeFile } from "node:fs/promises";
-import { parsePaprikaFile, parsePaprikaRecipes } from "../src/paprika-parser.ts";
+import { readFile, writeFile } from 'node:fs/promises';
+import { parsePaprikaFile, parsePaprikaRecipes } from '../src/paprika-parser.ts';
 
-const inPath = process.argv[2] ?? "";
+const inPath = process.argv[2] ?? '';
 const outPath =
   process.argv[3] ??
-  inPath.replace(/\.paprikarecipes$/i, "-parsed.json").replace(/\.[^/]+$/, "-parsed.json");
+  inPath.replace(/\.paprikarecipes$/i, '-parsed.json').replace(/\.[^/]+$/, '-parsed.json');
 
 if (!inPath) {
-  console.error("Usage: npx tsx scripts/dump-paprika-parsed.mts <file.paprikarecipes> [out.json]");
+  console.error('Usage: npx tsx scripts/dump-paprika-parsed.mts <file.paprikarecipes> [out.json]');
   process.exit(1);
 }
 
 const buf = await readFile(inPath);
-const file = new File([buf], inPath.split("/").pop() ?? "export.paprikarecipes", {
-  type: "application/zip",
+const file = new File([buf], inPath.split('/').pop() ?? 'export.paprikarecipes', {
+  type: 'application/zip',
 });
 const recipes = await parsePaprikaFile(file);
 const parsed = parsePaprikaRecipes(recipes, [], []);
@@ -25,7 +25,7 @@ const parsed = parsePaprikaRecipes(recipes, [], []);
 const out = {
   sourceFile: inPath,
   generatedAt: new Date().toISOString(),
-  parser: "parsePaprikaFile + parsePaprikaRecipes (empty household)",
+  parser: 'parsePaprikaFile + parsePaprikaRecipes (empty household)',
   recipeCount: parsed.length,
   recipes: parsed.map((r) => ({
     name: r.raw.name,
@@ -55,5 +55,5 @@ const out = {
   })),
 };
 
-await writeFile(outPath, JSON.stringify(out, null, 2), "utf8");
+await writeFile(outPath, JSON.stringify(out, null, 2), 'utf8');
 console.log(`Wrote ${outPath} (${parsed.length} recipes)`);

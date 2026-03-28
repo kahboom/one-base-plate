@@ -1,11 +1,7 @@
-import { useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { PageHeader, Card, Button, ConfirmDialog, useConfirm, FieldLabel } from "../components/ui";
-import {
-  loadThemePreference,
-  saveThemePreference,
-  type ThemePreference,
-} from "../theme";
+import { useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { PageHeader, Card, Button, ConfirmDialog, useConfirm, FieldLabel } from '../components/ui';
+import { loadThemePreference, saveThemePreference, type ThemePreference } from '../theme';
 import {
   clearAllHouseholdsAndDefault,
   clearDefaultHouseholdId,
@@ -19,19 +15,19 @@ import {
   mergeSeedRecipesForHousehold,
   resetHouseholdIngredientsToSeed,
   saveDefaultHouseholdId,
-} from "../storage";
-import { clearImportSession } from "../paprika-parser";
-import AuthUI from "../components/AuthUI";
-import SyncRecoveryPanel from "../components/SyncRecoveryPanel";
-import HouseholdSharingPanel from "../components/HouseholdSharingPanel";
-import { useAuth } from "../auth/useAuth";
+} from '../storage';
+import { clearImportSession } from '../paprika-parser';
+import AuthUI from '../components/AuthUI';
+import SyncRecoveryPanel from '../components/SyncRecoveryPanel';
+import HouseholdSharingPanel from '../components/HouseholdSharingPanel';
+import { useAuth } from '../auth/useAuth';
 
 export default function Settings() {
   const { householdId } = useParams<{ householdId: string }>();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
-  const [dataImportMessage, setDataImportMessage] = useState<"success" | null>(null);
+  const [dataImportMessage, setDataImportMessage] = useState<'success' | null>(null);
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
   const {
     pending: pendingBaseMeals,
@@ -57,7 +53,9 @@ export default function Settings() {
     confirm: confirmSeedIngredients,
     cancel: cancelSeedIngredients,
   } = useConfirm();
-  const [themePreference, setThemePreference] = useState<ThemePreference>(() => loadThemePreference());
+  const [themePreference, setThemePreference] = useState<ThemePreference>(() =>
+    loadThemePreference(),
+  );
 
   function setTheme(pref: ThemePreference) {
     saveThemePreference(pref);
@@ -66,11 +64,11 @@ export default function Settings() {
 
   function handleExport() {
     const json = exportHouseholdsJSON();
-    const blob = new Blob([json], { type: "application/json" });
+    const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = "onebaseplate-export.json";
+    a.download = 'onebaseplate-export.json';
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -86,7 +84,7 @@ export default function Settings() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const result = importHouseholdsJSON(reader.result as string, "merge");
+        const result = importHouseholdsJSON(reader.result as string, 'merge');
         const storedDefault = loadDefaultHouseholdId();
         if (!storedDefault || !result.some((h) => h.id === storedDefault)) {
           const fallbackId = result[0]?.id ?? null;
@@ -96,26 +94,26 @@ export default function Settings() {
             clearDefaultHouseholdId();
           }
         }
-        setDataImportMessage("success");
+        setDataImportMessage('success');
       } catch {
-        alert("Invalid JSON file. Please check the file format.");
+        alert('Invalid JSON file. Please check the file format.');
       }
     };
     reader.readAsText(file);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
   function handleClearClick() {
-    requestConfirm("", () => {
+    requestConfirm('', () => {
       clearAllHouseholdsAndDefault();
       clearImportSession();
-      navigate("/households");
+      navigate('/households');
     });
   }
 
   function handleClearBaseMealsClick() {
     if (!householdId) return;
-    requestConfirmBaseMeals("", () => {
+    requestConfirmBaseMeals('', () => {
       clearHouseholdBaseMealsAndPlanning(householdId);
       clearImportSession();
     });
@@ -123,7 +121,7 @@ export default function Settings() {
 
   function handleClearRecipesClick() {
     if (!householdId) return;
-    requestConfirmRecipes("", () => {
+    requestConfirmRecipes('', () => {
       clearHouseholdRecipes(householdId);
       clearImportSession();
     });
@@ -131,20 +129,20 @@ export default function Settings() {
 
   function handleRestoreSeedRecipesClick() {
     if (!householdId) return;
-    requestConfirmSeedRecipes("", () => {
+    requestConfirmSeedRecipes('', () => {
       const ok = mergeSeedRecipesForHousehold(householdId);
       if (!ok) {
-        alert("No bundled seed recipes are available for this household id.");
+        alert('No bundled seed recipes are available for this household id.');
       }
     });
   }
 
   function handleResetSeedIngredientsClick() {
     if (!householdId) return;
-    requestConfirmSeedIngredients("", () => {
+    requestConfirmSeedIngredients('', () => {
       const ok = resetHouseholdIngredientsToSeed(householdId);
       if (!ok) {
-        alert("No bundled seed ingredients are available for this household id.");
+        alert('No bundled seed ingredients are available for this household id.');
       }
     });
   }
@@ -172,9 +170,9 @@ export default function Settings() {
           >
             {(
               [
-                { value: "light" as const, label: "Light" },
-                { value: "dark" as const, label: "Dark" },
-                { value: "system" as const, label: "System" },
+                { value: 'light' as const, label: 'Light' },
+                { value: 'dark' as const, label: 'Dark' },
+                { value: 'system' as const, label: 'System' },
               ] as const
             ).map(({ value, label }) => (
               <button
@@ -185,8 +183,8 @@ export default function Settings() {
                 data-testid={`settings-theme-${value}`}
                 className={`rounded-sm border px-4 py-2 text-sm font-medium transition-colors min-h-[44px] ${
                   themePreference === value
-                    ? "border-brand bg-brand-light text-brand"
-                    : "border-border-default bg-surface text-text-primary hover:bg-bg"
+                    ? 'border-brand bg-brand-light text-brand'
+                    : 'border-border-default bg-surface text-text-primary hover:bg-bg'
                 }`}
                 onClick={() => setTheme(value)}
               >
@@ -203,10 +201,11 @@ export default function Settings() {
       <Card className="mb-6">
         <h2 className="mb-3 text-sm font-semibold text-text-primary">Data</h2>
         <p className="mb-4 text-sm text-text-secondary">
-          Export or import all households (members, ingredients, recipe library, base meals, weekly plans). Import
-          merges with existing data by household id. You can remove only this household&apos;s base meals and plans,
-          or only its recipe library, while keeping members. For households that include bundled seed data, you can
-          restore seed recipes or reset the ingredient catalog to the default list.
+          Export or import all households (members, ingredients, recipe library, base meals, weekly
+          plans). Import merges with existing data by household id. You can remove only this
+          household&apos;s base meals and plans, or only its recipe library, while keeping members.
+          For households that include bundled seed data, you can restore seed recipes or reset the
+          ingredient catalog to the default list.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button data-testid="settings-export-btn" onClick={handleExport}>
@@ -215,7 +214,7 @@ export default function Settings() {
           <Button data-testid="settings-import-btn" onClick={handleImportClick}>
             Import data
           </Button>
-          {dataImportMessage === "success" && (
+          {dataImportMessage === 'success' && (
             <p className="w-full text-sm text-success-text" data-testid="settings-import-success">
               Data imported and merged successfully.
             </p>
@@ -228,19 +227,34 @@ export default function Settings() {
             onChange={handleImportFile}
             data-testid="settings-import-file-input"
           />
-          <Button variant="danger" data-testid="settings-clear-base-meals-btn" onClick={handleClearBaseMealsClick}>
+          <Button
+            variant="danger"
+            data-testid="settings-clear-base-meals-btn"
+            onClick={handleClearBaseMealsClick}
+          >
             Remove all base meals
           </Button>
-          <Button variant="danger" data-testid="settings-clear-recipes-btn" onClick={handleClearRecipesClick}>
+          <Button
+            variant="danger"
+            data-testid="settings-clear-recipes-btn"
+            onClick={handleClearRecipesClick}
+          >
             Remove all recipes
           </Button>
           {seedRecipeCount > 0 && (
-            <Button data-testid="settings-restore-seed-recipes-btn" onClick={handleRestoreSeedRecipesClick}>
+            <Button
+              data-testid="settings-restore-seed-recipes-btn"
+              onClick={handleRestoreSeedRecipesClick}
+            >
               Restore seed recipes ({seedRecipeCount})
             </Button>
           )}
           {seedIngredientCount > 0 && (
-            <Button variant="danger" data-testid="settings-reset-seed-ingredients-btn" onClick={handleResetSeedIngredientsClick}>
+            <Button
+              variant="danger"
+              data-testid="settings-reset-seed-ingredients-btn"
+              onClick={handleResetSeedIngredientsClick}
+            >
               Reset ingredients to defaults ({seedIngredientCount})
             </Button>
           )}

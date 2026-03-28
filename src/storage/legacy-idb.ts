@@ -1,6 +1,6 @@
-import { openDB } from "idb";
-import type { Household } from "../types";
-import { LEGACY_IDB_NAME, LEGACY_IDB_STORE, STORAGE_KEY } from "./constants";
+import { openDB } from 'idb';
+import type { Household } from '../types';
+import { LEGACY_IDB_NAME, LEGACY_IDB_STORE, STORAGE_KEY } from './constants';
 
 /** Read households from pre-Dexie `idb` KV fallback (quota migration). */
 export async function readLegacyKvHouseholds(): Promise<Household[] | undefined> {

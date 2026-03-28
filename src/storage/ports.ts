@@ -1,5 +1,5 @@
-import type { Household } from "../types";
-import type { RemoteHousehold } from "../sync/types";
+import type { Household } from '../types';
+import type { RemoteHousehold } from '../sync/types';
 
 /**
  * Stable seam for persisted household aggregates. A future Expo / SQLite adapter

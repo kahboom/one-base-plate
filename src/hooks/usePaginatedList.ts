@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 export type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
@@ -24,9 +24,7 @@ export function usePaginatedList<T>(
   items: T[],
   options: UsePaginatedListOptions,
 ): UsePaginatedListResult<T> {
-  const [pageSize, setPageSize] = useState<PageSize>(
-    options.initialPageSize ?? DEFAULT_PAGE_SIZE,
-  );
+  const [pageSize, setPageSize] = useState<PageSize>(options.initialPageSize ?? DEFAULT_PAGE_SIZE);
   const [page, setPageRaw] = useState(1);
 
   const totalPages = Math.max(1, Math.ceil(items.length / pageSize));

@@ -6,7 +6,7 @@ import type {
   MealComponent,
   Recipe,
   WeeklyPlan,
-} from "./types";
+} from './types';
 
 const TRAILING_PUNCTUATION_RE = /[.,;:!?]+$/;
 
@@ -30,12 +30,7 @@ export interface IngredientMigrationReport {
 }
 
 export function normalizeIngredientName(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, " ")
-    .replace(TRAILING_PUNCTUATION_RE, "")
-    .trim();
+  return name.toLowerCase().trim().replace(/\s+/g, ' ').replace(TRAILING_PUNCTUATION_RE, '').trim();
 }
 
 function ingredientCompletenessScore(ingredient: Ingredient): number {
@@ -46,7 +41,7 @@ function ingredientCompletenessScore(ingredient: Ingredient): number {
   if (ingredient.babySafeWithAdaptation) score += 1;
   if (ingredient.imageUrl?.trim()) score += 1;
   if (ingredient.catalogId?.trim()) score += 1;
-  if (ingredient.source === "catalog") score += 1;
+  if (ingredient.source === 'catalog') score += 1;
   return score;
 }
 
@@ -64,9 +59,7 @@ function preferLongerText(current: string, candidate: string): string {
   const candidateTrimmed = candidate.trim();
   if (!currentTrimmed) return candidateTrimmed;
   if (!candidateTrimmed) return currentTrimmed;
-  return candidateTrimmed.length > currentTrimmed.length
-    ? candidateTrimmed
-    : currentTrimmed;
+  return candidateTrimmed.length > currentTrimmed.length ? candidateTrimmed : currentTrimmed;
 }
 
 function mergeIngredientMetadata(
@@ -81,17 +74,16 @@ function mergeIngredientMetadata(
     tags: Array.from(tags),
     shelfLifeHint: preferLongerText(survivor.shelfLifeHint, duplicate.shelfLifeHint),
     freezerFriendly: survivor.freezerFriendly || duplicate.freezerFriendly,
-    babySafeWithAdaptation:
-      survivor.babySafeWithAdaptation || duplicate.babySafeWithAdaptation,
+    babySafeWithAdaptation: survivor.babySafeWithAdaptation || duplicate.babySafeWithAdaptation,
     imageUrl:
       survivor.imageUrl?.trim() || duplicate.imageUrl?.trim()
         ? survivor.imageUrl?.trim() || duplicate.imageUrl?.trim()
         : undefined,
     catalogId: survivor.catalogId?.trim() || duplicate.catalogId?.trim() || undefined,
     source:
-      survivor.source === "catalog" || duplicate.source === "catalog"
-        ? "catalog"
-        : survivor.source ?? duplicate.source,
+      survivor.source === 'catalog' || duplicate.source === 'catalog'
+        ? 'catalog'
+        : (survivor.source ?? duplicate.source),
   };
 }
 
@@ -130,10 +122,7 @@ function remapBaseMeals(
   let updates = 0;
 
   const nextMeals = meals.map((meal) => {
-    const { components, updates: componentUpdates } = remapMealComponents(
-      meal.components,
-      idRemap,
-    );
+    const { components, updates: componentUpdates } = remapMealComponents(meal.components, idRemap);
     updates += componentUpdates;
     return { ...meal, components };
   });
@@ -204,9 +193,10 @@ function remapWeeklyPlans(
   return { plans: nextPlans, updates };
 }
 
-export function migrateHouseholdIngredients(
-  household: Household,
-): { household: Household; report: HouseholdMigrationReport } {
+export function migrateHouseholdIngredients(household: Household): {
+  household: Household;
+  report: HouseholdMigrationReport;
+} {
   const normalizedById = new Map<string, string>();
   const groupedByNormalized = new Map<string, Ingredient[]>();
 
@@ -226,7 +216,7 @@ export function migrateHouseholdIngredients(
   for (const [groupKey, groupIngredients] of groupedByNormalized.entries()) {
     if (groupIngredients.length === 0) continue;
 
-    if (groupKey.startsWith("__empty__")) {
+    if (groupKey.startsWith('__empty__')) {
       const ingredient = groupIngredients[0]!;
       idRemap.set(ingredient.id, ingredient.id);
       mergedIngredients.push(ingredient);
@@ -249,7 +239,9 @@ export function migrateHouseholdIngredients(
   }
 
   const normalizedNameChanges = household.ingredients.reduce((count, ingredient) => {
-    return count + (ingredient.name !== (normalizedById.get(ingredient.id) ?? ingredient.name) ? 1 : 0);
+    return (
+      count + (ingredient.name !== (normalizedById.get(ingredient.id) ?? ingredient.name) ? 1 : 0)
+    );
   }, 0);
 
   const ingredientNameById = new Map(mergedIngredients.map((ing) => [ing.id, ing.name]));
@@ -288,13 +280,13 @@ export function migrateHouseholdIngredients(
   };
 }
 
-export function migrateHouseholdsIngredients(
-  households: Household[],
-): { households: Household[]; report: IngredientMigrationReport } {
+export function migrateHouseholdsIngredients(households: Household[]): {
+  households: Household[];
+  report: IngredientMigrationReport;
+} {
   const reports: HouseholdMigrationReport[] = [];
   const migratedHouseholds = households.map((household) => {
-    const { household: migratedHousehold, report } =
-      migrateHouseholdIngredients(household);
+    const { household: migratedHousehold, report } = migrateHouseholdIngredients(household);
     reports.push(report);
     return migratedHousehold;
   });

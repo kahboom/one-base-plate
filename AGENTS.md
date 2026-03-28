@@ -31,20 +31,20 @@ npm run db:seed        # refresh src/seed-data.json from fixtures
 
 ## Repository map
 
-| Area | Role |
-|------|------|
-| `src/types.ts` | Domain types — keep in sync with PRD entities |
-| `src/storage.ts`, `src/storage/` | Local DB, migrations, ports |
-| `src/sync/` | Sync engine and remote adapter |
-| `src/auth/` | Supabase auth context/hooks |
-| `src/pages/` | Top-level routes / screens |
-| `src/components/` | Reusable UI |
-| `src/lib/`, `src/catalog.ts` | Business logic, parsing, sorting, tags |
-| `tests/` | Vitest specs; many align to PRD feature IDs (`fNNN-…`) |
-| `fixtures/` | Household and meal JSON fixtures |
-| `PRD.json` | Structured requirements, feature pass/fail, uiSpec |
-| `agent-progress.md` | Session handoff and completed work log |
-| `supabase/migrations/` | SQL reference for remote schema + RLS |
+| Area                             | Role                                                   |
+| -------------------------------- | ------------------------------------------------------ |
+| `src/types.ts`                   | Domain types — keep in sync with PRD entities          |
+| `src/storage.ts`, `src/storage/` | Local DB, migrations, ports                            |
+| `src/sync/`                      | Sync engine and remote adapter                         |
+| `src/auth/`                      | Supabase auth context/hooks                            |
+| `src/pages/`                     | Top-level routes / screens                             |
+| `src/components/`                | Reusable UI                                            |
+| `src/lib/`, `src/catalog.ts`     | Business logic, parsing, sorting, tags                 |
+| `tests/`                         | Vitest specs; many align to PRD feature IDs (`fNNN-…`) |
+| `fixtures/`                      | Household and meal JSON fixtures                       |
+| `PRD.json`                       | Structured requirements, feature pass/fail, uiSpec     |
+| `agent-progress.md`              | Session handoff and completed work log                 |
+| `supabase/migrations/`           | SQL reference for remote schema + RLS                  |
 
 ## How to work safely
 

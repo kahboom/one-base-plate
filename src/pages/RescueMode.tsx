@@ -1,19 +1,23 @@
-import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import type { Household, DayPlan } from "../types";
-import { loadHousehold, saveHousehold } from "../storage";
+import { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import type { Household, DayPlan } from '../types';
+import { loadHousehold, saveHousehold } from '../storage';
 import {
   generateRescueMeals,
   generateAssemblyVariants,
   type RescueScenario,
   type RescueMeal,
-} from "../planner";
-import { PageHeader, Card, Button, Chip, Section, EmptyState } from "../components/ui";
+} from '../planner';
+import { PageHeader, Card, Button, Chip, Section, EmptyState } from '../components/ui';
 
 const SCENARIOS: { id: RescueScenario; label: string; description: string }[] = [
-  { id: "low-energy", label: "Low energy", description: "Keep it simple tonight" },
-  { id: "low-time", label: "Low time", description: "Fastest acceptable dinner" },
-  { id: "everyone-melting-down", label: "Everyone melting down", description: "Safe foods first, minimum fuss" },
+  { id: 'low-energy', label: 'Low energy', description: 'Keep it simple tonight' },
+  { id: 'low-time', label: 'Low time', description: 'Fastest acceptable dinner' },
+  {
+    id: 'everyone-melting-down',
+    label: 'Everyone melting down',
+    description: 'Safe foods first, minimum fuss',
+  },
 ];
 
 export default function RescueMode() {
@@ -52,20 +56,22 @@ export default function RescueMode() {
     if (!meal) return;
 
     const variants = generateAssemblyVariants(meal, household.members, household.ingredients);
-    const todayPlan: DayPlan = { day: "Tonight", baseMealId: mealId, variants };
+    const todayPlan: DayPlan = { day: 'Tonight', baseMealId: mealId, variants };
 
     const updated = { ...household };
     if (updated.weeklyPlans.length === 0) {
-      updated.weeklyPlans = [{
-        id: `plan-rescue-${Date.now()}`,
-        days: [todayPlan],
-        selectedBaseMeals: [mealId],
-        generatedGroceryList: [],
-        notes: "Rescue meal",
-      }];
+      updated.weeklyPlans = [
+        {
+          id: `plan-rescue-${Date.now()}`,
+          days: [todayPlan],
+          selectedBaseMeals: [mealId],
+          generatedGroceryList: [],
+          notes: 'Rescue meal',
+        },
+      ];
     } else {
       const plan = { ...updated.weeklyPlans[updated.weeklyPlans.length - 1]! };
-      const existingTonightIdx = plan.days.findIndex((d) => d.day === "Tonight");
+      const existingTonightIdx = plan.days.findIndex((d) => d.day === 'Tonight');
       if (existingTonightIdx >= 0) {
         plan.days = [...plan.days];
         plan.days[existingTonightIdx] = todayPlan;
@@ -85,19 +91,29 @@ export default function RescueMode() {
     const meal = household.baseMeals.find((m) => m.id === mealId);
     if (!meal) return;
 
-    const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const DAY_LABELS = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
     const variants = generateAssemblyVariants(meal, household.members, household.ingredients);
 
     const updated = { ...household };
     if (updated.weeklyPlans.length === 0) {
       const dayPlan: DayPlan = { day: DAY_LABELS[0]!, baseMealId: mealId, variants };
-      updated.weeklyPlans = [{
-        id: `plan-rescue-${Date.now()}`,
-        days: [dayPlan],
-        selectedBaseMeals: [mealId],
-        generatedGroceryList: [],
-        notes: "",
-      }];
+      updated.weeklyPlans = [
+        {
+          id: `plan-rescue-${Date.now()}`,
+          days: [dayPlan],
+          selectedBaseMeals: [mealId],
+          generatedGroceryList: [],
+          notes: '',
+        },
+      ];
     } else {
       const plan = { ...updated.weeklyPlans[updated.weeklyPlans.length - 1]! };
       const usedDays = new Set(plan.days.map((d) => d.day));
@@ -122,7 +138,14 @@ export default function RescueMode() {
 
       {!hasMeals && (
         <EmptyState>
-          No meals available yet. <Link to={`/household/${householdId}/meals`} className="font-medium text-brand hover:underline">Add some base meals</Link> first.
+          No meals available yet.{' '}
+          <Link
+            to={`/household/${householdId}/meals`}
+            className="font-medium text-brand hover:underline"
+          >
+            Add some base meals
+          </Link>{' '}
+          first.
         </EmptyState>
       )}
 
@@ -148,11 +171,15 @@ export default function RescueMode() {
         <Section>
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-text-muted" data-testid="scenario-label">
-              Showing rescue meals for: <strong>{SCENARIOS.find((s) => s.id === scenario)?.label}</strong>
+              Showing rescue meals for:{' '}
+              <strong>{SCENARIOS.find((s) => s.id === scenario)?.label}</strong>
             </p>
             <Button
               small
-              onClick={() => { setScenario(null); setResults([]); }}
+              onClick={() => {
+                setScenario(null);
+                setResults([]);
+              }}
               data-testid="change-scenario"
             >
               Change scenario
@@ -165,7 +192,10 @@ export default function RescueMode() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex-1">
                     <strong className="text-lg">{r.meal.name}</strong>
-                    <p className="mt-1 text-sm text-text-secondary" data-testid={`prep-summary-${r.meal.id}`}>
+                    <p
+                      className="mt-1 text-sm text-text-secondary"
+                      data-testid={`prep-summary-${r.meal.id}`}
+                    >
                       {r.prepSummary}
                     </p>
                     <Chip variant="info" className="mt-1" data-testid={`confidence-${r.meal.id}`}>
@@ -180,7 +210,7 @@ export default function RescueMode() {
                       data-testid={`add-tonight-${r.meal.id}`}
                       disabled={addedTonight === r.meal.id}
                     >
-                      {addedTonight === r.meal.id ? "Added!" : "Add to tonight"}
+                      {addedTonight === r.meal.id ? 'Added!' : 'Add to tonight'}
                     </Button>
                     <Button
                       small
@@ -188,18 +218,24 @@ export default function RescueMode() {
                       data-testid={`add-to-week-${r.meal.id}`}
                       disabled={addedToWeek === r.meal.id}
                     >
-                      {addedToWeek === r.meal.id ? "Added!" : "Add to week"}
+                      {addedToWeek === r.meal.id ? 'Added!' : 'Add to week'}
                     </Button>
                   </div>
                 </div>
 
                 <div className="mt-3" data-testid={`rescue-assemblies-${r.meal.id}`}>
-                  <p className="mb-2 text-sm font-medium text-text-secondary">Per-person assembly</p>
+                  <p className="mb-2 text-sm font-medium text-text-secondary">
+                    Per-person assembly
+                  </p>
                   <div className="space-y-2">
                     {r.variants.map((v) => {
                       const member = household.members.find((m) => m.id === v.memberId);
                       return (
-                        <div key={v.id} className="rounded border border-border-light bg-bg p-2 text-sm" data-testid={`rescue-variant-${v.memberId}`}>
+                        <div
+                          key={v.id}
+                          className="rounded border border-border-light bg-bg p-2 text-sm"
+                          data-testid={`rescue-variant-${v.memberId}`}
+                        >
                           <strong>{member?.name ?? v.memberId}</strong>
                           <ul className="mt-1 list-disc pl-5 text-text-secondary">
                             {v.instructions.map((inst, i) => (

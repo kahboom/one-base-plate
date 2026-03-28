@@ -1,19 +1,19 @@
-import { useEffect, useState, useCallback } from "react";
-import { Link, useParams } from "react-router-dom";
-import type { Household, WeeklyPlan, IngredientCategory } from "../types";
-import { loadHousehold, toSentenceCase } from "../storage";
-import { generateGroceryList, type GroceryListItem } from "../planner";
-import { PageHeader, Card, Button, Chip, EmptyState } from "../components/ui";
+import { useEffect, useState, useCallback } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import type { Household, WeeklyPlan, IngredientCategory } from '../types';
+import { loadHousehold, toSentenceCase } from '../storage';
+import { generateGroceryList, type GroceryListItem } from '../planner';
+import { PageHeader, Card, Button, Chip, EmptyState } from '../components/ui';
 
 const CATEGORY_LABELS: Record<IngredientCategory, string> = {
-  protein: "Protein",
-  carb: "Carbs",
-  veg: "Vegetables",
-  fruit: "Fruit",
-  dairy: "Dairy",
-  snack: "Snacks",
-  freezer: "Freezer",
-  pantry: "Pantry",
+  protein: 'Protein',
+  carb: 'Carbs',
+  veg: 'Vegetables',
+  fruit: 'Fruit',
+  dairy: 'Dairy',
+  snack: 'Snacks',
+  freezer: 'Freezer',
+  pantry: 'Pantry',
 };
 
 export default function GroceryList() {
@@ -93,7 +93,7 @@ export default function GroceryList() {
 
       <div className="mb-4 flex flex-wrap items-center gap-4">
         <span className="text-sm text-text-secondary" data-testid="grocery-summary">
-          {visibleCount} to buy{ownedIds.size > 0 ? ` · ${ownedIds.size} already have` : ""}
+          {visibleCount} to buy{ownedIds.size > 0 ? ` · ${ownedIds.size} already have` : ''}
         </span>
         {ownedIds.size > 0 && (
           <Button small onClick={() => setOwnedIds(new Set())} data-testid="clear-owned-btn">
@@ -105,19 +105,19 @@ export default function GroceryList() {
           onClick={() => {
             const lines: string[] = [];
             lines.push(`Grocery List — ${household.name}`);
-            lines.push("=".repeat(40));
+            lines.push('='.repeat(40));
             for (const [category, catItems] of grouped) {
               lines.push(`\n${CATEGORY_LABELS[category] ?? category}:`);
               for (const item of catItems) {
-                const qty = item.quantity ? ` ${item.quantity}` : "";
+                const qty = item.quantity ? ` ${item.quantity}` : '';
                 lines.push(`  - ${item.name}${qty}`);
               }
             }
-            const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+            const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
+            const a = document.createElement('a');
             a.href = url;
-            a.download = `grocery-list-${household.name.toLowerCase().replace(/\s+/g, "-")}.txt`;
+            a.download = `grocery-list-${household.name.toLowerCase().replace(/\s+/g, '-')}.txt`;
             a.click();
             URL.revokeObjectURL(url);
           }}
@@ -125,11 +125,7 @@ export default function GroceryList() {
         >
           Export
         </Button>
-        <Button
-          small
-          onClick={() => window.print()}
-          data-testid="print-grocery-btn"
-        >
+        <Button small onClick={() => window.print()} data-testid="print-grocery-btn">
           Print
         </Button>
       </div>
@@ -149,7 +145,7 @@ export default function GroceryList() {
                     key={item.ingredientId}
                     data-testid={`grocery-item-${item.ingredientId}`}
                     className={`flex flex-col gap-1 rounded-sm p-2 transition-colors sm:flex-row sm:items-center sm:justify-between ${
-                      isOwned ? "bg-bg opacity-50" : "bg-surface"
+                      isOwned ? 'bg-bg opacity-50' : 'bg-surface'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -158,23 +154,33 @@ export default function GroceryList() {
                         data-testid={`toggle-owned-${item.ingredientId}`}
                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border-2 transition-colors ${
                           isOwned
-                            ? "border-success bg-success text-white"
-                            : "border-border-default bg-surface hover:border-brand"
+                            ? 'border-success bg-success text-white'
+                            : 'border-border-default bg-surface hover:border-brand'
                         }`}
-                        aria-label={isOwned ? `Mark ${item.name} as needed` : `Mark ${item.name} as already have`}
+                        aria-label={
+                          isOwned
+                            ? `Mark ${item.name} as needed`
+                            : `Mark ${item.name} as already have`
+                        }
                       >
                         {isOwned && (
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={3}
+                          >
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         )}
                       </button>
-                      <span className={`text-sm font-medium ${isOwned ? "line-through text-text-muted" : "text-text-primary"}`}>
+                      <span
+                        className={`text-sm font-medium ${isOwned ? 'line-through text-text-muted' : 'text-text-primary'}`}
+                      >
                         {toSentenceCase(item.name)}
                       </span>
-                      {item.quantity && (
-                        <Chip variant="neutral">{item.quantity}</Chip>
-                      )}
+                      {item.quantity && <Chip variant="neutral">{item.quantity}</Chip>}
                     </div>
                     <div className="ml-9 flex flex-wrap gap-1 sm:ml-0">
                       {item.usedInMeals.map((meal) => (

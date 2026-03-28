@@ -1,17 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  useParams,
-  useSearchParams,
-  useNavigate,
-} from "react-router-dom";
-import type { BaseMeal, Ingredient, MealComponent, Recipe } from "../types";
-import {
-  loadHousehold,
-  saveHousehold,
-  toSentenceCase,
-  normalizeHousehold,
-} from "../storage";
-import { promoteRecipeToBaseMeal } from "../lib/promoteRecipe";
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import type { BaseMeal, Ingredient, MealComponent, Recipe } from '../types';
+import { loadHousehold, saveHousehold, toSentenceCase, normalizeHousehold } from '../storage';
+import { promoteRecipeToBaseMeal } from '../lib/promoteRecipe';
 import {
   PageHeader,
   Card,
@@ -23,24 +14,20 @@ import {
   Chip,
   ConfirmDialog,
   useConfirm,
-} from "../components/ui";
-import AppModal from "../components/AppModal";
-import MealImageSlot from "../components/MealImageSlot";
-import ComponentForm from "../components/meals/ComponentForm";
-import RecipeLinksEditor from "../components/meals/RecipeLinksEditor";
-import { useIncrementalList } from "../hooks/useIncrementalList";
-import {
-  sortRecipes,
-  type RecipeSortKey,
-  type SortDir,
-} from "../lib/listSort";
+} from '../components/ui';
+import AppModal from '../components/AppModal';
+import MealImageSlot from '../components/MealImageSlot';
+import ComponentForm from '../components/meals/ComponentForm';
+import RecipeLinksEditor from '../components/meals/RecipeLinksEditor';
+import { useIncrementalList } from '../hooks/useIncrementalList';
+import { sortRecipes, type RecipeSortKey, type SortDir } from '../lib/listSort';
 import {
   CURATED_RECIPE_TAGS,
   recipeHasTag,
   recipeTagLabel,
   recipeMatchesCuratedFilter,
   normalizeRecipeTagForCurated,
-} from "../lib/recipeTags";
+} from '../lib/recipeTags';
 
 const RECIPE_SORT_OPTIONS: {
   value: string;
@@ -48,43 +35,43 @@ const RECIPE_SORT_OPTIONS: {
   key: RecipeSortKey;
   dir: SortDir;
 }[] = [
-  { value: "name-asc", label: "Name (A–Z)", key: "name", dir: "asc" },
-  { value: "name-desc", label: "Name (Z–A)", key: "name", dir: "desc" },
+  { value: 'name-asc', label: 'Name (A–Z)', key: 'name', dir: 'asc' },
+  { value: 'name-desc', label: 'Name (Z–A)', key: 'name', dir: 'desc' },
   {
-    value: "components-asc",
-    label: "Ingredients (few → many)",
-    key: "componentCount",
-    dir: "asc",
+    value: 'components-asc',
+    label: 'Ingredients (few → many)',
+    key: 'componentCount',
+    dir: 'asc',
   },
   {
-    value: "components-desc",
-    label: "Ingredients (many → few)",
-    key: "componentCount",
-    dir: "desc",
+    value: 'components-desc',
+    label: 'Ingredients (many → few)',
+    key: 'componentCount',
+    dir: 'desc',
   },
   {
-    value: "time-asc",
-    label: "Prep time (short → long)",
-    key: "totalPrepMinutes",
-    dir: "asc",
+    value: 'time-asc',
+    label: 'Prep time (short → long)',
+    key: 'totalPrepMinutes',
+    dir: 'asc',
   },
   {
-    value: "time-desc",
-    label: "Prep time (long → short)",
-    key: "totalPrepMinutes",
-    dir: "desc",
+    value: 'time-desc',
+    label: 'Prep time (long → short)',
+    key: 'totalPrepMinutes',
+    dir: 'desc',
   },
 ];
 
 function createEmptyRecipe(): Recipe {
   return {
     id: crypto.randomUUID(),
-    name: "",
-    description: "",
+    name: '',
+    description: '',
     components: [],
-    defaultPrep: "",
+    defaultPrep: '',
     recipeLinks: [],
-    notes: "",
+    notes: '',
   };
 }
 
@@ -94,7 +81,7 @@ function recipePrepSummary(r: Recipe): string {
   if (p && c) return `${p} prep + ${c} cook min`;
   if (p) return `${p} min prep`;
   if (c) return `${c} min cook`;
-  return "No prep time set";
+  return 'No prep time set';
 }
 
 function RecipeRow({ recipe, onClick }: { recipe: Recipe; onClick: () => void }) {
@@ -105,7 +92,7 @@ function RecipeRow({ recipe, onClick }: { recipe: Recipe; onClick: () => void })
       className="flex w-full items-center gap-3 rounded-md border border-border-light bg-surface px-3 py-2.5 text-left transition-colors hover:bg-bg hover:shadow-card cursor-pointer min-h-[48px]"
       onClick={onClick}
       data-testid={`recipe-row-${recipe.id}`}
-      aria-label={`Edit ${recipe.name || "unnamed recipe"}`}
+      aria-label={`Edit ${recipe.name || 'unnamed recipe'}`}
     >
       <MealImageSlot
         variant="row"
@@ -124,12 +111,12 @@ function RecipeRow({ recipe, onClick }: { recipe: Recipe; onClick: () => void })
         </span>
         <span className="block text-xs text-text-muted truncate">
           {recipePrepSummary(recipe)} · {recipe.components.length} ingredient
-          {recipe.components.length !== 1 ? "s" : ""}
+          {recipe.components.length !== 1 ? 's' : ''}
         </span>
       </span>
       <span
         className="flex max-w-[42%] shrink-0 flex-wrap items-center justify-end gap-1"
-        data-testid={tagPreview.length > 0 ? "recipe-row-tags" : undefined}
+        data-testid={tagPreview.length > 0 ? 'recipe-row-tags' : undefined}
       >
         {tagPreview.map((t) => (
           <Chip
@@ -170,7 +157,7 @@ function RecipeModal({
   const navigate = useNavigate();
   const [openComponentIndexes, setOpenComponentIndexes] = useState<number[]>([]);
   const [promoteOpen, setPromoteOpen] = useState(false);
-  const [difficulty, setDifficulty] = useState<BaseMeal["difficulty"]>("medium");
+  const [difficulty, setDifficulty] = useState<BaseMeal['difficulty']>('medium');
   const [rescueEligible, setRescueEligible] = useState(false);
   const [estimatedMinutes, setEstimatedMinutes] = useState(30);
 
@@ -186,9 +173,9 @@ function RecipeModal({
   function addComponent() {
     const newComponent: MealComponent = {
       id: crypto.randomUUID(),
-      ingredientId: "",
-      role: "protein",
-      quantity: "",
+      ingredientId: '',
+      role: 'protein',
+      quantity: '',
     };
     onChange({ ...recipe, components: [...recipe.components, newComponent] });
     setOpenComponentIndexes((prev) => [...prev, recipe.components.length]);
@@ -206,9 +193,7 @@ function RecipeModal({
       components: recipe.components.filter((_, i) => i !== index),
     });
     setOpenComponentIndexes((prev) =>
-      prev
-        .filter((item) => item !== index)
-        .map((item) => (item > index ? item - 1 : item)),
+      prev.filter((item) => item !== index).map((item) => (item > index ? item - 1 : item)),
     );
   }
 
@@ -255,7 +240,7 @@ function RecipeModal({
               />
               <div className="min-w-0">
                 <h2 className="truncate text-xl font-bold text-text-primary">
-                  {toSentenceCase(recipe.name) || "New recipe"}
+                  {toSentenceCase(recipe.name) || 'New recipe'}
                 </h2>
                 <span className="text-xs text-text-muted">
                   Recipe library — promote to a base meal when you want to plan it
@@ -290,7 +275,7 @@ function RecipeModal({
           >
             <summary className="cursor-pointer text-sm font-medium text-text-primary">
               Organization
-              {curatedOrgTagCount > 0 ? ` · ${curatedOrgTagCount} tags` : ""}
+              {curatedOrgTagCount > 0 ? ` · ${curatedOrgTagCount} tags` : ''}
             </summary>
             <p className="mt-2 text-xs text-text-muted">
               Optional hints for browsing, filtering, and attach-recipe suggestions. Does not change
@@ -323,7 +308,7 @@ function RecipeModal({
                     }}
                     data-testid={`recipe-tag-chip-${value}`}
                   >
-                    <Chip variant={selected ? "info" : "neutral"} className="text-xs">
+                    <Chip variant={selected ? 'info' : 'neutral'} className="text-xs">
                       {label}
                     </Chip>
                   </button>
@@ -350,10 +335,8 @@ function RecipeModal({
               <textarea
                 className="w-full rounded-lg border border-border-light bg-surface p-3 text-sm text-text-primary placeholder-text-muted focus:border-brand focus:outline-none"
                 rows={2}
-                value={recipe.description ?? ""}
-                onChange={(e) =>
-                  onChange({ ...recipe, description: e.target.value || undefined })
-                }
+                value={recipe.description ?? ''}
+                onChange={(e) => onChange({ ...recipe, description: e.target.value || undefined })}
                 placeholder="Brief summary of the dish"
                 data-testid="recipe-description"
               />
@@ -368,7 +351,7 @@ function RecipeModal({
               <FieldLabel label="Default prep (short note)">
                 <Input
                   type="text"
-                  value={recipe.defaultPrep ?? ""}
+                  value={recipe.defaultPrep ?? ''}
                   onChange={(e) =>
                     onChange({ ...recipe, defaultPrep: e.target.value || undefined })
                   }
@@ -378,7 +361,7 @@ function RecipeModal({
               <FieldLabel label="Prep time (minutes)">
                 <Input
                   type="number"
-                  value={recipe.prepTimeMinutes ?? ""}
+                  value={recipe.prepTimeMinutes ?? ''}
                   onChange={(e) =>
                     onChange({
                       ...recipe,
@@ -392,7 +375,7 @@ function RecipeModal({
               <FieldLabel label="Cook time (minutes)">
                 <Input
                   type="number"
-                  value={recipe.cookTimeMinutes ?? ""}
+                  value={recipe.cookTimeMinutes ?? ''}
                   onChange={(e) =>
                     onChange({
                       ...recipe,
@@ -452,7 +435,7 @@ function RecipeModal({
                 <textarea
                   className="w-full rounded-lg border border-border-light bg-surface p-3 text-sm text-text-primary placeholder-text-muted focus:border-brand focus:outline-none"
                   rows={4}
-                  value={recipe.ingredientsText ?? ""}
+                  value={recipe.ingredientsText ?? ''}
                   onChange={(e) =>
                     onChange({
                       ...recipe,
@@ -485,7 +468,7 @@ function RecipeModal({
                 <textarea
                   className="w-full rounded-lg border border-border-light bg-surface p-3 text-sm text-text-primary placeholder-text-muted focus:border-brand focus:outline-none"
                   rows={3}
-                  value={recipe.notes ?? ""}
+                  value={recipe.notes ?? ''}
                   onChange={(e) => onChange({ ...recipe, notes: e.target.value || undefined })}
                   placeholder="Tips, source notes…"
                   data-testid="recipe-notes"
@@ -504,10 +487,8 @@ function RecipeModal({
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <Input
                     type="url"
-                    value={recipe.imageUrl ?? ""}
-                    onChange={(e) =>
-                      onChange({ ...recipe, imageUrl: e.target.value || undefined })
-                    }
+                    value={recipe.imageUrl ?? ''}
+                    onChange={(e) => onChange({ ...recipe, imageUrl: e.target.value || undefined })}
                     placeholder="Image URL"
                     data-testid="recipe-image-url"
                   />
@@ -539,7 +520,7 @@ function RecipeModal({
                   <MealImageSlot
                     variant="editorPreview"
                     imageUrl={recipe.imageUrl}
-                    alt={recipe.name || "Recipe"}
+                    alt={recipe.name || 'Recipe'}
                     imageTestId="recipe-image-preview"
                     placeholderTestId="recipe-image-preview-placeholder"
                   />
@@ -560,7 +541,11 @@ function RecipeModal({
             Remove recipe
           </Button>
           <div className="flex flex-wrap items-center gap-3">
-            <Button variant="default" onClick={() => setPromoteOpen(true)} data-testid="recipe-promote-btn">
+            <Button
+              variant="default"
+              onClick={() => setPromoteOpen(true)}
+              data-testid="recipe-promote-btn"
+            >
               Add to base meals
             </Button>
             <span className="hidden text-xs text-text-muted sm:block">
@@ -587,7 +572,7 @@ function RecipeModal({
           <select
             className="w-full rounded-sm border border-border-default bg-surface px-4 py-2 text-base min-h-[44px]"
             value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value as BaseMeal["difficulty"])}
+            onChange={(e) => setDifficulty(e.target.value as BaseMeal['difficulty'])}
             data-testid="promote-difficulty"
           >
             <option value="easy">easy</option>
@@ -614,7 +599,11 @@ function RecipeModal({
           Rescue eligible
         </label>
         <div className="mt-6 flex gap-3">
-          <Button variant="primary" onClick={handlePromoteConfirm} data-testid="promote-confirm-btn">
+          <Button
+            variant="primary"
+            onClick={handlePromoteConfirm}
+            data-testid="promote-confirm-btn"
+          >
             Create base meal
           </Button>
           <Button onClick={() => setPromoteOpen(false)}>Cancel</Button>
@@ -632,10 +621,10 @@ export default function RecipeLibrary() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [baseMeals, setBaseMeals] = useState<BaseMeal[]>([]);
-  const [householdName, setHouseholdName] = useState("");
+  const [householdName, setHouseholdName] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [recipeSort, setRecipeSort] = useState(RECIPE_SORT_OPTIONS[0]!.value);
   const { pending, requestConfirm, confirm, cancel } = useConfirm();
@@ -654,14 +643,14 @@ export default function RecipeLibrary() {
   }, [householdId]);
 
   useEffect(() => {
-    const rid = searchParams.get("recipe");
+    const rid = searchParams.get('recipe');
     if (!rid || recipes.length === 0) return;
     if (!recipes.some((r) => r.id === rid)) return;
     setEditingId(rid);
     setSearchParams(
       (p) => {
         const next = new URLSearchParams(p);
-        next.delete("recipe");
+        next.delete('recipe');
         return next;
       },
       { replace: true },
@@ -694,9 +683,7 @@ export default function RecipeLibrary() {
   }, [recipes, searchQuery, tagFilter]);
 
   const sortedRecipes = useMemo(() => {
-    const opt =
-      RECIPE_SORT_OPTIONS.find((o) => o.value === recipeSort) ??
-      RECIPE_SORT_OPTIONS[0]!;
+    const opt = RECIPE_SORT_OPTIONS.find((o) => o.value === recipeSort) ?? RECIPE_SORT_OPTIONS[0]!;
     return sortRecipes(filteredRecipes, opt.key, opt.dir);
   }, [filteredRecipes, recipeSort]);
 
@@ -711,9 +698,7 @@ export default function RecipeLibrary() {
     sentinelRef: recipeListSentinelRef,
   } = useIncrementalList(sortedRecipes, { resetDeps: [...resetDeps] });
 
-  const editingRecipe = editingId
-    ? (recipes.find((r) => r.id === editingId) ?? null)
-    : null;
+  const editingRecipe = editingId ? (recipes.find((r) => r.id === editingId) ?? null) : null;
 
   function addRecipe() {
     const r = createEmptyRecipe();
@@ -727,7 +712,7 @@ export default function RecipeLibrary() {
 
   function removeRecipe(recipeId: string) {
     const r = recipes.find((x) => x.id === recipeId);
-    const label = r?.name || "Unnamed recipe";
+    const label = r?.name || 'Unnamed recipe';
     requestConfirm(label, () => {
       setRecipes((prev) => prev.filter((x) => x.id !== recipeId));
       setEditingId((prev) => (prev === recipeId ? null : prev));
@@ -799,7 +784,7 @@ export default function RecipeLibrary() {
                 onClick={() => setTagFilter(active ? null : value)}
                 data-testid={`recipe-tag-filter-${value}`}
               >
-                <Chip variant={active ? "info" : "neutral"} className="text-[10px]">
+                <Chip variant={active ? 'info' : 'neutral'} className="text-[10px]">
                   {label}
                 </Chip>
               </button>
@@ -825,7 +810,7 @@ export default function RecipeLibrary() {
       >
         <span>Recipes ({recipes.length})</span>
         {filteredRecipes.length !== recipes.length && (
-          <span>{` · ${filteredRecipes.length} match${filteredRecipes.length !== 1 ? "es" : ""}`}</span>
+          <span>{` · ${filteredRecipes.length} match${filteredRecipes.length !== 1 ? 'es' : ''}`}</span>
         )}
         {sortedRecipes.length > 0 && visibleRecipes.length < sortedRecipes.length && (
           <span>{` · showing ${visibleRecipes.length} of ${sortedRecipes.length}`}</span>
@@ -835,7 +820,8 @@ export default function RecipeLibrary() {
       {recipes.length === 0 ? (
         <div data-testid="recipe-library-empty">
           <EmptyState>
-            No recipes yet. Import from Paprika or paste an ingredient list. When you are ready to plan a night, promote a recipe to a{" "}
+            No recipes yet. Import from Paprika or paste an ingredient list. When you are ready to
+            plan a night, promote a recipe to a{' '}
             <button
               type="button"
               className="font-medium text-brand hover:underline"
@@ -858,7 +844,12 @@ export default function RecipeLibrary() {
           <div ref={recipeListSentinelRef} className="h-px w-full" aria-hidden />
           {recipeListHasMore && (
             <div className="flex justify-center pt-2">
-              <Button type="button" variant="default" onClick={loadMoreRecipes} data-testid="recipe-list-load-more">
+              <Button
+                type="button"
+                variant="default"
+                onClick={loadMoreRecipes}
+                data-testid="recipe-list-load-more"
+              >
                 Load more recipes
               </Button>
             </div>

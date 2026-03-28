@@ -11,17 +11,17 @@ Household meal-planning app: **one base meal, multiple assemblies**, merged groc
 
 ## Commands
 
-| Command | Use |
-|--------|-----|
-| `./init.sh` | Install, typecheck, test, start dev (full local verify) |
-| `npm run dev` | Vite dev server |
-| `npm run build` | `tsc -b` + production build |
-| `npm test` | Vitest single run |
-| `npm run test:watch` | Vitest watch |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run lint` | ESLint |
-| `npm run format` / `format:check` | Prettier |
-| `npm run db:seed` | Regenerate `src/seed-data.json` from `fixtures/households/` |
+| Command                           | Use                                                         |
+| --------------------------------- | ----------------------------------------------------------- |
+| `./init.sh`                       | Install, typecheck, test, start dev (full local verify)     |
+| `npm run dev`                     | Vite dev server                                             |
+| `npm run build`                   | `tsc -b` + production build                                 |
+| `npm test`                        | Vitest single run                                           |
+| `npm run test:watch`              | Vitest watch                                                |
+| `npm run typecheck`               | `tsc --noEmit`                                              |
+| `npm run lint`                    | ESLint                                                      |
+| `npm run format` / `format:check` | Prettier                                                    |
+| `npm run db:seed`                 | Regenerate `src/seed-data.json` from `fixtures/households/` |
 
 Optional cloud: copy `.env.example` → `.env` with `VITE_SUPABASE_*` (see README). Without env vars the app is local-only.
 

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { render } from "@testing-library/react";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
-import type { Household, Ingredient, BaseMeal } from "../src/types";
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import type { Household, Ingredient, BaseMeal } from '../src/types';
 import {
   saveHousehold,
   loadHousehold,
@@ -11,15 +11,15 @@ import {
   toSentenceCase,
   migrateHouseholdIngredients,
   runMigrationIfNeeded,
-} from "../src/storage";
-import IngredientManager from "../src/pages/IngredientManager";
-import { showAllIngredientRows, ingredientTextExistsOnAnyPage } from "./incremental-load-helpers";
+} from '../src/storage';
+import IngredientManager from '../src/pages/IngredientManager';
+import { showAllIngredientRows, ingredientTextExistsOnAnyPage } from './incremental-load-helpers';
 
 function makeIngredient(overrides: Partial<Ingredient> & { id: string; name: string }): Ingredient {
   return {
-    category: "pantry",
+    category: 'pantry',
     tags: [],
-    shelfLifeHint: "",
+    shelfLifeHint: '',
     freezerFriendly: false,
     babySafeWithAdaptation: false,
     ...overrides,
@@ -28,10 +28,20 @@ function makeIngredient(overrides: Partial<Ingredient> & { id: string; name: str
 
 function makeHousehold(overrides: Partial<Household> = {}): Household {
   return {
-    id: "h-f047",
-    name: "F047 Test Family",
+    id: 'h-f047',
+    name: 'F047 Test Family',
     members: [
-      { id: "m1", name: "Parent", role: "adult", safeFoods: [], hardNoFoods: [], preparationRules: [], textureLevel: "regular", allergens: [], notes: "" },
+      {
+        id: 'm1',
+        name: 'Parent',
+        role: 'adult',
+        safeFoods: [],
+        hardNoFoods: [],
+        preparationRules: [],
+        textureLevel: 'regular',
+        allergens: [],
+        notes: '',
+      },
     ],
     ingredients: [],
     baseMeals: [],
@@ -47,118 +57,124 @@ beforeEach(() => {
 });
 
 /* ========== normalizeIngredientName ========== */
-describe("normalizeIngredientName", () => {
-  it("lowercases names", () => {
-    expect(normalizeIngredientName("Chicken Breast")).toBe("chicken breast");
+describe('normalizeIngredientName', () => {
+  it('lowercases names', () => {
+    expect(normalizeIngredientName('Chicken Breast')).toBe('chicken breast');
   });
 
-  it("trims whitespace", () => {
-    expect(normalizeIngredientName("  pasta  ")).toBe("pasta");
+  it('trims whitespace', () => {
+    expect(normalizeIngredientName('  pasta  ')).toBe('pasta');
   });
 
-  it("collapses internal spaces", () => {
-    expect(normalizeIngredientName("sweet   potato")).toBe("sweet potato");
+  it('collapses internal spaces', () => {
+    expect(normalizeIngredientName('sweet   potato')).toBe('sweet potato');
   });
 
-  it("strips trailing punctuation", () => {
-    expect(normalizeIngredientName("tomatoes.")).toBe("tomatoes");
-    expect(normalizeIngredientName("rice,")).toBe("rice");
-    expect(normalizeIngredientName("bread;")).toBe("bread");
-    expect(normalizeIngredientName("peas!")).toBe("peas");
+  it('strips trailing punctuation', () => {
+    expect(normalizeIngredientName('tomatoes.')).toBe('tomatoes');
+    expect(normalizeIngredientName('rice,')).toBe('rice');
+    expect(normalizeIngredientName('bread;')).toBe('bread');
+    expect(normalizeIngredientName('peas!')).toBe('peas');
   });
 
-  it("handles combined issues", () => {
-    expect(normalizeIngredientName("  Chicken   Breast. ")).toBe("chicken breast");
+  it('handles combined issues', () => {
+    expect(normalizeIngredientName('  Chicken   Breast. ')).toBe('chicken breast');
   });
 });
 
 /* ========== toSentenceCase ========== */
-describe("toSentenceCase", () => {
-  it("capitalizes first letter", () => {
-    expect(toSentenceCase("chicken breast")).toBe("Chicken breast");
+describe('toSentenceCase', () => {
+  it('capitalizes first letter', () => {
+    expect(toSentenceCase('chicken breast')).toBe('Chicken breast');
   });
 
-  it("returns empty string for empty input", () => {
-    expect(toSentenceCase("")).toBe("");
+  it('returns empty string for empty input', () => {
+    expect(toSentenceCase('')).toBe('');
   });
 
-  it("preserves rest of string", () => {
-    expect(toSentenceCase("baked beans")).toBe("Baked beans");
+  it('preserves rest of string', () => {
+    expect(toSentenceCase('baked beans')).toBe('Baked beans');
   });
 });
 
 /* ========== migrateHouseholdIngredients ========== */
-describe("migrateHouseholdIngredients", () => {
-  it("normalizes ingredient names to lowercase", () => {
+describe('migrateHouseholdIngredients', () => {
+  it('normalizes ingredient names to lowercase', () => {
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "Chicken Breast", category: "protein" }),
-        makeIngredient({ id: "i2", name: "Sweet Potato", category: "veg" }),
+        makeIngredient({ id: 'i1', name: 'Chicken Breast', category: 'protein' }),
+        makeIngredient({ id: 'i2', name: 'Sweet Potato', category: 'veg' }),
       ],
     });
     const result = migrateHouseholdIngredients(household);
     expect(result.normalized).toBe(2);
-    expect(household.ingredients[0]!.name).toBe("chicken breast");
-    expect(household.ingredients[1]!.name).toBe("sweet potato");
+    expect(household.ingredients[0]!.name).toBe('chicken breast');
+    expect(household.ingredients[1]!.name).toBe('sweet potato');
   });
 
-  it("trims and collapses spaces during normalization", () => {
+  it('trims and collapses spaces during normalization', () => {
     const household = makeHousehold({
-      ingredients: [
-        makeIngredient({ id: "i1", name: "  baked   beans.  " }),
-      ],
+      ingredients: [makeIngredient({ id: 'i1', name: '  baked   beans.  ' })],
     });
     migrateHouseholdIngredients(household);
-    expect(household.ingredients[0]!.name).toBe("baked beans");
+    expect(household.ingredients[0]!.name).toBe('baked beans');
   });
 
-  it("detects and merges duplicate ingredients after normalization", () => {
+  it('detects and merges duplicate ingredients after normalization', () => {
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "Pasta", category: "carb", tags: ["staple"] }),
-        makeIngredient({ id: "i2", name: "pasta", category: "carb", tags: ["quick"] }),
-        makeIngredient({ id: "i3", name: "  PASTA  ", category: "carb" }),
+        makeIngredient({ id: 'i1', name: 'Pasta', category: 'carb', tags: ['staple'] }),
+        makeIngredient({ id: 'i2', name: 'pasta', category: 'carb', tags: ['quick'] }),
+        makeIngredient({ id: 'i3', name: '  PASTA  ', category: 'carb' }),
       ],
     });
     const result = migrateHouseholdIngredients(household);
     expect(result.duplicatesMerged).toBe(2);
     expect(household.ingredients.length).toBe(1);
-    expect(household.ingredients[0]!.tags).toContain("staple");
-    expect(household.ingredients[0]!.tags).toContain("quick");
+    expect(household.ingredients[0]!.tags).toContain('staple');
+    expect(household.ingredients[0]!.tags).toContain('quick');
   });
 
-  it("picks the most complete ingredient as survivor", () => {
+  it('picks the most complete ingredient as survivor', () => {
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "cheese", category: "dairy" }),
-        makeIngredient({ id: "i2", name: "Cheese", category: "dairy", tags: ["rescue"], imageUrl: "img.png", catalogId: "cat-cheese", source: "catalog" }),
+        makeIngredient({ id: 'i1', name: 'cheese', category: 'dairy' }),
+        makeIngredient({
+          id: 'i2',
+          name: 'Cheese',
+          category: 'dairy',
+          tags: ['rescue'],
+          imageUrl: 'img.png',
+          catalogId: 'cat-cheese',
+          source: 'catalog',
+        }),
       ],
     });
     migrateHouseholdIngredients(household);
     expect(household.ingredients.length).toBe(1);
-    expect(household.ingredients[0]!.id).toBe("i2");
-    expect(household.ingredients[0]!.imageUrl).toBe("img.png");
+    expect(household.ingredients[0]!.id).toBe('i2');
+    expect(household.ingredients[0]!.imageUrl).toBe('img.png');
   });
 
-  it("reassigns meal component references from duplicate to survivor", () => {
+  it('reassigns meal component references from duplicate to survivor', () => {
     const meal: BaseMeal = {
-      id: "bm1",
-      name: "Test meal",
+      id: 'bm1',
+      name: 'Test meal',
       components: [
-        { ingredientId: "i1", role: "carb", quantity: "200g" },
-        { ingredientId: "i2", role: "protein", quantity: "300g" },
+        { ingredientId: 'i1', role: 'carb', quantity: '200g' },
+        { ingredientId: 'i2', role: 'protein', quantity: '300g' },
       ],
-      defaultPrep: "",
+      defaultPrep: '',
       estimatedTimeMinutes: 20,
-      difficulty: "easy",
+      difficulty: 'easy',
       rescueEligible: false,
       wasteReuseHints: [],
     };
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "Pasta", category: "carb", tags: ["staple"] }),
-        makeIngredient({ id: "i2", name: "pasta", category: "carb" }),
-        makeIngredient({ id: "i3", name: "Chicken", category: "protein" }),
+        makeIngredient({ id: 'i1', name: 'Pasta', category: 'carb', tags: ['staple'] }),
+        makeIngredient({ id: 'i2', name: 'pasta', category: 'carb' }),
+        makeIngredient({ id: 'i3', name: 'Chicken', category: 'protein' }),
       ],
       baseMeals: [meal],
     });
@@ -169,24 +185,29 @@ describe("migrateHouseholdIngredients", () => {
     }
   });
 
-  it("reassigns alternative ingredient IDs from duplicate to survivor", () => {
+  it('reassigns alternative ingredient IDs from duplicate to survivor', () => {
     const meal: BaseMeal = {
-      id: "bm1",
-      name: "Test meal",
+      id: 'bm1',
+      name: 'Test meal',
       components: [
-        { ingredientId: "i3", alternativeIngredientIds: ["i1", "i2"], role: "protein", quantity: "300g" },
+        {
+          ingredientId: 'i3',
+          alternativeIngredientIds: ['i1', 'i2'],
+          role: 'protein',
+          quantity: '300g',
+        },
       ],
-      defaultPrep: "",
+      defaultPrep: '',
       estimatedTimeMinutes: 20,
-      difficulty: "easy",
+      difficulty: 'easy',
       rescueEligible: false,
       wasteReuseHints: [],
     };
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "Salmon", category: "protein" }),
-        makeIngredient({ id: "i2", name: "salmon", category: "protein" }),
-        makeIngredient({ id: "i3", name: "Chicken", category: "protein" }),
+        makeIngredient({ id: 'i1', name: 'Salmon', category: 'protein' }),
+        makeIngredient({ id: 'i2', name: 'salmon', category: 'protein' }),
+        makeIngredient({ id: 'i3', name: 'Chicken', category: 'protein' }),
       ],
       baseMeals: [meal],
     });
@@ -196,21 +217,21 @@ describe("migrateHouseholdIngredients", () => {
     expect(comp.alternativeIngredientIds![0]).not.toBe(comp.ingredientId);
   });
 
-  it("reassigns grocery list references in weekly plans", () => {
+  it('reassigns grocery list references in weekly plans', () => {
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "Rice", category: "carb", tags: ["staple"] }),
-        makeIngredient({ id: "i2", name: "rice", category: "carb" }),
+        makeIngredient({ id: 'i1', name: 'Rice', category: 'carb', tags: ['staple'] }),
+        makeIngredient({ id: 'i2', name: 'rice', category: 'carb' }),
       ],
       weeklyPlans: [
         {
-          id: "wp1",
+          id: 'wp1',
           days: [],
           selectedBaseMeals: [],
           generatedGroceryList: [
-            { ingredientId: "i2", name: "rice", category: "carb", quantity: "1", owned: false },
+            { ingredientId: 'i2', name: 'rice', category: 'carb', quantity: '1', owned: false },
           ],
-          notes: "",
+          notes: '',
         },
       ],
     });
@@ -220,11 +241,11 @@ describe("migrateHouseholdIngredients", () => {
     expect(result.referencesUpdated).toBeGreaterThan(0);
   });
 
-  it("is idempotent — running twice produces same result", () => {
+  it('is idempotent — running twice produces same result', () => {
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "Chicken Breast", category: "protein" }),
-        makeIngredient({ id: "i2", name: "chicken breast", category: "protein", tags: ["quick"] }),
+        makeIngredient({ id: 'i1', name: 'Chicken Breast', category: 'protein' }),
+        makeIngredient({ id: 'i2', name: 'chicken breast', category: 'protein', tags: ['quick'] }),
       ],
     });
     migrateHouseholdIngredients(household);
@@ -235,12 +256,12 @@ describe("migrateHouseholdIngredients", () => {
     expect(result2.duplicatesMerged).toBe(0);
   });
 
-  it("preserves non-duplicate ingredients unchanged", () => {
+  it('preserves non-duplicate ingredients unchanged', () => {
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "pasta", category: "carb" }),
-        makeIngredient({ id: "i2", name: "rice", category: "carb" }),
-        makeIngredient({ id: "i3", name: "chicken", category: "protein" }),
+        makeIngredient({ id: 'i1', name: 'pasta', category: 'carb' }),
+        makeIngredient({ id: 'i2', name: 'rice', category: 'carb' }),
+        makeIngredient({ id: 'i3', name: 'chicken', category: 'protein' }),
       ],
     });
     const result = migrateHouseholdIngredients(household);
@@ -248,56 +269,61 @@ describe("migrateHouseholdIngredients", () => {
     expect(household.ingredients.length).toBe(3);
   });
 
-  it("merges metadata from duplicates into survivor", () => {
+  it('merges metadata from duplicates into survivor', () => {
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "Broccoli", category: "veg", freezerFriendly: false }),
-        makeIngredient({ id: "i2", name: "broccoli", category: "veg", freezerFriendly: true, babySafeWithAdaptation: true, shelfLifeHint: "5 days" }),
+        makeIngredient({ id: 'i1', name: 'Broccoli', category: 'veg', freezerFriendly: false }),
+        makeIngredient({
+          id: 'i2',
+          name: 'broccoli',
+          category: 'veg',
+          freezerFriendly: true,
+          babySafeWithAdaptation: true,
+          shelfLifeHint: '5 days',
+        }),
       ],
     });
     migrateHouseholdIngredients(household);
     expect(household.ingredients.length).toBe(1);
     expect(household.ingredients[0]!.freezerFriendly).toBe(true);
     expect(household.ingredients[0]!.babySafeWithAdaptation).toBe(true);
-    expect(household.ingredients[0]!.shelfLifeHint).toBe("5 days");
+    expect(household.ingredients[0]!.shelfLifeHint).toBe('5 days');
   });
 });
 
 /* ========== runMigrationIfNeeded ========== */
-describe("runMigrationIfNeeded", () => {
-  it("migrates all households and sets migration flag", () => {
+describe('runMigrationIfNeeded', () => {
+  it('migrates all households and sets migration flag', () => {
     const h1 = makeHousehold({
-      id: "h1",
+      id: 'h1',
       ingredients: [
-        makeIngredient({ id: "i1", name: "Pasta", category: "carb" }),
-        makeIngredient({ id: "i2", name: "pasta", category: "carb" }),
+        makeIngredient({ id: 'i1', name: 'Pasta', category: 'carb' }),
+        makeIngredient({ id: 'i2', name: 'pasta', category: 'carb' }),
       ],
     });
     saveHouseholds([h1]);
     const result = runMigrationIfNeeded();
     expect(result.duplicatesMerged).toBe(1);
-    expect(localStorage.getItem("onebaseplate_migrated_v1")).toBe("1");
+    expect(localStorage.getItem('onebaseplate_migrated_v1')).toBe('1');
     const migrated = loadHouseholds();
     expect(migrated[0]!.ingredients.length).toBe(1);
   });
 
-  it("does not re-migrate after flag is set", () => {
+  it('does not re-migrate after flag is set', () => {
     const h1 = makeHousehold({
-      id: "h1",
-      ingredients: [
-        makeIngredient({ id: "i1", name: "Pasta", category: "carb" }),
-      ],
+      id: 'h1',
+      ingredients: [makeIngredient({ id: 'i1', name: 'Pasta', category: 'carb' })],
     });
     saveHouseholds([h1]);
     runMigrationIfNeeded();
-    h1.ingredients.push(makeIngredient({ id: "i2", name: "pasta", category: "carb" }));
+    h1.ingredients.push(makeIngredient({ id: 'i2', name: 'pasta', category: 'carb' }));
     saveHouseholds([h1]);
     const result2 = runMigrationIfNeeded();
     expect(result2.duplicatesMerged).toBe(0);
     expect(loadHouseholds()[0]!.ingredients.length).toBe(2);
   });
 
-  it("handles empty storage gracefully", () => {
+  it('handles empty storage gracefully', () => {
     const result = runMigrationIfNeeded();
     expect(result.normalized).toBe(0);
     expect(result.duplicatesMerged).toBe(0);
@@ -305,12 +331,12 @@ describe("runMigrationIfNeeded", () => {
 });
 
 /* ========== End-to-end: ingredient lists still work after migration ========== */
-describe("Post-migration end-to-end", () => {
-  it("ingredient list renders with sentence-case display after migration", () => {
+describe('Post-migration end-to-end', () => {
+  it('ingredient list renders with sentence-case display after migration', () => {
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "chicken breast", category: "protein" }),
-        makeIngredient({ id: "i2", name: "sweet potato", category: "veg" }),
+        makeIngredient({ id: 'i1', name: 'chicken breast', category: 'protein' }),
+        makeIngredient({ id: 'i2', name: 'sweet potato', category: 'veg' }),
       ],
     });
     saveHousehold(household);
@@ -325,31 +351,31 @@ describe("Post-migration end-to-end", () => {
 
     showAllIngredientRows();
 
-    const loaded = loadHousehold("h-f047")!;
-    expect(loaded.ingredients[0]!.name).toBe("chicken breast");
-    expect(ingredientTextExistsOnAnyPage("Chicken breast")).toBe(true);
-    expect(ingredientTextExistsOnAnyPage("Sweet potato")).toBe(true);
+    const loaded = loadHousehold('h-f047')!;
+    expect(loaded.ingredients[0]!.name).toBe('chicken breast');
+    expect(ingredientTextExistsOnAnyPage('Chicken breast')).toBe(true);
+    expect(ingredientTextExistsOnAnyPage('Sweet potato')).toBe(true);
   });
 
-  it("meal associations remain valid after migration with duplicates", () => {
+  it('meal associations remain valid after migration with duplicates', () => {
     const meal: BaseMeal = {
-      id: "bm1",
-      name: "Test meal",
+      id: 'bm1',
+      name: 'Test meal',
       components: [
-        { ingredientId: "i1", role: "carb", quantity: "200g" },
-        { ingredientId: "i2", role: "protein", quantity: "300g" },
+        { ingredientId: 'i1', role: 'carb', quantity: '200g' },
+        { ingredientId: 'i2', role: 'protein', quantity: '300g' },
       ],
-      defaultPrep: "",
+      defaultPrep: '',
       estimatedTimeMinutes: 20,
-      difficulty: "easy",
+      difficulty: 'easy',
       rescueEligible: false,
       wasteReuseHints: [],
     };
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "Pasta", category: "carb" }),
-        makeIngredient({ id: "i2", name: "Chicken", category: "protein" }),
-        makeIngredient({ id: "i3", name: "pasta", category: "carb", tags: ["quick"] }),
+        makeIngredient({ id: 'i1', name: 'Pasta', category: 'carb' }),
+        makeIngredient({ id: 'i2', name: 'Chicken', category: 'protein' }),
+        makeIngredient({ id: 'i3', name: 'pasta', category: 'carb', tags: ['quick'] }),
       ],
       baseMeals: [meal],
     });
@@ -357,55 +383,61 @@ describe("Post-migration end-to-end", () => {
     migrateHouseholdIngredients(household);
     saveHousehold(household);
 
-    const migrated = loadHousehold("h-f047")!;
+    const migrated = loadHousehold('h-f047')!;
     for (const comp of migrated.baseMeals[0]!.components) {
       expect(migrated.ingredients.some((i) => i.id === comp.ingredientId)).toBe(true);
     }
   });
 
-  it("catalog links remain intact after migration", () => {
+  it('catalog links remain intact after migration', () => {
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "Chicken Breast", category: "protein", catalogId: "cat-chicken-breast", source: "catalog" }),
+        makeIngredient({
+          id: 'i1',
+          name: 'Chicken Breast',
+          category: 'protein',
+          catalogId: 'cat-chicken-breast',
+          source: 'catalog',
+        }),
       ],
     });
     migrateHouseholdIngredients(household);
-    expect(household.ingredients[0]!.catalogId).toBe("cat-chicken-breast");
-    expect(household.ingredients[0]!.source).toBe("catalog");
-    expect(household.ingredients[0]!.name).toBe("chicken breast");
+    expect(household.ingredients[0]!.catalogId).toBe('cat-chicken-breast');
+    expect(household.ingredients[0]!.source).toBe('catalog');
+    expect(household.ingredients[0]!.name).toBe('chicken breast');
   });
 
-  it("no orphaned ingredient references remain after migration", () => {
+  it('no orphaned ingredient references remain after migration', () => {
     const household = makeHousehold({
       ingredients: [
-        makeIngredient({ id: "i1", name: "Rice", category: "carb" }),
-        makeIngredient({ id: "i2", name: "rice", category: "carb" }),
-        makeIngredient({ id: "i3", name: "  RICE  ", category: "carb" }),
+        makeIngredient({ id: 'i1', name: 'Rice', category: 'carb' }),
+        makeIngredient({ id: 'i2', name: 'rice', category: 'carb' }),
+        makeIngredient({ id: 'i3', name: '  RICE  ', category: 'carb' }),
       ],
       baseMeals: [
         {
-          id: "bm1",
-          name: "Test",
+          id: 'bm1',
+          name: 'Test',
           components: [
-            { ingredientId: "i1", role: "carb", quantity: "1" },
-            { ingredientId: "i2", alternativeIngredientIds: ["i3"], role: "carb", quantity: "1" },
+            { ingredientId: 'i1', role: 'carb', quantity: '1' },
+            { ingredientId: 'i2', alternativeIngredientIds: ['i3'], role: 'carb', quantity: '1' },
           ],
-          defaultPrep: "",
+          defaultPrep: '',
           estimatedTimeMinutes: 10,
-          difficulty: "easy",
+          difficulty: 'easy',
           rescueEligible: false,
           wasteReuseHints: [],
         },
       ],
       weeklyPlans: [
         {
-          id: "wp1",
+          id: 'wp1',
           days: [],
           selectedBaseMeals: [],
           generatedGroceryList: [
-            { ingredientId: "i3", name: "RICE", category: "carb", quantity: "1", owned: false },
+            { ingredientId: 'i3', name: 'RICE', category: 'carb', quantity: '1', owned: false },
           ],
-          notes: "",
+          notes: '',
         },
       ],
     });
@@ -428,14 +460,12 @@ describe("Post-migration end-to-end", () => {
     }
   });
 
-  it("ingredient names stored lowercase while UI displays sentence case", () => {
+  it('ingredient names stored lowercase while UI displays sentence case', () => {
     const household = makeHousehold({
-      ingredients: [
-        makeIngredient({ id: "i1", name: "Baked Beans", category: "pantry" }),
-      ],
+      ingredients: [makeIngredient({ id: 'i1', name: 'Baked Beans', category: 'pantry' })],
     });
     migrateHouseholdIngredients(household);
-    expect(household.ingredients[0]!.name).toBe("baked beans");
-    expect(toSentenceCase(household.ingredients[0]!.name)).toBe("Baked beans");
+    expect(household.ingredients[0]!.name).toBe('baked beans');
+    expect(toSentenceCase(household.ingredients[0]!.name)).toBe('Baked beans');
   });
 });

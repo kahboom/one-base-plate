@@ -1,38 +1,38 @@
-import { useEffect, useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
-import type { Household, DayPlan, MealOutcome } from "../types";
-import { loadHousehold, saveHousehold } from "../storage";
+import { useEffect, useState, useMemo } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import type { Household, DayPlan, MealOutcome } from '../types';
+import { loadHousehold, saveHousehold } from '../storage';
 import {
   computeMealOverlap,
   computeOutcomeScore,
   learnCompatibilityPatterns,
   computePatternScore,
-} from "../planner";
-import MealCard from "../components/MealCard";
-import { PageHeader, Card, Section, Button, Chip } from "../components/ui";
-import GuidedTour from "../components/GuidedTour";
-import AppModal from "../components/AppModal";
-import { MealDetailContent } from "./MealDetail";
+} from '../planner';
+import MealCard from '../components/MealCard';
+import { PageHeader, Card, Section, Button, Chip } from '../components/ui';
+import GuidedTour from '../components/GuidedTour';
+import AppModal from '../components/AppModal';
+import { MealDetailContent } from './MealDetail';
 
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const FULL_DAY_LABELS = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
 ];
 const outcomeLabels: Record<string, string> = {
-  success: "Worked well",
-  partial: "Partly worked",
+  success: 'Worked well',
+  partial: 'Partly worked',
   failure: "Didn't work",
 };
-const outcomeChipVariant: Record<string, "success" | "warning" | "danger"> = {
-  success: "success",
-  partial: "warning",
-  failure: "danger",
+const outcomeChipVariant: Record<string, 'success' | 'warning' | 'danger'> = {
+  success: 'success',
+  partial: 'warning',
+  failure: 'danger',
 };
 
 export default function Home() {
@@ -67,19 +67,10 @@ export default function Home() {
     return [...household.baseMeals]
       .map((meal) => ({
         meal,
-        overlap: computeMealOverlap(
-          meal,
-          household.members,
-          household.ingredients,
-        ),
+        overlap: computeMealOverlap(meal, household.members, household.ingredients),
         outcomeScore: computeOutcomeScore(meal.id, outcomes).score,
         patternScore: patterns
-          ? computePatternScore(
-              meal,
-              patterns,
-              household.members,
-              household.ingredients,
-            )
+          ? computePatternScore(meal, patterns, household.members, household.ingredients)
           : 0,
       }))
       .sort(
@@ -124,8 +115,7 @@ export default function Home() {
     ? computeMealOverlap(selectedMeal, household.members, household.ingredients)
     : null;
 
-  const selectedDayName =
-    selectedDayIndex !== null ? FULL_DAY_LABELS[selectedDayIndex] : null;
+  const selectedDayName = selectedDayIndex !== null ? FULL_DAY_LABELS[selectedDayIndex] : null;
   const selectedDayPlan: DayPlan | null =
     selectedDayName && latestPlan
       ? (latestPlan.days.find((day) => day.day === selectedDayName) ?? null)
@@ -134,13 +124,12 @@ export default function Home() {
     selectedDayName && selectedDayPlan
       ? (household.mealOutcomes ?? []).find(
           (outcome) =>
-            outcome.day === selectedDayName &&
-            outcome.baseMealId === selectedDayPlan.baseMealId,
+            outcome.day === selectedDayName && outcome.baseMealId === selectedDayPlan.baseMealId,
         )
       : undefined;
 
   function getMealName(mealId: string): string {
-    return household?.baseMeals.find((m) => m.id === mealId)?.name ?? "";
+    return household?.baseMeals.find((m) => m.id === mealId)?.name ?? '';
   }
 
   function handleTogglePinFromModal() {
@@ -155,9 +144,7 @@ export default function Home() {
 
       {household.members.length > 0 && (
         <Section>
-          <h2 className="mb-2 text-lg font-semibold text-text-primary">
-            Household members
-          </h2>
+          <h2 className="mb-2 text-lg font-semibold text-text-primary">Household members</h2>
           <div className="flex flex-wrap gap-2" data-testid="household-members">
             {household.members.map((m) => (
               <Link
@@ -165,8 +152,7 @@ export default function Home() {
                 to={`/household/${householdId}/member/${m.id}`}
                 className="rounded-full bg-surface border border-border-light px-3 py-1.5 text-sm text-text-primary hover:border-brand hover:bg-bg"
               >
-                {m.name || "Unnamed"}{" "}
-                <span className="text-text-muted">({m.role})</span>
+                {m.name || 'Unnamed'} <span className="text-text-muted">({m.role})</span>
               </Link>
             ))}
           </div>
@@ -176,15 +162,11 @@ export default function Home() {
       {latestPlan && (
         <Section>
           <div data-testid="weekly-strip">
-            <h2 className="mb-3 text-xl font-semibold text-text-primary">
-              This week
-            </h2>
+            <h2 className="mb-3 text-xl font-semibold text-text-primary">This week</h2>
             <div className="flex gap-2 overflow-x-auto pb-1">
               {DAY_LABELS.map((label, i) => {
                 const dayName = FULL_DAY_LABELS[i]!;
-                const dayPlan = latestPlan.days.find(
-                  (day) => day.day === dayName,
-                );
+                const dayPlan = latestPlan.days.find((day) => day.day === dayName);
                 return (
                   <button
                     type="button"
@@ -193,13 +175,9 @@ export default function Home() {
                     className="min-w-[80px] flex-shrink-0 rounded-md border border-border-light bg-surface px-2 py-3 text-center shadow-card cursor-pointer hover:border-brand"
                     onClick={() => setSelectedDayIndex(i)}
                   >
-                    <strong className="text-sm font-semibold text-text-primary">
-                      {label}
-                    </strong>
+                    <strong className="text-sm font-semibold text-text-primary">{label}</strong>
                     <p className="mt-1 text-xs text-text-secondary">
-                      {dayPlan
-                        ? getMealName(dayPlan.baseMealId) || "Planned"
-                        : "\u2014"}
+                      {dayPlan ? getMealName(dayPlan.baseMealId) || 'Planned' : '\u2014'}
                     </p>
                   </button>
                 );
@@ -234,10 +212,7 @@ export default function Home() {
 
       {household.baseMeals.length > 0 && (
         <Section>
-          <Link
-            to={`/household/${householdId}/rescue`}
-            data-testid="rescue-mode-card"
-          >
+          <Link to={`/household/${householdId}/rescue`} data-testid="rescue-mode-card">
             <Card className="cursor-pointer text-center hover:border-brand">
               <strong className="text-lg">Rescue mode</strong>
               <p className="mt-1 text-sm text-text-muted">
@@ -251,9 +226,7 @@ export default function Home() {
       {pinnedMeals.length > 0 && (
         <Section>
           <div data-testid="pinned-meals">
-            <h2 className="mb-3 text-xl font-semibold text-text-primary">
-              Pinned rotation
-            </h2>
+            <h2 className="mb-3 text-xl font-semibold text-text-primary">Pinned rotation</h2>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {pinnedMeals.map((meal) => (
                 <MealCard
@@ -276,9 +249,7 @@ export default function Home() {
       {topMeals.length > 0 && (
         <Section>
           <div data-testid="top-suggestions">
-            <h2 className="mb-3 text-xl font-semibold text-text-primary">
-              Top suggestions
-            </h2>
+            <h2 className="mb-3 text-xl font-semibold text-text-primary">Top suggestions</h2>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {topMeals.map(({ meal, overlap }) => (
                 <MealCard
@@ -309,9 +280,7 @@ export default function Home() {
         <div data-testid="day-details-modal">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-text-primary">
-              {selectedDayIndex !== null
-                ? `${DAY_LABELS[selectedDayIndex]} plan`
-                : "Day plan"}
+              {selectedDayIndex !== null ? `${DAY_LABELS[selectedDayIndex]} plan` : 'Day plan'}
             </h2>
             <Button
               variant="ghost"
@@ -322,22 +291,16 @@ export default function Home() {
             </Button>
           </div>
           {!selectedDayPlan ? (
-            <p className="text-sm text-text-muted">
-              No meal is planned for this day.
-            </p>
+            <p className="text-sm text-text-muted">No meal is planned for this day.</p>
           ) : (
             <>
               <p className="text-base font-semibold text-text-primary">
-                {getMealName(selectedDayPlan.baseMealId) || "Planned meal"}
+                {getMealName(selectedDayPlan.baseMealId) || 'Planned meal'}
               </p>
               {selectedDayOutcome && (
                 <div className="mt-2 flex items-center gap-2">
-                  <span className="text-xs font-medium text-text-secondary">
-                    Outcome:
-                  </span>
-                  <Chip
-                    variant={outcomeChipVariant[selectedDayOutcome.outcome]}
-                  >
+                  <span className="text-xs font-medium text-text-secondary">Outcome:</span>
+                  <Chip variant={outcomeChipVariant[selectedDayOutcome.outcome]}>
                     {outcomeLabels[selectedDayOutcome.outcome]}
                   </Chip>
                 </div>
@@ -345,15 +308,13 @@ export default function Home() {
               <Section title="Per-member assembly" className="mt-4 mb-0">
                 <div className="space-y-3" data-testid="day-modal-variants">
                   {selectedDayPlan.variants.map((variant) => {
-                    const member = household.members.find(
-                      (m) => m.id === variant.memberId,
-                    );
+                    const member = household.members.find((m) => m.id === variant.memberId);
                     if (!member) return null;
                     return (
                       <Card key={variant.id}>
                         <p className="text-sm font-semibold text-text-primary">
                           {member.name} ({member.role})
-                          {variant.requiresExtraPrep && " — extra prep"}
+                          {variant.requiresExtraPrep && ' — extra prep'}
                         </p>
                         <ul className="mt-2 space-y-1 pl-5 text-sm text-text-secondary">
                           {variant.instructions.map((instruction, idx) => (
@@ -372,7 +333,7 @@ export default function Home() {
                 >
                   {selectedDayOutcome?.notes?.trim()
                     ? selectedDayOutcome.notes
-                    : "No notes recorded for this day yet."}
+                    : 'No notes recorded for this day yet.'}
                 </p>
               </Section>
             </>
@@ -389,7 +350,7 @@ export default function Home() {
         <div data-testid="meal-details-modal">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-text-primary">
-              {selectedMeal?.name ?? "Meal details"}
+              {selectedMeal?.name ?? 'Meal details'}
             </h2>
             <Button
               variant="ghost"
@@ -404,9 +365,7 @@ export default function Home() {
               meal={selectedMeal}
               household={household}
               overlapLabel={`${selectedMealOverlap?.score ?? 0}/${selectedMealOverlap?.total ?? 0}`}
-              isPinned={(household.pinnedMealIds ?? []).includes(
-                selectedMeal.id,
-              )}
+              isPinned={(household.pinnedMealIds ?? []).includes(selectedMeal.id)}
               onTogglePin={handleTogglePinFromModal}
             />
           )}

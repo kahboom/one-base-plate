@@ -7,9 +7,9 @@ import type {
   MealComponent,
   Recipe,
   RecipeRef,
-} from "./types";
-import { normalizeRecipeTagForCurated } from "./lib/recipeTags";
-import seedData from "./seed-data.json";
+} from './types';
+import { normalizeRecipeTagForCurated } from './lib/recipeTags';
+import seedData from './seed-data.json';
 import {
   DEFAULT_HOUSEHOLD_KEY,
   META_HOUSEHOLDS,
@@ -20,12 +20,12 @@ import {
   STORAGE_KEY,
   STRIP_WHOLE_MEAL_TAGS_KEY,
   STRIP_THEME_RECIPE_TAGS_KEY,
-} from "./storage/constants";
-import { getAppDb, recreateAppDb } from "./storage/dexie-db";
-import { migrateLegacyIntoDexieIfNeeded } from "./storage/migrate-v3";
-import { setPaprikaImportSessionMemory } from "./storage/paprika-session-store";
-import { queueHouseholdSync, queueHouseholdDeleteSync, isAuthenticated } from "./sync/sync-engine";
-import { isRemoteHouseholdRowId, remoteRowIdForHousehold } from "./sync/remote-repository";
+} from './storage/constants';
+import { getAppDb, recreateAppDb } from './storage/dexie-db';
+import { migrateLegacyIntoDexieIfNeeded } from './storage/migrate-v3';
+import { setPaprikaImportSessionMemory } from './storage/paprika-session-store';
+import { queueHouseholdSync, queueHouseholdDeleteSync, isAuthenticated } from './sync/sync-engine';
+import { isRemoteHouseholdRowId, remoteRowIdForHousehold } from './sync/remote-repository';
 
 export {
   STORAGE_KEY,
@@ -35,9 +35,9 @@ export {
   STRIP_WHOLE_MEAL_TAGS_KEY,
   STRIP_THEME_RECIPE_TAGS_KEY,
   DEFAULT_HOUSEHOLD_KEY,
-} from "./storage/constants";
+} from './storage/constants';
 
-export type { HouseholdRepository, AppMetaStore } from "./storage/ports";
+export type { HouseholdRepository, AppMetaStore } from './storage/ports';
 
 /** Assign stable ids to meal components when missing; idempotent. */
 export function ensureHouseholdComponentIds(household: Household): Household {
@@ -64,9 +64,9 @@ export function sanitizeRecipe(recipe: Recipe): Recipe {
   void parentRecipeId;
   const tags = [...(rest.tags ?? [])];
   const typeToTag: Record<string, string> = {
-    "whole-meal": "whole-meal",
-    sauce: "sauce",
-    "batch-prep": "batch-prep",
+    'whole-meal': 'whole-meal',
+    sauce: 'sauce',
+    'batch-prep': 'batch-prep',
   };
   if (recipeType && typeToTag[recipeType]) {
     const t = typeToTag[recipeType];
@@ -77,7 +77,7 @@ export function sanitizeRecipe(recipe: Recipe): Recipe {
 
 function hadLegacyRecipeFields(recipe: Recipe): boolean {
   const o = recipe as unknown as Record<string, unknown>;
-  return "recipeType" in o || "parentRecipeId" in o;
+  return 'recipeType' in o || 'parentRecipeId' in o;
 }
 
 function ensureRecipeComponentIds(household: Household): Household {
@@ -106,10 +106,10 @@ export function normalizeHousehold(household: Household): NormalizedHousehold {
   const base: Household =
     household.recipes === undefined || household.suppressedCatalogIds === undefined
       ? {
-        ...household,
-        recipes: household.recipes ?? [],
-        suppressedCatalogIds: household.suppressedCatalogIds ?? [],
-      }
+          ...household,
+          recipes: household.recipes ?? [],
+          suppressedCatalogIds: household.suppressedCatalogIds ?? [],
+        }
       : household;
   return ensureRecipeComponentIds(ensureHouseholdComponentIds(base)) as NormalizedHousehold;
 }
@@ -136,7 +136,7 @@ export async function initStorage(): Promise<void> {
   const fromDexie = await dexieGetHouseholds();
   householdsCache = fromDexie ?? [];
   const paprikaRow = await getAppDb().meta.get(META_PAPRIKA_SESSION);
-  const raw = typeof paprikaRow?.value === "string" ? paprikaRow.value : null;
+  const raw = typeof paprikaRow?.value === 'string' ? paprikaRow.value : null;
   setPaprikaImportSessionMemory(raw);
 }
 
@@ -147,7 +147,7 @@ export async function seedIfNeeded(): Promise<void> {
   const seeded = seedData as unknown as Household[];
   householdsCache = seeded;
   await dexieSetHouseholds(seeded);
-  localStorage.setItem(SEEDED_KEY, "1");
+  localStorage.setItem(SEEDED_KEY, '1');
 }
 
 /**
@@ -175,7 +175,7 @@ export function saveHouseholds(households: Household[]): void {
   householdsCache = households;
   localStorage.removeItem(STORAGE_KEY);
   void dexieSetHouseholds(households).catch((err) => {
-    console.error("Failed to persist households:", err);
+    console.error('Failed to persist households:', err);
   });
 }
 
@@ -187,7 +187,7 @@ export function saveHouseholdsLocalOnly(households: Household[]): void {
   householdsCache = households;
   localStorage.removeItem(STORAGE_KEY);
   void dexieSetHouseholds(households).catch((err) => {
-    console.error("Failed to persist households:", err);
+    console.error('Failed to persist households:', err);
   });
 }
 
@@ -236,7 +236,11 @@ export function saveHousehold(household: Household): void {
 export function deleteHousehold(id: string): void {
   const households = loadHouseholds();
   const target = households.find((h) => h.id === id);
-  const remotePk = target ? remoteRowIdForHousehold(target) : isRemoteHouseholdRowId(id) ? id : null;
+  const remotePk = target
+    ? remoteRowIdForHousehold(target)
+    : isRemoteHouseholdRowId(id)
+      ? id
+      : null;
   saveHouseholds(households.filter((h) => h.id !== id));
   if (isAuthenticated() && remotePk) queueHouseholdDeleteSync(remotePk);
 }
@@ -261,7 +265,7 @@ export function clearAllHouseholdsAndDefault(): void {
 /** Component refs that resolve against the household {@link Household.recipes} library. */
 function componentRecipeRefTiesToRecipeLibrary(ref: ComponentRecipeRef): boolean {
   if (ref.recipeId) return true;
-  if (ref.sourceType === "imported-recipe") return true;
+  if (ref.sourceType === 'imported-recipe') return true;
   if (ref.importedRecipeSourceId) return true;
   return false;
 }
@@ -406,11 +410,11 @@ export function exportHouseholdsJSON(householdIds?: string[]): string {
 
 export function importHouseholdsJSON(
   json: string,
-  mode: "replace" | "merge" = "replace",
+  mode: 'replace' | 'merge' = 'replace',
 ): Household[] {
   const imported = JSON.parse(json) as Household[];
-  if (!Array.isArray(imported)) throw new Error("Invalid data: expected array");
-  if (mode === "replace") {
+  if (!Array.isArray(imported)) throw new Error('Invalid data: expected array');
+  if (mode === 'replace') {
     saveHouseholds(imported);
     return imported;
   }
@@ -444,8 +448,8 @@ export function normalizeIngredientName(name: string): string {
   return name
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, " ")
-    .replace(/[.,;:!?]+$/, "");
+    .replace(/\s+/g, ' ')
+    .replace(/[.,;:!?]+$/, '');
 }
 
 /**
@@ -581,32 +585,50 @@ function normalizeHouseholdIngredientNames(household: Household): Household {
 }
 
 const SINGULAR_EXCEPTIONS_GK = new Set([
-  "hummus", "couscous", "lentils", "chickpeas", "oats", "peas", "noodles",
-  "greens", "grits", "grains", "sprouts", "capers", "molasses", "quinoa",
-  "edamame", "gnocchi", "tortellini", "rigatoni", "penne", "fusilli",
+  'hummus',
+  'couscous',
+  'lentils',
+  'chickpeas',
+  'oats',
+  'peas',
+  'noodles',
+  'greens',
+  'grits',
+  'grains',
+  'sprouts',
+  'capers',
+  'molasses',
+  'quinoa',
+  'edamame',
+  'gnocchi',
+  'tortellini',
+  'rigatoni',
+  'penne',
+  'fusilli',
 ]);
 
 function singularizeForGroupKey(word: string): string {
   const w = word.toLowerCase();
   if (w.length < 3) return w;
   if (SINGULAR_EXCEPTIONS_GK.has(w)) return w;
-  if (w.endsWith("ies") && w.length > 4) return w.slice(0, -3) + "y";
-  if (w.endsWith("ves")) return w.slice(0, -3) + "f";
-  if (w.endsWith("oes") && w.length > 4) return w.slice(0, -2);
-  if (w.endsWith("ses") && w.length > 4) return w.slice(0, -2);
-  if (w.endsWith("ches") || w.endsWith("shes") || w.endsWith("xes") || w.endsWith("zes")) return w.slice(0, -2);
-  if (w.endsWith("s") && !w.endsWith("ss") && !w.endsWith("us")) return w.slice(0, -1);
+  if (w.endsWith('ies') && w.length > 4) return w.slice(0, -3) + 'y';
+  if (w.endsWith('ves')) return w.slice(0, -3) + 'f';
+  if (w.endsWith('oes') && w.length > 4) return w.slice(0, -2);
+  if (w.endsWith('ses') && w.length > 4) return w.slice(0, -2);
+  if (w.endsWith('ches') || w.endsWith('shes') || w.endsWith('xes') || w.endsWith('zes'))
+    return w.slice(0, -2);
+  if (w.endsWith('s') && !w.endsWith('ss') && !w.endsWith('us')) return w.slice(0, -1);
   return w;
 }
 
 export function normalizeIngredientGroupKey(name: string): string {
   return normalizeIngredientName(name)
-    .replace(/-/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/-/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
     .split(/\s+/)
     .map(singularizeForGroupKey)
-    .join(" ");
+    .join(' ');
 }
 
 function pickSurvivor(duplicates: Ingredient[]): Ingredient {
@@ -617,7 +639,7 @@ function pickSurvivor(duplicates: Ingredient[]): Ingredient {
     if (ing.tags.length > 0) score += ing.tags.length;
     if (ing.imageUrl) score += 2;
     if (ing.catalogId) score += 2;
-    if (ing.source === "catalog") score += 1;
+    if (ing.source === 'catalog') score += 1;
     if (ing.shelfLifeHint) score += 1;
     if (ing.freezerFriendly) score += 1;
     if (ing.babySafeWithAdaptation) score += 1;
@@ -639,7 +661,7 @@ export function mergeDuplicateMetadata(survivor: Ingredient, duplicates: Ingredi
     if (!merged.imageUrl && dup.imageUrl) merged.imageUrl = dup.imageUrl;
     if (!merged.catalogId && dup.catalogId) {
       merged.catalogId = dup.catalogId;
-      merged.source = "catalog";
+      merged.source = 'catalog';
     }
     if (!merged.shelfLifeHint && dup.shelfLifeHint) merged.shelfLifeHint = dup.shelfLifeHint;
     if (dup.freezerFriendly) merged.freezerFriendly = true;
@@ -653,7 +675,10 @@ export function mergeDuplicateMetadata(survivor: Ingredient, duplicates: Ingredi
   return merged;
 }
 
-export function remapIngredientReferences(household: Household, idRemap: Map<string, string>): number {
+export function remapIngredientReferences(
+  household: Household,
+  idRemap: Map<string, string>,
+): number {
   if (idRemap.size === 0) return 0;
   let updated = 0;
 
@@ -771,7 +796,7 @@ export function migrateHouseholdRecipeRefs(household: Household): RecipeRefMigra
       const existing = meal.recipeRefs ?? [];
       const alreadyLinked = existing.some((r) => r.recipeId === meal.sourceRecipeId);
       if (!alreadyLinked) {
-        const ref: RecipeRef = { recipeId: meal.sourceRecipeId, role: "primary" };
+        const ref: RecipeRef = { recipeId: meal.sourceRecipeId, role: 'primary' };
         meal.recipeRefs = [...existing, ref];
         result.recipeRefsBackfilled++;
       }
@@ -812,7 +837,7 @@ export function runRecipeRefMigrationIfNeeded(): RecipeRefMigrationResult {
   }
   const households = loadHouseholds();
   if (households.length === 0) {
-    localStorage.setItem(RECIPE_REF_MIGRATION_KEY, "1");
+    localStorage.setItem(RECIPE_REF_MIGRATION_KEY, '1');
     return { recipeRefsBackfilled: 0, componentRecipeIdsSet: 0, wholeMealTagsAdded: 0 };
   }
 
@@ -829,7 +854,7 @@ export function runRecipeRefMigrationIfNeeded(): RecipeRefMigrationResult {
   }
 
   saveHouseholds(households);
-  localStorage.setItem(RECIPE_REF_MIGRATION_KEY, "1");
+  localStorage.setItem(RECIPE_REF_MIGRATION_KEY, '1');
   return totals;
 }
 
@@ -842,7 +867,7 @@ export function runStripWholeMealTagsIfNeeded(): number {
   if (localStorage.getItem(STRIP_WHOLE_MEAL_TAGS_KEY)) return 0;
   const households = loadHouseholds();
   if (households.length === 0) {
-    localStorage.setItem(STRIP_WHOLE_MEAL_TAGS_KEY, "1");
+    localStorage.setItem(STRIP_WHOLE_MEAL_TAGS_KEY, '1');
     return 0;
   }
   let recipesUpdated = 0;
@@ -852,18 +877,18 @@ export function runStripWholeMealTagsIfNeeded(): number {
     h.recipes = list.map((recipe) => {
       const tags = recipe.tags;
       if (!tags?.length) return recipe;
-      const next = tags.filter((t) => normalizeRecipeTagForCurated(t) !== "whole-meal");
+      const next = tags.filter((t) => normalizeRecipeTagForCurated(t) !== 'whole-meal');
       if (next.length === tags.length) return recipe;
       recipesUpdated++;
       return { ...recipe, tags: next.length > 0 ? next : undefined };
     });
   }
   saveHouseholds(households);
-  localStorage.setItem(STRIP_WHOLE_MEAL_TAGS_KEY, "1");
+  localStorage.setItem(STRIP_WHOLE_MEAL_TAGS_KEY, '1');
   return recipesUpdated;
 }
 
-const THEME_TAGS_REMOVED = new Set(["taco", "pizza", "pasta"]);
+const THEME_TAGS_REMOVED = new Set(['taco', 'pizza', 'pasta']);
 
 function stripThemeTagsFromStringList(tags: string[] | undefined): string[] | undefined {
   if (!tags?.length) return tags;
@@ -885,7 +910,7 @@ export function runStripThemeRecipeTagsIfNeeded(): {
   }
   const households = loadHouseholds();
   if (households.length === 0) {
-    localStorage.setItem(STRIP_THEME_RECIPE_TAGS_KEY, "1");
+    localStorage.setItem(STRIP_THEME_RECIPE_TAGS_KEY, '1');
     return { recipesUpdated: 0, baseMealsUpdated: 0 };
   }
   let recipesUpdated = 0;
@@ -908,7 +933,7 @@ export function runStripThemeRecipeTagsIfNeeded(): {
     }
   }
   saveHouseholds(households);
-  localStorage.setItem(STRIP_THEME_RECIPE_TAGS_KEY, "1");
+  localStorage.setItem(STRIP_THEME_RECIPE_TAGS_KEY, '1');
   return { recipesUpdated, baseMealsUpdated };
 }
 
@@ -918,7 +943,7 @@ export function runMigrationIfNeeded(): MigrationResult {
   }
   const households = loadHouseholds();
   if (households.length === 0) {
-    localStorage.setItem(MIGRATION_KEY, "1");
+    localStorage.setItem(MIGRATION_KEY, '1');
     return { normalized: 0, duplicatesMerged: 0, referencesUpdated: 0 };
   }
 
@@ -931,7 +956,7 @@ export function runMigrationIfNeeded(): MigrationResult {
   }
 
   saveHouseholds(households);
-  localStorage.setItem(MIGRATION_KEY, "1");
+  localStorage.setItem(MIGRATION_KEY, '1');
   return totals;
 }
 
@@ -953,9 +978,9 @@ export async function replaceLocalWithRemote(households: Household[]): Promise<v
 /** Trigger a JSON download of current household data as a backup. */
 export function downloadHouseholdsBackup(householdIds?: string[]): void {
   const json = exportHouseholdsJSON(householdIds);
-  const blob = new Blob([json], { type: "application/json" });
+  const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   a.href = url;
   a.download = `onebaseplate-backup-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();

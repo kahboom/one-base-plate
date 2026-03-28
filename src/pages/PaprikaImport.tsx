@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import type { BaseMeal, Ingredient, IngredientCategory, Recipe } from "../types";
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import type { BaseMeal, Ingredient, IngredientCategory, Recipe } from '../types';
 import {
   loadHousehold,
   saveHouseholdAsync,
@@ -8,7 +8,7 @@ import {
   normalizeIngredientName,
   normalizeHousehold,
   type NormalizedHousehold,
-} from "../storage";
+} from '../storage';
 import {
   parsePaprikaFile,
   parsePaprikaRecipes,
@@ -26,21 +26,21 @@ import {
   refreshPaprikaSessionParsedLines,
   paprikaRecipeImageUrl,
   PAPRIKA_INGREDIENT_PARSER_VERSION,
-} from "../paprika-parser";
+} from '../paprika-parser';
 import type {
   ParsedPaprikaRecipe,
   PaprikaReviewLine,
   PaprikaGroupResolution,
   PaprikaCreateDraft,
-} from "../paprika-parser";
-import { findNearDuplicates, searchCatalog } from "../catalog";
-import { mapPaprikaCategories } from "../lib/paprikaCategoryMap";
-import { recipeTagLabel } from "../lib/recipeTags";
-import PaprikaIngredientPicker from "../components/PaprikaIngredientPicker";
-import TagSuggestInput from "../components/TagSuggestInput";
-import { useListKeyNav } from "../hooks/useListKeyNav";
-import AppModal from "../components/AppModal";
-import PostImportDestination from "../components/PostImportDestination";
+} from '../paprika-parser';
+import { findNearDuplicates, searchCatalog } from '../catalog';
+import { mapPaprikaCategories } from '../lib/paprikaCategoryMap';
+import { recipeTagLabel } from '../lib/recipeTags';
+import PaprikaIngredientPicker from '../components/PaprikaIngredientPicker';
+import TagSuggestInput from '../components/TagSuggestInput';
+import { useListKeyNav } from '../hooks/useListKeyNav';
+import AppModal from '../components/AppModal';
+import PostImportDestination from '../components/PostImportDestination';
 import {
   PageHeader,
   Card,
@@ -52,40 +52,39 @@ import {
   EmptyState,
   Section,
   Input,
-} from "../components/ui";
+} from '../components/ui';
 
-type Step = "upload" | "select" | "review" | "done";
+type Step = 'upload' | 'select' | 'review' | 'done';
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
-  "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
+  'protein',
+  'carb',
+  'veg',
+  'fruit',
+  'dairy',
+  'snack',
+  'freezer',
+  'pantry',
 ];
 
 /** Page size for Paprika import recipe list and bulk ingredient review list */
 const PAPRIKA_IMPORT_PAGE_SIZE = 10;
 
-type ReviewFilter =
-  | "all"
-  | "exceptions"
-  | "ambiguous"
-  | "ignored"
-  | "matched"
-  | "low-confidence";
+type ReviewFilter = 'all' | 'exceptions' | 'ambiguous' | 'ignored' | 'matched' | 'low-confidence';
 
 function lineMatchesReviewFilter(line: PaprikaReviewLine, filter: ReviewFilter): boolean {
-  if (filter === "all") return true;
-  if (filter === "ambiguous" || filter === "exceptions") {
-    return line.resolutionStatus === "pending";
+  if (filter === 'all') return true;
+  if (filter === 'ambiguous' || filter === 'exceptions') {
+    return line.resolutionStatus === 'pending';
   }
-  if (filter === "ignored") return line.action === "ignore";
-  if (filter === "matched") {
+  if (filter === 'ignored') return line.action === 'ignore';
+  if (filter === 'matched') {
     return (
-      line.action === "use" &&
-      line.status === "matched" &&
-      line.resolutionStatus === "resolved"
+      line.action === 'use' && line.status === 'matched' && line.resolutionStatus === 'resolved'
     );
   }
-  if (filter === "low-confidence") {
-    return line.confidenceBand === "low" && line.resolutionStatus === "pending";
+  if (filter === 'low-confidence') {
+    return line.confidenceBand === 'low' && line.resolutionStatus === 'pending';
   }
   return true;
 }
@@ -96,17 +95,17 @@ export default function PaprikaImport() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [householdName, setHouseholdName] = useState("");
+  const [householdName, setHouseholdName] = useState('');
   const [loaded, setLoaded] = useState(false);
 
-  const [step, setStep] = useState<Step>("upload");
+  const [step, setStep] = useState<Step>('upload');
   const [parsedRecipes, setParsedRecipes] = useState<ParsedPaprikaRecipe[]>([]);
   const [importedCount, setImportedCount] = useState(0);
   const [savedImportedRecipes, setSavedImportedRecipes] = useState<Recipe[]>([]);
   const [doneBaseMeals, setDoneBaseMeals] = useState<BaseMeal[]>([]);
   const [doneAllRecipes, setDoneAllRecipes] = useState<Recipe[]>([]);
-  const [error, setError] = useState("");
-  const [reviewFilter, setReviewFilter] = useState<ReviewFilter>("all");
+  const [error, setError] = useState('');
+  const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('all');
   const [sessionSavedAt, setSessionSavedAt] = useState<string | null>(null);
   const [selectPage, setSelectPage] = useState(0);
   /** Local draft while typing “go to page” (committed on blur / Enter). */
@@ -114,7 +113,7 @@ export default function PaprikaImport() {
   const [matchPickerGroupKey, setMatchPickerGroupKey] = useState<string | null>(null);
   const [catalogPickerGroupKey, setCatalogPickerGroupKey] = useState<string | null>(null);
   const [createGroupKey, setCreateGroupKey] = useState<string | null>(null);
-  const [catalogSearch, setCatalogSearch] = useState("");
+  const [catalogSearch, setCatalogSearch] = useState('');
 
   const catalogResults = useMemo(
     () => (catalogSearch ? searchCatalog(catalogSearch) : []).slice(0, 40),
@@ -131,7 +130,7 @@ export default function PaprikaImport() {
     category: IngredientCategory;
     tags: string;
     retainImportAlias: boolean;
-  }>({ canonicalName: "", category: "pantry", tags: "", retainImportAlias: false });
+  }>({ canonicalName: '', category: 'pantry', tags: '', retainImportAlias: false });
   const [duplicateDialog, setDuplicateDialog] = useState<{
     draft: PaprikaCreateDraft;
     groupKey: string;
@@ -154,7 +153,8 @@ export default function PaprikaImport() {
     for (const recipe of parsedRecipes) {
       if (!recipe.selected) continue;
       for (const line of recipe.parsedLines) {
-        if (line.action !== "create" || !line.createDraft || line.resolutionStatus !== "resolved") continue;
+        if (line.action !== 'create' || !line.createDraft || line.resolutionStatus !== 'resolved')
+          continue;
         const key = line.groupKey ?? groupKeyForParsedName(line.name);
         if (!key || seen.has(key)) continue;
         seen.add(key);
@@ -163,10 +163,10 @@ export default function PaprikaImport() {
           name: normalizeIngredientName(line.createDraft.canonicalName),
           category: line.createDraft.category,
           tags: [...(line.createDraft.tags ?? [])],
-          shelfLifeHint: "",
+          shelfLifeHint: '',
           freezerFriendly: false,
           babySafeWithAdaptation: false,
-          source: "pending-import",
+          source: 'pending-import',
         });
       }
     }
@@ -189,7 +189,7 @@ export default function PaprikaImport() {
     // Restore saved session if available (re-parse lines from `raw` when parser version bumps — full
     // recipe text is stripped from snapshots, so names would otherwise stay stale forever).
     const session = loadImportSession(householdId);
-    if (session && session.step !== "done") {
+    if (session && session.step !== 'done') {
       let recipes = migrateLegacyPaprikaRecipes(session.parsedRecipes);
       if ((session.importParserVersion ?? 0) < PAPRIKA_INGREDIENT_PARSER_VERSION) {
         recipes = refreshPaprikaSessionParsedLines(recipes, household?.ingredients ?? []);
@@ -210,7 +210,7 @@ export default function PaprikaImport() {
   /** Persist draft after state updates (never call setState from inside another setState updater — React 19). */
   useEffect(() => {
     if (!loaded || !householdId) return;
-    if (step === "done" || step === "upload") return;
+    if (step === 'done' || step === 'upload') return;
     saveImportSession({
       householdId,
       parsedRecipes,
@@ -221,36 +221,33 @@ export default function PaprikaImport() {
   }, [loaded, householdId, step, parsedRecipes]);
 
   const sessionSaveLabel = useMemo(() => {
-    if (!sessionSavedAt) return "Not saved yet";
+    if (!sessionSavedAt) return 'Not saved yet';
     const date = new Date(sessionSavedAt);
-    if (Number.isNaN(date.getTime())) return "Saved to draft";
-    return `Saved to draft ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    if (Number.isNaN(date.getTime())) return 'Saved to draft';
+    return `Saved to draft ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   }, [sessionSavedAt]);
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setError("");
+    setError('');
 
     try {
       const recipes = await parsePaprikaFile(file);
       if (recipes.length === 0) {
-        setError("No recipes found in this file.");
+        setError('No recipes found in this file.');
         return;
       }
       const hh = householdId ? loadHousehold(householdId) : undefined;
       const parsed = parsePaprikaRecipes(recipes, ingredients, hh?.recipes ?? []);
       setParsedRecipes(parsed);
-      setStep("select");
+      setStep('select');
     } catch {
-      setError("Failed to parse file. Make sure it is a valid .paprikarecipes export.");
+      setError('Failed to parse file. Make sure it is a valid .paprikarecipes export.');
     }
   }
 
-  const selectedRecipes = useMemo(
-    () => parsedRecipes.filter((r) => r.selected),
-    [parsedRecipes],
-  );
+  const selectedRecipes = useMemo(() => parsedRecipes.filter((r) => r.selected), [parsedRecipes]);
 
   const duplicateCount = useMemo(
     () => parsedRecipes.filter((r) => r.isDuplicate).length,
@@ -267,10 +264,7 @@ export default function PaprikaImport() {
     return [...cats].sort();
   }, [parsedRecipes]);
 
-  const bulkSummary = useMemo(
-    () => computeBulkSummary(selectedRecipes),
-    [selectedRecipes],
-  );
+  const bulkSummary = useMemo(() => computeBulkSummary(selectedRecipes), [selectedRecipes]);
 
   const allReviewLines = useMemo(() => {
     const lines: { line: PaprikaReviewLine; globalRecipeIdx: number; lineIdx: number }[] = [];
@@ -306,14 +300,11 @@ export default function PaprikaImport() {
         parsedName: lines[0]!.line.name,
         lines,
       }))
-      .sort((a, b) =>
-        a.parsedName.localeCompare(b.parsedName, undefined, { sensitivity: "base" }),
-      );
+      .sort((a, b) => a.parsedName.localeCompare(b.parsedName, undefined, { sensitivity: 'base' }));
   }, [filteredReviewLines]);
 
   const pendingCount = useMemo(
-    () =>
-      allReviewLines.filter(({ line }) => line.resolutionStatus === "pending").length,
+    () => allReviewLines.filter(({ line }) => line.resolutionStatus === 'pending').length,
     [allReviewLines],
   );
 
@@ -343,7 +334,7 @@ export default function PaprikaImport() {
   );
 
   const reviewPage = useMemo(() => {
-    const raw = searchParams.get("reviewPage");
+    const raw = searchParams.get('reviewPage');
     const n = raw ? parseInt(raw, 10) : 1;
     const oneBased = Number.isFinite(n) && n >= 1 ? n : 1;
     return Math.min(maxReviewPageIdx, oneBased - 1);
@@ -359,8 +350,8 @@ export default function PaprikaImport() {
       setSearchParams(
         (sp) => {
           const nsp = new URLSearchParams(sp);
-          if (clamped === 0) nsp.delete("reviewPage");
-          else nsp.set("reviewPage", String(clamped + 1));
+          if (clamped === 0) nsp.delete('reviewPage');
+          else nsp.set('reviewPage', String(clamped + 1));
           return nsp;
         },
         { replace: false },
@@ -373,7 +364,7 @@ export default function PaprikaImport() {
     if (reviewPageInputDraft === null) return;
     const trimmed = reviewPageInputDraft.trim();
     setReviewPageInputDraft(null);
-    if (trimmed === "") return;
+    if (trimmed === '') return;
     const v = parseInt(trimmed, 10);
     if (!Number.isFinite(v)) return;
     setReviewPageIndex(v - 1);
@@ -381,7 +372,7 @@ export default function PaprikaImport() {
 
   const reviewFilterPrevRef = useRef(reviewFilter);
   useEffect(() => {
-    if (step !== "review") {
+    if (step !== 'review') {
       reviewFilterPrevRef.current = reviewFilter;
       return;
     }
@@ -391,7 +382,7 @@ export default function PaprikaImport() {
     setSearchParams(
       (sp) => {
         const nsp = new URLSearchParams(sp);
-        nsp.delete("reviewPage");
+        nsp.delete('reviewPage');
         return nsp;
       },
       { replace: true },
@@ -399,19 +390,19 @@ export default function PaprikaImport() {
   }, [reviewFilter, step, setSearchParams]);
 
   useEffect(() => {
-    if (step !== "review") return;
-    const raw = searchParams.get("reviewPage");
+    if (step !== 'review') return;
+    const raw = searchParams.get('reviewPage');
     const n = raw ? parseInt(raw, 10) : NaN;
     const requestedOneBased = Number.isFinite(n) && n >= 1 ? n : 1;
     const clampedIdx = Math.min(maxReviewPageIdx, requestedOneBased - 1);
     const desiredRaw = clampedIdx === 0 ? null : String(clampedIdx + 1);
-    const normalizeRaw = raw === "1" ? null : raw;
+    const normalizeRaw = raw === '1' ? null : raw;
     if (normalizeRaw === desiredRaw) return;
     setSearchParams(
       (sp) => {
         const nsp = new URLSearchParams(sp);
-        if (desiredRaw === null) nsp.delete("reviewPage");
-        else nsp.set("reviewPage", desiredRaw);
+        if (desiredRaw === null) nsp.delete('reviewPage');
+        else nsp.set('reviewPage', desiredRaw);
         return nsp;
       },
       { replace: true },
@@ -433,17 +424,20 @@ export default function PaprikaImport() {
     };
   }, [reviewGroups, reviewPage]);
 
-  function renderReviewLinesPager(position: "top" | "bottom") {
+  function renderReviewLinesPager(position: 'top' | 'bottom') {
     if (!reviewPaging.showPager) return null;
-    const isTop = position === "top";
+    const isTop = position === 'top';
     return (
       <div
-        className={`flex min-w-0 flex-nowrap items-center justify-between gap-3 overflow-x-auto ${isTop ? "mb-2" : "mt-4"}`}
-        data-testid={isTop ? "review-lines-pagination" : "review-lines-pagination-bottom"}
+        className={`flex min-w-0 flex-nowrap items-center justify-between gap-3 overflow-x-auto ${isTop ? 'mb-2' : 'mt-4'}`}
+        data-testid={isTop ? 'review-lines-pagination' : 'review-lines-pagination-bottom'}
       >
-        <span className="min-w-0 shrink truncate text-xs text-text-muted" title={`Showing ${reviewPaging.from1}–${reviewPaging.end} of ${reviewPaging.total}; page ${reviewPage + 1} of ${reviewPaging.pageCount}`}>
+        <span
+          className="min-w-0 shrink truncate text-xs text-text-muted"
+          title={`Showing ${reviewPaging.from1}–${reviewPaging.end} of ${reviewPaging.total}; page ${reviewPage + 1} of ${reviewPaging.pageCount}`}
+        >
           Showing {reviewPaging.from1}–{reviewPaging.end} of {reviewPaging.total}
-          {" · "}
+          {' · '}
           Page {reviewPage + 1} of {reviewPaging.pageCount}
         </span>
         <div className="flex shrink-0 flex-nowrap items-center gap-2">
@@ -459,13 +453,13 @@ export default function PaprikaImport() {
               onChange={(e) => setReviewPageInputDraft(e.target.value)}
               onBlur={commitReviewPageInput}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (e.key === 'Enter') {
                   e.preventDefault();
                   (e.target as HTMLInputElement).blur();
                 }
               }}
               className="h-9 min-h-0 w-full px-2 py-1 text-center text-xs tabular-nums"
-              data-testid={isTop ? "review-lines-page-select" : "review-lines-page-select-bottom"}
+              data-testid={isTop ? 'review-lines-page-select' : 'review-lines-page-select-bottom'}
             />
           </div>
           <span className="whitespace-nowrap text-xs text-text-muted">
@@ -476,7 +470,7 @@ export default function PaprikaImport() {
             disabled={reviewPage <= 0}
             onClick={() => setReviewPageIndex(reviewPage - 1)}
             className="shrink-0"
-            data-testid={isTop ? "review-lines-prev" : "review-lines-prev-bottom"}
+            data-testid={isTop ? 'review-lines-prev' : 'review-lines-prev-bottom'}
           >
             Previous
           </Button>
@@ -485,7 +479,7 @@ export default function PaprikaImport() {
             disabled={reviewPage >= reviewPaging.pageCount - 1}
             onClick={() => setReviewPageIndex(reviewPage + 1)}
             className="shrink-0"
-            data-testid={isTop ? "review-lines-next" : "review-lines-next-bottom"}
+            data-testid={isTop ? 'review-lines-next' : 'review-lines-next-bottom'}
           >
             Next
           </Button>
@@ -526,15 +520,15 @@ export default function PaprikaImport() {
     });
   }
 
-  function handleDuplicateAction(index: number, action: "skip" | "merge" | "keep-both") {
+  function handleDuplicateAction(index: number, action: 'skip' | 'merge' | 'keep-both') {
     setParsedRecipes((prev) => {
       const next = [...prev];
       const recipe = { ...next[index]! };
-      if (action === "skip") {
+      if (action === 'skip') {
         recipe.selected = false;
-      } else if (action === "merge" || action === "keep-both") {
+      } else if (action === 'merge' || action === 'keep-both') {
         recipe.selected = true;
-        if (action === "keep-both") {
+        if (action === 'keep-both') {
           recipe.isDuplicate = false;
           recipe.existingRecipeId = undefined;
         }
@@ -544,17 +538,21 @@ export default function PaprikaImport() {
     });
   }
 
-  function updateReviewLine(recipeIdx: number, lineIdx: number, updates: Partial<PaprikaReviewLine>) {
+  function updateReviewLine(
+    recipeIdx: number,
+    lineIdx: number,
+    updates: Partial<PaprikaReviewLine>,
+  ) {
     setParsedRecipes((prev) => {
       const next = [...prev];
       const recipe = { ...next[recipeIdx]! };
       const lines = [...recipe.parsedLines];
       const prevLine = lines[lineIdx]!;
       let merged: PaprikaReviewLine = { ...prevLine, ...updates };
-      if (updates.action === "ignore") {
-        merged = { ...merged, resolutionStatus: "resolved", explicitIgnore: true };
-      } else if (updates.action === "use" || updates.action === "create") {
-        merged = { ...merged, resolutionStatus: "resolved", lowConfidenceAccepted: true };
+      if (updates.action === 'ignore') {
+        merged = { ...merged, resolutionStatus: 'resolved', explicitIgnore: true };
+      } else if (updates.action === 'use' || updates.action === 'create') {
+        merged = { ...merged, resolutionStatus: 'resolved', lowConfidenceAccepted: true };
       }
       if (updates.action !== undefined && updates.action !== prevLine.action) {
         merged = { ...merged, perLineOverride: true };
@@ -577,17 +575,17 @@ export default function PaprikaImport() {
     const item = catalogResults[index];
     if (!item) return;
     if (catalogPickerGroupKey) {
-      applyResolutionToGroup(catalogPickerGroupKey, { kind: "catalog", catalogItem: item });
+      applyResolutionToGroup(catalogPickerGroupKey, { kind: 'catalog', catalogItem: item });
     }
     setCatalogPickerGroupKey(null);
   };
 
   const approveSuggestedHouseholdMatch = useCallback(
     (groupKey: string, ingredient: Ingredient | null | undefined) => {
-      setError("");
+      setError('');
       if (!ingredient) return;
       applyResolutionToGroup(groupKey, {
-        kind: "use",
+        kind: 'use',
         ingredientId: ingredient.id,
         ingredient,
       });
@@ -595,27 +593,29 @@ export default function PaprikaImport() {
     [applyResolutionToGroup],
   );
 
-  const openCreateModalForGroup = useCallback((groupKey: string) => {
-    const line = parsedRecipes
-      .flatMap((r) => r.parsedLines)
-      .find((l) => (l.groupKey ?? groupKeyForParsedName(l.name)) === groupKey);
-    if (!line) return;
-    const draft = line.createDraft;
-    setCreateForm({
-      canonicalName: draft?.canonicalName ?? line.name,
-      category: draft?.category ?? line.newCategory,
-      tags: draft?.tags?.join(", ") ?? "",
-      retainImportAlias: draft?.retainImportAlias ?? false,
-    });
-    setCreateGroupKey(groupKey);
-  }, [parsedRecipes]);
+  const openCreateModalForGroup = useCallback(
+    (groupKey: string) => {
+      const line = parsedRecipes
+        .flatMap((r) => r.parsedLines)
+        .find((l) => (l.groupKey ?? groupKeyForParsedName(l.name)) === groupKey);
+      if (!line) return;
+      const draft = line.createDraft;
+      setCreateForm({
+        canonicalName: draft?.canonicalName ?? line.name,
+        category: draft?.category ?? line.newCategory,
+        tags: draft?.tags?.join(', ') ?? '',
+        retainImportAlias: draft?.retainImportAlias ?? false,
+      });
+      setCreateGroupKey(groupKey);
+    },
+    [parsedRecipes],
+  );
 
   const editingCreateDraft = useMemo(() => {
     if (!createGroupKey) return false;
     return parsedRecipes.some((r) =>
       r.parsedLines.some(
-        (l) =>
-          (l.groupKey ?? groupKeyForParsedName(l.name)) === createGroupKey && !!l.createDraft,
+        (l) => (l.groupKey ?? groupKeyForParsedName(l.name)) === createGroupKey && !!l.createDraft,
       ),
     );
   }, [createGroupKey, parsedRecipes]);
@@ -625,7 +625,10 @@ export default function PaprikaImport() {
     const draft: PaprikaCreateDraft = {
       canonicalName: createForm.canonicalName,
       category: createForm.category,
-      tags: createForm.tags.split(",").map((s) => s.trim()).filter(Boolean),
+      tags: createForm.tags
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
       retainImportAlias: createForm.retainImportAlias,
     };
     const norm = normalizeIngredientName(draft.canonicalName);
@@ -639,39 +642,39 @@ export default function PaprikaImport() {
       .find((l) => (l.groupKey ?? groupKeyForParsedName(l.name)) === createGroupKey);
     if (
       sample?.matchedCatalog &&
-      (sample.confidenceBand === "exact" || sample.confidenceBand === "strong")
+      (sample.confidenceBand === 'exact' || sample.confidenceBand === 'strong')
     ) {
       const ok = window.confirm(
         `A strong catalog match (${toSentenceCase(sample.matchedCatalog.name)}) exists. Create a new ingredient anyway?`,
       );
       if (!ok) return;
     }
-    applyResolutionToGroup(createGroupKey, { kind: "create", draft });
+    applyResolutionToGroup(createGroupKey, { kind: 'create', draft });
     setCreateGroupKey(null);
   }, [createGroupKey, createForm, ingredients, parsedRecipes, applyResolutionToGroup]);
 
-  function handleBulkAction(action: "approve-matched" | "create-all-new" | "ignore-instructions") {
+  function handleBulkAction(action: 'approve-matched' | 'create-all-new' | 'ignore-instructions') {
     setParsedRecipes((prev) => applyBulkAction(prev, action));
   }
 
   function handleStartReview() {
     if (selectedRecipes.length === 0) return;
-    setStep("review");
+    setStep('review');
   }
 
   async function handleSaveAll() {
     if (!householdId) return;
     const rawHousehold = loadHousehold(householdId);
     if (!rawHousehold) {
-      setError("Could not load this household. Return to the household list and try again.");
+      setError('Could not load this household. Return to the household list and try again.');
       return;
     }
     const household: NormalizedHousehold = normalizeHousehold(rawHousehold);
-    setError("");
+    setError('');
 
     if (!canFinalizePaprikaImport(parsedRecipes)) {
       setError(
-        "Resolve or intentionally ignore every pending ingredient line (including low-confidence matches) before importing.",
+        'Resolve or intentionally ignore every pending ingredient line (including low-confidence matches) before importing.',
       );
       return;
     }
@@ -735,9 +738,8 @@ export default function PaprikaImport() {
 
       const allSaved: Recipe[] = [];
       for (const parsed of selectedRecipes) {
-        const recipeId = parsed.isDuplicate && parsed.existingRecipeId
-          ? parsed.existingRecipeId
-          : undefined;
+        const recipeId =
+          parsed.isDuplicate && parsed.existingRecipeId ? parsed.existingRecipeId : undefined;
         const found = recipeId
           ? household.recipes.find((r) => r.id === recipeId)
           : newRecipes.find((r) => r.name === parsed.raw.name);
@@ -747,10 +749,10 @@ export default function PaprikaImport() {
       setDoneBaseMeals(household.baseMeals);
       setDoneAllRecipes(household.recipes);
 
-      setStep("done");
+      setStep('done');
     } catch {
       setError(
-        "Could not save imported recipes. Your browser storage quota was exceeded or data could not be written. Try exporting a backup, removing old households or meals, then importing again.",
+        'Could not save imported recipes. Your browser storage quota was exceeded or data could not be written. Try exporting a backup, removing old households or meals, then importing again.',
       );
     }
   }
@@ -765,7 +767,7 @@ export default function PaprikaImport() {
         subtitleTo={`/households?edit=${householdId}`}
       />
 
-      {step === "upload" && (
+      {step === 'upload' && (
         <div data-testid="paprika-upload-step">
           <Card className="mb-4">
             <FieldLabel label="Upload .paprikarecipes file">
@@ -784,7 +786,9 @@ export default function PaprikaImport() {
 
           {error && (
             <Card className="mb-4 border-danger bg-danger/5">
-              <p className="text-sm text-danger" data-testid="paprika-error">{error}</p>
+              <p className="text-sm text-danger" data-testid="paprika-error">
+                {error}
+              </p>
             </Card>
           )}
 
@@ -794,20 +798,24 @@ export default function PaprikaImport() {
         </div>
       )}
 
-      {step === "select" && (
+      {step === 'select' && (
         <div data-testid="paprika-select-step">
           <div className="mb-4 flex flex-wrap gap-2">
             <Chip variant="info">{parsedRecipes.length} recipes found</Chip>
             <Chip variant="success">{selectedRecipes.length} selected</Chip>
-            <Chip variant="neutral" data-testid="import-session-status">{sessionSaveLabel}</Chip>
-            {duplicateCount > 0 && (
-              <Chip variant="warning">{duplicateCount} duplicates</Chip>
-            )}
+            <Chip variant="neutral" data-testid="import-session-status">
+              {sessionSaveLabel}
+            </Chip>
+            {duplicateCount > 0 && <Chip variant="warning">{duplicateCount} duplicates</Chip>}
           </div>
 
           <div className="mb-4 flex flex-wrap gap-2">
-            <Button small onClick={selectAll} data-testid="select-all-btn">Select all</Button>
-            <Button small onClick={selectNone} data-testid="select-none-btn">Select none</Button>
+            <Button small onClick={selectAll} data-testid="select-all-btn">
+              Select all
+            </Button>
+            <Button small onClick={selectNone} data-testid="select-none-btn">
+              Select none
+            </Button>
             {categories.length > 0 && (
               <Select
                 onChange={(e) => {
@@ -818,7 +826,9 @@ export default function PaprikaImport() {
               >
                 <option value="">Select by category...</option>
                 {categories.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </Select>
             )}
@@ -831,7 +841,7 @@ export default function PaprikaImport() {
             >
               <span className="text-xs text-text-muted">
                 Showing {selectPaging.from1}–{selectPaging.end} of {selectPaging.total}
-                {" · "}
+                {' · '}
                 Page {selectPage + 1} of {selectPaging.pageCount}
               </span>
               <div className="flex flex-wrap gap-2">
@@ -846,9 +856,7 @@ export default function PaprikaImport() {
                 <Button
                   small
                   disabled={selectPage >= selectPaging.pageCount - 1}
-                  onClick={() =>
-                    setSelectPage((p) => Math.min(selectPaging.pageCount - 1, p + 1))
-                  }
+                  onClick={() => setSelectPage((p) => Math.min(selectPaging.pageCount - 1, p + 1))}
                   data-testid="recipe-select-next"
                 >
                   Next
@@ -861,15 +869,13 @@ export default function PaprikaImport() {
             {parsedRecipes.slice(selectPaging.start, selectPaging.end).map((recipe, localIdx) => {
               const i = selectPaging.start + localIdx;
               const cats = recipe.raw.categories;
-              const {
-                tags: previewMappedTags,
-                unmappedCount: previewUnmappedCount,
-              } = mapPaprikaCategories(cats);
+              const { tags: previewMappedTags, unmappedCount: previewUnmappedCount } =
+                mapPaprikaCategories(cats);
               return (
                 <Card
                   key={i}
                   data-testid={`recipe-item-${i}`}
-                  className={`!p-2.5 shadow-none ${!recipe.selected ? "opacity-60" : ""}`}
+                  className={`!p-2.5 shadow-none ${!recipe.selected ? 'opacity-60' : ''}`}
                 >
                   <div className="flex items-start gap-2 sm:items-center">
                     <input
@@ -886,10 +892,15 @@ export default function PaprikaImport() {
                         </p>
                         {recipe.isDuplicate && (
                           <div className="flex shrink-0 flex-wrap items-center gap-1">
-                            <Chip variant="warning" className="text-[10px]">Duplicate</Chip>
+                            <Chip variant="warning" className="text-[10px]">
+                              Duplicate
+                            </Chip>
                             <Select
                               onChange={(e) =>
-                                handleDuplicateAction(i, e.target.value as "skip" | "merge" | "keep-both")
+                                handleDuplicateAction(
+                                  i,
+                                  e.target.value as 'skip' | 'merge' | 'keep-both',
+                                )
                               }
                               className="max-w-[11rem] py-1 text-xs"
                               data-testid={`duplicate-action-${i}`}
@@ -907,7 +918,9 @@ export default function PaprikaImport() {
                           <span>{recipe.parsedLines.length} ing.</span>
                         )}
                         {cats.slice(0, 2).map((c) => (
-                          <span key={c} className="truncate text-text-secondary">{c}</span>
+                          <span key={c} className="truncate text-text-secondary">
+                            {c}
+                          </span>
                         ))}
                         {cats.length > 2 && (
                           <span className="text-text-muted">+{cats.length - 2}</span>
@@ -930,7 +943,7 @@ export default function PaprikaImport() {
                           )}
                           {previewUnmappedCount > 0 && (
                             <span className="text-text-muted">
-                              {previewMappedTags.length > 0 ? "· " : ""}
+                              {previewMappedTags.length > 0 ? '· ' : ''}
                               {previewUnmappedCount} unmapped — kept as import metadata only
                             </span>
                           )}
@@ -955,9 +968,15 @@ export default function PaprikaImport() {
                 disabled={selectedRecipes.length === 0}
                 data-testid="start-review-btn"
               >
-                Review {selectedRecipes.length} recipe{selectedRecipes.length !== 1 ? "s" : ""}
+                Review {selectedRecipes.length} recipe{selectedRecipes.length !== 1 ? 's' : ''}
               </Button>
-              <Button onClick={() => { setStep("upload"); setParsedRecipes([]); clearImportSession(); }}>
+              <Button
+                onClick={() => {
+                  setStep('upload');
+                  setParsedRecipes([]);
+                  clearImportSession();
+                }}
+              >
                 Back
               </Button>
             </ActionGroup>
@@ -965,11 +984,13 @@ export default function PaprikaImport() {
         </div>
       )}
 
-      {step === "review" && (
+      {step === 'review' && (
         <div data-testid="paprika-review-step">
           {error && (
             <Card className="mb-4 border-danger bg-danger/5">
-              <p className="text-sm text-danger" data-testid="paprika-error">{error}</p>
+              <p className="text-sm text-danger" data-testid="paprika-error">
+                {error}
+              </p>
             </Card>
           )}
           {selectedRecipes.some((r) => (r.raw.categories?.length ?? 0) > 0) && (
@@ -993,7 +1014,7 @@ export default function PaprikaImport() {
                         <span className="font-medium text-text-primary">{r.raw.name}</span>
                         {sumTags.length > 0 && (
                           <>
-                            {": "}
+                            {': '}
                             {sumTags.map((t) => (
                               <Chip key={t} variant="neutral" className="mx-0.5 text-[10px]">
                                 {recipeTagLabel(t)}
@@ -1003,7 +1024,7 @@ export default function PaprikaImport() {
                         )}
                         {sumUnmapped > 0 && (
                           <span className="text-text-muted">
-                            {sumTags.length > 0 ? " · " : ": "}
+                            {sumTags.length > 0 ? ' · ' : ': '}
                             {sumUnmapped} unmapped (metadata only)
                           </span>
                         )}
@@ -1026,7 +1047,7 @@ export default function PaprikaImport() {
               {sessionSaveLabel}
               {pendingCount > 0 && (
                 <span className="ml-2 text-[color:var(--color-warning-text)]">
-                  {pendingCount} line{pendingCount !== 1 ? "s" : ""} still need a decision.
+                  {pendingCount} line{pendingCount !== 1 ? 's' : ''} still need a decision.
                 </span>
               )}
             </p>
@@ -1035,8 +1056,8 @@ export default function PaprikaImport() {
               <Button
                 small
                 onClick={() => {
-                  setError("");
-                  handleBulkAction("approve-matched");
+                  setError('');
+                  handleBulkAction('approve-matched');
                 }}
                 data-testid="bulk-approve-matched"
               >
@@ -1045,8 +1066,8 @@ export default function PaprikaImport() {
               <Button
                 small
                 onClick={() => {
-                  setError("");
-                  handleBulkAction("create-all-new");
+                  setError('');
+                  handleBulkAction('create-all-new');
                 }}
                 data-testid="bulk-create-new"
               >
@@ -1055,8 +1076,8 @@ export default function PaprikaImport() {
               <Button
                 small
                 onClick={() => {
-                  setError("");
-                  handleBulkAction("ignore-instructions");
+                  setError('');
+                  handleBulkAction('ignore-instructions');
                 }}
                 data-testid="bulk-ignore-instructions"
               >
@@ -1068,40 +1089,44 @@ export default function PaprikaImport() {
               <span className="text-sm text-text-secondary">Show:</span>
               <Button
                 small
-                variant={reviewFilter === "all" ? "primary" : "default"}
-                onClick={() => setReviewFilter("all")}
+                variant={reviewFilter === 'all' ? 'primary' : 'default'}
+                onClick={() => setReviewFilter('all')}
                 data-testid="filter-all"
               >
                 All ({allReviewLines.length})
               </Button>
               <Button
                 small
-                variant={reviewFilter === "ambiguous" || reviewFilter === "exceptions" ? "primary" : "default"}
-                onClick={() => setReviewFilter("ambiguous")}
+                variant={
+                  reviewFilter === 'ambiguous' || reviewFilter === 'exceptions'
+                    ? 'primary'
+                    : 'default'
+                }
+                onClick={() => setReviewFilter('ambiguous')}
                 data-testid="filter-ambiguous"
               >
                 Pending ({pendingCount})
               </Button>
               <Button
                 small
-                variant={reviewFilter === "ignored" ? "primary" : "default"}
-                onClick={() => setReviewFilter("ignored")}
+                variant={reviewFilter === 'ignored' ? 'primary' : 'default'}
+                onClick={() => setReviewFilter('ignored')}
                 data-testid="filter-ignored"
               >
                 Ignored
               </Button>
               <Button
                 small
-                variant={reviewFilter === "matched" ? "primary" : "default"}
-                onClick={() => setReviewFilter("matched")}
+                variant={reviewFilter === 'matched' ? 'primary' : 'default'}
+                onClick={() => setReviewFilter('matched')}
                 data-testid="filter-matched"
               >
                 Matched
               </Button>
               <Button
                 small
-                variant={reviewFilter === "low-confidence" ? "primary" : "default"}
-                onClick={() => setReviewFilter("low-confidence")}
+                variant={reviewFilter === 'low-confidence' ? 'primary' : 'default'}
+                onClick={() => setReviewFilter('low-confidence')}
                 data-testid="filter-low-confidence"
               >
                 Low-confidence
@@ -1109,7 +1134,7 @@ export default function PaprikaImport() {
             </div>
           </Section>
 
-          {renderReviewLinesPager("top")}
+          {renderReviewLinesPager('top')}
 
           <div className="space-y-1" data-testid="review-lines">
             {reviewGroups.slice(reviewPaging.start, reviewPaging.end).map((group, pageIdx) => {
@@ -1118,9 +1143,9 @@ export default function PaprikaImport() {
               const sample = group.lines[0]!.line;
               const band = sample.confidenceBand;
               const resolvedHouseholdName =
-                sample.action === "use" && sample.resolutionStatus === "resolved"
-                  ? sample.matchedIngredient?.name ??
-                    ingredients.find((ing) => ing.id === sample.manualIngredientId)?.name
+                sample.action === 'use' && sample.resolutionStatus === 'resolved'
+                  ? (sample.matchedIngredient?.name ??
+                    ingredients.find((ing) => ing.id === sample.manualIngredientId)?.name)
                   : undefined;
               return (
                 <Card
@@ -1138,7 +1163,10 @@ export default function PaprikaImport() {
                             if (seen.has(ref.globalRecipeIdx)) continue;
                             seen.add(ref.globalRecipeIdx);
                             const recipe = parsedRecipes[ref.globalRecipeIdx]!;
-                            const img = paprikaRecipeImageUrl(recipe.raw.image_url, recipe.raw.photo_data);
+                            const img = paprikaRecipeImageUrl(
+                              recipe.raw.image_url,
+                              recipe.raw.photo_data,
+                            );
                             if (img) imgs.push(img);
                           }
                           if (imgs.length === 0) return null;
@@ -1160,9 +1188,9 @@ export default function PaprikaImport() {
                             {toSentenceCase(group.parsedName)}
                           </p>
                           <p className="text-[11px] text-text-muted">
-                            {group.lines.length} occurrence{group.lines.length !== 1 ? "s" : ""} ·{" "}
-                            {recipeNames.length} recipe{recipeNames.length !== 1 ? "s" : ""}
-                            {sample.resolutionStatus === "pending" && (
+                            {group.lines.length} occurrence{group.lines.length !== 1 ? 's' : ''} ·{' '}
+                            {recipeNames.length} recipe{recipeNames.length !== 1 ? 's' : ''}
+                            {sample.resolutionStatus === 'pending' && (
                               <Chip variant="warning" className="ml-2 text-[10px]">
                                 Pending
                               </Chip>
@@ -1177,25 +1205,26 @@ export default function PaprikaImport() {
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {resolvedHouseholdName && (
-                            <div
-                              className="w-full rounded-md border border-brand/25 bg-brand/5 px-2.5 py-2"
-                              data-testid={`review-group-use-preview-${i}`}
+                          <div
+                            className="w-full rounded-md border border-brand/25 bg-brand/5 px-2.5 py-2"
+                            data-testid={`review-group-use-preview-${i}`}
+                          >
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                              Will use household ingredient
+                            </p>
+                            <p
+                              className="text-sm font-medium text-text-primary"
+                              data-testid={`review-group-use-name-${i}`}
                             >
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-                                Will use household ingredient
-                              </p>
-                              <p
-                                className="text-sm font-medium text-text-primary"
-                                data-testid={`review-group-use-name-${i}`}
-                              >
-                                {toSentenceCase(resolvedHouseholdName)}
-                              </p>
-                              <p className="mt-0.5 text-[11px] text-text-muted">
-                                This is the name stored on the ingredient and used in meals and groceries.
-                              </p>
-                            </div>
-                          )}
-                        {sample.resolutionStatus === "pending" && sample.matchedIngredient && (
+                              {toSentenceCase(resolvedHouseholdName)}
+                            </p>
+                            <p className="mt-0.5 text-[11px] text-text-muted">
+                              This is the name stored on the ingredient and used in meals and
+                              groceries.
+                            </p>
+                          </div>
+                        )}
+                        {sample.resolutionStatus === 'pending' && sample.matchedIngredient && (
                           <Chip
                             variant="success"
                             className="max-w-full cursor-pointer truncate text-[10px] hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand"
@@ -1205,24 +1234,30 @@ export default function PaprikaImport() {
                             aria-label={`Use suggested match: ${sample.matchedIngredient.name}`}
                             data-testid={`review-group-suggested-${i}`}
                             onClick={() =>
-                              approveSuggestedHouseholdMatch(group.groupKey, sample.matchedIngredient)
+                              approveSuggestedHouseholdMatch(
+                                group.groupKey,
+                                sample.matchedIngredient,
+                              )
                             }
                             onKeyDown={(e) => {
-                              if (e.key !== "Enter" && e.key !== " ") return;
+                              if (e.key !== 'Enter' && e.key !== ' ') return;
                               e.preventDefault();
-                              approveSuggestedHouseholdMatch(group.groupKey, sample.matchedIngredient);
+                              approveSuggestedHouseholdMatch(
+                                group.groupKey,
+                                sample.matchedIngredient,
+                              );
                             }}
                           >
                             Suggested: {sample.matchedIngredient.name}
                           </Chip>
                         )}
-                        {sample.resolutionStatus === "pending" && sample.matchedCatalog && (
+                        {sample.resolutionStatus === 'pending' && sample.matchedCatalog && (
                           <Chip variant="info" className="max-w-full truncate text-[10px]">
                             Catalog: {toSentenceCase(sample.matchedCatalog.name)}
                           </Chip>
                         )}
                       </div>
-                      {sample.action === "create" && sample.createDraft && (
+                      {sample.action === 'create' && sample.createDraft && (
                         <div
                           className="rounded-md border border-brand/25 bg-brand/5 px-2.5 py-2"
                           data-testid={`review-group-create-preview-${i}`}
@@ -1241,8 +1276,8 @@ export default function PaprikaImport() {
                           <p className="mt-0.5 text-[11px] text-text-muted">
                             {sample.createDraft.category}
                             {(sample.createDraft.tags?.length ?? 0) > 0 &&
-                              ` · ${(sample.createDraft.tags ?? []).join(", ")}`}
-                            {sample.createDraft.retainImportAlias && " · alias from import kept"}
+                              ` · ${(sample.createDraft.tags ?? []).join(', ')}`}
+                            {sample.createDraft.retainImportAlias && ' · alias from import kept'}
                           </p>
                           <Button
                             small
@@ -1267,7 +1302,7 @@ export default function PaprikaImport() {
                       <Button
                         small
                         onClick={() => {
-                          setCatalogSearch("");
+                          setCatalogSearch('');
                           setCatalogPickerGroupKey(group.groupKey);
                         }}
                         data-testid={`group-catalog-${i}`}
@@ -1279,11 +1314,11 @@ export default function PaprikaImport() {
                         onClick={() => openCreateModalForGroup(group.groupKey)}
                         data-testid={`group-create-${i}`}
                       >
-                        {sample.createDraft ? "Edit create" : "Create new"}
+                        {sample.createDraft ? 'Edit create' : 'Create new'}
                       </Button>
                       <Button
                         small
-                        onClick={() => applyResolutionToGroup(group.groupKey, { kind: "ignore" })}
+                        onClick={() => applyResolutionToGroup(group.groupKey, { kind: 'ignore' })}
                         data-testid={`group-ignore-${i}`}
                       >
                         Ignore all
@@ -1293,12 +1328,12 @@ export default function PaprikaImport() {
 
                   <div className="mt-3 space-y-2 border-t border-border-light pt-2">
                     <p className="text-[10px] font-medium uppercase text-text-muted">
-                      {group.lines.length > 1 ? "Per-line override" : "Source line"}
+                      {group.lines.length > 1 ? 'Per-line override' : 'Source line'}
                     </p>
                     {group.lines.length === 1 && (
                       <p className="text-[11px] text-text-muted">
-                        Resolve this ingredient using the buttons above; per-line actions appear when the same
-                        name appears in more than one recipe line.
+                        Resolve this ingredient using the buttons above; per-line actions appear
+                        when the same name appears in more than one recipe line.
                       </p>
                     )}
                     {group.lines.map((ref, j) => {
@@ -1320,12 +1355,16 @@ export default function PaprikaImport() {
                               <Select
                                 value={line.action}
                                 onChange={(e) => {
-                                  const v = e.target.value as PaprikaReviewLine["action"];
+                                  const v = e.target.value as PaprikaReviewLine['action'];
                                   const patch: Partial<PaprikaReviewLine> = { action: v };
-                                  if (v === "use" && line.matchedIngredient) {
+                                  if (v === 'use' && line.matchedIngredient) {
                                     patch.manualIngredientId = line.matchedIngredient.id;
                                   }
-                                  if (v === "create" && line.status === "unmatched" && !line.matchedCatalog) {
+                                  if (
+                                    v === 'create' &&
+                                    line.status === 'unmatched' &&
+                                    !line.matchedCatalog
+                                  ) {
                                     patch.matchedIngredient = null;
                                     patch.matchedCatalog = null;
                                   }
@@ -1334,19 +1373,19 @@ export default function PaprikaImport() {
                                 className="w-[min(100%,10rem)] py-1 text-xs"
                                 data-testid={`review-action-${i}-${j}`}
                               >
-                                {line.action === "pending" && (
+                                {line.action === 'pending' && (
                                   <option value="pending">Needs resolution</option>
                                 )}
                                 {(line.matchedIngredient || line.manualIngredientId) && (
                                   <option value="use">Use household match</option>
                                 )}
                                 <option value="create">
-                                  {line.matchedCatalog ? "Create from catalog" : "Create new"}
+                                  {line.matchedCatalog ? 'Create from catalog' : 'Create new'}
                                 </option>
                                 <option value="ignore">Ignore</option>
                               </Select>
                             )}
-                            {line.action === "create" && !line.matchedCatalog && (
+                            {line.action === 'create' && !line.matchedCatalog && (
                               <Select
                                 value={line.newCategory}
                                 onChange={(e) =>
@@ -1358,7 +1397,9 @@ export default function PaprikaImport() {
                                 data-testid={`review-category-${i}-${j}`}
                               >
                                 {CATEGORY_OPTIONS.map((c) => (
-                                  <option key={c} value={c}>{c}</option>
+                                  <option key={c} value={c}>
+                                    {c}
+                                  </option>
                                 ))}
                               </Select>
                             )}
@@ -1395,11 +1436,12 @@ export default function PaprikaImport() {
             })}
           </div>
 
-          {renderReviewLinesPager("bottom")}
+          {renderReviewLinesPager('bottom')}
 
-          {reviewGroups.length === 0 && (reviewFilter === "ambiguous" || reviewFilter === "exceptions") && (
-            <EmptyState>No exceptions to review. All ingredients are resolved.</EmptyState>
-          )}
+          {reviewGroups.length === 0 &&
+            (reviewFilter === 'ambiguous' || reviewFilter === 'exceptions') && (
+              <EmptyState>No exceptions to review. All ingredients are resolved.</EmptyState>
+            )}
 
           <AppModal
             open={matchPickerGroupKey !== null}
@@ -1408,7 +1450,9 @@ export default function PaprikaImport() {
             className="max-w-md p-4"
             panelTestId="paprika-match-modal"
           >
-            <h3 className="mb-2 text-base font-semibold text-text-primary">Match household ingredient</h3>
+            <h3 className="mb-2 text-base font-semibold text-text-primary">
+              Match household ingredient
+            </h3>
             <p className="mb-3 text-xs text-text-muted">
               Search and pick the household ingredient for this group (apply to all occurrences).
             </p>
@@ -1416,8 +1460,8 @@ export default function PaprikaImport() {
               ingredients={allPickerIngredients}
               onSelect={(ing) => {
                 if (matchPickerGroupKey) {
-                  if (ing.id.startsWith("pending-create:")) {
-                    const sourceKey = ing.id.slice("pending-create:".length);
+                  if (ing.id.startsWith('pending-create:')) {
+                    const sourceKey = ing.id.slice('pending-create:'.length);
                     const sourceLine = parsedRecipes
                       .flatMap((r) => r.parsedLines)
                       .find(
@@ -1427,13 +1471,13 @@ export default function PaprikaImport() {
                       );
                     if (sourceLine?.createDraft) {
                       applyResolutionToGroup(matchPickerGroupKey, {
-                        kind: "create",
+                        kind: 'create',
                         draft: sourceLine.createDraft,
                       });
                     }
                   } else {
                     applyResolutionToGroup(matchPickerGroupKey, {
-                      kind: "use",
+                      kind: 'use',
                       ingredientId: ing.id,
                       ingredient: ing,
                     });
@@ -1454,7 +1498,10 @@ export default function PaprikaImport() {
             <h3 className="mb-2 text-base font-semibold text-text-primary">Add from catalog</h3>
             <Input
               value={catalogSearch}
-              onChange={(e) => { setCatalogSearch(e.target.value); catalogKeyNav.setActiveIndex(-1); }}
+              onChange={(e) => {
+                setCatalogSearch(e.target.value);
+                catalogKeyNav.setActiveIndex(-1);
+              }}
               onKeyDown={catalogKeyNav.onKeyDown}
               placeholder="Search catalog…"
               className="mb-2"
@@ -1469,12 +1516,15 @@ export default function PaprikaImport() {
                     type="button"
                     className={`w-full rounded px-2 py-1.5 text-left transition-colors ${
                       catalogKeyNav.activeIndex === i
-                        ? "bg-bg-elevated ring-1 ring-brand"
-                        : "hover:bg-bg-elevated"
+                        ? 'bg-bg-elevated ring-1 ring-brand'
+                        : 'hover:bg-bg-elevated'
                     }`}
                     onClick={() => {
                       if (catalogPickerGroupKey) {
-                        applyResolutionToGroup(catalogPickerGroupKey, { kind: "catalog", catalogItem: item });
+                        applyResolutionToGroup(catalogPickerGroupKey, {
+                          kind: 'catalog',
+                          catalogItem: item,
+                        });
                       }
                       setCatalogPickerGroupKey(null);
                     }}
@@ -1495,11 +1545,11 @@ export default function PaprikaImport() {
             panelTestId="paprika-create-modal"
           >
             <h3 className="mb-1 text-base font-semibold text-text-primary">
-              {editingCreateDraft ? "Edit new ingredient" : "Create new ingredient"}
+              {editingCreateDraft ? 'Edit new ingredient' : 'Create new ingredient'}
             </h3>
             <p className="mb-3 text-xs text-text-muted">
-              This name appears on the review card after you apply (sentence case in the UI; stored in
-              lowercase).
+              This name appears on the review card after you apply (sentence case in the UI; stored
+              in lowercase).
             </p>
             <div className="space-y-2">
               <FieldLabel label="Canonical name">
@@ -1507,7 +1557,7 @@ export default function PaprikaImport() {
                   value={createForm.canonicalName}
                   onChange={(e) => setCreateForm((f) => ({ ...f, canonicalName: e.target.value }))}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+                    if (e.key === 'Enter') {
                       e.preventDefault();
                       submitCreateIngredientModal();
                     }
@@ -1527,7 +1577,9 @@ export default function PaprikaImport() {
                   className="w-full"
                 >
                   {CATEGORY_OPTIONS.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
                   ))}
                 </Select>
               </FieldLabel>
@@ -1558,7 +1610,7 @@ export default function PaprikaImport() {
                   onClick={submitCreateIngredientModal}
                   data-testid="paprika-create-submit"
                 >
-                  {editingCreateDraft ? "Save changes" : "Apply to group"}
+                  {editingCreateDraft ? 'Save changes' : 'Apply to group'}
                 </Button>
                 <Button onClick={() => setCreateGroupKey(null)}>Cancel</Button>
               </div>
@@ -1572,9 +1624,12 @@ export default function PaprikaImport() {
             className="max-w-sm p-4"
             panelTestId="paprika-duplicate-modal"
           >
-            <h3 className="mb-2 text-base font-semibold text-text-primary">Ingredient may already exist</h3>
+            <h3 className="mb-2 text-base font-semibold text-text-primary">
+              Ingredient may already exist
+            </h3>
             <p className="mb-3 text-sm text-text-secondary">
-              &quot;{duplicateDialog?.draft.canonicalName}&quot; matches existing household ingredient &quot;
+              &quot;{duplicateDialog?.draft.canonicalName}&quot; matches existing household
+              ingredient &quot;
               {duplicateDialog?.existing.name}&quot;.
             </p>
             <div className="flex flex-wrap gap-2">
@@ -1583,7 +1638,7 @@ export default function PaprikaImport() {
                 onClick={() => {
                   if (!duplicateDialog) return;
                   applyResolutionToGroup(duplicateDialog.groupKey, {
-                    kind: "use",
+                    kind: 'use',
                     ingredientId: duplicateDialog.existing.id,
                     ingredient: duplicateDialog.existing,
                   });
@@ -1598,7 +1653,7 @@ export default function PaprikaImport() {
                 onClick={() => {
                   if (!duplicateDialog) return;
                   applyResolutionToGroup(duplicateDialog.groupKey, {
-                    kind: "create",
+                    kind: 'create',
                     draft: duplicateDialog.draft,
                   });
                   setDuplicateDialog(null);
@@ -1619,13 +1674,19 @@ export default function PaprikaImport() {
                 disabled={!canFinalizePaprikaImport(parsedRecipes)}
                 data-testid="import-save-all-btn"
               >
-                Import {selectedRecipes.length} recipe{selectedRecipes.length !== 1 ? "s" : ""}
+                Import {selectedRecipes.length} recipe{selectedRecipes.length !== 1 ? 's' : ''}
               </Button>
-              <Button onClick={() => { setStep("select"); }}>
+              <Button
+                onClick={() => {
+                  setStep('select');
+                }}
+              >
                 Back to selection
               </Button>
               <Button
-                onClick={() => { navigate(`/household/${householdId}/home`); }}
+                onClick={() => {
+                  navigate(`/household/${householdId}/home`);
+                }}
                 data-testid="pause-import-btn"
               >
                 Save &amp; resume later
@@ -1635,14 +1696,13 @@ export default function PaprikaImport() {
         </div>
       )}
 
-      {step === "done" && (
+      {step === 'done' && (
         <div data-testid="paprika-done-step">
           <Card className="mb-4">
-            <h3 className="text-lg font-semibold text-text-primary mb-2">
-              Import complete
-            </h3>
+            <h3 className="text-lg font-semibold text-text-primary mb-2">Import complete</h3>
             <p className="text-sm text-text-secondary">
-              Successfully imported {importedCount} recipe{importedCount !== 1 ? "s" : ""} from Paprika.
+              Successfully imported {importedCount} recipe{importedCount !== 1 ? 's' : ''} from
+              Paprika.
             </p>
           </Card>
           {savedImportedRecipes.length > 0 && householdId ? (
@@ -1663,9 +1723,7 @@ export default function PaprikaImport() {
               >
                 View recipe library
               </Button>
-              <Button onClick={() => navigate(`/household/${householdId}/home`)}>
-                Home
-              </Button>
+              <Button onClick={() => navigate(`/household/${householdId}/home`)}>Home</Button>
             </ActionGroup>
           )}
         </div>

@@ -1,13 +1,13 @@
-import type { Household } from "../types";
+import type { Household } from '../types';
 import {
   HOUSEHOLDS_IDB_META,
   META_HOUSEHOLDS,
   META_STORAGE_LAYER_MIGRATED_V3,
   STORAGE_KEY,
-} from "./constants";
-import { getAppDb } from "./dexie-db";
-import { readLegacyKvHouseholds } from "./legacy-idb";
-import { migratePaprikaSessionFromLocalStorage } from "./paprika-session-store";
+} from './constants';
+import { getAppDb } from './dexie-db';
+import { readLegacyKvHouseholds } from './legacy-idb';
+import { migratePaprikaSessionFromLocalStorage } from './paprika-session-store';
 
 function parseHouseholdsJson(raw: string): Household[] | undefined {
   try {
@@ -40,7 +40,7 @@ export async function migrateLegacyIntoDexieIfNeeded(): Promise<void> {
     return;
   }
 
-  const inLegacyIdb = localStorage.getItem(HOUSEHOLDS_IDB_META) === "1";
+  const inLegacyIdb = localStorage.getItem(HOUSEHOLDS_IDB_META) === '1';
   const fromKv = await readLegacyKvHouseholds();
   const rawLs = localStorage.getItem(STORAGE_KEY);
   const fromLs = rawLs !== null ? parseHouseholdsJson(rawLs) : undefined;

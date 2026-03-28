@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { RefObject, KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { RefObject, KeyboardEvent } from 'react';
 
 export interface UseListKeyNavResult {
   activeIndex: number;
@@ -32,39 +32,39 @@ export function useListKeyNav(
     const el = listRef.current;
     if (!el) return;
     const child = el.children[index] as HTMLElement | undefined;
-    child?.scrollIntoView({ block: "nearest" });
+    child?.scrollIntoView({ block: 'nearest' });
   }, []);
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (itemCount === 0) {
-        if (e.key === "Escape" && opts?.onEscape) {
+        if (e.key === 'Escape' && opts?.onEscape) {
           e.preventDefault();
           opts.onEscape();
         }
         return;
       }
 
-      if (e.key === "ArrowDown") {
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
         setActiveIndex((prev) => {
           const next = prev < itemCount - 1 ? prev + 1 : 0;
           scrollTo(next);
           return next;
         });
-      } else if (e.key === "ArrowUp") {
+      } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setActiveIndex((prev) => {
           const next = prev <= 0 ? itemCount - 1 : prev - 1;
           scrollTo(next);
           return next;
         });
-      } else if (e.key === "Enter") {
+      } else if (e.key === 'Enter') {
         if (activeIndex >= 0 && activeIndex < itemCount) {
           e.preventDefault();
           onSelect(activeIndex);
         }
-      } else if (e.key === "Escape" && opts?.onEscape) {
+      } else if (e.key === 'Escape' && opts?.onEscape) {
         e.preventDefault();
         opts.onEscape();
       }

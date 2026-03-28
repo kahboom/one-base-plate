@@ -1,7 +1,7 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import App from "./App";
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
 import {
   initStorage,
   seedIfNeeded,
@@ -9,11 +9,11 @@ import {
   runRecipeRefMigrationIfNeeded,
   runStripWholeMealTagsIfNeeded,
   runStripThemeRecipeTagsIfNeeded,
-} from "./storage";
-import { initTheme } from "./theme";
-import { AuthProvider } from "./auth/AuthContext";
-import { initOnlineListeners } from "./sync/sync-engine";
-import "./app.css";
+} from './storage';
+import { initTheme } from './theme';
+import { AuthProvider } from './auth/AuthContext';
+import { initOnlineListeners } from './sync/sync-engine';
+import './app.css';
 
 initTheme();
 
@@ -27,7 +27,7 @@ void (async () => {
 
   initOnlineListeners();
 
-  createRoot(document.getElementById("root")!).render(
+  createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <AuthProvider>
         <BrowserRouter>

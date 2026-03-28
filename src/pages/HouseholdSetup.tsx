@@ -1,27 +1,38 @@
-import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate, useMatch } from "react-router-dom";
-import type { Household, HouseholdMember, MemberRole, TextureLevel } from "../types";
-import { loadHousehold, saveHousehold } from "../storage";
-import { PageShell, Card, Button, Input, Select, FieldLabel, Chip, ConfirmDialog, useConfirm, HouseholdNavStack } from "../components/ui";
+import { useEffect, useState } from 'react';
+import { useParams, Link, useNavigate, useMatch } from 'react-router-dom';
+import type { Household, HouseholdMember, MemberRole, TextureLevel } from '../types';
+import { loadHousehold, saveHousehold } from '../storage';
+import {
+  PageShell,
+  Card,
+  Button,
+  Input,
+  Select,
+  FieldLabel,
+  Chip,
+  ConfirmDialog,
+  useConfirm,
+  HouseholdNavStack,
+} from '../components/ui';
 
 function createEmptyMember(): HouseholdMember {
   return {
     id: crypto.randomUUID(),
-    name: "",
-    role: "adult",
+    name: '',
+    role: 'adult',
     safeFoods: [],
     hardNoFoods: [],
     preparationRules: [],
-    textureLevel: "regular",
+    textureLevel: 'regular',
     allergens: [],
-    notes: "",
+    notes: '',
   };
 }
 
 function createEmptyHousehold(): Household {
   return {
     id: crypto.randomUUID(),
-    name: "",
+    name: '',
     members: [],
     ingredients: [],
     recipes: [],
@@ -31,8 +42,8 @@ function createEmptyHousehold(): Household {
   };
 }
 
-const ROLE_OPTIONS: MemberRole[] = ["adult", "toddler", "baby", "pet"];
-const TEXTURE_OPTIONS: TextureLevel[] = ["regular", "soft", "mashable", "pureed"];
+const ROLE_OPTIONS: MemberRole[] = ['adult', 'toddler', 'baby', 'pet'];
+const TEXTURE_OPTIONS: TextureLevel[] = ['regular', 'soft', 'mashable', 'pureed'];
 
 function MemberForm({
   member,
@@ -49,7 +60,7 @@ function MemberForm({
   onRemove: () => void;
   householdId: string | undefined;
 }) {
-  const memberName = member.name.trim() || "Unnamed member";
+  const memberName = member.name.trim() || 'Unnamed member';
 
   return (
     <Card data-testid={`member-${member.id}`} className="mb-3">
@@ -63,7 +74,7 @@ function MemberForm({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button small onClick={onToggleExpand}>
-            {expanded ? "Done" : "Edit"}
+            {expanded ? 'Done' : 'Edit'}
           </Button>
           <Button
             variant="ghost"
@@ -93,7 +104,9 @@ function MemberForm({
               onChange={(e) => onChange({ ...member, role: e.target.value as MemberRole })}
             >
               {ROLE_OPTIONS.map((r) => (
-                <option key={r} value={r}>{r}</option>
+                <option key={r} value={r}>
+                  {r}
+                </option>
               ))}
             </Select>
           </FieldLabel>
@@ -101,10 +114,14 @@ function MemberForm({
           <FieldLabel label="Texture level">
             <Select
               value={member.textureLevel}
-              onChange={(e) => onChange({ ...member, textureLevel: e.target.value as TextureLevel })}
+              onChange={(e) =>
+                onChange({ ...member, textureLevel: e.target.value as TextureLevel })
+              }
             >
               {TEXTURE_OPTIONS.map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t}>
+                  {t}
+                </option>
               ))}
             </Select>
           </FieldLabel>
@@ -128,7 +145,7 @@ function MemberForm({
 export default function HouseholdSetup() {
   const { householdId } = useParams<{ householdId?: string }>();
   const navigate = useNavigate();
-  const isStandaloneNew = useMatch({ path: "/household/new", end: true }) != null;
+  const isStandaloneNew = useMatch({ path: '/household/new', end: true }) != null;
   const isNew = isStandaloneNew;
   const effectiveHouseholdId = isNew ? undefined : householdId;
 
@@ -165,7 +182,8 @@ export default function HouseholdSetup() {
   }
 
   function removeMember(memberId: string) {
-    const memberName = household.members.find((member) => member.id === memberId)?.name || "Unnamed member";
+    const memberName =
+      household.members.find((member) => member.id === memberId)?.name || 'Unnamed member';
     requestConfirm(memberName, () => {
       setHousehold((h) => ({
         ...h,
@@ -193,7 +211,7 @@ export default function HouseholdSetup() {
           </p>
         )}
         <h1 className="text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">
-          {isNew ? "Create Household" : "Edit Household"}
+          {isNew ? 'Create Household' : 'Edit Household'}
         </h1>
         {isNew && (
           <p className="mt-2 text-sm text-text-secondary">
@@ -251,7 +269,7 @@ export default function HouseholdSetup() {
         <div className="flex flex-wrap items-center justify-end gap-3">
           <Button onClick={addMember}>Add member</Button>
           <Button variant="primary" onClick={handleSaveHousehold}>
-            {isNew ? "Create household" : "Save household"}
+            {isNew ? 'Create household' : 'Save household'}
           </Button>
         </div>
       </Card>

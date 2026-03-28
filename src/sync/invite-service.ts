@@ -1,15 +1,15 @@
-import { getSupabaseClient } from "../supabase/client";
-import type { HouseholdInvite, RemoteHousehold } from "./types";
+import { getSupabaseClient } from '../supabase/client';
+import type { HouseholdInvite, RemoteHousehold } from './types';
 
 function requireClient() {
   const client = getSupabaseClient();
-  if (!client) throw new Error("Supabase client not configured");
+  if (!client) throw new Error('Supabase client not configured');
   return client;
 }
 
 function generateCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-  let code = "";
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let code = '';
   const values = crypto.getRandomValues(new Uint8Array(8));
   for (const v of values) {
     code += chars[v % chars.length];
@@ -25,11 +25,13 @@ export async function createInvite(
   const code = generateCode();
   const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000).toISOString();
 
-  const { data: { user } } = await client.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
 
   const { data, error } = await client
-    .from("household_invites")
+    .from('household_invites')
     .insert({
       household_id: householdId,
       code,
@@ -43,7 +45,7 @@ export async function createInvite(
 
   if (error) throw new Error(`Failed to create invite: ${error.message}`);
 
-  const link = `${typeof window !== "undefined" ? window.location.origin : ""}/invite/${code}`;
+  const link = `${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${code}`;
 
   return {
     code,
@@ -59,52 +61,50 @@ export async function acceptInvite(
   const client = requireClient();
 
   const { data: invite, error: lookupErr } = await client
-    .from("household_invites")
-    .select("*")
-    .eq("code", code)
+    .from('household_invites')
+    .select('*')
+    .eq('code', code)
     .maybeSingle();
 
   if (lookupErr) throw new Error(`Failed to look up invite: ${lookupErr.message}`);
-  if (!invite) throw new Error("Invite not found or has been revoked.");
+  if (!invite) throw new Error('Invite not found or has been revoked.');
 
   if (new Date(invite.expires_at as string) < new Date()) {
-    throw new Error("This invite has expired.");
+    throw new Error('This invite has expired.');
   }
 
   if ((invite.use_count as number) >= (invite.max_uses as number)) {
-    throw new Error("This invite has reached its maximum number of uses.");
+    throw new Error('This invite has reached its maximum number of uses.');
   }
 
   const { data: existingMembership } = await client
-    .from("household_memberships")
-    .select("id")
-    .eq("household_id", invite.household_id as string)
-    .eq("user_id", userId)
+    .from('household_memberships')
+    .select('id')
+    .eq('household_id', invite.household_id as string)
+    .eq('user_id', userId)
     .maybeSingle();
 
   if (existingMembership) {
-    throw new Error("You are already a member of this household.");
+    throw new Error('You are already a member of this household.');
   }
 
-  const { error: memberErr } = await client
-    .from("household_memberships")
-    .insert({
-      household_id: invite.household_id,
-      user_id: userId,
-      role: "editor",
-    });
+  const { error: memberErr } = await client.from('household_memberships').insert({
+    household_id: invite.household_id,
+    user_id: userId,
+    role: 'editor',
+  });
 
   if (memberErr) throw new Error(`Failed to join household: ${memberErr.message}`);
 
   await client
-    .from("household_invites")
+    .from('household_invites')
     .update({ use_count: (invite.use_count as number) + 1 })
-    .eq("id", invite.id as string);
+    .eq('id', invite.id as string);
 
   const { data: household, error: hhErr } = await client
-    .from("households")
-    .select("*")
-    .eq("id", invite.household_id as string)
+    .from('households')
+    .select('*')
+    .eq('id', invite.household_id as string)
     .single();
 
   if (hhErr) throw new Error(`Failed to fetch household: ${hhErr.message}`);
@@ -114,10 +114,7 @@ export async function acceptInvite(
 
 export async function revokeInvite(inviteId: string): Promise<void> {
   const client = requireClient();
-  const { error } = await client
-    .from("household_invites")
-    .delete()
-    .eq("id", inviteId);
+  const { error } = await client.from('household_invites').delete().eq('id', inviteId);
 
   if (error) throw new Error(`Failed to revoke invite: ${error.message}`);
 }
@@ -127,11 +124,11 @@ export async function listInvites(householdId: string): Promise<HouseholdInvite[
   const now = new Date().toISOString();
 
   const { data, error } = await client
-    .from("household_invites")
-    .select("*")
-    .eq("household_id", householdId)
-    .gt("expires_at", now)
-    .order("created_at", { ascending: false });
+    .from('household_invites')
+    .select('*')
+    .eq('household_id', householdId)
+    .gt('expires_at', now)
+    .order('created_at', { ascending: false });
 
   if (error) throw new Error(`Failed to list invites: ${error.message}`);
   return (data ?? []).filter((r) => (r.use_count as number) < (r.max_uses as number)).map(mapRow);

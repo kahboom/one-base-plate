@@ -1,47 +1,47 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes } from "react-router-dom";
-import type { Household } from "../src/types";
-import { saveHousehold, loadHousehold } from "../src/storage";
-import { householdLayoutRouteBranch } from "./householdLayoutRoutes";
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Routes } from 'react-router-dom';
+import type { Household } from '../src/types';
+import { saveHousehold, loadHousehold } from '../src/storage';
+import { householdLayoutRouteBranch } from './householdLayoutRoutes';
 
 function seedHousehold(): Household {
   const household: Household = {
-    id: "h-inline",
-    name: "Inline Test Family",
+    id: 'h-inline',
+    name: 'Inline Test Family',
     members: [
       {
-        id: "m1",
-        name: "Alice",
-        role: "adult",
+        id: 'm1',
+        name: 'Alice',
+        role: 'adult',
         safeFoods: [],
         hardNoFoods: [],
         preparationRules: [],
-        textureLevel: "regular",
+        textureLevel: 'regular',
         allergens: [],
-        notes: "",
+        notes: '',
       },
     ],
     ingredients: [
       {
-        id: "i1",
-        name: "Chicken",
-        category: "protein",
+        id: 'i1',
+        name: 'Chicken',
+        category: 'protein',
         tags: [],
-        shelfLifeHint: "",
+        shelfLifeHint: '',
         babySafeWithAdaptation: true,
         freezerFriendly: false,
       },
     ],
     baseMeals: [
       {
-        id: "meal1",
-        name: "Test Meal",
-        components: [{ ingredientId: "i1", role: "protein", quantity: "200g" }],
-        defaultPrep: "pan-fry",
+        id: 'meal1',
+        name: 'Test Meal',
+        components: [{ ingredientId: 'i1', role: 'protein', quantity: '200g' }],
+        defaultPrep: 'pan-fry',
         estimatedTimeMinutes: 15,
-        difficulty: "easy",
+        difficulty: 'easy',
         rescueEligible: false,
         wasteReuseHints: [],
       },
@@ -55,19 +55,19 @@ function seedHousehold(): Household {
 
 function seedEmptyHousehold(): Household {
   const household: Household = {
-    id: "h-empty",
-    name: "Empty Family",
+    id: 'h-empty',
+    name: 'Empty Family',
     members: [
       {
-        id: "m1",
-        name: "Bob",
-        role: "adult",
+        id: 'm1',
+        name: 'Bob',
+        role: 'adult',
         safeFoods: [],
         hardNoFoods: [],
         preparationRules: [],
-        textureLevel: "regular",
+        textureLevel: 'regular',
         allergens: [],
-        notes: "",
+        notes: '',
       },
     ],
     ingredients: [],
@@ -107,177 +107,186 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-describe("F038: Inline ingredient creation and discoverable navigation", () => {
-  describe("Inline ingredient form in Base Meal Manager", () => {
+describe('F038: Inline ingredient creation and discoverable navigation', () => {
+  describe('Inline ingredient form in Base Meal Manager', () => {
     it("shows 'Add new ingredient' button in component form", async () => {
       seedHousehold();
-      renderBaseMealManager("h-inline");
+      renderBaseMealManager('h-inline');
       const user = userEvent.setup();
-      await user.click(screen.getByTestId("meal-row-meal1"));
-      const modal = screen.getByTestId("meal-modal");
-      await user.click(within(modal).getByTestId("component-toggle-0"));
-      expect(within(modal).getByTestId("add-ingredient-inline")).toBeInTheDocument();
+      await user.click(screen.getByTestId('meal-row-meal1'));
+      const modal = screen.getByTestId('meal-modal');
+      await user.click(within(modal).getByTestId('component-toggle-0'));
+      expect(within(modal).getByTestId('add-ingredient-inline')).toBeInTheDocument();
     });
 
     it("opens inline form when clicking 'Add new ingredient'", async () => {
       seedHousehold();
-      renderBaseMealManager("h-inline");
+      renderBaseMealManager('h-inline');
       const user = userEvent.setup();
-      await user.click(screen.getByTestId("meal-row-meal1"));
-      const modal = screen.getByTestId("meal-modal");
-      await user.click(within(modal).getByTestId("component-toggle-0"));
-      await user.click(within(modal).getByTestId("add-ingredient-inline"));
-      expect(within(modal).getByTestId("inline-ingredient-form")).toBeInTheDocument();
-      expect(within(modal).getByTestId("inline-ingredient-name")).toBeInTheDocument();
-      expect(within(modal).getByTestId("inline-ingredient-category")).toBeInTheDocument();
+      await user.click(screen.getByTestId('meal-row-meal1'));
+      const modal = screen.getByTestId('meal-modal');
+      await user.click(within(modal).getByTestId('component-toggle-0'));
+      await user.click(within(modal).getByTestId('add-ingredient-inline'));
+      expect(within(modal).getByTestId('inline-ingredient-form')).toBeInTheDocument();
+      expect(within(modal).getByTestId('inline-ingredient-name')).toBeInTheDocument();
+      expect(within(modal).getByTestId('inline-ingredient-category')).toBeInTheDocument();
     });
 
-    it("creates ingredient inline and selects it in the component", async () => {
+    it('creates ingredient inline and selects it in the component', async () => {
       seedHousehold();
-      renderBaseMealManager("h-inline");
+      renderBaseMealManager('h-inline');
       const user = userEvent.setup();
-      await user.click(screen.getByTestId("meal-row-meal1"));
-      const modal = screen.getByTestId("meal-modal");
-      await user.click(within(modal).getByTestId("component-toggle-0"));
-      await user.click(within(modal).getByTestId("add-ingredient-inline"));
-      await user.type(within(modal).getByTestId("inline-ingredient-name"), "Broccoli");
-      await user.selectOptions(within(modal).getByTestId("inline-ingredient-category"), "veg");
-      await user.click(within(modal).getByTestId("inline-ingredient-save"));
+      await user.click(screen.getByTestId('meal-row-meal1'));
+      const modal = screen.getByTestId('meal-modal');
+      await user.click(within(modal).getByTestId('component-toggle-0'));
+      await user.click(within(modal).getByTestId('add-ingredient-inline'));
+      await user.type(within(modal).getByTestId('inline-ingredient-name'), 'Broccoli');
+      await user.selectOptions(within(modal).getByTestId('inline-ingredient-category'), 'veg');
+      await user.click(within(modal).getByTestId('inline-ingredient-save'));
       // Form should close
-      expect(within(modal).queryByTestId("inline-ingredient-form")).not.toBeInTheDocument();
+      expect(within(modal).queryByTestId('inline-ingredient-form')).not.toBeInTheDocument();
       // The new ingredient should appear in the select dropdown options
-      const selects = within(modal).getAllByRole("combobox");
+      const selects = within(modal).getAllByRole('combobox');
       const ingredientSelect = selects.find((s) => {
-        const options = within(s).queryAllByRole("option");
-        return options.some((o) => o.textContent?.includes("Broccoli"));
+        const options = within(s).queryAllByRole('option');
+        return options.some((o) => o.textContent?.includes('Broccoli'));
       });
       expect(ingredientSelect).toBeTruthy();
     });
 
-    it("cancels inline form without adding ingredient", async () => {
+    it('cancels inline form without adding ingredient', async () => {
       seedHousehold();
-      renderBaseMealManager("h-inline");
+      renderBaseMealManager('h-inline');
       const user = userEvent.setup();
-      await user.click(screen.getByTestId("meal-row-meal1"));
-      const modal = screen.getByTestId("meal-modal");
-      await user.click(within(modal).getByTestId("component-toggle-0"));
-      await user.click(within(modal).getByTestId("add-ingredient-inline"));
-      await user.type(within(modal).getByTestId("inline-ingredient-name"), "Tofu");
-      const inlineForm = within(modal).getByTestId("inline-ingredient-form");
-      await user.click(within(inlineForm).getByText("Cancel"));
-      expect(within(modal).queryByTestId("inline-ingredient-form")).not.toBeInTheDocument();
+      await user.click(screen.getByTestId('meal-row-meal1'));
+      const modal = screen.getByTestId('meal-modal');
+      await user.click(within(modal).getByTestId('component-toggle-0'));
+      await user.click(within(modal).getByTestId('add-ingredient-inline'));
+      await user.type(within(modal).getByTestId('inline-ingredient-name'), 'Tofu');
+      const inlineForm = within(modal).getByTestId('inline-ingredient-form');
+      await user.click(within(inlineForm).getByText('Cancel'));
+      expect(within(modal).queryByTestId('inline-ingredient-form')).not.toBeInTheDocument();
       // Tofu should not be in any select
-      const allOptions = within(modal).getAllByRole("option");
-      expect(allOptions.some((o) => o.textContent?.includes("Tofu"))).toBe(false);
+      const allOptions = within(modal).getAllByRole('option');
+      expect(allOptions.some((o) => o.textContent?.includes('Tofu'))).toBe(false);
     });
 
-    it("persists inline-created ingredient on save", async () => {
+    it('persists inline-created ingredient on save', async () => {
       seedHousehold();
-      renderBaseMealManager("h-inline");
+      renderBaseMealManager('h-inline');
       const user = userEvent.setup();
-      await user.click(screen.getByTestId("meal-row-meal1"));
-      const modal = screen.getByTestId("meal-modal");
-      await user.click(within(modal).getByTestId("component-toggle-0"));
-      await user.click(within(modal).getByTestId("add-ingredient-inline"));
-      await user.type(within(modal).getByTestId("inline-ingredient-name"), "Rice");
-      await user.selectOptions(within(modal).getByTestId("inline-ingredient-category"), "carb");
-      await user.click(within(modal).getByTestId("inline-ingredient-save"));
+      await user.click(screen.getByTestId('meal-row-meal1'));
+      const modal = screen.getByTestId('meal-modal');
+      await user.click(within(modal).getByTestId('component-toggle-0'));
+      await user.click(within(modal).getByTestId('add-ingredient-inline'));
+      await user.type(within(modal).getByTestId('inline-ingredient-name'), 'Rice');
+      await user.selectOptions(within(modal).getByTestId('inline-ingredient-category'), 'carb');
+      await user.click(within(modal).getByTestId('inline-ingredient-save'));
       // Auto-save persists
-      const household = loadHousehold("h-inline");
-      expect(household!.ingredients.some((i) => i.name === "rice")).toBe(true);
+      const household = loadHousehold('h-inline');
+      expect(household!.ingredients.some((i) => i.name === 'rice')).toBe(true);
     });
   });
 
-  describe("Section tabs for Ingredients and Base meals", () => {
-    it("Base meals page shows Ingredients section tab link", () => {
+  describe('Section tabs for Ingredients and Base meals', () => {
+    it('Base meals page shows Ingredients section tab link', () => {
       seedHousehold();
-      renderBaseMealManager("h-inline");
-      const sectionNav = screen.getByTestId("section-nav");
-      const ingredientsLink = within(sectionNav).getByText("Ingredients");
+      renderBaseMealManager('h-inline');
+      const sectionNav = screen.getByTestId('section-nav');
+      const ingredientsLink = within(sectionNav).getByText('Ingredients');
       expect(ingredientsLink).toBeInTheDocument();
-      expect(ingredientsLink.closest("a")).toHaveAttribute("href", "/household/h-inline/ingredients");
+      expect(ingredientsLink.closest('a')).toHaveAttribute(
+        'href',
+        '/household/h-inline/ingredients',
+      );
     });
 
-    it("Home page shows secondary nav from shared household shell", () => {
+    it('Home page shows secondary nav from shared household shell', () => {
       seedHousehold();
       render(
-        <MemoryRouter initialEntries={["/household/h-inline/home"]}>
+        <MemoryRouter initialEntries={['/household/h-inline/home']}>
           <Routes>{householdLayoutRouteBranch}</Routes>
         </MemoryRouter>,
       );
-      expect(screen.getByTestId("section-nav")).toBeInTheDocument();
+      expect(screen.getByTestId('section-nav')).toBeInTheDocument();
     });
   });
 
-  describe("Empty state links in Planner and Weekly Planner", () => {
-    it("Planner empty state links to ingredients and base meals pages", () => {
+  describe('Empty state links in Planner and Weekly Planner', () => {
+    it('Planner empty state links to ingredients and base meals pages', () => {
       seedEmptyHousehold();
-      renderPlanner("h-empty");
-      const ingredientsLink = screen.getByText("Add ingredients");
-      const mealsLink = screen.getByText("add base meals");
-      expect(ingredientsLink.closest("a")).toHaveAttribute("href", "/household/h-empty/ingredients");
-      expect(mealsLink.closest("a")).toHaveAttribute("href", "/household/h-empty/meals");
+      renderPlanner('h-empty');
+      const ingredientsLink = screen.getByText('Add ingredients');
+      const mealsLink = screen.getByText('add base meals');
+      expect(ingredientsLink.closest('a')).toHaveAttribute(
+        'href',
+        '/household/h-empty/ingredients',
+      );
+      expect(mealsLink.closest('a')).toHaveAttribute('href', '/household/h-empty/meals');
     });
 
-    it("Weekly planner empty state links to ingredients and base meals pages", () => {
+    it('Weekly planner empty state links to ingredients and base meals pages', () => {
       seedEmptyHousehold();
-      renderWeeklyPlanner("h-empty");
-      const ingredientsLink = screen.getByText("Add ingredients");
-      const mealsLink = screen.getByText("add base meals");
-      expect(ingredientsLink.closest("a")).toHaveAttribute("href", "/household/h-empty/ingredients");
-      expect(mealsLink.closest("a")).toHaveAttribute("href", "/household/h-empty/meals");
+      renderWeeklyPlanner('h-empty');
+      const ingredientsLink = screen.getByText('Add ingredients');
+      const mealsLink = screen.getByText('add base meals');
+      expect(ingredientsLink.closest('a')).toHaveAttribute(
+        'href',
+        '/household/h-empty/ingredients',
+      );
+      expect(mealsLink.closest('a')).toHaveAttribute('href', '/household/h-empty/meals');
     });
 
-    it("Planner empty state link navigates to ingredients page", async () => {
+    it('Planner empty state link navigates to ingredients page', async () => {
       seedEmptyHousehold();
-      renderPlanner("h-empty");
+      renderPlanner('h-empty');
       const user = userEvent.setup();
-      await user.click(screen.getByText("Add ingredients"));
-      expect(screen.getByRole("heading", { level: 1, name: "Ingredients" })).toBeInTheDocument();
+      await user.click(screen.getByText('Add ingredients'));
+      expect(screen.getByRole('heading', { level: 1, name: 'Ingredients' })).toBeInTheDocument();
     });
 
-    it("Weekly planner empty state link navigates to base meals page", async () => {
+    it('Weekly planner empty state link navigates to base meals page', async () => {
       seedEmptyHousehold();
-      renderWeeklyPlanner("h-empty");
+      renderWeeklyPlanner('h-empty');
       const user = userEvent.setup();
-      await user.click(screen.getByText("add base meals"));
-      expect(screen.getByRole("heading", { level: 1, name: "Base Meals" })).toBeInTheDocument();
+      await user.click(screen.getByText('add base meals'));
+      expect(screen.getByRole('heading', { level: 1, name: 'Base Meals' })).toBeInTheDocument();
     });
   });
 
-  describe("Ingredient creation without leaving the meal editor", () => {
-    it("user stays on Base Meal Manager after creating ingredient inline", async () => {
+  describe('Ingredient creation without leaving the meal editor', () => {
+    it('user stays on Base Meal Manager after creating ingredient inline', async () => {
       seedHousehold();
-      renderBaseMealManager("h-inline");
+      renderBaseMealManager('h-inline');
       const user = userEvent.setup();
-      await user.click(screen.getByTestId("meal-row-meal1"));
-      const modal = screen.getByTestId("meal-modal");
-      await user.click(within(modal).getByTestId("component-toggle-0"));
-      await user.click(within(modal).getByTestId("add-ingredient-inline"));
-      await user.type(within(modal).getByTestId("inline-ingredient-name"), "Pasta");
-      await user.click(within(modal).getByTestId("inline-ingredient-save"));
+      await user.click(screen.getByTestId('meal-row-meal1'));
+      const modal = screen.getByTestId('meal-modal');
+      await user.click(within(modal).getByTestId('component-toggle-0'));
+      await user.click(within(modal).getByTestId('add-ingredient-inline'));
+      await user.type(within(modal).getByTestId('inline-ingredient-name'), 'Pasta');
+      await user.click(within(modal).getByTestId('inline-ingredient-save'));
       // Still on the Base Meal Manager page
-      expect(screen.getByText("Base Meals")).toBeInTheDocument();
-      expect(screen.queryByText("Home Page")).not.toBeInTheDocument();
+      expect(screen.getByText('Base Meals')).toBeInTheDocument();
+      expect(screen.queryByText('Home Page')).not.toBeInTheDocument();
     });
 
-    it("inline-created ingredient is immediately available in all component selects", async () => {
+    it('inline-created ingredient is immediately available in all component selects', async () => {
       seedHousehold();
-      renderBaseMealManager("h-inline");
+      renderBaseMealManager('h-inline');
       const user = userEvent.setup();
-      await user.click(screen.getByTestId("meal-row-meal1"));
-      const modal = screen.getByTestId("meal-modal");
+      await user.click(screen.getByTestId('meal-row-meal1'));
+      const modal = screen.getByTestId('meal-modal');
       // Create ingredient inline
-      await user.click(within(modal).getByTestId("component-toggle-0"));
-      await user.click(within(modal).getByTestId("add-ingredient-inline"));
-      await user.type(within(modal).getByTestId("inline-ingredient-name"), "Tofu");
-      await user.selectOptions(within(modal).getByTestId("inline-ingredient-category"), "protein");
-      await user.click(within(modal).getByTestId("inline-ingredient-save"));
+      await user.click(within(modal).getByTestId('component-toggle-0'));
+      await user.click(within(modal).getByTestId('add-ingredient-inline'));
+      await user.type(within(modal).getByTestId('inline-ingredient-name'), 'Tofu');
+      await user.selectOptions(within(modal).getByTestId('inline-ingredient-category'), 'protein');
+      await user.click(within(modal).getByTestId('inline-ingredient-save'));
       // The meal's component select should include Tofu
-      const selects = within(modal).getAllByRole("combobox");
+      const selects = within(modal).getAllByRole('combobox');
       const hasTofu = selects.some((s) => {
-        const options = within(s).queryAllByRole("option");
-        return options.some((o) => o.textContent?.includes("Tofu"));
+        const options = within(s).queryAllByRole('option');
+        return options.some((o) => o.textContent?.includes('Tofu'));
       });
       expect(hasTofu).toBe(true);
     });

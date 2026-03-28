@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 let lockCount = 0;
-let savedOverflow = "";
+let savedOverflow = '';
 
 /**
  * Locks document body scroll while active. Reference-counted so nested modals
@@ -13,7 +13,7 @@ export function useBodyScrollLock(active: boolean) {
 
     if (lockCount === 0) {
       savedOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     }
     lockCount++;
 

@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo, useCallback, type FormEvent } from "react";
-import { useParams } from "react-router-dom";
-import type { Ingredient, IngredientCategory, Household } from "../types";
+import { useEffect, useState, useMemo, useCallback, useRef, type FormEvent } from 'react';
+import { useParams } from 'react-router-dom';
+import type { Ingredient, IngredientCategory, Household } from '../types';
 import {
   loadHousehold,
   saveHousehold,
@@ -12,8 +12,8 @@ import {
   validateIngredientAliases,
   ingredientMatchesQuery,
   sanitizeIngredientAliasesAgainstHousehold,
-} from "../storage";
-import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from "../catalog";
+} from '../storage';
+import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from '../catalog';
 import {
   PageHeader,
   Card,
@@ -25,51 +25,66 @@ import {
   EmptyState,
   ConfirmDialog,
   useConfirm,
-} from "../components/ui";
-import AppModal from "../components/AppModal";
-import TagSuggestInput from "../components/TagSuggestInput";
-import { sortIngredients, type IngredientSortKey, type SortDir } from "../lib/listSort";
-import { usePaginatedList, PAGE_SIZE_OPTIONS, type PageSize } from "../hooks/usePaginatedList";
-import { findIngredientReferences, type IngredientReference } from "../lib/ingredientRefs";
-import { useListKeyNav } from "../hooks/useListKeyNav";
+} from '../components/ui';
+import AppModal from '../components/AppModal';
+import TagSuggestInput from '../components/TagSuggestInput';
+import { sortIngredients, type IngredientSortKey, type SortDir } from '../lib/listSort';
+import { usePaginatedList, PAGE_SIZE_OPTIONS, type PageSize } from '../hooks/usePaginatedList';
+import { findIngredientReferences, type IngredientReference } from '../lib/ingredientRefs';
+import { useListKeyNav } from '../hooks/useListKeyNav';
 
-const INGREDIENT_SORT_OPTIONS: { value: string; label: string; key: IngredientSortKey; dir: SortDir }[] = [
-  { value: "name-asc", label: "Name (A–Z)", key: "name", dir: "asc" },
-  { value: "name-desc", label: "Name (Z–A)", key: "name", dir: "desc" },
-  { value: "category-asc", label: "Category (A–Z)", key: "category", dir: "asc" },
-  { value: "category-desc", label: "Category (Z–A)", key: "category", dir: "desc" },
+const INGREDIENT_SORT_OPTIONS: {
+  value: string;
+  label: string;
+  key: IngredientSortKey;
+  dir: SortDir;
+}[] = [
+  { value: 'name-asc', label: 'Name (A–Z)', key: 'name', dir: 'asc' },
+  { value: 'name-desc', label: 'Name (Z–A)', key: 'name', dir: 'desc' },
+  { value: 'category-asc', label: 'Category (A–Z)', key: 'category', dir: 'asc' },
+  { value: 'category-desc', label: 'Category (Z–A)', key: 'category', dir: 'desc' },
 ];
 
 const CATEGORY_OPTIONS: IngredientCategory[] = [
-  "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
+  'protein',
+  'carb',
+  'veg',
+  'fruit',
+  'dairy',
+  'snack',
+  'freezer',
+  'pantry',
 ];
 
-const COMMON_TAGS = ["quick", "mashable", "rescue", "staple", "batch-friendly"];
+const COMMON_TAGS = ['quick', 'mashable', 'rescue', 'staple', 'batch-friendly'];
 
-type SourceFilter = "" | "manual" | "catalog" | "pending-import";
+type SourceFilter = '' | 'manual' | 'catalog' | 'pending-import';
 
 function createEmptyIngredient(): Ingredient {
   return {
     id: crypto.randomUUID(),
-    name: "",
-    category: "pantry",
+    name: '',
+    category: 'pantry',
     tags: [],
-    shelfLifeHint: "",
+    shelfLifeHint: '',
     freezerFriendly: false,
     babySafeWithAdaptation: false,
-    source: "manual",
+    source: 'manual',
   };
 }
 
-const CATEGORY_CHIP_VARIANT: Record<IngredientCategory, "success" | "warning" | "danger" | "info" | "neutral"> = {
-  protein: "danger",
-  carb: "warning",
-  veg: "success",
-  fruit: "success",
-  dairy: "info",
-  snack: "neutral",
-  freezer: "info",
-  pantry: "neutral",
+const CATEGORY_CHIP_VARIANT: Record<
+  IngredientCategory,
+  'success' | 'warning' | 'danger' | 'info' | 'neutral'
+> = {
+  protein: 'danger',
+  carb: 'warning',
+  veg: 'success',
+  fruit: 'success',
+  dairy: 'info',
+  snack: 'neutral',
+  freezer: 'info',
+  pantry: 'neutral',
 };
 
 function populateFromCatalog(
@@ -81,14 +96,12 @@ function populateFromCatalog(
     existing.map((i) => i.catalogId).filter((id): id is string => !!id),
   );
   const suppressed = new Set(suppressedCatalogIds);
-  const newFromCatalog = MASTER_CATALOG
-    .filter(
-      (ci) =>
-        !existingNames.has(ci.name.toLowerCase()) &&
-        !existingCatalogIds.has(ci.id) &&
-        !suppressed.has(ci.id),
-    )
-    .map((ci) => catalogIngredientToHousehold(ci));
+  const newFromCatalog = MASTER_CATALOG.filter(
+    (ci) =>
+      !existingNames.has(ci.name.toLowerCase()) &&
+      !existingCatalogIds.has(ci.id) &&
+      !suppressed.has(ci.id),
+  ).map((ci) => catalogIngredientToHousehold(ci));
   return [...existing, ...newFromCatalog];
 }
 
@@ -118,11 +131,16 @@ function DuplicateWarningDialog({
     >
       <h2 className="mb-2 text-lg font-bold text-text-primary">Duplicate ingredient</h2>
       <p className="mb-4 text-sm text-text-secondary">
-        An ingredient named &ldquo;{duplicateName}&rdquo; already exists in your list. Would you like to keep the existing one or add a duplicate?
+        An ingredient named &ldquo;{duplicateName}&rdquo; already exists in your list. Would you
+        like to keep the existing one or add a duplicate?
       </p>
       <div className="flex gap-3">
-        <Button variant="primary" onClick={onMerge} data-testid="duplicate-merge-btn">Keep existing</Button>
-        <Button onClick={onCancel} data-testid="duplicate-cancel-btn">Cancel</Button>
+        <Button variant="primary" onClick={onMerge} data-testid="duplicate-merge-btn">
+          Keep existing
+        </Button>
+        <Button onClick={onCancel} data-testid="duplicate-cancel-btn">
+          Cancel
+        </Button>
       </div>
     </AppModal>
   );
@@ -164,8 +182,8 @@ function MergeConfirmView({
               key={ing.id}
               className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors ${
                 survivorId === ing.id
-                  ? "border-brand bg-brand/5 font-medium text-text-primary"
-                  : "border-border-light text-text-secondary hover:bg-bg"
+                  ? 'border-brand bg-brand/5 font-medium text-text-primary'
+                  : 'border-border-light text-text-secondary hover:bg-bg'
               }`}
             >
               <input
@@ -177,7 +195,9 @@ function MergeConfirmView({
                 data-testid={`merge-survivor-radio-${ing.id}`}
               />
               {toSentenceCase(ing.name)}
-              <Chip variant={CATEGORY_CHIP_VARIANT[ing.category]} className="ml-auto text-[10px]">{ing.category}</Chip>
+              <Chip variant={CATEGORY_CHIP_VARIANT[ing.category]} className="ml-auto text-[10px]">
+                {ing.category}
+              </Chip>
             </label>
           ))}
         </div>
@@ -185,12 +205,11 @@ function MergeConfirmView({
 
       <div className="mb-3 rounded-md border border-border-light bg-bg px-3 py-2 text-sm">
         <p className="font-medium text-text-primary">
-          Merge &ldquo;{toSentenceCase(absorbed.name)}&rdquo; into &ldquo;{toSentenceCase(survivor.name)}&rdquo;
+          Merge &ldquo;{toSentenceCase(absorbed.name)}&rdquo; into &ldquo;
+          {toSentenceCase(survivor.name)}&rdquo;
         </p>
         <ul className="mt-2 list-disc pl-4 text-text-secondary">
-          {newTags.length > 0 && (
-            <li>Tags added: {newTags.join(", ")}</li>
-          )}
+          {newTags.length > 0 && <li>Tags added: {newTags.join(', ')}</li>}
           {!survivor.imageUrl && absorbed.imageUrl && (
             <li>Image inherited from &ldquo;{toSentenceCase(absorbed.name)}&rdquo;</li>
           )}
@@ -201,22 +220,32 @@ function MergeConfirmView({
             <li>Baby safe flag applied</li>
           )}
           {absorbedRefCount > 0 && (
-            <li>{absorbedRefCount} reference{absorbedRefCount !== 1 ? "s" : ""} will be remapped</li>
+            <li>
+              {absorbedRefCount} reference{absorbedRefCount !== 1 ? 's' : ''} will be remapped
+            </li>
           )}
-          {newTags.length === 0 && (survivor.imageUrl || !absorbed.imageUrl) &&
+          {newTags.length === 0 &&
+            (survivor.imageUrl || !absorbed.imageUrl) &&
             !(absorbed.freezerFriendly && !survivor.freezerFriendly) &&
             !(absorbed.babySafeWithAdaptation && !survivor.babySafeWithAdaptation) &&
-            absorbedRefCount === 0 && (
-            <li>No additional metadata to merge</li>
-          )}
+            absorbedRefCount === 0 && <li>No additional metadata to merge</li>}
         </ul>
       </div>
       <p className="mb-3 text-xs text-text-muted">
-        &ldquo;{toSentenceCase(absorbed.name)}&rdquo; will be removed after merging. This cannot be undone.
+        &ldquo;{toSentenceCase(absorbed.name)}&rdquo; will be removed after merging. This cannot be
+        undone.
       </p>
       <div className="flex gap-3">
-        <Button variant="primary" onClick={() => onConfirm(survivor.id, absorbed.id)} data-testid="merge-confirm-btn">Confirm merge</Button>
-        <Button onClick={onCancel} data-testid="merge-cancel-btn">Cancel</Button>
+        <Button
+          variant="primary"
+          onClick={() => onConfirm(survivor.id, absorbed.id)}
+          data-testid="merge-confirm-btn"
+        >
+          Confirm merge
+        </Button>
+        <Button onClick={onCancel} data-testid="merge-cancel-btn">
+          Cancel
+        </Button>
       </div>
     </div>
   );
@@ -248,11 +277,11 @@ function IngredientModal({
   onDuplicateFound: (newIng: Ingredient, existing: Ingredient) => void;
   onMerge: (survivorId: string, absorbedId: string) => void;
 }) {
-  const [tagInput, setTagInput] = useState("");
-  const [aliasInput, setAliasInput] = useState("");
-  const [aliasCommitError, setAliasCommitError] = useState("");
+  const [tagInput, setTagInput] = useState('');
+  const [aliasInput, setAliasInput] = useState('');
+  const [aliasCommitError, setAliasCommitError] = useState('');
   const [mergeMode, setMergeMode] = useState(false);
-  const [mergeSearch, setMergeSearch] = useState("");
+  const [mergeSearch, setMergeSearch] = useState('');
   const [mergeTarget, setMergeTarget] = useState<Ingredient | null>(null);
 
   const tagSuggestions = useMemo(() => {
@@ -283,18 +312,18 @@ function IngredientModal({
   }, [mergeMode, mergeSearch, allIngredients, ingredient.id]);
 
   const handleMergeResultSelect = useCallback(
-    (index: number) => { setMergeTarget(mergeResults[index]!); },
+    (index: number) => {
+      setMergeTarget(mergeResults[index]!);
+    },
     [mergeResults],
   );
   const handleMergeSearchCancel = useCallback(() => {
     setMergeMode(false);
-    setMergeSearch("");
+    setMergeSearch('');
   }, []);
-  const mergeKeyNav = useListKeyNav(
-    mergeResults.length,
-    handleMergeResultSelect,
-    { onEscape: handleMergeSearchCancel },
-  );
+  const mergeKeyNav = useListKeyNav(mergeResults.length, handleMergeResultSelect, {
+    onEscape: handleMergeSearchCancel,
+  });
 
   const mergeRefCounts = useMemo(() => {
     if (!mergeTarget || !householdRef) return { current: 0, target: 0 };
@@ -309,7 +338,7 @@ function IngredientModal({
     const trimmed = tag.trim();
     if (!trimmed || ingredient.tags.includes(trimmed)) return;
     onChange({ ...ingredient, tags: [...ingredient.tags, trimmed] });
-    setTagInput("");
+    setTagInput('');
   }
 
   function removeTag(tag: string) {
@@ -320,14 +349,14 @@ function IngredientModal({
     const canon = normalizeIngredientName(ingredient.name);
     const a = normalizeIngredientName(aliasInput);
     if (!a || a === canon) {
-      setAliasInput("");
-      setAliasCommitError("");
+      setAliasInput('');
+      setAliasCommitError('');
       return;
     }
     const list = [...(ingredient.aliases ?? [])];
     if (list.some((x) => normalizeIngredientName(x) === a)) {
-      setAliasInput("");
-      setAliasCommitError("");
+      setAliasInput('');
+      setAliasCommitError('');
       return;
     }
     const trial: Ingredient = { ...ingredient, name: canon, aliases: [...list, a] };
@@ -336,9 +365,9 @@ function IngredientModal({
       setAliasCommitError(v.blockingReason);
       return;
     }
-    setAliasCommitError("");
+    setAliasCommitError('');
     onChange(trial);
-    setAliasInput("");
+    setAliasInput('');
   }
 
   function removeAlias(alias: string) {
@@ -367,25 +396,30 @@ function IngredientModal({
       className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-6"
       panelTestId="ingredient-modal"
     >
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-text-primary">
-              {toSentenceCase(ingredient.name) || "New ingredient"}
-            </h2>
-            <span className="text-xs text-text-muted" data-testid="ingredient-source-label">
-              {ingredient.source === "catalog" ? "From catalog" : "Manual"}
-            </span>
-          </div>
-          <Button variant="ghost" onClick={onDismiss} aria-label="Close modal">✕</Button>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-text-primary">
+            {toSentenceCase(ingredient.name) || 'New ingredient'}
+          </h2>
+          <span className="text-xs text-text-muted" data-testid="ingredient-source-label">
+            {ingredient.source === 'catalog' ? 'From catalog' : 'Manual'}
+          </span>
         </div>
+        <Button variant="ghost" onClick={onDismiss} aria-label="Close modal">
+          ✕
+        </Button>
+      </div>
 
-        {duplicates.length > 0 && (
-          <div className="mb-4 rounded-md border border-warning bg-warning/10 px-3 py-2 text-sm text-text-primary" data-testid="duplicate-inline-warning">
-            A similar ingredient &ldquo;{duplicates[0]!.name}&rdquo; already exists in your list.
-          </div>
-        )}
+      {duplicates.length > 0 && (
+        <div
+          className="mb-4 rounded-md border border-warning bg-warning/10 px-3 py-2 text-sm text-text-primary"
+          data-testid="duplicate-inline-warning"
+        >
+          A similar ingredient &ldquo;{duplicates[0]!.name}&rdquo; already exists in your list.
+        </div>
+      )}
 
-        <form onSubmit={handleModalSubmit}>
+      <form onSubmit={handleModalSubmit}>
         <div className="space-y-4">
           <FieldLabel label="Name">
             <Input
@@ -435,7 +469,7 @@ function IngredientModal({
                     small
                     type="button"
                     aria-label={`Remove alias ${a}`}
-                    data-testid={`alias-remove-${a.replace(/\s+/g, "-")}`}
+                    data-testid={`alias-remove-${a.replace(/\s+/g, '-')}`}
                     onClick={() => removeAlias(a)}
                   >
                     x
@@ -449,10 +483,10 @@ function IngredientModal({
                 value={aliasInput}
                 onChange={(e) => {
                   setAliasInput(e.target.value);
-                  setAliasCommitError("");
+                  setAliasCommitError('');
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === 'Enter') {
                     e.preventDefault();
                     commitAlias();
                   }
@@ -476,7 +510,9 @@ function IngredientModal({
               data-testid="modal-ingredient-category"
             >
               {CATEGORY_OPTIONS.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
             </Select>
           </FieldLabel>
@@ -487,9 +523,7 @@ function IngredientModal({
                 type="checkbox"
                 className="h-5 w-5 accent-brand"
                 checked={ingredient.freezerFriendly}
-                onChange={(e) =>
-                  onChange({ ...ingredient, freezerFriendly: e.target.checked })
-                }
+                onChange={(e) => onChange({ ...ingredient, freezerFriendly: e.target.checked })}
               />
               Freezer friendly
             </label>
@@ -511,7 +545,7 @@ function IngredientModal({
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Input
                 type="url"
-                value={ingredient.imageUrl ?? ""}
+                value={ingredient.imageUrl ?? ''}
                 onChange={(e) => onChange({ ...ingredient, imageUrl: e.target.value || undefined })}
                 placeholder="Image URL"
                 data-testid="ingredient-image-url"
@@ -541,7 +575,7 @@ function IngredientModal({
               <div className="mt-2">
                 <img
                   src={ingredient.imageUrl}
-                  alt={ingredient.name || "Ingredient"}
+                  alt={ingredient.name || 'Ingredient'}
                   className="h-20 w-20 rounded-md border border-border-light object-cover"
                   data-testid="ingredient-image-preview"
                 />
@@ -553,15 +587,23 @@ function IngredientModal({
             <span className="mb-1 block text-sm font-medium text-text-secondary">Tags</span>
             <div className="flex flex-wrap gap-1">
               {ingredient.tags.map((tag) => (
-                <span key={tag} data-testid={`tag-${tag}`} className="inline-flex items-center gap-1">
+                <span
+                  key={tag}
+                  data-testid={`tag-${tag}`}
+                  className="inline-flex items-center gap-1"
+                >
                   <Chip variant="info">{tag}</Chip>
-                  <Button variant="ghost" small onClick={() => removeTag(tag)}>x</Button>
+                  <Button variant="ghost" small onClick={() => removeTag(tag)}>
+                    x
+                  </Button>
                 </span>
               ))}
             </div>
             <div className="mt-2 flex flex-wrap gap-1">
               {COMMON_TAGS.filter((t) => !ingredient.tags.includes(t)).map((tag) => (
-                <Button key={tag} small onClick={() => addTag(tag)}>+{tag}</Button>
+                <Button key={tag} small onClick={() => addTag(tag)}>
+                  +{tag}
+                </Button>
               ))}
             </div>
             <div className="mt-2 flex gap-2">
@@ -576,7 +618,9 @@ function IngredientModal({
                 onPick={(tag) => addTag(tag)}
                 onSubmitPlain={() => addTag(tagInput)}
               />
-              <Button small onClick={() => addTag(tagInput)}>Add tag</Button>
+              <Button small onClick={() => addTag(tagInput)}>
+                Add tag
+              </Button>
             </div>
           </div>
         </div>
@@ -594,7 +638,7 @@ function IngredientModal({
                   onMerge(survivorId, absorbedId);
                   setMergeTarget(null);
                   setMergeMode(false);
-                  setMergeSearch("");
+                  setMergeSearch('');
                 }}
                 onCancel={() => setMergeTarget(null)}
               />
@@ -604,7 +648,10 @@ function IngredientModal({
                   <Input
                     type="search"
                     value={mergeSearch}
-                    onChange={(e) => { setMergeSearch(e.target.value); mergeKeyNav.setActiveIndex(-1); }}
+                    onChange={(e) => {
+                      setMergeSearch(e.target.value);
+                      mergeKeyNav.setActiveIndex(-1);
+                    }}
                     onKeyDown={mergeKeyNav.onKeyDown}
                     placeholder="Search ingredient to merge in..."
                     data-testid="merge-search-input"
@@ -628,14 +675,20 @@ function IngredientModal({
                         <button
                           type="button"
                           className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
-                            mergeKeyNav.activeIndex === i ? "bg-bg ring-1 ring-brand" : "hover:bg-bg"
+                            mergeKeyNav.activeIndex === i
+                              ? 'bg-bg ring-1 ring-brand'
+                              : 'hover:bg-bg'
                           }`}
                           onClick={() => setMergeTarget(r)}
                           onMouseEnter={() => mergeKeyNav.setActiveIndex(i)}
                           data-testid={`merge-result-${r.id}`}
                         >
-                          <span className="flex-1 truncate text-text-primary">{toSentenceCase(r.name)}</span>
-                          <Chip variant={CATEGORY_CHIP_VARIANT[r.category]} className="text-[10px]">{r.category}</Chip>
+                          <span className="flex-1 truncate text-text-primary">
+                            {toSentenceCase(r.name)}
+                          </span>
+                          <Chip variant={CATEGORY_CHIP_VARIANT[r.category]} className="text-[10px]">
+                            {r.category}
+                          </Chip>
                         </button>
                       </li>
                     ))}
@@ -651,16 +704,18 @@ function IngredientModal({
         )}
 
         <div className="mt-6 flex items-center justify-between border-t border-border-light pt-4">
-          {isNewIngredient ? <span /> : <Button variant="danger" onClick={onDelete} data-testid="delete-ingredient-btn">Delete</Button>}
-          <Button
-            type="submit"
-            variant="primary"
-            data-testid="ingredient-modal-done"
-          >
+          {isNewIngredient ? (
+            <span />
+          ) : (
+            <Button variant="danger" onClick={onDelete} data-testid="delete-ingredient-btn">
+              Delete
+            </Button>
+          )}
+          <Button type="submit" variant="primary" data-testid="ingredient-modal-done">
             Done
           </Button>
         </div>
-        </form>
+      </form>
     </AppModal>
   );
 }
@@ -689,7 +744,7 @@ function BulkDeleteConfirmDialog({
 
   const sampleNames = selectedIngredients
     .slice(0, 5)
-    .map((i) => toSentenceCase(i.name) || "Unnamed");
+    .map((i) => toSentenceCase(i.name) || 'Unnamed');
   const remaining = selectedIngredients.length - sampleNames.length;
 
   return (
@@ -704,42 +759,48 @@ function BulkDeleteConfirmDialog({
 
       <p className="mb-3 text-sm text-text-secondary">
         {noneReferenced
-          ? `Delete ${selectedIngredients.length} selected ingredient${selectedIngredients.length !== 1 ? "s" : ""}? This cannot be undone.`
+          ? `Delete ${selectedIngredients.length} selected ingredient${selectedIngredients.length !== 1 ? 's' : ''}? This cannot be undone.`
           : someReferenced
-            ? `${referenced.length} of ${selectedIngredients.length} selected ingredient${selectedIngredients.length !== 1 ? "s" : ""} ${referenced.length !== 1 ? "are" : "is"} used by meals, recipes, or plans and cannot be deleted.`
-            : `All ${selectedIngredients.length} selected ingredient${selectedIngredients.length !== 1 ? "s" : ""} ${selectedIngredients.length !== 1 ? "are" : "is"} used by meals, recipes, or plans and cannot be deleted.`}
+            ? `${referenced.length} of ${selectedIngredients.length} selected ingredient${selectedIngredients.length !== 1 ? 's' : ''} ${referenced.length !== 1 ? 'are' : 'is'} used by meals, recipes, or plans and cannot be deleted.`
+            : `All ${selectedIngredients.length} selected ingredient${selectedIngredients.length !== 1 ? 's' : ''} ${selectedIngredients.length !== 1 ? 'are' : 'is'} used by meals, recipes, or plans and cannot be deleted.`}
       </p>
 
-      <div className="mb-4 rounded-md border border-border-light bg-bg px-3 py-2" data-testid="bulk-delete-sample-names">
+      <div
+        className="mb-4 rounded-md border border-border-light bg-bg px-3 py-2"
+        data-testid="bulk-delete-sample-names"
+      >
         <ul className="list-disc pl-4 text-sm text-text-primary">
           {sampleNames.map((name, i) => (
             <li key={i}>{name}</li>
           ))}
         </ul>
-        {remaining > 0 && (
-          <p className="mt-1 text-xs text-text-muted">and {remaining} more...</p>
-        )}
+        {remaining > 0 && <p className="mt-1 text-xs text-text-muted">and {remaining} more...</p>}
       </div>
 
       {referenced.length > 0 && (
-        <div className="mb-4 rounded-md border border-warning bg-warning/10 px-3 py-2" data-testid="bulk-delete-protected-warning">
+        <div
+          className="mb-4 rounded-md border border-warning bg-warning/10 px-3 py-2"
+          data-testid="bulk-delete-protected-warning"
+        >
           <p className="mb-1 text-sm font-medium text-text-primary">
             Protected ingredients ({referenced.length}):
           </p>
           <ul className="list-disc pl-4 text-sm text-text-secondary">
             {referenced.slice(0, 5).map((ing) => {
               const refs = referencedMap.get(ing.id) ?? [];
-              const refSummary = [...new Set(refs.map((r) => r.entityName))].slice(0, 2).join(", ");
+              const refSummary = [...new Set(refs.map((r) => r.entityName))].slice(0, 2).join(', ');
               return (
                 <li key={ing.id}>
                   {toSentenceCase(ing.name)} &mdash; used in {refSummary}
-                  {refs.length > 2 ? ` and ${refs.length - 2} more` : ""}
+                  {refs.length > 2 ? ` and ${refs.length - 2} more` : ''}
                 </li>
               );
             })}
           </ul>
           {referenced.length > 5 && (
-            <p className="mt-1 text-xs text-text-muted">and {referenced.length - 5} more protected...</p>
+            <p className="mt-1 text-xs text-text-muted">
+              and {referenced.length - 5} more protected...
+            </p>
           )}
         </div>
       )}
@@ -782,11 +843,11 @@ function IngredientTableRow({
     <button
       type="button"
       className={`flex w-full items-center gap-3 rounded-md border bg-surface px-3 py-2.5 text-left transition-colors hover:bg-bg hover:shadow-card min-h-[48px] cursor-pointer ${
-        selected ? "border-brand bg-brand/5" : "border-border-light"
+        selected ? 'border-brand bg-brand/5' : 'border-border-light'
       }`}
       data-testid={`ingredient-row-${ingredient.id}`}
       aria-label={`Edit ${
-        ingredient.name.trim() ? toSentenceCase(ingredient.name) : "unnamed ingredient"
+        ingredient.name.trim() ? toSentenceCase(ingredient.name) : 'unnamed ingredient'
       }`}
       onClick={onClick}
     >
@@ -799,9 +860,12 @@ function IngredientTableRow({
           type="checkbox"
           className="h-5 w-5 accent-brand cursor-pointer"
           checked={selected}
-          onChange={(e) => { e.stopPropagation(); onToggleSelect(); }}
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggleSelect();
+          }}
           aria-label={`Select ${
-            ingredient.name.trim() ? toSentenceCase(ingredient.name) : "unnamed ingredient"
+            ingredient.name.trim() ? toSentenceCase(ingredient.name) : 'unnamed ingredient'
           }`}
           data-testid={`ingredient-select-${ingredient.id}`}
         />
@@ -821,24 +885,33 @@ function IngredientTableRow({
         {/* Name */}
         <span className="flex flex-1 min-w-0 items-center sm:flex-[2] self-center gap-1.5">
           <span className="block text-sm font-medium leading-tight text-text-primary truncate">
-            {ingredient.name ? toSentenceCase(ingredient.name) : <span className="italic text-text-muted">Unnamed</span>}
+            {ingredient.name ? (
+              toSentenceCase(ingredient.name)
+            ) : (
+              <span className="italic text-text-muted">Unnamed</span>
+            )}
           </span>
           {(ingredient.aliases?.length ?? 0) > 0 && (
             <span
               className="flex-shrink-0 text-[10px] text-text-muted hidden sm:inline"
               data-testid={`ingredient-row-alias-hint-${ingredient.id}`}
-              title={(ingredient.aliases ?? []).map((a) => toSentenceCase(a)).join(", ")}
+              title={(ingredient.aliases ?? []).map((a) => toSentenceCase(a)).join(', ')}
             >
               +{ingredient.aliases!.length} alt
             </span>
           )}
           {/* Mobile: category + tags inline below name */}
           <span className="flex flex-wrap items-center gap-1 mt-0.5 sm:hidden">
-            <Chip variant={CATEGORY_CHIP_VARIANT[ingredient.category]} className="text-[10px] leading-none">
+            <Chip
+              variant={CATEGORY_CHIP_VARIANT[ingredient.category]}
+              className="text-[10px] leading-none"
+            >
               {ingredient.category}
             </Chip>
             {ingredient.tags.slice(0, 2).map((tag) => (
-              <Chip key={tag} variant="info" className="text-[10px] leading-none">{tag}</Chip>
+              <Chip key={tag} variant="info" className="text-[10px] leading-none">
+                {tag}
+              </Chip>
             ))}
             {ingredient.tags.length > 2 && (
               <span className="text-[10px] text-text-muted">+{ingredient.tags.length - 2}</span>
@@ -848,27 +921,38 @@ function IngredientTableRow({
 
         {/* Desktop columns */}
         <span className="hidden sm:flex sm:flex-1 sm:items-center sm:gap-1 sm:self-center">
-          <Chip variant={CATEGORY_CHIP_VARIANT[ingredient.category]} className="text-[10px] leading-none">
+          <Chip
+            variant={CATEGORY_CHIP_VARIANT[ingredient.category]}
+            className="text-[10px] leading-none"
+          >
             {ingredient.category}
           </Chip>
         </span>
 
         <span className="hidden sm:flex sm:flex-1 sm:flex-wrap sm:items-center sm:gap-1 sm:min-w-0 sm:self-center">
           {ingredient.tags.slice(0, 3).map((tag) => (
-            <Chip key={tag} variant="info" className="text-[10px] leading-none">{tag}</Chip>
+            <Chip key={tag} variant="info" className="text-[10px] leading-none">
+              {tag}
+            </Chip>
           ))}
           {ingredient.tags.length > 3 && (
-            <span className="text-[10px] leading-none text-text-muted">+{ingredient.tags.length - 3}</span>
+            <span className="text-[10px] leading-none text-text-muted">
+              +{ingredient.tags.length - 3}
+            </span>
           )}
         </span>
 
         {/* Flags */}
         <span className="flex w-16 flex-shrink-0 items-center justify-center gap-1.5 self-center">
           {ingredient.freezerFriendly && (
-            <Chip variant="info" className="text-[10px] leading-none" title="Freezer friendly">❄️</Chip>
+            <Chip variant="info" className="text-[10px] leading-none" title="Freezer friendly">
+              ❄️
+            </Chip>
           )}
           {ingredient.babySafeWithAdaptation && (
-            <Chip variant="success" className="text-[10px] leading-none" title="Baby safe">🍼</Chip>
+            <Chip variant="success" className="text-[10px] leading-none" title="Baby safe">
+              🍼
+            </Chip>
           )}
         </span>
       </span>
@@ -887,16 +971,16 @@ function PaginationControls({
   onPageChange: (p: number) => void;
 }) {
   const pages = useMemo(() => {
-    const result: (number | "ellipsis")[] = [];
+    const result: (number | 'ellipsis')[] = [];
     if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) result.push(i);
     } else {
       result.push(1);
-      if (page > 3) result.push("ellipsis");
+      if (page > 3) result.push('ellipsis');
       const start = Math.max(2, page - 1);
       const end = Math.min(totalPages - 1, page + 1);
       for (let i = start; i <= end; i++) result.push(i);
-      if (page < totalPages - 2) result.push("ellipsis");
+      if (page < totalPages - 2) result.push('ellipsis');
       result.push(totalPages);
     }
     return result;
@@ -905,7 +989,11 @@ function PaginationControls({
   if (totalPages <= 1) return null;
 
   return (
-    <nav className="flex items-center justify-center gap-1 pt-4" aria-label="Pagination" data-testid="pagination-controls">
+    <nav
+      className="flex items-center justify-center gap-1 pt-4"
+      aria-label="Pagination"
+      data-testid="pagination-controls"
+    >
       <Button
         small
         onClick={() => onPageChange(1)}
@@ -926,16 +1014,18 @@ function PaginationControls({
       </Button>
 
       {pages.map((p, i) =>
-        p === "ellipsis" ? (
-          <span key={`e${i}`} className="px-1 text-sm text-text-muted">…</span>
+        p === 'ellipsis' ? (
+          <span key={`e${i}`} className="px-1 text-sm text-text-muted">
+            …
+          </span>
         ) : (
           <Button
             key={p}
             small
-            variant={p === page ? "primary" : "default"}
+            variant={p === page ? 'primary' : 'default'}
             onClick={() => onPageChange(p)}
             aria-label={`Page ${p}`}
-            aria-current={p === page ? "page" : undefined}
+            aria-current={p === page ? 'page' : undefined}
             data-testid={`pagination-page-${p}`}
           >
             {p}
@@ -970,13 +1060,13 @@ export default function IngredientManager() {
   const { householdId } = useParams<{ householdId: string }>();
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [householdName, setHouseholdName] = useState("");
+  const [householdName, setHouseholdName] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<IngredientCategory | "">("");
-  const [tagFilter, setTagFilter] = useState("");
-  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<IngredientCategory | ''>('');
+  const [tagFilter, setTagFilter] = useState('');
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('');
   const [ingredientSort, setIngredientSort] = useState(INGREDIENT_SORT_OPTIONS[0]!.value);
   const [duplicateWarning, setDuplicateWarning] = useState<{
     newIngredient: Ingredient;
@@ -993,10 +1083,19 @@ export default function IngredientManager() {
   // Household ref for reference checking
   const [householdRef, setHouseholdRef] = useState<Household | null>(null);
 
+  /**
+   * Ingredient ids that belong in persisted household storage (not master-catalog display fillers).
+   * Initialized from storage on load; grows when the user adds an ingredient or saves/dismisses an edit
+   * on a row. Prevents `populateFromCatalog` virtual rows from being written back — which used to
+   * undo Settings "reset ingredients to defaults" as soon as this page mounted.
+   */
+  const persistedIngredientIdsRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     if (!householdId) return;
     const household = loadHousehold(householdId);
     if (household) {
+      persistedIngredientIdsRef.current = new Set(household.ingredients.map((i) => i.id));
       setIngredients(populateFromCatalog(household.ingredients, household.suppressedCatalogIds));
       setHouseholdName(household.name);
       setHouseholdRef(household);
@@ -1008,7 +1107,8 @@ export default function IngredientManager() {
     if (!loaded || !householdId) return;
     const household = loadHousehold(householdId);
     if (!household) return;
-    household.ingredients = sanitizeIngredientAliasesAgainstHousehold(ingredients);
+    const toPersist = ingredients.filter((i) => persistedIngredientIdsRef.current.has(i.id));
+    household.ingredients = sanitizeIngredientAliasesAgainstHousehold(toPersist);
     saveHousehold(household);
     setHouseholdRef(household);
   }, [loaded, householdId, ingredients]);
@@ -1027,7 +1127,7 @@ export default function IngredientManager() {
       if (categoryFilter && ing.category !== categoryFilter) return false;
       if (tagFilter && !ing.tags.includes(tagFilter)) return false;
       if (sourceFilter) {
-        const s = ing.source ?? "manual";
+        const s = ing.source ?? 'manual';
         if (s !== sourceFilter) return false;
       }
       return true;
@@ -1036,7 +1136,8 @@ export default function IngredientManager() {
 
   const sortedIngredients = useMemo(() => {
     const opt =
-      INGREDIENT_SORT_OPTIONS.find((o) => o.value === ingredientSort) ?? INGREDIENT_SORT_OPTIONS[0]!;
+      INGREDIENT_SORT_OPTIONS.find((o) => o.value === ingredientSort) ??
+      INGREDIENT_SORT_OPTIONS[0]!;
     return sortIngredients(filteredIngredients, opt.key, opt.dir);
   }, [filteredIngredients, ingredientSort]);
 
@@ -1045,17 +1146,14 @@ export default function IngredientManager() {
     [searchQuery, categoryFilter, tagFilter, sourceFilter, ingredientSort],
   );
 
-  const {
-    pageItems,
-    page,
-    totalPages,
-    pageSize,
-    setPage,
-    setPageSize,
-  } = usePaginatedList(sortedIngredients, { resetDeps: [...paginationResetDeps] });
+  const { pageItems, page, totalPages, pageSize, setPage, setPageSize } = usePaginatedList(
+    sortedIngredients,
+    { resetDeps: [...paginationResetDeps] },
+  );
 
   const editingIngredient =
-    draftNewIngredient ?? (editingId ? ingredients.find((ing) => ing.id === editingId) ?? null : null);
+    draftNewIngredient ??
+    (editingId ? (ingredients.find((ing) => ing.id === editingId) ?? null) : null);
 
   function addIngredient() {
     setEditingId(null);
@@ -1063,9 +1161,7 @@ export default function IngredientManager() {
   }
 
   function updateIngredient(updated: Ingredient) {
-    setIngredients((prev) =>
-      prev.map((ing) => (ing.id === updated.id ? updated : ing)),
-    );
+    setIngredients((prev) => prev.map((ing) => (ing.id === updated.id ? updated : ing)));
   }
 
   function handleModalChange(updated: Ingredient) {
@@ -1082,7 +1178,9 @@ export default function IngredientManager() {
       return;
     }
     if (editingIngredient?.name) {
-      updateIngredient(normalizeIngredientForStorage(editingIngredient));
+      const normalized = normalizeIngredientForStorage(editingIngredient);
+      updateIngredient(normalized);
+      persistedIngredientIdsRef.current.add(normalized.id);
     }
     setEditingId(null);
   }
@@ -1097,6 +1195,7 @@ export default function IngredientManager() {
       }
       const v = validateIngredientAliases(normalized, ingredients);
       if (v.blockingReason) return;
+      persistedIngredientIdsRef.current.add(normalized.id);
       setIngredients((prev) => [...prev, normalized]);
       setDraftNewIngredient(null);
       return;
@@ -1109,6 +1208,7 @@ export default function IngredientManager() {
           ingredients.map((i) => (i.id === normalized.id ? normalized : i)),
         );
         if (v.blockingReason) return;
+        persistedIngredientIdsRef.current.add(normalized.id);
         updateIngredient(normalized);
       }
       setEditingId(null);
@@ -1117,8 +1217,9 @@ export default function IngredientManager() {
 
   function removeIngredient(ingredientId: string) {
     const ing = ingredients.find((i) => i.id === ingredientId);
-    const displayName = ing?.name.trim() ? toSentenceCase(ing.name) : "this ingredient";
+    const displayName = ing?.name.trim() ? toSentenceCase(ing.name) : 'this ingredient';
     requestConfirm(displayName, () => {
+      persistedIngredientIdsRef.current.delete(ingredientId);
       if (householdId && ing?.catalogId) {
         const household = loadHousehold(householdId);
         if (household) {
@@ -1163,7 +1264,10 @@ export default function IngredientManager() {
       }
       saveHousehold(household);
 
-      setIngredients(household.ingredients);
+      persistedIngredientIdsRef.current = new Set(household.ingredients.map((i) => i.id));
+      setIngredients(
+        populateFromCatalog(household.ingredients, household.suppressedCatalogIds ?? []),
+      );
       setHouseholdRef(household);
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -1241,6 +1345,9 @@ export default function IngredientManager() {
           }
         }
       }
+      for (const id of idsToDelete) {
+        persistedIngredientIdsRef.current.delete(id);
+      }
       setIngredients((prev) => prev.filter((i) => !deleteSet.has(i.id)));
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -1276,13 +1383,15 @@ export default function IngredientManager() {
           </div>
           <Select
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value as IngredientCategory | "")}
+            onChange={(e) => setCategoryFilter(e.target.value as IngredientCategory | '')}
             className="sm:w-36"
             data-testid="ingredient-category-filter"
           >
             <option value="">All categories</option>
             {CATEGORY_OPTIONS.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>
+                {c}
+              </option>
             ))}
           </Select>
           {allTags.length > 0 && (
@@ -1294,7 +1403,9 @@ export default function IngredientManager() {
             >
               <option value="">All tags</option>
               {allTags.map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t}>
+                  {t}
+                </option>
               ))}
             </Select>
           )}
@@ -1328,7 +1439,9 @@ export default function IngredientManager() {
             data-testid="ingredient-page-size"
           >
             {PAGE_SIZE_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s} / page</option>
+              <option key={s} value={s}>
+                {s} / page
+              </option>
             ))}
           </Select>
           <Button onClick={addIngredient}>Add ingredient</Button>
@@ -1350,30 +1463,41 @@ export default function IngredientManager() {
           <Button small onClick={clearSelection} data-testid="bulk-clear-selection">
             Clear selection
           </Button>
-          <Button small variant="danger" onClick={() => setBulkDeleteOpen(true)} data-testid="bulk-delete-btn">
+          <Button
+            small
+            variant="danger"
+            onClick={() => setBulkDeleteOpen(true)}
+            data-testid="bulk-delete-btn"
+          >
             Delete selected
           </Button>
         </div>
       )}
 
       {/* Result summary */}
-      <h2 className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm font-medium text-text-secondary" data-testid="ingredient-list-summary">
+      <h2
+        className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm font-medium text-text-secondary"
+        data-testid="ingredient-list-summary"
+      >
         <span>Items ({ingredients.length})</span>
         {filteredIngredients.length !== ingredients.length && (
-          <span>{` · ${filteredIngredients.length} match${filteredIngredients.length !== 1 ? "es" : ""}`}</span>
+          <span>{` · ${filteredIngredients.length} match${filteredIngredients.length !== 1 ? 'es' : ''}`}</span>
         )}
-        {selectedCount > 0 && (
-          <span>{` · ${selectedCount} selected`}</span>
-        )}
-        {totalPages > 1 && (
-          <span>{` · page ${page} of ${totalPages}`}</span>
-        )}
+        {selectedCount > 0 && <span>{` · ${selectedCount} selected`}</span>}
+        {totalPages > 1 && <span>{` · page ${page} of ${totalPages}`}</span>}
       </h2>
 
       {/* Table header (desktop) */}
       {sortedIngredients.length > 0 && (
-        <div className="hidden sm:flex items-center gap-3 rounded-t-md border border-border-light bg-bg px-3 py-2 text-xs font-medium text-text-muted" role="row" data-testid="ingredient-table-header">
-          <label className="flex flex-shrink-0 items-center justify-center" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="hidden sm:flex items-center gap-3 rounded-t-md border border-border-light bg-bg px-3 py-2 text-xs font-medium text-text-muted"
+          role="row"
+          data-testid="ingredient-table-header"
+        >
+          <label
+            className="flex flex-shrink-0 items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
             <input
               type="checkbox"
               className="h-5 w-5 accent-brand cursor-pointer"
@@ -1399,7 +1523,10 @@ export default function IngredientManager() {
       ) : filteredIngredients.length === 0 ? (
         <EmptyState>No ingredients match your filters.</EmptyState>
       ) : (
-        <div className="space-y-1.5 sm:space-y-0 sm:[&>div+div]:border-t-0" data-testid="ingredient-list">
+        <div
+          className="space-y-1.5 sm:space-y-0 sm:[&>div+div]:border-t-0"
+          data-testid="ingredient-list"
+        >
           {pageItems.map((ingredient) => (
             <IngredientTableRow
               key={ingredient.id}
@@ -1443,10 +1570,11 @@ export default function IngredientManager() {
 
       <DuplicateWarningDialog
         open={!!duplicateWarning}
-        duplicateName={duplicateWarning?.newIngredient.name ?? ""}
+        duplicateName={duplicateWarning?.newIngredient.name ?? ''}
         existingIngredient={duplicateWarning?.existingIngredient ?? null}
         onMerge={() => {
           if (duplicateWarning) {
+            persistedIngredientIdsRef.current.delete(duplicateWarning.newIngredient.id);
             setIngredients((prev) =>
               prev.filter((i) => i.id !== duplicateWarning.newIngredient.id),
             );

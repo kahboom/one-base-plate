@@ -1179,10 +1179,7 @@
       "estimatedTimeMinutes": 40,
       "difficulty": "easy",
       "rescueEligible": true,
-      "wasteReuseHints": [
-        "Leftovers reheat well for lunch",
-        "Sauce freezes in batches"
-      ]
+      "wasteReuseHints": ["Leftovers reheat well for lunch", "Sauce freezes in batches"]
     },
     {
       "id": "bm-rice-bowl",

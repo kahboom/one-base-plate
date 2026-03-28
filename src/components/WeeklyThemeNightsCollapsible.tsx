@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { AnchorStructureTypesField } from "./AnchorStructureTypesField";
-import { EmojiPickerField } from "./EmojiPickerField";
-import { Card, Button, Input, FieldLabel } from "./ui";
-import type { WeeklyAnchor } from "../types";
+import { useState } from 'react';
+import { AnchorStructureTypesField } from './AnchorStructureTypesField';
+import { EmojiPickerField } from './EmojiPickerField';
+import { Card, Button, Input, FieldLabel } from './ui';
+import type { WeeklyAnchor } from '../types';
 
 const WEEKDAYS = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
 ] as const;
 
 type Props = {
@@ -19,10 +19,7 @@ type Props = {
   onPersist: (anchors: WeeklyAnchor[]) => void;
 };
 
-export default function WeeklyThemeNightsCollapsible({
-  weeklyAnchors,
-  onPersist,
-}: Props) {
+export default function WeeklyThemeNightsCollapsible({ weeklyAnchors, onPersist }: Props) {
   const [open, setOpen] = useState(false);
   const [anchorForm, setAnchorForm] = useState<{
     weekday: (typeof WEEKDAYS)[number];
@@ -33,9 +30,9 @@ export default function WeeklyThemeNightsCollapsible({
     enabled: boolean;
   }>({
     weekday: WEEKDAYS[0]!,
-    label: "",
-    icon: "",
-    tags: "",
+    label: '',
+    icon: '',
+    tags: '',
     structureTypes: [],
     enabled: true,
   });
@@ -44,7 +41,7 @@ export default function WeeklyThemeNightsCollapsible({
     const label = anchorForm.label.trim();
     if (!label) return;
     const matchTags = anchorForm.tags
-      .split(",")
+      .split(',')
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
     const matchStructureTypes = [...anchorForm.structureTypes];
@@ -60,9 +57,9 @@ export default function WeeklyThemeNightsCollapsible({
     onPersist([...weeklyAnchors, anchor]);
     setAnchorForm({
       weekday: WEEKDAYS[0]!,
-      label: "",
-      icon: "",
-      tags: "",
+      label: '',
+      icon: '',
+      tags: '',
       structureTypes: [],
       enabled: true,
     });
@@ -80,13 +77,13 @@ export default function WeeklyThemeNightsCollapsible({
         <div>
           <h2 className="text-sm font-semibold text-text-primary">Weekly theme nights</h2>
           <p className="mt-1 text-sm text-text-secondary">
-            Optional soft anchors (e.g. Taco Tuesday). They lightly boost matching meals after household fit —
-            you can still assign any meal.
+            Optional soft anchors (e.g. Taco Tuesday). They lightly boost matching meals after
+            household fit — you can still assign any meal.
           </p>
         </div>
         <span
           className="shrink-0 text-text-muted transition-transform"
-          style={{ transform: open ? "rotate(180deg)" : undefined }}
+          style={{ transform: open ? 'rotate(180deg)' : undefined }}
           aria-hidden
         >
           ▾
@@ -95,7 +92,10 @@ export default function WeeklyThemeNightsCollapsible({
 
       {open && (
         <div className="mt-4 border-t border-border-light pt-4">
-          <div className="mb-4 space-y-3 rounded-md border border-border-light bg-bg p-3" data-testid="weekly-anchors-form">
+          <div
+            className="mb-4 space-y-3 rounded-md border border-border-light bg-bg p-3"
+            data-testid="weekly-anchors-form"
+          >
             <div className="grid gap-3 sm:grid-cols-2">
               <FieldLabel label="Weekday">
                 <select
@@ -119,9 +119,7 @@ export default function WeeklyThemeNightsCollapsible({
               <FieldLabel label="Label">
                 <Input
                   value={anchorForm.label}
-                  onChange={(e) =>
-                    setAnchorForm((f) => ({ ...f, label: e.target.value }))
-                  }
+                  onChange={(e) => setAnchorForm((f) => ({ ...f, label: e.target.value }))}
                   placeholder="e.g. Taco night"
                   data-testid="anchor-label"
                 />
@@ -129,9 +127,7 @@ export default function WeeklyThemeNightsCollapsible({
               <FieldLabel label="Icon (optional)">
                 <EmojiPickerField
                   value={anchorForm.icon}
-                  onChange={(icon) =>
-                    setAnchorForm((f) => ({ ...f, icon }))
-                  }
+                  onChange={(icon) => setAnchorForm((f) => ({ ...f, icon }))}
                   placeholder="Choose emoji"
                   data-testid="anchor-icon"
                 />
@@ -139,9 +135,7 @@ export default function WeeklyThemeNightsCollapsible({
               <FieldLabel label="Match tags (comma-separated)">
                 <Input
                   value={anchorForm.tags}
-                  onChange={(e) =>
-                    setAnchorForm((f) => ({ ...f, tags: e.target.value }))
-                  }
+                  onChange={(e) => setAnchorForm((f) => ({ ...f, tags: e.target.value }))}
                   placeholder="taco, mexican"
                   data-testid="anchor-tags"
                 />
@@ -149,9 +143,7 @@ export default function WeeklyThemeNightsCollapsible({
               <div className="sm:col-span-2">
                 <AnchorStructureTypesField
                   selected={anchorForm.structureTypes}
-                  onChange={(structureTypes) =>
-                    setAnchorForm((f) => ({ ...f, structureTypes }))
-                  }
+                  onChange={(structureTypes) => setAnchorForm((f) => ({ ...f, structureTypes }))}
                 />
               </div>
             </div>
@@ -160,9 +152,7 @@ export default function WeeklyThemeNightsCollapsible({
                 type="checkbox"
                 className="h-4 w-4 accent-brand"
                 checked={anchorForm.enabled}
-                onChange={(e) =>
-                  setAnchorForm((f) => ({ ...f, enabled: e.target.checked }))
-                }
+                onChange={(e) => setAnchorForm((f) => ({ ...f, enabled: e.target.checked }))}
               />
               Enabled
             </label>
@@ -179,11 +169,9 @@ export default function WeeklyThemeNightsCollapsible({
                   data-testid={`weekly-anchor-${a.id}`}
                 >
                   <span>
-                    <strong>{a.weekday}</strong>: {a.icon ? `${a.icon} ` : ""}
+                    <strong>{a.weekday}</strong>: {a.icon ? `${a.icon} ` : ''}
                     {a.label}
-                    {!a.enabled && (
-                      <span className="ml-2 text-text-muted">(off)</span>
-                    )}
+                    {!a.enabled && <span className="ml-2 text-text-muted">(off)</span>}
                   </span>
                   <div className="flex gap-2">
                     <Button
@@ -198,15 +186,13 @@ export default function WeeklyThemeNightsCollapsible({
                         )
                       }
                     >
-                      {a.enabled ? "Disable" : "Enable"}
+                      {a.enabled ? 'Disable' : 'Enable'}
                     </Button>
                     <Button
                       type="button"
                       small
                       variant="danger"
-                      onClick={() =>
-                        onPersist(weeklyAnchors.filter((x) => x.id !== a.id))
-                      }
+                      onClick={() => onPersist(weeklyAnchors.filter((x) => x.id !== a.id))}
                     >
                       Remove
                     </Button>

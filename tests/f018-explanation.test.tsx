@@ -1,46 +1,46 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
-import type { Household, BaseMeal, Ingredient, HouseholdMember } from "../src/types";
-import { saveHousehold } from "../src/storage";
-import { generateMealExplanation } from "../src/planner";
-import Planner from "../src/pages/Planner";
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import type { Household, BaseMeal, Ingredient, HouseholdMember } from '../src/types';
+import { saveHousehold } from '../src/storage';
+import { generateMealExplanation } from '../src/planner';
+import Planner from '../src/pages/Planner';
 
 const ingredients: Ingredient[] = [
   {
-    id: "ing-pasta",
-    name: "pasta",
-    category: "carb",
+    id: 'ing-pasta',
+    name: 'pasta',
+    category: 'carb',
     tags: [],
-    shelfLifeHint: "",
+    shelfLifeHint: '',
     freezerFriendly: false,
     babySafeWithAdaptation: true,
   },
   {
-    id: "ing-chicken",
-    name: "chicken",
-    category: "protein",
+    id: 'ing-chicken',
+    name: 'chicken',
+    category: 'protein',
     tags: [],
-    shelfLifeHint: "",
+    shelfLifeHint: '',
     freezerFriendly: true,
     babySafeWithAdaptation: false,
   },
   {
-    id: "ing-mushrooms",
-    name: "mushrooms",
-    category: "veg",
+    id: 'ing-mushrooms',
+    name: 'mushrooms',
+    category: 'veg',
     tags: [],
-    shelfLifeHint: "",
+    shelfLifeHint: '',
     freezerFriendly: false,
     babySafeWithAdaptation: true,
   },
   {
-    id: "ing-broccoli",
-    name: "broccoli",
-    category: "veg",
+    id: 'ing-broccoli',
+    name: 'broccoli',
+    category: 'veg',
     tags: [],
-    shelfLifeHint: "",
+    shelfLifeHint: '',
     freezerFriendly: true,
     babySafeWithAdaptation: true,
   },
@@ -48,37 +48,37 @@ const ingredients: Ingredient[] = [
 
 const members: HouseholdMember[] = [
   {
-    id: "m-alex",
-    name: "Alex",
-    role: "adult",
+    id: 'm-alex',
+    name: 'Alex',
+    role: 'adult',
     safeFoods: [],
-    hardNoFoods: ["mushrooms"],
+    hardNoFoods: ['mushrooms'],
     preparationRules: [],
-    textureLevel: "regular",
+    textureLevel: 'regular',
     allergens: [],
-    notes: "",
+    notes: '',
   },
   {
-    id: "m-jordan",
-    name: "Jordan",
-    role: "adult",
+    id: 'm-jordan',
+    name: 'Jordan',
+    role: 'adult',
     safeFoods: [],
     hardNoFoods: [],
     preparationRules: [],
-    textureLevel: "regular",
+    textureLevel: 'regular',
     allergens: [],
-    notes: "",
+    notes: '',
   },
   {
-    id: "m-kid",
-    name: "Riley",
-    role: "toddler",
-    safeFoods: ["pasta", "cheese"],
+    id: 'm-kid',
+    name: 'Riley',
+    role: 'toddler',
+    safeFoods: ['pasta', 'cheese'],
     hardNoFoods: [],
     preparationRules: [],
-    textureLevel: "soft",
+    textureLevel: 'soft',
     allergens: [],
-    notes: "",
+    notes: '',
   },
 ];
 
@@ -86,159 +86,157 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-describe("F018: Meal explanation engine", () => {
-  it("explains when a meal works for everyone without modification", () => {
+describe('F018: Meal explanation engine', () => {
+  it('explains when a meal works for everyone without modification', () => {
     const meal: BaseMeal = {
-      id: "meal-1",
-      name: "Simple pasta",
-      components: [
-        { ingredientId: "ing-pasta", role: "carb", quantity: "300g" },
-      ],
-      defaultPrep: "Cook",
+      id: 'meal-1',
+      name: 'Simple pasta',
+      components: [{ ingredientId: 'ing-pasta', role: 'carb', quantity: '300g' }],
+      defaultPrep: 'Cook',
       estimatedTimeMinutes: 10,
-      difficulty: "easy",
+      difficulty: 'easy',
       rescueEligible: true,
       wasteReuseHints: [],
     };
 
     const twoAdults = members.slice(0, 2); // Alex and Jordan only
     const result = generateMealExplanation(meal, twoAdults, ingredients);
-    expect(result.summary).toContain("Works for everyone");
-    expect(result.summary).toContain("no modifications needed");
+    expect(result.summary).toContain('Works for everyone');
+    expect(result.summary).toContain('no modifications needed');
     expect(result.tradeOffs).toHaveLength(0);
   });
 
-  it("explains when a meal works for everyone with adaptations", () => {
+  it('explains when a meal works for everyone with adaptations', () => {
     const meal: BaseMeal = {
-      id: "meal-2",
-      name: "Pasta with broccoli",
+      id: 'meal-2',
+      name: 'Pasta with broccoli',
       components: [
-        { ingredientId: "ing-pasta", role: "carb", quantity: "300g" },
-        { ingredientId: "ing-broccoli", role: "veg", quantity: "200g" },
+        { ingredientId: 'ing-pasta', role: 'carb', quantity: '300g' },
+        { ingredientId: 'ing-broccoli', role: 'veg', quantity: '200g' },
       ],
-      defaultPrep: "Cook",
+      defaultPrep: 'Cook',
       estimatedTimeMinutes: 15,
-      difficulty: "easy",
+      difficulty: 'easy',
       rescueEligible: true,
       wasteReuseHints: [],
     };
 
     const result = generateMealExplanation(meal, members, ingredients);
-    expect(result.summary).toContain("Works for everyone");
-    expect(result.summary).toContain("adaptation");
+    expect(result.summary).toContain('Works for everyone');
+    expect(result.summary).toContain('adaptation');
   });
 
-  it("explains conflicts with member names", () => {
+  it('explains conflicts with member names', () => {
     const meal: BaseMeal = {
-      id: "meal-3",
-      name: "Mushroom pasta",
+      id: 'meal-3',
+      name: 'Mushroom pasta',
       components: [
-        { ingredientId: "ing-pasta", role: "carb", quantity: "300g" },
-        { ingredientId: "ing-mushrooms", role: "veg", quantity: "200g" },
+        { ingredientId: 'ing-pasta', role: 'carb', quantity: '300g' },
+        { ingredientId: 'ing-mushrooms', role: 'veg', quantity: '200g' },
       ],
-      defaultPrep: "Cook",
+      defaultPrep: 'Cook',
       estimatedTimeMinutes: 15,
-      difficulty: "easy",
+      difficulty: 'easy',
       rescueEligible: false,
       wasteReuseHints: [],
     };
 
     const result = generateMealExplanation(meal, members, ingredients);
-    expect(result.summary).toContain("2/3");
-    expect(result.summary).toContain("Alex");
-    expect(result.summary).toContain("conflict");
+    expect(result.summary).toContain('2/3');
+    expect(result.summary).toContain('Alex');
+    expect(result.summary).toContain('conflict');
   });
 
-  it("lists conflict details as trade-offs", () => {
+  it('lists conflict details as trade-offs', () => {
     const meal: BaseMeal = {
-      id: "meal-4",
-      name: "Mushroom pasta",
+      id: 'meal-4',
+      name: 'Mushroom pasta',
       components: [
-        { ingredientId: "ing-pasta", role: "carb", quantity: "300g" },
-        { ingredientId: "ing-mushrooms", role: "veg", quantity: "200g" },
+        { ingredientId: 'ing-pasta', role: 'carb', quantity: '300g' },
+        { ingredientId: 'ing-mushrooms', role: 'veg', quantity: '200g' },
       ],
-      defaultPrep: "Cook",
+      defaultPrep: 'Cook',
       estimatedTimeMinutes: 15,
-      difficulty: "easy",
+      difficulty: 'easy',
       rescueEligible: false,
       wasteReuseHints: [],
     };
 
     const result = generateMealExplanation(meal, members, ingredients);
-    expect(result.tradeOffs.some((t) => t.includes("Alex") && t.includes("mushrooms"))).toBe(true);
+    expect(result.tradeOffs.some((t) => t.includes('Alex') && t.includes('mushrooms'))).toBe(true);
   });
 
-  it("notes extra prep needed as trade-off", () => {
+  it('notes extra prep needed as trade-off', () => {
     const meal: BaseMeal = {
-      id: "meal-5",
-      name: "Pasta broccoli",
+      id: 'meal-5',
+      name: 'Pasta broccoli',
       components: [
-        { ingredientId: "ing-pasta", role: "carb", quantity: "300g" },
-        { ingredientId: "ing-broccoli", role: "veg", quantity: "200g" },
+        { ingredientId: 'ing-pasta', role: 'carb', quantity: '300g' },
+        { ingredientId: 'ing-broccoli', role: 'veg', quantity: '200g' },
       ],
-      defaultPrep: "Cook",
+      defaultPrep: 'Cook',
       estimatedTimeMinutes: 15,
-      difficulty: "easy",
+      difficulty: 'easy',
       rescueEligible: true,
       wasteReuseHints: [],
     };
 
     const result = generateMealExplanation(meal, members, ingredients);
-    expect(result.tradeOffs.some((t) => t.includes("Extra prep") && t.includes("Riley"))).toBe(true);
+    expect(result.tradeOffs.some((t) => t.includes('Extra prep') && t.includes('Riley'))).toBe(
+      true,
+    );
   });
 
-  it("flags toddler missing safe food as trade-off", () => {
+  it('flags toddler missing safe food as trade-off', () => {
     const meal: BaseMeal = {
-      id: "meal-6",
-      name: "Chicken broccoli",
+      id: 'meal-6',
+      name: 'Chicken broccoli',
       components: [
-        { ingredientId: "ing-chicken", role: "protein", quantity: "300g" },
-        { ingredientId: "ing-broccoli", role: "veg", quantity: "200g" },
+        { ingredientId: 'ing-chicken', role: 'protein', quantity: '300g' },
+        { ingredientId: 'ing-broccoli', role: 'veg', quantity: '200g' },
       ],
-      defaultPrep: "Cook",
+      defaultPrep: 'Cook',
       estimatedTimeMinutes: 20,
-      difficulty: "easy",
+      difficulty: 'easy',
       rescueEligible: false,
       wasteReuseHints: [],
     };
 
     const result = generateMealExplanation(meal, members, ingredients);
-    expect(result.tradeOffs.some((t) =>
-      t.includes("Riley") && t.includes("no safe food"),
-    )).toBe(true);
+    expect(result.tradeOffs.some((t) => t.includes('Riley') && t.includes('no safe food'))).toBe(
+      true,
+    );
   });
 
-  it("does not flag safe food trade-off when toddler safe food is present", () => {
+  it('does not flag safe food trade-off when toddler safe food is present', () => {
     const meal: BaseMeal = {
-      id: "meal-7",
-      name: "Pasta broccoli",
+      id: 'meal-7',
+      name: 'Pasta broccoli',
       components: [
-        { ingredientId: "ing-pasta", role: "carb", quantity: "300g" },
-        { ingredientId: "ing-broccoli", role: "veg", quantity: "200g" },
+        { ingredientId: 'ing-pasta', role: 'carb', quantity: '300g' },
+        { ingredientId: 'ing-broccoli', role: 'veg', quantity: '200g' },
       ],
-      defaultPrep: "Cook",
+      defaultPrep: 'Cook',
       estimatedTimeMinutes: 15,
-      difficulty: "easy",
+      difficulty: 'easy',
       rescueEligible: true,
       wasteReuseHints: [],
     };
 
     const result = generateMealExplanation(meal, members, ingredients);
-    expect(result.tradeOffs.some((t) =>
-      t.includes("Riley") && t.includes("no safe food"),
-    )).toBe(false);
+    expect(result.tradeOffs.some((t) => t.includes('Riley') && t.includes('no safe food'))).toBe(
+      false,
+    );
   });
 
-  it("handles zero-member case gracefully", () => {
+  it('handles zero-member case gracefully', () => {
     const meal: BaseMeal = {
-      id: "meal-8",
-      name: "Pasta",
-      components: [
-        { ingredientId: "ing-pasta", role: "carb", quantity: "300g" },
-      ],
-      defaultPrep: "Cook",
+      id: 'meal-8',
+      name: 'Pasta',
+      components: [{ ingredientId: 'ing-pasta', role: 'carb', quantity: '300g' }],
+      defaultPrep: 'Cook',
       estimatedTimeMinutes: 10,
-      difficulty: "easy",
+      difficulty: 'easy',
       rescueEligible: true,
       wasteReuseHints: [],
     };
@@ -249,24 +247,24 @@ describe("F018: Meal explanation engine", () => {
   });
 });
 
-describe("F018: Explanation panel in planner UI", () => {
-  it("shows explanation with summary and trade-offs when meal is selected", async () => {
+describe('F018: Explanation panel in planner UI', () => {
+  it('shows explanation with summary and trade-offs when meal is selected', async () => {
     const household: Household = {
-      id: "h-explain",
-      name: "Explanation Family",
+      id: 'h-explain',
+      name: 'Explanation Family',
       members,
       ingredients,
       baseMeals: [
         {
-          id: "meal-1",
-          name: "Mushroom pasta",
+          id: 'meal-1',
+          name: 'Mushroom pasta',
           components: [
-            { ingredientId: "ing-pasta", role: "carb", quantity: "300g" },
-            { ingredientId: "ing-mushrooms", role: "veg", quantity: "200g" },
+            { ingredientId: 'ing-pasta', role: 'carb', quantity: '300g' },
+            { ingredientId: 'ing-mushrooms', role: 'veg', quantity: '200g' },
           ],
-          defaultPrep: "Cook",
+          defaultPrep: 'Cook',
           estimatedTimeMinutes: 15,
-          difficulty: "easy",
+          difficulty: 'easy',
           rescueEligible: false,
           wasteReuseHints: [],
         },
@@ -277,38 +275,36 @@ describe("F018: Explanation panel in planner UI", () => {
 
     const user = userEvent.setup();
     render(
-      <MemoryRouter initialEntries={["/household/h-explain/planner"]}>
+      <MemoryRouter initialEntries={['/household/h-explain/planner']}>
         <Routes>
           <Route path="/household/:householdId/planner" element={<Planner />} />
         </Routes>
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByTestId("selectable-meal-1"));
+    await user.click(screen.getByTestId('selectable-meal-1'));
 
-    const explanation = screen.getByTestId("meal-explanation");
-    expect(within(explanation).getByText("Why this meal?")).toBeInTheDocument();
+    const explanation = screen.getByTestId('meal-explanation');
+    expect(within(explanation).getByText('Why this meal?')).toBeInTheDocument();
     expect(within(explanation).getByText(/2\/3/)).toBeInTheDocument();
-    expect(within(explanation).getByText("Trade-offs")).toBeInTheDocument();
+    expect(within(explanation).getByText('Trade-offs')).toBeInTheDocument();
     expect(within(explanation).getByText(/Alex.*mushrooms/)).toBeInTheDocument();
   });
 
-  it("shows no trade-offs section when meal is universally accepted", async () => {
+  it('shows no trade-offs section when meal is universally accepted', async () => {
     const household: Household = {
-      id: "h-explain2",
-      name: "Simple Family",
+      id: 'h-explain2',
+      name: 'Simple Family',
       members: members.slice(0, 2), // Two adults only
       ingredients,
       baseMeals: [
         {
-          id: "meal-2",
-          name: "Simple pasta",
-          components: [
-            { ingredientId: "ing-pasta", role: "carb", quantity: "300g" },
-          ],
-          defaultPrep: "Cook",
+          id: 'meal-2',
+          name: 'Simple pasta',
+          components: [{ ingredientId: 'ing-pasta', role: 'carb', quantity: '300g' }],
+          defaultPrep: 'Cook',
           estimatedTimeMinutes: 10,
-          difficulty: "easy",
+          difficulty: 'easy',
           rescueEligible: true,
           wasteReuseHints: [],
         },
@@ -319,17 +315,17 @@ describe("F018: Explanation panel in planner UI", () => {
 
     const user = userEvent.setup();
     render(
-      <MemoryRouter initialEntries={["/household/h-explain2/planner"]}>
+      <MemoryRouter initialEntries={['/household/h-explain2/planner']}>
         <Routes>
           <Route path="/household/:householdId/planner" element={<Planner />} />
         </Routes>
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByTestId("selectable-meal-2"));
+    await user.click(screen.getByTestId('selectable-meal-2'));
 
-    const explanation = screen.getByTestId("meal-explanation");
+    const explanation = screen.getByTestId('meal-explanation');
     expect(within(explanation).getByText(/Works for everyone/)).toBeInTheDocument();
-    expect(within(explanation).queryByText("Trade-offs")).not.toBeInTheDocument();
+    expect(within(explanation).queryByText('Trade-offs')).not.toBeInTheDocument();
   });
 });

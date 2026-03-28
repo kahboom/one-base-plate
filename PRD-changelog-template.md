@@ -5,6 +5,7 @@ This file records product-spec changes made to `PRD.json`.
 ## Entry template
 
 ### YYYY-MM-DD — Short summary
+
 - Requestor:
 - Reason:
 - Scope:
@@ -20,6 +21,7 @@ This file records product-spec changes made to `PRD.json`.
 - Notes:
 
 ## Rules
+
 - Log every material PRD change before or alongside implementation.
 - Do not treat code changes as PRD changes unless the spec itself changed.
 - If the UI changes, note both the feature IDs and the affected `uiSpec.screens`.
@@ -29,6 +31,7 @@ This file records product-spec changes made to `PRD.json`.
 ## Examples
 
 ### 2026-03-12 — Added visual weekly planner and meal cards
+
 - Requestor: product owner
 - Reason: weekly planning needed a visual, interactive flow instead of a list
 - Scope: planning UI, feature sequencing, acceptance criteria

@@ -1,25 +1,28 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 const inputClassName =
-  "w-full rounded-sm border border-border-default bg-surface px-4 py-2 text-base text-text-primary min-h-[44px] transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light";
+  'w-full rounded-sm border border-border-default bg-surface px-4 py-2 text-base text-text-primary min-h-[44px] transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light';
 
 const MAX_SUGGESTIONS = 50;
 
-export type TagSuggestMode = "comma" | "single";
+export type TagSuggestMode = 'comma' | 'single';
 
 function parseCommaField(value: string): { committed: string[]; token: string } {
-  const lastComma = value.lastIndexOf(",");
+  const lastComma = value.lastIndexOf(',');
   if (lastComma === -1) {
     return { committed: [], token: value };
   }
   const before = value.slice(0, lastComma);
-  const committed = before.split(",").map((s) => s.trim()).filter(Boolean);
+  const committed = before
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
   const token = value.slice(lastComma + 1);
   return { committed, token };
 }
 
 function applyCommaSuggestion(full: string, tag: string): string {
-  const lastComma = full.lastIndexOf(",");
+  const lastComma = full.lastIndexOf(',');
   if (lastComma === -1) return tag;
   return `${full.slice(0, lastComma + 1)} ${tag}`;
 }
@@ -50,7 +53,7 @@ export default function TagSuggestInput({
   suggestions,
   exclude = new Set(),
   placeholder,
-  className = "",
+  className = '',
   inputTestId,
   mode,
   onPick,
@@ -63,7 +66,7 @@ export default function TagSuggestInput({
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const filtered = useMemo(() => {
-    if (mode === "single") {
+    if (mode === 'single') {
       const token = value.trim();
       return suggestions
         .filter((t) => !exclude.has(t) && (!token || t.toLowerCase().includes(token.toLowerCase())))
@@ -94,13 +97,13 @@ export default function TagSuggestInput({
         close();
       }
     }
-    document.addEventListener("pointerdown", onDocPointerDown, true);
-    return () => document.removeEventListener("pointerdown", onDocPointerDown, true);
+    document.addEventListener('pointerdown', onDocPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onDocPointerDown, true);
   }, [open, close]);
 
   const applySuggestion = useCallback(
     (tag: string) => {
-      if (mode === "comma") {
+      if (mode === 'comma') {
         onChange(applyCommaSuggestion(value, tag));
       } else {
         onPick?.(tag);
@@ -113,13 +116,13 @@ export default function TagSuggestInput({
   const showList = open && filtered.length > 0;
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Escape") {
+    if (e.key === 'Escape') {
       e.preventDefault();
       close();
       return;
     }
 
-    if (e.key === "ArrowDown") {
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
       if (!open) setOpen(true);
       if (filtered.length === 0) return;
@@ -127,7 +130,7 @@ export default function TagSuggestInput({
       return;
     }
 
-    if (e.key === "ArrowUp") {
+    if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (!open) setOpen(true);
       if (filtered.length === 0) return;
@@ -135,7 +138,7 @@ export default function TagSuggestInput({
       return;
     }
 
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       if (showList && activeIndex >= 0 && activeIndex < filtered.length) {
         e.preventDefault();
         applySuggestion(filtered[activeIndex]!);
@@ -149,8 +152,7 @@ export default function TagSuggestInput({
     }
   }
 
-  const activeDescendant =
-    showList && activeIndex >= 0 ? `${id}-opt-${activeIndex}` : undefined;
+  const activeDescendant = showList && activeIndex >= 0 ? `${id}-opt-${activeIndex}` : undefined;
 
   return (
     <div ref={wrapperRef} className={`relative w-full min-w-0 ${className}`}>
@@ -191,7 +193,7 @@ export default function TagSuggestInput({
                 role="option"
                 aria-selected={active}
                 className={`flex w-full px-3 py-2 text-left text-sm ${
-                  active ? "bg-bg text-text-primary" : "text-text-primary hover:bg-bg"
+                  active ? 'bg-bg text-text-primary' : 'text-text-primary hover:bg-bg'
                 }`}
                 onMouseEnter={() => setActiveIndex(i)}
                 onMouseDown={(e) => e.preventDefault()}

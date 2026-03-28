@@ -1,4 +1,4 @@
-import { isCuratedTag } from "./recipeTags";
+import { isCuratedTag } from './recipeTags';
 
 /**
  * Normalize a Paprika category string for lookup: lowercase, trim, collapse whitespace,
@@ -6,61 +6,61 @@ import { isCuratedTag } from "./recipeTags";
  */
 export function normalizePaprikaCategory(raw: string): string {
   let s = raw.trim().toLowerCase();
-  s = s.replace(/\s+/g, " ");
-  s = s.replace(/^[,.;:\s]+|[,.;:\s]+$/g, "");
-  s = s.replace(/\s+/g, " ").trim();
+  s = s.replace(/\s+/g, ' ');
+  s = s.replace(/^[,.;:\s]+|[,.;:\s]+$/g, '');
+  s = s.replace(/\s+/g, ' ').trim();
   return singularizeCategoryKey(s);
 }
 
 /** Keys are normalized category strings; values are curated recipe tag values. */
 export const PAPRIKA_CATEGORY_TAG_MAP: Readonly<Record<string, string>> = {
-  soup: "soup",
-  soups: "soup",
-  salad: "salad",
-  salads: "salad",
-  snack: "snack",
-  snacks: "snack",
-  bread: "bread",
-  breads: "bread",
-  seafood: "seafood",
-  sauce: "sauce",
-  sauces: "sauce",
-  quick: "quick",
-  "quick dinner": "quick",
-  "quick dinners": "quick",
-  freezer: "freezer-friendly",
-  "freezer meal": "freezer-friendly",
-  "freezer meals": "freezer-friendly",
-  rescue: "rescue",
-  emergency: "rescue",
-  fallback: "rescue",
-  "kid friendly": "kid-friendly",
-  "kid-friendly": "kid-friendly",
-  kids: "kid-friendly",
-  "prep ahead": "prep-ahead",
-  "make ahead": "prep-ahead",
-  "batch cooking": "batch-prep",
-  "batch prep": "batch-prep",
-  "batch-prep": "batch-prep",
-  side: "side",
-  "side dish": "side",
-  "side dishes": "side",
+  soup: 'soup',
+  soups: 'soup',
+  salad: 'salad',
+  salads: 'salad',
+  snack: 'snack',
+  snacks: 'snack',
+  bread: 'bread',
+  breads: 'bread',
+  seafood: 'seafood',
+  sauce: 'sauce',
+  sauces: 'sauce',
+  quick: 'quick',
+  'quick dinner': 'quick',
+  'quick dinners': 'quick',
+  freezer: 'freezer-friendly',
+  'freezer meal': 'freezer-friendly',
+  'freezer meals': 'freezer-friendly',
+  rescue: 'rescue',
+  emergency: 'rescue',
+  fallback: 'rescue',
+  'kid friendly': 'kid-friendly',
+  'kid-friendly': 'kid-friendly',
+  kids: 'kid-friendly',
+  'prep ahead': 'prep-ahead',
+  'make ahead': 'prep-ahead',
+  'batch cooking': 'batch-prep',
+  'batch prep': 'batch-prep',
+  'batch-prep': 'batch-prep',
+  side: 'side',
+  'side dish': 'side',
+  'side dishes': 'side',
 } as const;
 
 function singularizeCategoryKey(s: string): string {
   if (!s) return s;
   /** No blanket -ies→y (would corrupt e.g. "cookies"); explicit map entries cover common plurals. */
-  if (s.length >= 5 && s.endsWith("es")) {
+  if (s.length >= 5 && s.endsWith('es')) {
     if (/(ches|shes|xes|zes|sses)$/.test(s)) {
       return s.slice(0, -2);
     }
   }
   if (
     s.length > 3 &&
-    s.endsWith("s") &&
-    !s.endsWith("ss") &&
-    !s.endsWith("us") &&
-    !s.endsWith("is")
+    s.endsWith('s') &&
+    !s.endsWith('ss') &&
+    !s.endsWith('us') &&
+    !s.endsWith('is')
   ) {
     return s.slice(0, -1);
   }
@@ -78,7 +78,7 @@ function lookupCategoryToTag(normalized: string): string | undefined {
     if (fromSingular !== undefined) return fromSingular;
   }
 
-  const plural = normalized + "s";
+  const plural = normalized + 's';
   const fromPlural = PAPRIKA_CATEGORY_TAG_MAP[plural];
   if (fromPlural !== undefined) return fromPlural;
 

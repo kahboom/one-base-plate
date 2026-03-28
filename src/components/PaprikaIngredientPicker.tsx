@@ -1,14 +1,14 @@
-import { useCallback, useMemo, useState } from "react";
-import type { Ingredient } from "../types";
-import { Input } from "./ui";
-import { useListKeyNav } from "../hooks/useListKeyNav";
+import { useCallback, useMemo, useState } from 'react';
+import type { Ingredient } from '../types';
+import { Input } from './ui';
+import { useListKeyNav } from '../hooks/useListKeyNav';
 
 export default function PaprikaIngredientPicker({
   ingredients,
   valueId,
   onSelect,
-  placeholder = "Search ingredients…",
-  testId = "paprika-ingredient-picker",
+  placeholder = 'Search ingredients…',
+  testId = 'paprika-ingredient-picker',
 }: {
   ingredients: Ingredient[];
   valueId?: string | null;
@@ -16,9 +16,12 @@ export default function PaprikaIngredientPicker({
   placeholder?: string;
   testId?: string;
 }) {
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState('');
   const sorted = useMemo(
-    () => [...ingredients].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" })),
+    () =>
+      [...ingredients].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+      ),
     [ingredients],
   );
   const filtered = useMemo(() => {
@@ -28,7 +31,9 @@ export default function PaprikaIngredientPicker({
   }, [sorted, q]);
 
   const handleSelect = useCallback(
-    (index: number) => { onSelect(filtered[index]!); },
+    (index: number) => {
+      onSelect(filtered[index]!);
+    },
     [filtered, onSelect],
   );
 
@@ -41,7 +46,10 @@ export default function PaprikaIngredientPicker({
     <div data-testid={testId}>
       <Input
         value={q}
-        onChange={(e) => { setQ(e.target.value); setActiveIndex(-1); }}
+        onChange={(e) => {
+          setQ(e.target.value);
+          setActiveIndex(-1);
+        }}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         className="mb-2"
@@ -57,25 +65,23 @@ export default function PaprikaIngredientPicker({
               type="button"
               className={`w-full rounded px-2 py-1.5 text-left hover:bg-bg-elevated ${
                 activeIndex === i
-                  ? "bg-bg-elevated ring-1 ring-brand"
+                  ? 'bg-bg-elevated ring-1 ring-brand'
                   : valueId === ing.id
-                    ? "bg-brand/10 font-medium text-brand"
-                    : "text-text-primary"
+                    ? 'bg-brand/10 font-medium text-brand'
+                    : 'text-text-primary'
               }`}
               onClick={() => onSelect(ing)}
               onMouseEnter={() => setActiveIndex(i)}
               data-testid={`${testId}-option-${ing.id}`}
             >
               {ing.name}
-              {ing.id.startsWith("pending-create:") && (
+              {ing.id.startsWith('pending-create:') && (
                 <span className="ml-1.5 text-[10px] text-text-muted">(pending import)</span>
               )}
             </button>
           </li>
         ))}
-        {filtered.length === 0 && (
-          <li className="px-2 py-2 text-text-muted">No matches</li>
-        )}
+        {filtered.length === 0 && <li className="px-2 py-2 text-text-muted">No matches</li>}
       </ul>
     </div>
   );

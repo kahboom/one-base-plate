@@ -4,24 +4,24 @@ import type {
   Ingredient,
   IngredientCategory,
   MealComponent,
-} from "./types";
-import { guessComponentRole } from "./recipe-parser";
-import { normalizeIngredientName } from "./storage";
+} from './types';
+import { guessComponentRole } from './recipe-parser';
+import { normalizeIngredientName } from './storage';
 
 export type ImportMappingEditPayload =
-  | { kind: "ignore" }
-  | { kind: "use"; ingredientId: string }
-  | { kind: "create"; category: IngredientCategory; name?: string };
+  | { kind: 'ignore' }
+  | { kind: 'use'; ingredientId: string }
+  | { kind: 'create'; category: IngredientCategory; name?: string };
 
 export function componentIndexForMapping(
   mappingIndex: number,
   mappings: ImportMapping[],
 ): number | null {
   const m = mappings[mappingIndex];
-  if (!m || m.action === "ignore") return null;
+  if (!m || m.action === 'ignore') return null;
   let count = 0;
   for (let i = 0; i < mappingIndex; i++) {
-    if (mappings[i]!.action !== "ignore") count++;
+    if (mappings[i]!.action !== 'ignore') count++;
   }
   return count;
 }
@@ -29,7 +29,7 @@ export function componentIndexForMapping(
 function countNonIgnoreBefore(mappingIndex: number, mappings: ImportMapping[]): number {
   let c = 0;
   for (let i = 0; i < mappingIndex; i++) {
-    if (mappings[i]!.action !== "ignore") c++;
+    if (mappings[i]!.action !== 'ignore') c++;
   }
   return c;
 }
@@ -43,50 +43,50 @@ function mealComponentFromMapping(
     previous?.quantity ??
     (mapping.parsedQuantityValue != null
       ? `${mapping.parsedQuantityValue}${
-          mapping.parsedQuantityUnit ? ` ${mapping.parsedQuantityUnit}` : ""
+          mapping.parsedQuantityUnit ? ` ${mapping.parsedQuantityUnit}` : ''
         }`
-      : "");
+      : '');
   return {
     ingredientId: ingredient.id,
     role: guessComponentRole(ingredient.category),
     quantity: qty,
     unit: mapping.parsedQuantityUnit || previous?.unit,
-    prepNote: mapping.prepNotes?.join(", ") || previous?.prepNote,
+    prepNote: mapping.prepNotes?.join(', ') || previous?.prepNote,
     originalSourceLine: mapping.originalLine,
-    matchType: mapping.action === "use" ? "existing" : "new",
+    matchType: mapping.action === 'use' ? 'existing' : 'new',
   };
 }
 
 function mappingUse(ingredientId: string, base: ImportMapping): ImportMapping {
   return {
     ...base,
-    action: "use",
-    chosenAction: "use",
+    action: 'use',
+    chosenAction: 'use',
     ingredientId,
     finalMatchedIngredientId: ingredientId,
-    matchType: "existing",
+    matchType: 'existing',
   };
 }
 
 function mappingCreate(ingredientId: string, base: ImportMapping): ImportMapping {
   return {
     ...base,
-    action: "create",
-    chosenAction: "create",
+    action: 'create',
+    chosenAction: 'create',
     ingredientId,
     finalMatchedIngredientId: ingredientId,
-    matchType: "new",
+    matchType: 'new',
   };
 }
 
 function mappingIgnore(base: ImportMapping): ImportMapping {
   return {
     ...base,
-    action: "ignore",
-    chosenAction: "ignore",
+    action: 'ignore',
+    chosenAction: 'ignore',
     ingredientId: undefined,
     finalMatchedIngredientId: undefined,
-    matchType: "ignored",
+    matchType: 'ignored',
   };
 }
 
@@ -96,10 +96,10 @@ function makeNewIngredient(category: IngredientCategory, name: string): Ingredie
     name: normalizeIngredientName(name),
     category,
     tags: [],
-    shelfLifeHint: "",
+    shelfLifeHint: '',
     freezerFriendly: false,
     babySafeWithAdaptation: false,
-    source: "manual",
+    source: 'manual',
   };
 }
 
@@ -111,7 +111,7 @@ export function applyImportMappingEdit(
 ): { meal: BaseMeal; newIngredients: Ingredient[] } {
   const mappings = [...(meal.importMappings ?? [])];
   if (mappingIndex < 0 || mappingIndex >= mappings.length) {
-    throw new Error("Invalid mapping index");
+    throw new Error('Invalid mapping index');
   }
 
   const oldBase = mappings[mappingIndex]!;
@@ -124,7 +124,7 @@ export function applyImportMappingEdit(
   const prevCompIdx = componentIndexForMapping(mappingIndex, oldMappings);
   const prevComp = prevCompIdx !== null ? oldComps[prevCompIdx] : undefined;
 
-  if (edit.kind === "ignore") {
+  if (edit.kind === 'ignore') {
     mappings[mappingIndex] = mappingIgnore(oldBase);
     if (prevCompIdx === null) {
       return {
@@ -139,20 +139,16 @@ export function applyImportMappingEdit(
     };
   }
 
-  if (edit.kind === "use") {
+  if (edit.kind === 'use') {
     const ing = byId.get(edit.ingredientId);
-    if (!ing) throw new Error("Ingredient not found");
+    if (!ing) throw new Error('Ingredient not found');
     const m = mappingUse(edit.ingredientId, oldBase);
     mappings[mappingIndex] = m;
     const comp = mealComponentFromMapping(m, ing, prevComp);
 
     if (prevCompIdx === null) {
       const insertAt = countNonIgnoreBefore(mappingIndex, oldMappings);
-      const newComps = [
-        ...oldComps.slice(0, insertAt),
-        comp,
-        ...oldComps.slice(insertAt),
-      ];
+      const newComps = [...oldComps.slice(0, insertAt), comp, ...oldComps.slice(insertAt)];
       return {
         meal: { ...meal, importMappings: mappings, components: newComps },
         newIngredients: [],
@@ -167,10 +163,7 @@ export function applyImportMappingEdit(
   }
 
   const name =
-    edit.name?.trim() ||
-    oldBase.cleanedIngredientName ||
-    oldBase.parsedName ||
-    "Ingredient";
+    edit.name?.trim() || oldBase.cleanedIngredientName || oldBase.parsedName || 'Ingredient';
   const ing = makeNewIngredient(edit.category, name);
   newIngredients.push(ing);
   const m = mappingCreate(ing.id, oldBase);
@@ -179,11 +172,7 @@ export function applyImportMappingEdit(
 
   if (prevCompIdx === null) {
     const insertAt = countNonIgnoreBefore(mappingIndex, oldMappings);
-    const newComps = [
-      ...oldComps.slice(0, insertAt),
-      comp,
-      ...oldComps.slice(insertAt),
-    ];
+    const newComps = [...oldComps.slice(0, insertAt), comp, ...oldComps.slice(insertAt)];
     return {
       meal: { ...meal, importMappings: mappings, components: newComps },
       newIngredients,

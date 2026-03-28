@@ -1,8 +1,7 @@
-import { useEffect, type ReactNode } from "react";
-import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
+import { useEffect, type ReactNode } from 'react';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
-const DEFAULT_BACKDROP =
-  "fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4";
+const DEFAULT_BACKDROP = 'fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4';
 
 interface AppModalProps {
   open: boolean;
@@ -23,7 +22,7 @@ export default function AppModal({
   onClose,
   ariaLabel,
   children,
-  className = "",
+  className = '',
   backdropClassName = DEFAULT_BACKDROP,
   closeOnBackdropClick = true,
   backdropTestId,
@@ -34,10 +33,10 @@ export default function AppModal({
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
   if (!open) return null;

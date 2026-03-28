@@ -1,22 +1,30 @@
-import { useState, useCallback } from "react";
-import type { ReactNode, ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes } from "react";
-import AppModal from "./AppModal";
-import { Link, useParams, useLocation } from "react-router-dom";
+import { useState, useCallback } from 'react';
+import type {
+  ReactNode,
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  SelectHTMLAttributes,
+} from 'react';
+import AppModal from './AppModal';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import {
   GLOBAL_NAV_ITEMS,
   SECONDARY_NAV_ITEMS,
   buildHouseholdPath,
   isGlobalNavItemActive,
   isSecondaryNavItemActive,
-} from "../nav/householdNavConfig";
+} from '../nav/householdNavConfig';
 
 /* ---------- App header (OneBasePlate brand) ---------- */
 export function AppHeader() {
   const { householdId } = useParams<{ householdId?: string }>();
-  const homeHref = householdId ? `/household/${householdId}/home` : "/households";
+  const homeHref = householdId ? `/household/${householdId}/home` : '/households';
   return (
     <header className="mb-6 pb-4 border-b border-border-light">
-      <Link to={homeHref} className="text-2xl font-bold tracking-tight text-text-primary hover:text-brand transition-colors">
+      <Link
+        to={homeHref}
+        className="text-2xl font-bold tracking-tight text-text-primary hover:text-brand transition-colors"
+      >
         OneBasePlate
       </Link>
     </header>
@@ -64,7 +72,7 @@ export function PageHeader({
 /* ---------- Card ---------- */
 export function Card({
   children,
-  className = "",
+  className = '',
   ...props
 }: { children: ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
   return (
@@ -78,10 +86,16 @@ export function Card({
 }
 
 /* ---------- Card grid ---------- */
-export function CardGrid({ children, compact = false }: { children: ReactNode; compact?: boolean }) {
+export function CardGrid({
+  children,
+  compact = false,
+}: {
+  children: ReactNode;
+  compact?: boolean;
+}) {
   return (
     <div
-      className={`grid gap-4 ${compact ? "grid-cols-[repeat(auto-fill,minmax(180px,1fr))]" : "grid-cols-[repeat(auto-fill,minmax(260px,1fr))]"}`}
+      className={`grid gap-4 ${compact ? 'grid-cols-[repeat(auto-fill,minmax(180px,1fr))]' : 'grid-cols-[repeat(auto-fill,minmax(260px,1fr))]'}`}
     >
       {children}
     </div>
@@ -89,27 +103,24 @@ export function CardGrid({ children, compact = false }: { children: ReactNode; c
 }
 
 /* ---------- Buttons ---------- */
-type ButtonVariant = "default" | "primary" | "danger" | "ghost";
+type ButtonVariant = 'default' | 'primary' | 'danger' | 'ghost';
 
 const btnBase =
-  "inline-flex items-center justify-center font-medium rounded-sm transition-colors cursor-pointer min-h-[44px] text-sm focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2";
+  'inline-flex items-center justify-center font-medium rounded-sm transition-colors cursor-pointer min-h-[44px] text-sm focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2';
 
 const btnVariants: Record<ButtonVariant, string> = {
   default:
-    "border border-border-default bg-surface text-text-primary hover:bg-bg hover:shadow-card",
-  primary:
-    "border border-brand bg-brand text-white hover:bg-brand-hover",
-  danger:
-    "border border-danger text-danger hover:bg-danger-light",
-  ghost:
-    "border-none bg-transparent text-brand hover:underline p-0 min-h-0",
+    'border border-border-default bg-surface text-text-primary hover:bg-bg hover:shadow-card',
+  primary: 'border border-brand bg-brand text-white hover:bg-brand-hover',
+  danger: 'border border-danger text-danger hover:bg-danger-light',
+  ghost: 'border-none bg-transparent text-brand hover:underline p-0 min-h-0',
 };
 
 export function Button({
-  variant = "default",
+  variant = 'default',
   small = false,
-  type = "button",
-  className = "",
+  type = 'button',
+  className = '',
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -118,17 +129,14 @@ export function Button({
   return (
     <button
       type={type}
-      className={`${btnBase} ${small ? "px-3 py-1.5 text-xs min-h-[36px]" : "px-4 py-2"} ${btnVariants[variant]} disabled:cursor-not-allowed disabled:opacity-45 disabled:pointer-events-none ${className}`}
+      className={`${btnBase} ${small ? 'px-3 py-1.5 text-xs min-h-[36px]' : 'px-4 py-2'} ${btnVariants[variant]} disabled:cursor-not-allowed disabled:opacity-45 disabled:pointer-events-none ${className}`}
       {...props}
     />
   );
 }
 
 /* ---------- Inputs ---------- */
-export function Input({
-  className = "",
-  ...props
-}: InputHTMLAttributes<HTMLInputElement>) {
+export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       className={`w-full rounded-sm border border-border-default bg-surface px-4 py-2 text-base text-text-primary min-h-[44px] transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light ${className}`}
@@ -138,7 +146,7 @@ export function Input({
 }
 
 export function Select({
-  className = "",
+  className = '',
   children,
   ...props
 }: SelectHTMLAttributes<HTMLSelectElement>) {
@@ -153,7 +161,15 @@ export function Select({
 }
 
 /* ---------- Field label (stacked: label above input) ---------- */
-export function FieldLabel({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
+export function FieldLabel({
+  label,
+  children,
+  className = '',
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <label className={`block ${className}`}>
       <span className="mb-1 block text-sm font-medium text-text-secondary">{label}</span>
@@ -163,20 +179,20 @@ export function FieldLabel({ label, children, className = "" }: { label: string;
 }
 
 /* ---------- Chips ---------- */
-type ChipVariant = "success" | "warning" | "danger" | "info" | "neutral";
+type ChipVariant = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
 const chipVariants: Record<ChipVariant, string> = {
-  success: "bg-success-bg text-success-text",
-  warning: "bg-warning-bg text-warning-text",
-  danger: "bg-conflict-bg text-conflict-text",
-  info: "bg-info-bg text-info-text",
-  neutral: "bg-neutral-bg text-neutral-text",
+  success: 'bg-success-bg text-success-text',
+  warning: 'bg-warning-bg text-warning-text',
+  danger: 'bg-conflict-bg text-conflict-text',
+  info: 'bg-info-bg text-info-text',
+  neutral: 'bg-neutral-bg text-neutral-text',
 };
 
 export function Chip({
-  variant = "neutral",
+  variant = 'neutral',
   children,
-  className = "",
+  className = '',
   ...props
 }: {
   variant?: ChipVariant;
@@ -203,7 +219,15 @@ export function EmptyState({ children }: { children: ReactNode }) {
 }
 
 /* ---------- Section ---------- */
-export function Section({ title, children, className = "" }: { title?: string; children: ReactNode; className?: string }) {
+export function Section({
+  title,
+  children,
+  className = '',
+}: {
+  title?: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <section className={`mb-8 ${className}`}>
       {title && <h2 className="mb-4 text-xl font-semibold text-text-primary">{title}</h2>}
@@ -215,18 +239,16 @@ export function Section({ title, children, className = "" }: { title?: string; c
 /* ---------- Nav bar ---------- */
 export function NavBar({
   children,
-  placement = "bottom",
+  placement = 'bottom',
 }: {
   children: ReactNode;
-  placement?: "top" | "bottom";
+  placement?: 'top' | 'bottom';
 }) {
-  const isTop = placement === "top";
+  const isTop = placement === 'top';
   return (
     <nav
       className={`flex flex-wrap items-center gap-x-4 gap-y-2 ${
-        isTop
-          ? "mb-6 border-b border-border-light pb-4"
-          : "mt-8 border-t border-border-light pt-4"
+        isTop ? 'mb-6 border-b border-border-light pb-4' : 'mt-8 border-t border-border-light pt-4'
       }`}
     >
       {children}
@@ -236,7 +258,7 @@ export function NavBar({
 
 /** Primary destinations: pill bar inside the unified household nav card */
 function globalNavRowClass() {
-  return "flex flex-wrap items-center gap-1.5 rounded-t-md border-b border-border-light bg-surface px-2 py-2 sm:gap-2 sm:px-3";
+  return 'flex flex-wrap items-center gap-1.5 rounded-t-md border-b border-border-light bg-surface px-2 py-2 sm:gap-2 sm:px-3';
 }
 
 export function GlobalNav({ householdId }: { householdId?: string }) {
@@ -248,11 +270,7 @@ export function GlobalNav({ householdId }: { householdId?: string }) {
   }
 
   return (
-    <nav
-      className={globalNavRowClass()}
-      data-testid="global-nav"
-      aria-label="Global navigation"
-    >
+    <nav className={globalNavRowClass()} data-testid="global-nav" aria-label="Global navigation">
       {GLOBAL_NAV_ITEMS.map((item) => {
         const href = buildHouseholdPath(householdId, item.path);
         const active = isGlobalNavItemActive(currentPath, householdId, item.path);
@@ -261,7 +279,7 @@ export function GlobalNav({ householdId }: { householdId?: string }) {
             key={item.path}
             to={href}
             className={navLinkClass(active)}
-            aria-current={active ? "page" : undefined}
+            aria-current={active ? 'page' : undefined}
           >
             {item.label}
           </Link>
@@ -276,7 +294,7 @@ export function SecondaryNav({ householdId }: { householdId?: string }) {
   const currentPath = location.pathname;
 
   const items = SECONDARY_NAV_ITEMS.filter(
-    (item) => item.path === "/households" || Boolean(householdId),
+    (item) => item.path === '/households' || Boolean(householdId),
   );
 
   const showDividerAbove = Boolean(householdId);
@@ -284,7 +302,7 @@ export function SecondaryNav({ householdId }: { householdId?: string }) {
   return (
     <nav
       className={`flex flex-wrap items-center gap-x-5 gap-y-1.5 px-3 py-2.5 sm:px-4 ${
-        showDividerAbove ? "border-t border-border-light bg-bg" : "bg-bg"
+        showDividerAbove ? 'border-t border-border-light bg-bg' : 'bg-bg'
       }`}
       data-testid="section-nav"
       aria-label="Secondary navigation"
@@ -297,7 +315,7 @@ export function SecondaryNav({ householdId }: { householdId?: string }) {
             key={item.path}
             to={href}
             className={secondaryNavLinkClass(active)}
-            aria-current={active ? "page" : undefined}
+            aria-current={active ? 'page' : undefined}
           >
             {item.label}
           </Link>
@@ -327,7 +345,7 @@ export function HouseholdNav({ householdId }: { householdId?: string }) {
 
 function navLinkClass(isActive: boolean) {
   const base =
-    "inline-flex items-center rounded-pill px-3 py-1.5 text-sm font-medium transition-colors min-h-[36px] whitespace-nowrap";
+    'inline-flex items-center rounded-pill px-3 py-1.5 text-sm font-medium transition-colors min-h-[36px] whitespace-nowrap';
   return isActive
     ? `${base} bg-brand text-white`
     : `${base} text-text-secondary hover:bg-brand-light hover:text-brand`;
@@ -335,34 +353,29 @@ function navLinkClass(isActive: boolean) {
 
 function secondaryNavLinkClass(isActive: boolean) {
   const base =
-    "inline-flex items-center rounded-md px-0.5 py-1 text-sm transition-colors min-h-[36px] whitespace-nowrap";
+    'inline-flex items-center rounded-md px-0.5 py-1 text-sm transition-colors min-h-[36px] whitespace-nowrap';
   return isActive
     ? `${base} font-semibold text-brand`
     : `${base} font-medium text-text-secondary hover:text-brand`;
 }
 
-
 /* ---------- Form row ---------- */
 export function FormRow({ children }: { children: ReactNode }) {
   return (
-    <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
-      {children}
-    </div>
+    <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">{children}</div>
   );
 }
 
 /* ---------- Action group ---------- */
 export function ActionGroup({
   children,
-  placement = "bottom",
+  placement = 'bottom',
 }: {
   children: ReactNode;
-  placement?: "top" | "bottom";
+  placement?: 'top' | 'bottom';
 }) {
   return (
-    <div
-      className={`flex flex-col gap-3 sm:flex-row ${placement === "top" ? "mb-6" : "mt-8"}`}
-    >
+    <div className={`flex flex-col gap-3 sm:flex-row ${placement === 'top' ? 'mb-6' : 'mt-8'}`}>
       {children}
     </div>
   );
@@ -373,7 +386,7 @@ export function ConfirmDialog({
   open,
   title,
   message,
-  confirmLabel = "Delete",
+  confirmLabel = 'Delete',
   onConfirm,
   onCancel,
 }: {
@@ -389,7 +402,9 @@ export function ConfirmDialog({
       <h2 className="mb-2 text-lg font-bold text-text-primary">{title}</h2>
       <p className="mb-6 text-sm text-text-secondary">{message}</p>
       <div className="flex gap-3">
-        <Button variant="danger" onClick={onConfirm}>{confirmLabel}</Button>
+        <Button variant="danger" onClick={onConfirm}>
+          {confirmLabel}
+        </Button>
         <Button onClick={onCancel}>Cancel</Button>
       </div>
     </AppModal>

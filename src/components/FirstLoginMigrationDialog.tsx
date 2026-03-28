@@ -1,7 +1,7 @@
-import { useState } from "react";
-import AppModal from "./AppModal";
-import { Button } from "./ui";
-import type { FirstLoginContext, ConflictChoice } from "../sync/types";
+import { useState } from 'react';
+import AppModal from './AppModal';
+import { Button } from './ui';
+import type { FirstLoginContext, ConflictChoice } from '../sync/types';
 
 interface Props {
   open: boolean;
@@ -10,12 +10,7 @@ interface Props {
   onCancel: () => void;
 }
 
-export default function FirstLoginMigrationDialog({
-  open,
-  context,
-  onResolve,
-  onCancel,
-}: Props) {
+export default function FirstLoginMigrationDialog({ open, context, onResolve, onCancel }: Props) {
   const [busy, setBusy] = useState(false);
 
   const localCount = context.localHouseholds.length;
@@ -34,13 +29,10 @@ export default function FirstLoginMigrationDialog({
       className="max-w-md p-6"
       closeOnBackdropClick={false}
     >
-      <h2 className="mb-2 text-lg font-bold text-text-primary">
-        Sync your data
-      </h2>
+      <h2 className="mb-2 text-lg font-bold text-text-primary">Sync your data</h2>
       <p className="mb-4 text-sm text-text-secondary">
-        You have <strong>{localCount}</strong> household{localCount !== 1 ? "s" : ""} on
-        this device and <strong>{remoteCount}</strong> in your cloud account.
-        How would you like to proceed?
+        You have <strong>{localCount}</strong> household{localCount !== 1 ? 's' : ''} on this device
+        and <strong>{remoteCount}</strong> in your cloud account. How would you like to proceed?
       </p>
 
       <div className="flex flex-col gap-3">
@@ -48,30 +40,21 @@ export default function FirstLoginMigrationDialog({
           variant="primary"
           disabled={busy}
           data-testid="migration-keep-local"
-          onClick={() => handle("keep-local")}
+          onClick={() => handle('keep-local')}
         >
           Keep this device's data and upload it
         </Button>
         <Button
           disabled={busy}
           data-testid="migration-keep-remote"
-          onClick={() => handle("keep-remote")}
+          onClick={() => handle('keep-remote')}
         >
           Use cloud data and replace this device
         </Button>
-        <Button
-          disabled={busy}
-          data-testid="migration-merge"
-          onClick={() => handle("merge")}
-        >
+        <Button disabled={busy} data-testid="migration-merge" onClick={() => handle('merge')}>
           Merge both (combine by household)
         </Button>
-        <Button
-          variant="ghost"
-          disabled={busy}
-          data-testid="migration-cancel"
-          onClick={onCancel}
-        >
+        <Button variant="ghost" disabled={busy} data-testid="migration-cancel" onClick={onCancel}>
           Cancel and stay signed out
         </Button>
       </div>

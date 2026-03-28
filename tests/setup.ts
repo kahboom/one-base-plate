@@ -1,8 +1,8 @@
-import "fake-indexeddb/auto";
-import "@testing-library/jest-dom/vitest";
-import { beforeEach } from "vitest";
-import { vi } from "vitest";
-import { resetAppStorageForTests } from "../src/storage";
+import 'fake-indexeddb/auto';
+import '@testing-library/jest-dom/vitest';
+import { beforeEach } from 'vitest';
+import { vi } from 'vitest';
+import { resetAppStorageForTests } from '../src/storage';
 
 beforeEach(async () => {
   localStorage.clear();
@@ -16,12 +16,12 @@ globalThis.IntersectionObserver = class IntersectionObserver {
   disconnect = vi.fn();
   takeRecords = vi.fn(() => []);
   root: Element | null = null;
-  rootMargin = "";
+  rootMargin = '';
   thresholds: ReadonlyArray<number> = [];
 } as unknown as typeof IntersectionObserver;
 
 /* WeeklyPlanner and other screens use matchMedia for responsive caps */
-Object.defineProperty(window, "matchMedia", {
+Object.defineProperty(window, 'matchMedia', {
   writable: true,
   configurable: true,
   value: vi.fn().mockImplementation((query: string) => ({

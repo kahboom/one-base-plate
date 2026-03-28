@@ -1,5 +1,5 @@
-import { META_PAPRIKA_SESSION, PAPRIKA_SESSION_LS_KEY } from "./constants";
-import { getAppDb } from "./dexie-db";
+import { META_PAPRIKA_SESSION, PAPRIKA_SESSION_LS_KEY } from './constants';
+import { getAppDb } from './dexie-db';
 
 /** Memory copy; hydrated in initStorage() from Dexie. Paprika UI reads synchronously. */
 let paprikaImportSessionJson: string | null = null;
@@ -17,14 +17,14 @@ export function rememberAndQueuePaprikaImportSessionPersist(json: string): void 
   paprikaImportSessionJson = json;
   void getAppDb()
     .meta.put({ key: META_PAPRIKA_SESSION, value: json })
-    .catch((err) => console.error("Failed to persist Paprika session:", err));
+    .catch((err) => console.error('Failed to persist Paprika session:', err));
 }
 
 export function clearPaprikaImportSessionSync(): void {
   paprikaImportSessionJson = null;
   void getAppDb()
     .meta.delete(META_PAPRIKA_SESSION)
-    .catch((err) => console.error("Failed to clear Paprika session:", err));
+    .catch((err) => console.error('Failed to clear Paprika session:', err));
 }
 
 export async function clearPaprikaImportSessionPersisted(): Promise<void> {

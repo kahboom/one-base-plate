@@ -9,16 +9,13 @@ import type {
   MealComponent,
   MealOutcome,
   WeeklyAnchor,
-} from "./types";
+} from './types';
 
 function isHumanMember(member: HouseholdMember): boolean {
-  return member.role !== "pet";
+  return member.role !== 'pet';
 }
 
-function resolveIngredientName(
-  ingredientId: string,
-  ingredients: Ingredient[],
-): string {
+function resolveIngredientName(ingredientId: string, ingredients: Ingredient[]): string {
   const found = ingredients.find((i) => i.id === ingredientId);
   return found ? found.name : ingredientId;
 }
@@ -64,8 +61,8 @@ function pickBestIngredient(
     const { compatibility } = getMemberIngredientCompatibility(name, ing, member);
 
     let score = 0;
-    if (compatibility === "direct") score = 3;
-    else if (compatibility === "with-adaptation") score = 1;
+    if (compatibility === 'direct') score = 3;
+    else if (compatibility === 'with-adaptation') score = 1;
     else score = -1; // conflict
 
     // Bonus for safe food match
@@ -95,9 +92,7 @@ function getPreparationInstruction(
   ingredients: Ingredient[],
 ): string | null {
   const name = resolveIngredientName(component.ingredientId, ingredients);
-  const rule = member.preparationRules.find((r) =>
-    matchesFood(r.ingredient, name),
-  );
+  const rule = member.preparationRules.find((r) => matchesFood(r.ingredient, name));
   return rule ? `${name}: ${rule.rule}` : null;
 }
 
@@ -106,26 +101,23 @@ function isBabyUnsafe(
   member: HouseholdMember,
   ingredients: Ingredient[],
 ): boolean {
-  if (member.role !== "baby") return false;
+  if (member.role !== 'baby') return false;
   const ing = ingredients.find((i) => i.id === component.ingredientId);
   return !!ing && !ing.babySafeWithAdaptation;
 }
 
-function getBabyTextureGuidance(
-  component: MealComponent,
-  ingredients: Ingredient[],
-): string {
+function getBabyTextureGuidance(component: MealComponent, ingredients: Ingredient[]): string {
   const name = resolveIngredientName(component.ingredientId, ingredients);
   switch (component.role) {
-    case "protein":
+    case 'protein':
       return `${name}: shred finely or blend to safe texture`;
-    case "carb":
+    case 'carb':
       return `${name}: cook until very soft, cut into finger-safe pieces`;
-    case "veg":
+    case 'veg':
       return `${name}: steam until very soft, mash or cut into finger-safe strips`;
-    case "sauce":
+    case 'sauce':
       return `${name}: ensure no chunks, serve smooth`;
-    case "topping":
+    case 'topping':
       return `${name}: omit or blend into base`;
   }
 }
@@ -135,23 +127,26 @@ function getTextureInstruction(
   member: HouseholdMember,
   ingredients: Ingredient[],
 ): string | null {
-  if (member.textureLevel === "regular") return null;
+  if (member.textureLevel === 'regular') return null;
 
-  if (member.role === "baby" && (member.textureLevel === "mashable" || member.textureLevel === "pureed")) {
+  if (
+    member.role === 'baby' &&
+    (member.textureLevel === 'mashable' || member.textureLevel === 'pureed')
+  ) {
     return getBabyTextureGuidance(component, ingredients);
   }
 
   const name = resolveIngredientName(component.ingredientId, ingredients);
 
-  if (member.textureLevel === "pureed") {
+  if (member.textureLevel === 'pureed') {
     return `${name}: puree before serving`;
   }
 
-  if (member.textureLevel === "mashable") {
+  if (member.textureLevel === 'mashable') {
     return `${name}: mash or cut into small safe pieces`;
   }
 
-  if (member.textureLevel === "soft") {
+  if (member.textureLevel === 'soft') {
     return `${name}: ensure soft texture`;
   }
 
@@ -167,7 +162,7 @@ function isSafeFoodComponent(
   return member.safeFoods.some((s) => matchesFood(s, name));
 }
 
-export type MemberCompatibility = "direct" | "with-adaptation" | "conflict";
+export type MemberCompatibility = 'direct' | 'with-adaptation' | 'conflict';
 
 export interface MemberOverlap {
   memberId: string;
@@ -188,18 +183,18 @@ function getMemberIngredientCompatibility(
   member: HouseholdMember,
 ): { compatibility: MemberCompatibility; conflict: string | null } {
   if (member.hardNoFoods.some((h) => matchesFood(h, ingredientName))) {
-    return { compatibility: "conflict", conflict: `${ingredientName} (hard-no)` };
+    return { compatibility: 'conflict', conflict: `${ingredientName} (hard-no)` };
   }
-  if (member.role === "baby" && ingredient && !ingredient.babySafeWithAdaptation) {
-    return { compatibility: "conflict", conflict: `${ingredientName} (not baby-safe)` };
+  if (member.role === 'baby' && ingredient && !ingredient.babySafeWithAdaptation) {
+    return { compatibility: 'conflict', conflict: `${ingredientName} (not baby-safe)` };
   }
   if (
-    member.textureLevel !== "regular" ||
+    member.textureLevel !== 'regular' ||
     member.preparationRules.some((r) => matchesFood(r.ingredient, ingredientName))
   ) {
-    return { compatibility: "with-adaptation", conflict: null };
+    return { compatibility: 'with-adaptation', conflict: null };
   }
-  return { compatibility: "direct", conflict: null };
+  return { compatibility: 'direct', conflict: null };
 }
 
 export function computeIngredientOverlap(
@@ -221,7 +216,7 @@ export function computeIngredientOverlap(
     };
   });
 
-  const compatible = memberDetails.filter((d) => d.compatibility !== "conflict").length;
+  const compatible = memberDetails.filter((d) => d.compatibility !== 'conflict').length;
 
   return {
     score: compatible,
@@ -247,21 +242,21 @@ export function computeMealOverlap(
       const ing = ingredients.find((i) => i.id === bestId);
       const { compatibility, conflict } = getMemberIngredientCompatibility(name, ing, member);
 
-      if (compatibility === "conflict") {
+      if (compatibility === 'conflict') {
         hasConflict = true;
         if (conflict) conflicts.push(conflict);
-      } else if (compatibility === "with-adaptation") {
+      } else if (compatibility === 'with-adaptation') {
         needsAdaptation = true;
       }
     }
 
     let compatibility: MemberCompatibility;
     if (hasConflict) {
-      compatibility = "conflict";
+      compatibility = 'conflict';
     } else if (needsAdaptation) {
-      compatibility = "with-adaptation";
+      compatibility = 'with-adaptation';
     } else {
-      compatibility = "direct";
+      compatibility = 'direct';
     }
 
     return {
@@ -272,7 +267,7 @@ export function computeMealOverlap(
     };
   });
 
-  const compatible = memberDetails.filter((d) => d.compatibility !== "conflict").length;
+  const compatible = memberDetails.filter((d) => d.compatibility !== 'conflict').length;
 
   return {
     score: compatible,
@@ -297,38 +292,38 @@ export function generateMealExplanation(
   const overlap = computeMealOverlap(meal, humanMembers, ingredients);
   const tradeOffs: string[] = [];
 
-  const adaptMembers = overlap.memberDetails.filter((d) => d.compatibility === "with-adaptation");
-  const conflictMembers = overlap.memberDetails.filter((d) => d.compatibility === "conflict");
+  const adaptMembers = overlap.memberDetails.filter((d) => d.compatibility === 'with-adaptation');
+  const conflictMembers = overlap.memberDetails.filter((d) => d.compatibility === 'conflict');
 
   // Build summary
   let summary: string;
   if (overlap.score === overlap.total) {
     if (adaptMembers.length === 0) {
-      summary = "Works for everyone — no modifications needed.";
+      summary = 'Works for everyone — no modifications needed.';
     } else {
       summary = `Works for everyone — ${adaptMembers.length === 1 ? `${adaptMembers[0]!.memberName} needs` : `${adaptMembers.length} members need`} adaptation.`;
     }
   } else if (overlap.score === 0) {
-    summary = "No members can eat this meal without conflicts.";
+    summary = 'No members can eat this meal without conflicts.';
   } else {
-    const names = conflictMembers.map((d) => d.memberName).join(", ");
-    summary = `Works for ${overlap.score}/${overlap.total} members — ${names} ${conflictMembers.length === 1 ? "has" : "have"} conflicts.`;
+    const names = conflictMembers.map((d) => d.memberName).join(', ');
+    summary = `Works for ${overlap.score}/${overlap.total} members — ${names} ${conflictMembers.length === 1 ? 'has' : 'have'} conflicts.`;
   }
 
   // Trade-offs: conflicts
   for (const d of conflictMembers) {
-    tradeOffs.push(`${d.memberName}: ${d.conflicts.join(", ")}`);
+    tradeOffs.push(`${d.memberName}: ${d.conflicts.join(', ')}`);
   }
 
   // Trade-offs: extra prep needed
   if (adaptMembers.length > 0) {
-    const names = adaptMembers.map((d) => d.memberName).join(", ");
+    const names = adaptMembers.map((d) => d.memberName).join(', ');
     tradeOffs.push(`Extra prep needed for ${names}`);
   }
 
   // Trade-offs: toddler/baby safe food coverage
   for (const member of humanMembers) {
-    if (member.role !== "toddler" && member.role !== "baby") continue;
+    if (member.role !== 'toddler' && member.role !== 'baby') continue;
     const hasSafeFood = meal.components.some((c) => {
       const bestId = pickBestIngredient(c, member, ingredients);
       const name = resolveIngredientName(bestId, ingredients);
@@ -343,18 +338,18 @@ export function generateMealExplanation(
   const outcomeScore = computeOutcomeScore(meal.id, outcomes);
   if (outcomeScore.total > 0) {
     if (outcomeScore.label) {
-      tradeOffs.push(`Past results: ${outcomeScore.label} (${outcomeScore.successCount} success, ${outcomeScore.failureCount} failure)`);
+      tradeOffs.push(
+        `Past results: ${outcomeScore.label} (${outcomeScore.successCount} success, ${outcomeScore.failureCount} failure)`,
+      );
     }
   }
 
   // Pattern-based insights
   if (patterns && patterns.insights.length > 0) {
-    const mealIngredientIds = new Set(
-      meal.components.flatMap((c) => getAllIngredientIds(c)),
-    );
+    const mealIngredientIds = new Set(meal.components.flatMap((c) => getAllIngredientIds(c)));
     const relevantInsights = patterns.insights.filter((insight) => {
       // Show prep rule and safe food insights if relevant to this meal
-      if (insight.includes("prep tend to work") || insight.includes("safe foods for kids")) {
+      if (insight.includes('prep tend to work') || insight.includes('safe foods for kids')) {
         return true;
       }
       // Show ingredient insights only if this meal uses the ingredient
@@ -382,25 +377,25 @@ export function generateShortReason(
   const humanMembers = members.filter(isHumanMember);
   // Outcome-based reasons take priority when strong signal
   const outcomeScore = computeOutcomeScore(meal.id, outcomes);
-  if (outcomeScore.successCount >= 3) return "Household favorite";
+  if (outcomeScore.successCount >= 3) return 'Household favorite';
   if (outcomeScore.failureCount > 0 && outcomeScore.successCount === 0) return "Often doesn't work";
 
   // Pattern-based reasons when patterns are learned
   if (patterns && patterns.insights.length > 0) {
     const patternScore = computePatternScore(meal, patterns, humanMembers, ingredients);
-    if (patternScore >= 3) return "Matches household patterns";
-    if (patternScore <= -3) return "Clashes with learned preferences";
+    if (patternScore >= 3) return 'Matches household patterns';
+    if (patternScore <= -3) return 'Clashes with learned preferences';
   }
 
   const overlap = computeMealOverlap(meal, humanMembers, ingredients);
 
   if (overlap.score === overlap.total) {
-    const adaptMembers = overlap.memberDetails.filter((d) => d.compatibility === "with-adaptation");
-    if (adaptMembers.length === 0) return "Works for everyone";
+    const adaptMembers = overlap.memberDetails.filter((d) => d.compatibility === 'with-adaptation');
+    if (adaptMembers.length === 0) return 'Works for everyone';
 
     // Find the most interesting adaptation reason
     for (const member of humanMembers) {
-      if (member.role === "toddler" || member.role === "baby") {
+      if (member.role === 'toddler' || member.role === 'baby') {
         const hasSafe = meal.components.some((c) => {
           const bestId = pickBestIngredient(c, member, ingredients);
           const name = resolveIngredientName(bestId, ingredients);
@@ -410,15 +405,18 @@ export function generateShortReason(
       }
       if (member.preparationRules.length > 0) {
         const matched = member.preparationRules.find((r) =>
-          meal.components.some((c) => matchesFood(r.ingredient, resolveIngredientName(c.ingredientId, ingredients))),
+          meal.components.some((c) =>
+            matchesFood(r.ingredient, resolveIngredientName(c.ingredientId, ingredients)),
+          ),
         );
-        if (matched) return `${matched.rule.toLowerCase().includes("separate") ? "sauce separate works" : "prep rules handled"}`;
+        if (matched)
+          return `${matched.rule.toLowerCase().includes('separate') ? 'sauce separate works' : 'prep rules handled'}`;
       }
     }
-    return "Works with small adaptations";
+    return 'Works with small adaptations';
   }
 
-  if (overlap.score === 0) return "Conflicts for all members";
+  if (overlap.score === 0) return 'Conflicts for all members';
 
   return `Fits ${overlap.score} of ${overlap.total} members`;
 }
@@ -432,34 +430,31 @@ export interface OutcomeScore {
   label: string;
 }
 
-export function computeOutcomeScore(
-  mealId: string,
-  outcomes: MealOutcome[],
-): OutcomeScore {
+export function computeOutcomeScore(mealId: string, outcomes: MealOutcome[]): OutcomeScore {
   const mealOutcomes = outcomes.filter((o) => o.baseMealId === mealId);
-  const successCount = mealOutcomes.filter((o) => o.outcome === "success").length;
-  const partialCount = mealOutcomes.filter((o) => o.outcome === "partial").length;
-  const failureCount = mealOutcomes.filter((o) => o.outcome === "failure").length;
+  const successCount = mealOutcomes.filter((o) => o.outcome === 'success').length;
+  const partialCount = mealOutcomes.filter((o) => o.outcome === 'partial').length;
+  const failureCount = mealOutcomes.filter((o) => o.outcome === 'failure').length;
   const total = mealOutcomes.length;
 
   // +2 per success, +0.5 per partial, -3 per failure
   const score = successCount * 2 + partialCount * 0.5 - failureCount * 3;
 
-  let label = "";
+  let label = '';
   if (total === 0) {
-    label = "";
+    label = '';
   } else if (failureCount > 0 && successCount === 0) {
-    label = "repeated failures";
+    label = 'repeated failures';
   } else if (failureCount > successCount) {
     label = "often doesn't work";
   } else if (successCount >= 3) {
-    label = "household favorite";
+    label = 'household favorite';
   } else if (successCount >= 1 && failureCount === 0) {
-    label = "reliable choice";
+    label = 'reliable choice';
   } else if (successCount > failureCount) {
-    label = "mostly works";
+    label = 'mostly works';
   } else {
-    label = "mixed results";
+    label = 'mixed results';
   }
 
   return { score, successCount, partialCount, failureCount, total, label };
@@ -504,10 +499,7 @@ export interface WeekEffortBalance {
   highEffortDays: string[];
 }
 
-export function computeWeekEffortBalance(
-  days: DayPlan[],
-  meals: BaseMeal[],
-): WeekEffortBalance {
+export function computeWeekEffortBalance(days: DayPlan[], meals: BaseMeal[]): WeekEffortBalance {
   const effortCounts = { easy: 0, medium: 0, hard: 0 };
   let totalPrepMinutes = 0;
   const highEffortDays: string[] = [];
@@ -517,7 +509,7 @@ export function computeWeekEffortBalance(
     if (!meal) continue;
     effortCounts[meal.difficulty] += 1;
     totalPrepMinutes += meal.estimatedTimeMinutes;
-    if (meal.difficulty === "hard") {
+    if (meal.difficulty === 'hard') {
       highEffortDays.push(day.day);
     }
   }
@@ -525,7 +517,7 @@ export function computeWeekEffortBalance(
   return { totalPrepMinutes, effortCounts, highEffortDays };
 }
 
-const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export function generateWeeklyPlan(
   meals: BaseMeal[],
@@ -592,7 +584,13 @@ export function generateWeeklyPlan(
         // Pattern-based bonus from learned compatibility patterns
         const patternBonus = patternScores.get(meal.id) ?? 0;
 
-        const score = overlap.score + reuseBonus * 0.5 - repeatPenalty + pinnedBonus + outcomeBonus + patternBonus;
+        const score =
+          overlap.score +
+          reuseBonus * 0.5 -
+          repeatPenalty +
+          pinnedBonus +
+          outcomeBonus +
+          patternBonus;
         if (score > bestScore) {
           bestScore = score;
           bestMeal = meal;
@@ -602,10 +600,7 @@ export function generateWeeklyPlan(
 
     // Track ingredient usage
     for (const c of bestMeal.components) {
-      usedIngredientCounts.set(
-        c.ingredientId,
-        (usedIngredientCounts.get(c.ingredientId) ?? 0) + 1,
-      );
+      usedIngredientCounts.set(c.ingredientId, (usedIngredientCounts.get(c.ingredientId) ?? 0) + 1);
     }
 
     const variants = generateAssemblyVariants(bestMeal, members, ingredients);
@@ -619,16 +614,13 @@ export function generateWeeklyPlan(
   return days;
 }
 
-function difficultySortKey(difficulty: BaseMeal["difficulty"]): number {
-  if (difficulty === "easy") return 0;
-  if (difficulty === "medium") return 1;
+function difficultySortKey(difficulty: BaseMeal['difficulty']): number {
+  if (difficulty === 'easy') return 0;
+  if (difficulty === 'medium') return 1;
   return 2;
 }
 
-function collectIngredientIdsFromPlanDays(
-  days: DayPlan[],
-  meals: BaseMeal[],
-): Set<string> {
+function collectIngredientIdsFromPlanDays(days: DayPlan[], meals: BaseMeal[]): Set<string> {
   const ids = new Set<string>();
   for (const day of days) {
     const meal = meals.find((m) => m.id === day.baseMealId);
@@ -667,12 +659,12 @@ export interface WeeklySuggestedMealRow {
 }
 
 /** Values used when matching weekly theme anchors to meals (see deriveMealStructureTypes). */
-export const MEAL_STRUCTURE_TYPE_OPTIONS = ["single-protein", "multi-protein"] as const;
+export const MEAL_STRUCTURE_TYPE_OPTIONS = ['single-protein', 'multi-protein'] as const;
 
 /** For soft theme matching on weekday anchors (multi-protein vs single, etc.). */
 export function deriveMealStructureTypes(meal: BaseMeal): string[] {
-  const proteinCount = meal.components.filter((c) => c.role === "protein").length;
-  return [proteinCount > 1 ? "multi-protein" : "single-protein"];
+  const proteinCount = meal.components.filter((c) => c.role === 'protein').length;
+  return [proteinCount > 1 ? 'multi-protein' : 'single-protein'];
 }
 
 /**
@@ -789,7 +781,14 @@ export interface GroceryListItem extends GroceryItem {
 }
 
 const CATEGORY_ORDER: IngredientCategory[] = [
-  "protein", "carb", "veg", "fruit", "dairy", "snack", "freezer", "pantry",
+  'protein',
+  'carb',
+  'veg',
+  'fruit',
+  'dairy',
+  'snack',
+  'freezer',
+  'pantry',
 ];
 
 export function generateGroceryList(
@@ -823,8 +822,8 @@ export function generateGroceryList(
     items.push({
       ingredientId: id,
       name: ing?.name ?? id,
-      category: ing?.category ?? "pantry",
-      quantity: data.quantity > 1 ? `×${data.quantity}` : "",
+      category: ing?.category ?? 'pantry',
+      quantity: data.quantity > 1 ? `×${data.quantity}` : '',
       owned: false,
       usedInMeals: [...data.mealIds]
         .map((mealId) => {
@@ -853,8 +852,8 @@ export function formatPlanForExport(
 ): string {
   const lines: string[] = [];
   lines.push(`Weekly Meal Plan — ${householdName}`);
-  lines.push("=".repeat(40));
-  lines.push("");
+  lines.push('='.repeat(40));
+  lines.push('');
 
   for (const day of days) {
     const meal = meals.find((m) => m.id === day.baseMealId);
@@ -873,13 +872,13 @@ export function formatPlanForExport(
         lines.push(`    - ${instr}`);
       }
     }
-    lines.push("");
+    lines.push('');
   }
 
   const groceryItems = generateGroceryList(days, meals, ingredients);
   if (groceryItems.length > 0) {
-    lines.push("Grocery List");
-    lines.push("-".repeat(40));
+    lines.push('Grocery List');
+    lines.push('-'.repeat(40));
 
     const grouped = new Map<IngredientCategory, GroceryListItem[]>();
     for (const item of groceryItems) {
@@ -891,20 +890,18 @@ export function formatPlanForExport(
     for (const [category, catItems] of grouped) {
       lines.push(`  ${category.charAt(0).toUpperCase() + category.slice(1)}:`);
       for (const item of catItems) {
-        const qty = item.quantity ? ` ${item.quantity}` : "";
+        const qty = item.quantity ? ` ${item.quantity}` : '';
         const meals_used =
-          item.usedInMeals.length > 0
-            ? ` (${item.usedInMeals.map((m) => m.name).join(", ")})`
-            : "";
+          item.usedInMeals.length > 0 ? ` (${item.usedInMeals.map((m) => m.name).join(', ')})` : '';
         lines.push(`    - ${item.name}${qty}${meals_used}`);
       }
     }
   }
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
-export type RescueScenario = "low-energy" | "low-time" | "everyone-melting-down";
+export type RescueScenario = 'low-energy' | 'low-time' | 'everyone-melting-down';
 
 export interface RescueMeal {
   meal: BaseMeal;
@@ -925,7 +922,7 @@ export function generateRescueMeals(
   const pool = rescueEligible.length > 0 ? rescueEligible : meals;
   if (pool.length === 0) return [];
 
-  const stapleCategories = new Set(["freezer", "pantry"]);
+  const stapleCategories = new Set(['freezer', 'pantry']);
 
   const scored = pool.map((meal) => {
     const overlap = computeMealOverlap(meal, humanMembers, ingredients);
@@ -941,18 +938,18 @@ export function generateRescueMeals(
     score += stapleCount * 3;
 
     // Scenario-specific scoring
-    if (scenario === "low-time") {
+    if (scenario === 'low-time') {
       score -= meal.estimatedTimeMinutes * 0.5;
-      if (meal.difficulty === "easy") score += 5;
-    } else if (scenario === "low-energy") {
-      if (meal.difficulty === "easy") score += 8;
-      else if (meal.difficulty === "medium") score += 2;
+      if (meal.difficulty === 'easy') score += 5;
+    } else if (scenario === 'low-energy') {
+      if (meal.difficulty === 'easy') score += 8;
+      else if (meal.difficulty === 'medium') score += 2;
       else score -= 5;
       score -= meal.estimatedTimeMinutes * 0.3;
     } else {
       // everyone-melting-down: maximize safe food coverage
       for (const member of humanMembers) {
-        if (member.role !== "toddler" && member.role !== "baby") continue;
+        if (member.role !== 'toddler' && member.role !== 'baby') continue;
         const hasSafe = meal.components.some((c) => {
           const bestId = pickBestIngredient(c, member, ingredients);
           const name = resolveIngredientName(bestId, ingredients);
@@ -960,7 +957,7 @@ export function generateRescueMeals(
         });
         if (hasSafe) score += 5;
       }
-      if (meal.difficulty === "easy") score += 5;
+      if (meal.difficulty === 'easy') score += 5;
       score -= meal.estimatedTimeMinutes * 0.4;
     }
 
@@ -975,9 +972,9 @@ export function generateRescueMeals(
     const confidence =
       meal.estimatedTimeMinutes <= 15
         ? `${meal.estimatedTimeMinutes}-minute save`
-        : meal.difficulty === "easy"
-          ? "good for tired nights"
-          : "doable with a little prep";
+        : meal.difficulty === 'easy'
+          ? 'good for tired nights'
+          : 'doable with a little prep';
     return { meal, overlap, variants, prepSummary, confidence };
   });
 }
@@ -1021,7 +1018,7 @@ export function learnCompatibilityPatterns(
     const meal = meals.find((m) => m.id === outcome.baseMealId);
     if (!meal) continue;
 
-    const delta = outcome.outcome === "success" ? 1 : outcome.outcome === "failure" ? -1 : 0.25;
+    const delta = outcome.outcome === 'success' ? 1 : outcome.outcome === 'failure' ? -1 : 0.25;
 
     // Score each ingredient in the meal
     for (const component of meal.components) {
@@ -1030,26 +1027,26 @@ export function learnCompatibilityPatterns(
         ingredientScores.set(id, (ingredientScores.get(id) ?? 0) + delta);
       }
 
-      if (outcome.outcome === "success") {
+      if (outcome.outcome === 'success') {
         for (const id of allIds) {
           ingredientSuccesses.set(id, (ingredientSuccesses.get(id) ?? 0) + 1);
         }
-      } else if (outcome.outcome === "failure") {
+      } else if (outcome.outcome === 'failure') {
         for (const id of allIds) {
           ingredientFailures.set(id, (ingredientFailures.get(id) ?? 0) + 1);
         }
       }
 
       // Track protein preferences
-      if (component.role === "protein") {
+      if (component.role === 'protein') {
         const bestIds = new Set<string>();
         for (const member of humanMembers) {
           bestIds.add(pickBestIngredient(component, member, ingredients));
         }
         for (const pid of bestIds) {
-          if (outcome.outcome === "success") {
+          if (outcome.outcome === 'success') {
             proteinSuccesses.set(pid, (proteinSuccesses.get(pid) ?? 0) + 1);
-          } else if (outcome.outcome === "failure") {
+          } else if (outcome.outcome === 'failure') {
             proteinFailures.set(pid, (proteinFailures.get(pid) ?? 0) + 1);
           }
         }
@@ -1067,11 +1064,11 @@ export function learnCompatibilityPatterns(
     );
     if (hasPrepRuleRelevance) {
       prepRuleMealsTotal++;
-      if (outcome.outcome === "success") prepRuleMealsSuccess++;
+      if (outcome.outcome === 'success') prepRuleMealsSuccess++;
     }
 
     // Check safe food coverage for toddlers/babies
-    const childMembers = humanMembers.filter((m) => m.role === "toddler" || m.role === "baby");
+    const childMembers = humanMembers.filter((m) => m.role === 'toddler' || m.role === 'baby');
     if (childMembers.length > 0) {
       const hasSafeFoodCoverage = childMembers.some((member) =>
         meal.components.some((c) => {
@@ -1082,7 +1079,7 @@ export function learnCompatibilityPatterns(
       );
       if (hasSafeFoodCoverage) {
         safeFoodMealsTotal++;
-        if (outcome.outcome === "success") safeFoodMealsSuccess++;
+        if (outcome.outcome === 'success') safeFoodMealsSuccess++;
       }
     }
   }
@@ -1093,9 +1090,11 @@ export function learnCompatibilityPatterns(
     const rate = prepRuleMealsSuccess / prepRuleMealsTotal;
     if (rate >= 0.7) {
       prepRuleBoost = 1.5;
-      const ruleNames = [...new Set(
-        humanMembers.flatMap((m) => m.preparationRules.map((r) => r.rule.toLowerCase())),
-      )];
+      const ruleNames = [
+        ...new Set(
+          humanMembers.flatMap((m) => m.preparationRules.map((r) => r.rule.toLowerCase())),
+        ),
+      ];
       if (ruleNames.length > 0) {
         insights.push(`Meals with "${ruleNames[0]}" prep tend to work well`);
       }
@@ -1108,7 +1107,7 @@ export function learnCompatibilityPatterns(
     const rate = safeFoodMealsSuccess / safeFoodMealsTotal;
     if (rate >= 0.7) {
       safeFoodBoost = 1.5;
-      insights.push("Meals including safe foods for kids succeed more often");
+      insights.push('Meals including safe foods for kids succeed more often');
     }
   }
 
@@ -1176,7 +1175,7 @@ export function computePatternScore(
 
   // Apply safe food boost if meal covers child safe foods
   if (patterns.safeFoodBoost > 0) {
-    const childMembers = humanMembers.filter((m) => m.role === "toddler" || m.role === "baby");
+    const childMembers = humanMembers.filter((m) => m.role === 'toddler' || m.role === 'baby');
     const hasSafeFoodCoverage = childMembers.some((member) =>
       meal.components.some((c) => {
         const bestId = pickBestIngredient(c, member, ingredients);
@@ -1209,16 +1208,23 @@ export function generateAssemblyVariants(
 
     for (const component of meal.components) {
       // For multi-option components, pick the best ingredient for this member
-      const hasAlternatives = component.alternativeIngredientIds && component.alternativeIngredientIds.length > 0;
+      const hasAlternatives =
+        component.alternativeIngredientIds && component.alternativeIngredientIds.length > 0;
       let resolvedComponent = component;
 
       if (hasAlternatives) {
         const bestId = pickBestIngredient(component, member, ingredients);
         if (bestId !== component.ingredientId) {
-          resolvedComponent = { ...component, ingredientId: bestId, alternativeIngredientIds: undefined };
+          resolvedComponent = {
+            ...component,
+            ingredientId: bestId,
+            alternativeIngredientIds: undefined,
+          };
           const chosenName = resolveIngredientName(bestId, ingredients);
-          const allNames = getAllIngredientIds(component).map((id) => resolveIngredientName(id, ingredients));
-          instructions.push(`Protein option: ${chosenName} (from ${allNames.join(", ")})`);
+          const allNames = getAllIngredientIds(component).map((id) =>
+            resolveIngredientName(id, ingredients),
+          );
+          instructions.push(`Protein option: ${chosenName} (from ${allNames.join(', ')})`);
         }
       }
 
@@ -1234,11 +1240,11 @@ export function generateAssemblyVariants(
     }
 
     if (excludedNames.length > 0) {
-      instructions.push(`Exclude: ${excludedNames.join(", ")}`);
+      instructions.push(`Exclude: ${excludedNames.join(', ')}`);
     }
 
     if (babyUnsafeNames.length > 0) {
-      instructions.push(`Not suitable for baby — skip: ${babyUnsafeNames.join(", ")}`);
+      instructions.push(`Not suitable for baby — skip: ${babyUnsafeNames.join(', ')}`);
       requiresExtraPrep = true;
     }
 
@@ -1251,21 +1257,13 @@ export function generateAssemblyVariants(
         matchedSafeFoods.push(name);
       }
 
-      const prepInstruction = getPreparationInstruction(
-        component,
-        member,
-        ingredients,
-      );
+      const prepInstruction = getPreparationInstruction(component, member, ingredients);
       if (prepInstruction) {
         instructions.push(prepInstruction);
         requiresExtraPrep = true;
       }
 
-      const textureInstruction = getTextureInstruction(
-        component,
-        member,
-        ingredients,
-      );
+      const textureInstruction = getTextureInstruction(component, member, ingredients);
       if (textureInstruction) {
         instructions.push(textureInstruction);
         requiresExtraPrep = true;
@@ -1273,22 +1271,20 @@ export function generateAssemblyVariants(
     }
 
     if (includedComponents.length === 0) {
-      instructions.push(
-        "No compatible components — serve a fallback safe food instead",
-      );
+      instructions.push('No compatible components — serve a fallback safe food instead');
     } else if (instructions.length === 0) {
-      instructions.push("Serve as prepared — no modifications needed");
+      instructions.push('Serve as prepared — no modifications needed');
     }
 
-    if (member.role === "toddler" || member.role === "baby") {
+    if (member.role === 'toddler' || member.role === 'baby') {
       if (safeFoodIncluded) {
-        instructions.push(`Includes safe food: ${matchedSafeFoods.join(", ")}`);
+        instructions.push(`Includes safe food: ${matchedSafeFoods.join(', ')}`);
       } else if (member.safeFoods.length > 0) {
         instructions.push(
-          `No safe food in this meal — add on the side: ${member.safeFoods.slice(0, 3).join(", ")}`,
+          `No safe food in this meal — add on the side: ${member.safeFoods.slice(0, 3).join(', ')}`,
         );
       } else {
-        instructions.push("No safe food matched — consider adding a familiar side");
+        instructions.push('No safe food matched — consider adding a familiar side');
       }
     }
 

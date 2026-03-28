@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type {
   BaseMeal,
   ComponentRecipeRef,
@@ -7,17 +7,13 @@ import type {
   MealComponent,
   Recipe,
   RecipeRef,
-} from "../types";
-import { loadHousehold, saveHousehold, normalizeHousehold } from "../storage";
-import { promoteRecipeToBaseMeal } from "../lib/promoteRecipe";
-import { Card, Button, Input, FieldLabel, Chip, ActionGroup, EmptyState } from "./ui";
-import { useListKeyNav } from "../hooks/useListKeyNav";
+} from '../types';
+import { loadHousehold, saveHousehold, normalizeHousehold } from '../storage';
+import { promoteRecipeToBaseMeal } from '../lib/promoteRecipe';
+import { Card, Button, Input, FieldLabel, Chip, ActionGroup, EmptyState } from './ui';
+import { useListKeyNav } from '../hooks/useListKeyNav';
 
-type Destination =
-  | "choose"
-  | "promote"
-  | "attach-meal"
-  | "attach-component";
+type Destination = 'choose' | 'promote' | 'attach-meal' | 'attach-component';
 
 interface PostImportDestinationProps {
   householdId: string;
@@ -40,26 +36,26 @@ export default function PostImportDestination({
   const [activeRecipeIndex, setActiveRecipeIndex] = useState(0);
   const activeRecipe = recipes[activeRecipeIndex];
 
-  const [destination, setDestination] = useState<Destination>("choose");
+  const [destination, setDestination] = useState<Destination>('choose');
 
-  const [difficulty, setDifficulty] = useState<BaseMeal["difficulty"]>("medium");
+  const [difficulty, setDifficulty] = useState<BaseMeal['difficulty']>('medium');
   const [estimatedMinutes, setEstimatedMinutes] = useState(30);
   const [rescueEligible, setRescueEligible] = useState(false);
 
-  const [mealSearch, setMealSearch] = useState("");
+  const [mealSearch, setMealSearch] = useState('');
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
 
   const filteredMeals = useMemo(() => {
     const q = mealSearch.trim().toLowerCase();
-    const list = baseMeals.filter(
-      (m) => !q || m.name.toLowerCase().includes(q),
-    );
+    const list = baseMeals.filter((m) => !q || m.name.toLowerCase().includes(q));
     return list.slice(0, 20);
   }, [baseMeals, mealSearch]);
 
   const handleMealKeySelect = useCallback(
-    (index: number) => { setSelectedMealId(filteredMeals[index]!.id); },
+    (index: number) => {
+      setSelectedMealId(filteredMeals[index]!.id);
+    },
     [filteredMeals],
   );
   const mealKeyNav = useListKeyNav(filteredMeals.length, handleMealKeySelect);
@@ -67,11 +63,11 @@ export default function PostImportDestination({
   const selectedMeal = baseMeals.find((m) => m.id === selectedMealId);
 
   function resetDestinationState() {
-    setDestination("choose");
-    setDifficulty("medium");
+    setDestination('choose');
+    setDifficulty('medium');
     setEstimatedMinutes(30);
     setRescueEligible(false);
-    setMealSearch("");
+    setMealSearch('');
     setSelectedMealId(null);
     setSelectedComponentId(null);
   }
@@ -94,9 +90,7 @@ export default function PostImportDestination({
       rescueEligible,
       estimatedTimeMinutes: estimatedMinutes > 0 ? estimatedMinutes : 30,
     });
-    saveHousehold(
-      normalizeHousehold({ ...norm, baseMeals: [...norm.baseMeals, meal] }),
-    );
+    saveHousehold(normalizeHousehold({ ...norm, baseMeals: [...norm.baseMeals, meal] }));
 
     if (isBatch && activeRecipeIndex < recipes.length - 1) {
       advanceToNext();
@@ -128,7 +122,7 @@ export default function PostImportDestination({
     const ref: RecipeRef = {
       recipeId: activeRecipe.id,
       label: activeRecipe.name,
-      role: "primary",
+      role: 'primary',
     };
     const updated: BaseMeal = {
       ...meal,
@@ -162,7 +156,7 @@ export default function PostImportDestination({
     const newRef: ComponentRecipeRef = {
       id: crypto.randomUUID(),
       componentId: selectedComponentId,
-      sourceType: "imported-recipe",
+      sourceType: 'imported-recipe',
       recipeId: activeRecipe.id,
       label: activeRecipe.name,
       isDefault: true,
@@ -199,11 +193,9 @@ export default function PostImportDestination({
     return (
       <div data-testid="post-import-destination">
         <Card className="mb-4">
-          <h3 className="text-lg font-semibold text-text-primary mb-2">
-            Import complete
-          </h3>
+          <h3 className="text-lg font-semibold text-text-primary mb-2">Import complete</h3>
           <p className="text-sm text-text-secondary">
-            {recipes.length} recipe{recipes.length !== 1 ? "s" : ""} saved to your library.
+            {recipes.length} recipe{recipes.length !== 1 ? 's' : ''} saved to your library.
           </p>
         </Card>
         <ActionGroup>
@@ -229,14 +221,17 @@ export default function PostImportDestination({
         </div>
       )}
 
-      {destination === "choose" && (
+      {destination === 'choose' && (
         <div data-testid="destination-choose">
           <Card className="mb-4">
             <h3 className="text-lg font-semibold text-text-primary mb-2">
-              {isBatch ? `What would you like to do with "${activeRecipe.name}"?` : "Recipe saved — what next?"}
+              {isBatch
+                ? `What would you like to do with "${activeRecipe.name}"?`
+                : 'Recipe saved — what next?'}
             </h3>
             <p className="text-sm text-text-secondary mb-4">
-              Your recipe has been saved to the library. You can also use it for meal planning right away.
+              Your recipe has been saved to the library. You can also use it for meal planning right
+              away.
             </p>
 
             <div className="space-y-2">
@@ -259,37 +254,45 @@ export default function PostImportDestination({
                   const fromTimes =
                     (activeRecipe.prepTimeMinutes ?? 0) + (activeRecipe.cookTimeMinutes ?? 0) || 0;
                   if (fromTimes > 0) setEstimatedMinutes(fromTimes);
-                  setDestination("promote");
+                  setDestination('promote');
                 }}
                 data-testid="dest-new-base-meal"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-text-primary">Create a new base meal</p>
-                  <p className="text-xs text-text-muted">Make it available for weekly planning and grocery lists</p>
+                  <p className="text-xs text-text-muted">
+                    Make it available for weekly planning and grocery lists
+                  </p>
                 </div>
               </button>
 
               <button
                 type="button"
                 className="flex w-full items-start gap-3 rounded-lg border border-border-light p-3 text-left hover:bg-bg transition-colors"
-                onClick={() => setDestination("attach-meal")}
+                onClick={() => setDestination('attach-meal')}
                 data-testid="dest-attach-meal"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-text-primary">Attach to an existing base meal</p>
-                  <p className="text-xs text-text-muted">Link this recipe as a reference on a meal you already have</p>
+                  <p className="text-sm font-medium text-text-primary">
+                    Attach to an existing base meal
+                  </p>
+                  <p className="text-xs text-text-muted">
+                    Link this recipe as a reference on a meal you already have
+                  </p>
                 </div>
               </button>
 
               <button
                 type="button"
                 className="flex w-full items-start gap-3 rounded-lg border border-border-light p-3 text-left hover:bg-bg transition-colors"
-                onClick={() => setDestination("attach-component")}
+                onClick={() => setDestination('attach-component')}
                 data-testid="dest-component-recipe"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-text-primary">Use as a component recipe</p>
-                  <p className="text-xs text-text-muted">Assign as the recipe for a specific protein, sauce, or side on a meal</p>
+                  <p className="text-xs text-text-muted">
+                    Assign as the recipe for a specific protein, sauce, or side on a meal
+                  </p>
                 </div>
               </button>
             </div>
@@ -307,7 +310,7 @@ export default function PostImportDestination({
                 }}
                 data-testid="dest-skip"
               >
-                {activeRecipeIndex < recipes.length - 1 ? "Skip this recipe" : "Done"}
+                {activeRecipeIndex < recipes.length - 1 ? 'Skip this recipe' : 'Done'}
               </Button>
               <Button onClick={handleDone} data-testid="dest-finish-all">
                 Finish — go to library
@@ -317,7 +320,7 @@ export default function PostImportDestination({
         </div>
       )}
 
-      {destination === "promote" && (
+      {destination === 'promote' && (
         <div data-testid="destination-promote">
           <Card className="mb-4">
             <h3 className="mb-2 text-lg font-semibold text-text-primary">
@@ -331,7 +334,7 @@ export default function PostImportDestination({
               <select
                 className="w-full rounded-sm border border-border-default bg-surface px-4 py-2 text-base min-h-[44px]"
                 value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value as BaseMeal["difficulty"])}
+                onChange={(e) => setDifficulty(e.target.value as BaseMeal['difficulty'])}
                 data-testid="promote-difficulty"
               >
                 <option value="easy">easy</option>
@@ -365,12 +368,12 @@ export default function PostImportDestination({
             <Button variant="primary" onClick={handlePromote} data-testid="promote-confirm-btn">
               Create base meal
             </Button>
-            <Button onClick={() => setDestination("choose")}>Back</Button>
+            <Button onClick={() => setDestination('choose')}>Back</Button>
           </ActionGroup>
         </div>
       )}
 
-      {destination === "attach-meal" && (
+      {destination === 'attach-meal' && (
         <div data-testid="destination-attach-meal">
           <Card className="mb-4">
             <h3 className="mb-2 text-lg font-semibold text-text-primary">
@@ -381,7 +384,10 @@ export default function PostImportDestination({
               <Input
                 type="search"
                 value={mealSearch}
-                onChange={(e) => { setMealSearch(e.target.value); mealKeyNav.setActiveIndex(-1); }}
+                onChange={(e) => {
+                  setMealSearch(e.target.value);
+                  mealKeyNav.setActiveIndex(-1);
+                }}
                 onKeyDown={mealKeyNav.onKeyDown}
                 placeholder="Search your base meals…"
                 data-testid="attach-meal-search"
@@ -393,17 +399,15 @@ export default function PostImportDestination({
               className="mt-2 max-h-56 space-y-1 overflow-y-auto"
               data-testid="attach-meal-list"
             >
-              {filteredMeals.length === 0 && (
-                <EmptyState>No meals found.</EmptyState>
-              )}
+              {filteredMeals.length === 0 && <EmptyState>No meals found.</EmptyState>}
               {filteredMeals.map((meal, i) => (
                 <button
                   key={meal.id}
                   type="button"
                   className={`flex w-full items-center justify-between rounded-sm border px-3 py-2 text-left text-sm transition-colors ${
                     selectedMealId === meal.id || mealKeyNav.activeIndex === i
-                      ? "border-brand bg-brand/5 font-medium"
-                      : "border-border-light hover:bg-bg"
+                      ? 'border-brand bg-brand/5 font-medium'
+                      : 'border-border-light hover:bg-bg'
                   }`}
                   onClick={() => setSelectedMealId(meal.id)}
                   onMouseEnter={() => mealKeyNav.setActiveIndex(i)}
@@ -411,7 +415,7 @@ export default function PostImportDestination({
                 >
                   <span className="truncate text-text-primary">{meal.name}</span>
                   <span className="shrink-0 text-xs text-text-muted">
-                    {meal.components.length} component{meal.components.length !== 1 ? "s" : ""}
+                    {meal.components.length} component{meal.components.length !== 1 ? 's' : ''}
                   </span>
                 </button>
               ))}
@@ -427,12 +431,19 @@ export default function PostImportDestination({
             >
               Attach recipe
             </Button>
-            <Button onClick={() => { setSelectedMealId(null); setDestination("choose"); }}>Back</Button>
+            <Button
+              onClick={() => {
+                setSelectedMealId(null);
+                setDestination('choose');
+              }}
+            >
+              Back
+            </Button>
           </ActionGroup>
         </div>
       )}
 
-      {destination === "attach-component" && !selectedMealId && (
+      {destination === 'attach-component' && !selectedMealId && (
         <div data-testid="destination-component-meal-pick">
           <Card className="mb-4">
             <h3 className="mb-2 text-lg font-semibold text-text-primary">
@@ -446,7 +457,10 @@ export default function PostImportDestination({
               <Input
                 type="search"
                 value={mealSearch}
-                onChange={(e) => { setMealSearch(e.target.value); mealKeyNav.setActiveIndex(-1); }}
+                onChange={(e) => {
+                  setMealSearch(e.target.value);
+                  mealKeyNav.setActiveIndex(-1);
+                }}
                 onKeyDown={mealKeyNav.onKeyDown}
                 placeholder="Search your base meals…"
                 data-testid="component-meal-search"
@@ -458,17 +472,15 @@ export default function PostImportDestination({
               className="mt-2 max-h-56 space-y-1 overflow-y-auto"
               data-testid="component-meal-list"
             >
-              {filteredMeals.length === 0 && (
-                <EmptyState>No meals found.</EmptyState>
-              )}
+              {filteredMeals.length === 0 && <EmptyState>No meals found.</EmptyState>}
               {filteredMeals.map((meal, i) => (
                 <button
                   key={meal.id}
                   type="button"
                   className={`flex w-full items-center justify-between rounded-sm border px-3 py-2 text-left text-sm transition-colors ${
                     mealKeyNav.activeIndex === i
-                      ? "border-brand bg-brand/5 font-medium"
-                      : "border-border-light hover:bg-bg"
+                      ? 'border-brand bg-brand/5 font-medium'
+                      : 'border-border-light hover:bg-bg'
                   }`}
                   onClick={() => setSelectedMealId(meal.id)}
                   onMouseEnter={() => mealKeyNav.setActiveIndex(i)}
@@ -476,7 +488,7 @@ export default function PostImportDestination({
                 >
                   <span className="truncate text-text-primary">{meal.name}</span>
                   <span className="shrink-0 text-xs text-text-muted">
-                    {meal.components.length} component{meal.components.length !== 1 ? "s" : ""}
+                    {meal.components.length} component{meal.components.length !== 1 ? 's' : ''}
                   </span>
                 </button>
               ))}
@@ -484,12 +496,12 @@ export default function PostImportDestination({
           </Card>
 
           <ActionGroup>
-            <Button onClick={() => setDestination("choose")}>Back</Button>
+            <Button onClick={() => setDestination('choose')}>Back</Button>
           </ActionGroup>
         </div>
       )}
 
-      {destination === "attach-component" && selectedMeal && (
+      {destination === 'attach-component' && selectedMeal && (
         <div data-testid="destination-component-slot-pick">
           <Card className="mb-4">
             <h3 className="mb-2 text-lg font-semibold text-text-primary">
@@ -509,13 +521,15 @@ export default function PostImportDestination({
                     type="button"
                     className={`flex w-full items-center gap-2 rounded-sm border px-3 py-2 text-left text-sm transition-colors ${
                       selectedComponentId === comp.id
-                        ? "border-brand bg-brand/5 font-medium"
-                        : "border-border-light hover:bg-bg"
+                        ? 'border-brand bg-brand/5 font-medium'
+                        : 'border-border-light hover:bg-bg'
                     }`}
                     onClick={() => setSelectedComponentId(comp.id ?? null)}
                     data-testid={`component-slot-${comp.id}`}
                   >
-                    <Chip variant="info" className="shrink-0 text-[10px]">{comp.role}</Chip>
+                    <Chip variant="info" className="shrink-0 text-[10px]">
+                      {comp.role}
+                    </Chip>
                     <span className="truncate text-text-primary">
                       {ingredientName(comp.ingredientId)}
                     </span>
@@ -537,7 +551,12 @@ export default function PostImportDestination({
             >
               Assign recipe to component
             </Button>
-            <Button onClick={() => { setSelectedMealId(null); setSelectedComponentId(null); }}>
+            <Button
+              onClick={() => {
+                setSelectedMealId(null);
+                setSelectedComponentId(null);
+              }}
+            >
               Back to meal list
             </Button>
           </ActionGroup>
