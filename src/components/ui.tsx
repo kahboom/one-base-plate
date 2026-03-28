@@ -394,7 +394,7 @@ export function ConfirmDialog({
   title: string;
   message: string;
   confirmLabel?: string;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 }) {
   return (
@@ -413,14 +413,20 @@ export function ConfirmDialog({
 
 /* ---------- useConfirm hook ---------- */
 export function useConfirm() {
-  const [pending, setPending] = useState<{ entityName: string; action: () => void } | null>(null);
+  const [pending, setPending] = useState<{
+    entityName: string;
+    action: () => void | Promise<void>;
+  } | null>(null);
 
-  const requestConfirm = useCallback((entityName: string, action: () => void) => {
-    setPending({ entityName, action });
-  }, []);
+  const requestConfirm = useCallback(
+    (entityName: string, action: () => void | Promise<void>) => {
+      setPending({ entityName, action });
+    },
+    [],
+  );
 
-  const confirm = useCallback(() => {
-    pending?.action();
+  const confirm = useCallback(async () => {
+    await pending?.action();
     setPending(null);
   }, [pending]);
 
