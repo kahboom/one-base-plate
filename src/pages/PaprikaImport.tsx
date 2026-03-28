@@ -24,6 +24,7 @@ import {
   groupKeyForParsedName,
   countLowConfidencePending,
   refreshPaprikaSessionParsedLines,
+  paprikaRecipeImageUrl,
   PAPRIKA_INGREDIENT_PARSER_VERSION,
 } from "../paprika-parser";
 import type {
@@ -1129,23 +1130,51 @@ export default function PaprikaImport() {
                 >
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1 space-y-1">
-                      <p className="text-sm font-semibold text-text-primary">
-                        {toSentenceCase(group.parsedName)}
-                      </p>
-                      <p className="text-[11px] text-text-muted">
-                        {group.lines.length} occurrence{group.lines.length !== 1 ? "s" : ""} ·{" "}
-                        {recipeNames.length} recipe{recipeNames.length !== 1 ? "s" : ""}
-                        {sample.resolutionStatus === "pending" && (
-                          <Chip variant="warning" className="ml-2 text-[10px]">
-                            Pending
-                          </Chip>
-                        )}
-                        {band && (
-                          <Chip variant="neutral" className="ml-1 text-[10px]">
-                            {band} confidence
-                          </Chip>
-                        )}
-                      </p>
+                      <div className="flex items-start gap-2.5">
+                        {(() => {
+                          const seen = new Set<number>();
+                          const imgs: string[] = [];
+                          for (const ref of group.lines) {
+                            if (seen.has(ref.globalRecipeIdx)) continue;
+                            seen.add(ref.globalRecipeIdx);
+                            const recipe = parsedRecipes[ref.globalRecipeIdx]!;
+                            const img = paprikaRecipeImageUrl(recipe.raw.image_url, recipe.raw.photo_data);
+                            if (img) imgs.push(img);
+                          }
+                          if (imgs.length === 0) return null;
+                          return (
+                            <div className="flex shrink-0 gap-1">
+                              {imgs.slice(0, 3).map((src, imgIdx) => (
+                                <img
+                                  key={imgIdx}
+                                  src={src}
+                                  alt=""
+                                  className="h-10 w-10 rounded-md object-cover"
+                                />
+                              ))}
+                            </div>
+                          );
+                        })()}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-text-primary">
+                            {toSentenceCase(group.parsedName)}
+                          </p>
+                          <p className="text-[11px] text-text-muted">
+                            {group.lines.length} occurrence{group.lines.length !== 1 ? "s" : ""} ·{" "}
+                            {recipeNames.length} recipe{recipeNames.length !== 1 ? "s" : ""}
+                            {sample.resolutionStatus === "pending" && (
+                              <Chip variant="warning" className="ml-2 text-[10px]">
+                                Pending
+                              </Chip>
+                            )}
+                            {band && (
+                              <Chip variant="neutral" className="ml-1 text-[10px]">
+                                {band} confidence
+                              </Chip>
+                            )}
+                          </p>
+                        </div>
+                      </div>
                       <div className="flex flex-wrap gap-1">
                         {resolvedHouseholdName && (
                             <div

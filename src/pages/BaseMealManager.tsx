@@ -26,6 +26,7 @@ import ComponentForm from "../components/meals/ComponentForm";
 import RecipeLinksEditor from "../components/meals/RecipeLinksEditor";
 import ComponentRecipePicker from "../components/meals/ComponentRecipePicker";
 import { resolveMealImageUrl } from "../lib/mealImage";
+import TagSuggestInput from "../components/TagSuggestInput";
 
 const MEAL_SORT_OPTIONS: {
   value: string;
@@ -83,10 +84,18 @@ const DIFFICULTY_CHIP_VARIANT: Record<
   hard: "danger",
 };
 
+const EMPTY_MEAL_TAGS: string[] = [];
+
+/** Trim + lowercase so meal tags align with weekly anchor `matchTags`. */
+function normalizeBaseMealTag(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
 function createEmptyMeal(): BaseMeal {
   return {
     id: crypto.randomUUID(),
     name: "",
+    tags: [],
     components: [],
     defaultPrep: "",
     estimatedTimeMinutes: 30,
@@ -121,6 +130,32 @@ function MealModal({
     [],
   );
   const [mealRecipePickerOpen, setMealRecipePickerOpen] = useState(false);
+  const [mealTagInput, setMealTagInput] = useState("");
+
+  const mealTags = meal.tags ?? EMPTY_MEAL_TAGS;
+  const mealTagSuggestions = useMemo(() => {
+    const current = new Set(mealTags);
+    const seen = new Set<string>();
+    for (const m of allMeals) {
+      for (const t of m.tags ?? []) {
+        if (!current.has(t)) seen.add(t);
+      }
+    }
+    return [...seen].sort((a, b) => a.localeCompare(b));
+  }, [allMeals, mealTags]);
+
+  function addMealTag(raw: string) {
+    const normalized = normalizeBaseMealTag(raw);
+    if (!normalized) return;
+    if (mealTags.includes(normalized)) return;
+    onChange({ ...meal, tags: [...mealTags, normalized] });
+    setMealTagInput("");
+  }
+
+  function removeMealTag(tag: string) {
+    const next = mealTags.filter((t) => t !== tag);
+    onChange({ ...meal, tags: next });
+  }
 
   function addComponent() {
     const newComponent: MealComponent = {
@@ -194,6 +229,21 @@ function MealModal({
             {meal.rescueEligible ? "Rescue eligible" : "Not rescue"}
           </Chip>
         </div>
+        {mealTags.length > 0 ? (
+          <div
+            className="mt-2 flex flex-wrap items-center gap-2"
+            data-testid="meal-theme-tag-chips"
+          >
+            <span className="text-xs font-medium text-text-muted">
+              Theme tags
+            </span>
+            {mealTags.map((tag) => (
+              <Chip key={tag} variant="neutral" className="text-xs">
+                {tag}
+              </Chip>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="flex-1 min-h-0 space-y-6 overflow-y-auto px-4 py-5 sm:px-6">
@@ -305,6 +355,58 @@ function MealModal({
               />
               Rescue eligible
             </label>
+          </div>
+          <div className="space-y-2 border-t border-border-light pt-4">
+            <span className="block text-sm font-medium text-text-secondary">
+              Theme tags
+            </span>
+            <p className="text-xs text-text-muted">
+              Used for weekly theme nights (match tags on Household → Weekly
+              theme nights).
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {mealTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1"
+                  data-testid={`meal-tag-chip-${tag}`}
+                >
+                  <Chip variant="info">{tag}</Chip>
+                  <Button
+                    variant="ghost"
+                    small
+                    type="button"
+                    aria-label={`Remove tag ${tag}`}
+                    data-testid={`meal-tag-remove-${tag}`}
+                    onClick={() => removeMealTag(tag)}
+                  >
+                    ×
+                  </Button>
+                </span>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
+              <TagSuggestInput
+                mode="single"
+                value={mealTagInput}
+                onChange={setMealTagInput}
+                suggestions={mealTagSuggestions}
+                exclude={new Set(mealTags)}
+                placeholder="e.g. taco, pizza"
+                className="max-w-[240px] flex-1"
+                inputTestId="meal-tag-input"
+                onPick={(tag) => addMealTag(tag)}
+                onSubmitPlain={() => addMealTag(mealTagInput)}
+              />
+              <Button
+                type="button"
+                small
+                data-testid="meal-tag-add"
+                onClick={() => addMealTag(mealTagInput)}
+              >
+                Add tag
+              </Button>
+            </div>
           </div>
         </section>
 

@@ -334,6 +334,30 @@ export function clearHouseholdRecipes(householdId: string): void {
   if (isAuthenticated()) queueHouseholdSync(households[idx]!);
 }
 
+/** How many ingredient rows ship in bundled seed data for this household id (0 if none). */
+export function countSeedIngredientsForHousehold(householdId: string): number {
+  const seedHouseholds = seedData as unknown as Household[];
+  const seedH = seedHouseholds.find((h) => h.id === householdId);
+  return seedH?.ingredients?.length ?? 0;
+}
+
+/**
+ * Replaces the household ingredient catalog with a deep copy of bundled seed data for this id.
+ * Returns false if the household is missing, the id is absent from seed data, or seed ingredients are empty.
+ */
+export function resetHouseholdIngredientsToSeed(householdId: string): boolean {
+  const seedHouseholds = seedData as unknown as Household[];
+  const seedH = seedHouseholds.find((h) => h.id === householdId);
+  const seedIngredients = seedH?.ingredients;
+  if (!seedIngredients?.length) return false;
+
+  const h = loadHousehold(householdId);
+  if (!h) return false;
+
+  saveHousehold({ ...h, ingredients: structuredClone(seedIngredients) });
+  return true;
+}
+
 /** How many recipe rows ship in bundled seed data for this household id (0 if none). */
 export function countSeedRecipesForHousehold(householdId: string): number {
   const seedHouseholds = seedData as unknown as Household[];

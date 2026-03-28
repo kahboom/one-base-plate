@@ -1,3 +1,7 @@
+### 2026-03-27 — Base meal theme tags editor (F069)
+- **Base Meals** meal modal: optional **theme tags** under Planning metadata (chips, remove, typeahead from other meals’ tags, Add tag). Values trimmed + lowercased on add so they align with **Weekly theme nights** anchor `matchTags`. Separate header chip row `meal-theme-tag-chips` when tags exist; summary chips unchanged.
+- **PRD** F069 (M5); **tests** `f005-base-meals`, `weekly-suggested-ranking`; **README** Base meal theme tags blurb.
+
 ### 2026-03-27 — Supabase sync hardening (F068 follow-up)
 - **Auth / queue:** `setCurrentUserId` clears the in-memory incremental queue and timers on sign-out or user switch so pending work cannot flush under a different account. **`flushQueuedSync`** snapshots the user id at flush start and **aborts** the rest of the batch if the session changes mid-flush (discards remaining remote ops for that batch; local Dexie data unchanged).
 - **Payloads:** `console.warn` when a household JSON snapshot is **≥ 256 KiB**; per-household `console.debug` payload size only **≥ 64 KiB** (quieter normal flushes).

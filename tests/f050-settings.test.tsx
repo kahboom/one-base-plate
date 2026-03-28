@@ -8,6 +8,7 @@ import {
   saveHousehold,
   loadDefaultHouseholdId,
   saveDefaultHouseholdId,
+  countSeedIngredientsForHousehold,
 } from "../src/storage";
 import { saveImportSession, loadImportSession } from "../src/paprika-parser";
 import { applyThemeToDocument, loadThemePreference } from "../src/theme";
@@ -64,6 +65,7 @@ describe("F050 — Settings page", () => {
     expect(screen.getByTestId("settings-clear-base-meals-btn")).toBeInTheDocument();
     expect(screen.getByTestId("settings-clear-recipes-btn")).toBeInTheDocument();
     expect(screen.queryByTestId("settings-restore-seed-recipes-btn")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("settings-reset-seed-ingredients-btn")).not.toBeInTheDocument();
     expect(screen.getByTestId("settings-clear-all-btn")).toBeInTheDocument();
     expect(screen.getByTestId("import-paprika-btn")).toBeInTheDocument();
   });
@@ -175,5 +177,33 @@ describe("F050 — Settings page", () => {
     saveHousehold(makeHousehold({ id: "H001", name: "McG" }));
     renderSettings("/household/H001/settings");
     expect(screen.getByTestId("settings-restore-seed-recipes-btn")).toBeInTheDocument();
+  });
+
+  it("shows reset seed ingredients for household ids that ship with bundled seed ingredients", () => {
+    saveHousehold(makeHousehold({ id: "H001", name: "McG" }));
+    renderSettings("/household/H001/settings");
+    expect(screen.getByTestId("settings-reset-seed-ingredients-btn")).toBeInTheDocument();
+  });
+
+  it("replaces ingredients with bundled defaults after confirm", async () => {
+    const custom = {
+      id: "ing-custom-only",
+      name: "custom spice",
+      category: "pantry" as const,
+      tags: [] as string[],
+      shelfLifeHint: "",
+      freezerFriendly: false,
+      babySafeWithAdaptation: true,
+    };
+    saveHousehold(makeHousehold({ id: "H001", name: "McG", ingredients: [custom] }));
+    renderSettings("/household/H001/settings");
+
+    await userEvent.click(screen.getByTestId("settings-reset-seed-ingredients-btn"));
+    await userEvent.click(screen.getByRole("button", { name: "Reset ingredients" }));
+
+    const h = loadHouseholds().find((x) => x.id === "H001")!;
+    expect(h.ingredients.some((i) => i.id === "ing-custom-only")).toBe(false);
+    expect(h.ingredients.some((i) => i.id === "ing-pasta")).toBe(true);
+    expect(h.ingredients).toHaveLength(countSeedIngredientsForHousehold("H001"));
   });
 });

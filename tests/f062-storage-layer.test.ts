@@ -2,11 +2,13 @@ import { describe, it, expect } from "vitest";
 import seedData from "../src/seed-data.json";
 import type { Household } from "../src/types";
 import {
+  countSeedIngredientsForHousehold,
   countSeedRecipesForHousehold,
   initStorage,
   loadHouseholds,
   mergeSeedRecipesForHousehold,
   resetAppStorageForTests,
+  resetHouseholdIngredientsToSeed,
   saveHousehold,
   STORAGE_KEY,
   importHouseholdsJSON,
@@ -150,6 +152,55 @@ describe("mergeSeedRecipesForHousehold", () => {
       weeklyPlans: [],
     });
     expect(mergeSeedRecipesForHousehold("h-no-seed")).toBe(false);
+  });
+});
+
+describe("resetHouseholdIngredientsToSeed", () => {
+  it("replaces ingredients with bundled seed copy for H001", async () => {
+    const seed = seedData as unknown as Household[];
+    const seedH001 = seed.find((h) => h.id === "H001")!;
+    expect(seedH001.ingredients?.length).toBeGreaterThan(0);
+
+    await initStorage();
+    saveHousehold({
+      id: "H001",
+      name: "McG",
+      members: [],
+      ingredients: [
+        {
+          id: "ing-custom",
+          name: "custom",
+          category: "pantry",
+          tags: [],
+          shelfLifeHint: "",
+          freezerFriendly: false,
+          babySafeWithAdaptation: true,
+        },
+      ],
+      baseMeals: [],
+      weeklyPlans: [],
+    });
+
+    expect(countSeedIngredientsForHousehold("H001")).toBe(seedH001.ingredients!.length);
+    expect(resetHouseholdIngredientsToSeed("H001")).toBe(true);
+
+    const h = loadHouseholds().find((x) => x.id === "H001")!;
+    expect(h.ingredients.some((i) => i.id === "ing-custom")).toBe(false);
+    expect(h.ingredients.find((i) => i.id === "ing-pasta")?.name).toBe("pasta");
+    expect(h.ingredients).toHaveLength(seedH001.ingredients!.length);
+  });
+
+  it("returns false when bundled seed has no ingredients for this household id", async () => {
+    await initStorage();
+    saveHousehold({
+      id: "h-no-seed",
+      name: "X",
+      members: [],
+      ingredients: [{ id: "i1", name: "x", category: "pantry", tags: [], shelfLifeHint: "", freezerFriendly: false, babySafeWithAdaptation: true }],
+      baseMeals: [],
+      weeklyPlans: [],
+    });
+    expect(resetHouseholdIngredientsToSeed("h-no-seed")).toBe(false);
   });
 });
 

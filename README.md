@@ -34,6 +34,10 @@ On the **household home** screen, **Top suggestions** lists up to **three** meal
 
 **Weekly Planner** and other screens may rank meals differently (for example, avoiding repeats already on the plan). The above applies specifically to **Top suggestions** on the home screen.
 
+### Base meal theme tags
+
+On **Base Meals**, each meal’s edit modal includes optional **theme tags** under *Planning metadata*. Tags are stored lowercase and are used as a **soft tie-break** when a day has a **weekly theme anchor** whose *match tags* overlap (configure anchors under **Household → Weekly theme nights**). They are separate from recipe library tags.
+
 ---
 
 ## Manual Commands

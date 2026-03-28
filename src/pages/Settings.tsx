@@ -13,9 +13,11 @@ import {
   clearHouseholdRecipes,
   exportHouseholdsJSON,
   importHouseholdsJSON,
+  countSeedIngredientsForHousehold,
   countSeedRecipesForHousehold,
   loadDefaultHouseholdId,
   mergeSeedRecipesForHousehold,
+  resetHouseholdIngredientsToSeed,
   saveDefaultHouseholdId,
 } from "../storage";
 import { clearImportSession } from "../paprika-parser";
@@ -48,6 +50,12 @@ export default function Settings() {
     requestConfirm: requestConfirmSeedRecipes,
     confirm: confirmSeedRecipes,
     cancel: cancelSeedRecipes,
+  } = useConfirm();
+  const {
+    pending: pendingSeedIngredients,
+    requestConfirm: requestConfirmSeedIngredients,
+    confirm: confirmSeedIngredients,
+    cancel: cancelSeedIngredients,
   } = useConfirm();
   const [themePreference, setThemePreference] = useState<ThemePreference>(() => loadThemePreference());
 
@@ -131,7 +139,18 @@ export default function Settings() {
     });
   }
 
+  function handleResetSeedIngredientsClick() {
+    if (!householdId) return;
+    requestConfirmSeedIngredients("", () => {
+      const ok = resetHouseholdIngredientsToSeed(householdId);
+      if (!ok) {
+        alert("No bundled seed ingredients are available for this household id.");
+      }
+    });
+  }
+
   const seedRecipeCount = householdId ? countSeedRecipesForHousehold(householdId) : 0;
+  const seedIngredientCount = householdId ? countSeedIngredientsForHousehold(householdId) : 0;
 
   return (
     <>
@@ -186,7 +205,8 @@ export default function Settings() {
         <p className="mb-4 text-sm text-text-secondary">
           Export or import all households (members, ingredients, recipe library, base meals, weekly plans). Import
           merges with existing data by household id. You can remove only this household&apos;s base meals and plans,
-          or only its recipe library, while keeping members and ingredients.
+          or only its recipe library, while keeping members. For households that include bundled seed data, you can
+          restore seed recipes or reset the ingredient catalog to the default list.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button data-testid="settings-export-btn" onClick={handleExport}>
@@ -217,6 +237,11 @@ export default function Settings() {
           {seedRecipeCount > 0 && (
             <Button data-testid="settings-restore-seed-recipes-btn" onClick={handleRestoreSeedRecipesClick}>
               Restore seed recipes ({seedRecipeCount})
+            </Button>
+          )}
+          {seedIngredientCount > 0 && (
+            <Button variant="danger" data-testid="settings-reset-seed-ingredients-btn" onClick={handleResetSeedIngredientsClick}>
+              Reset ingredients to defaults ({seedIngredientCount})
             </Button>
           )}
           <Button variant="danger" data-testid="settings-clear-all-btn" onClick={handleClearClick}>
@@ -271,6 +296,14 @@ export default function Settings() {
         confirmLabel="Restore recipes"
         onConfirm={confirmSeedRecipes}
         onCancel={cancelSeedRecipes}
+      />
+      <ConfirmDialog
+        open={!!pendingSeedIngredients}
+        title="Reset ingredients to defaults"
+        message="This replaces your entire ingredient catalog for this household with the app’s bundled default list. Custom ingredients are removed. Base meals, recipes, and plans may still reference ingredient ids that no longer exist until you edit or re-link them. This cannot be undone."
+        confirmLabel="Reset ingredients"
+        onConfirm={confirmSeedIngredients}
+        onCancel={cancelSeedIngredients}
       />
     </>
   );

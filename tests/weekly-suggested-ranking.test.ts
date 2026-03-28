@@ -7,7 +7,10 @@ import type {
   MealOutcome,
   WeeklyAnchor,
 } from "../src/types";
-import { rankWeeklySuggestedMeals } from "../src/planner";
+import {
+  mealMatchesWeeklyAnchor,
+  rankWeeklySuggestedMeals,
+} from "../src/planner";
 
 const ingredients: Ingredient[] = [
   {
@@ -251,5 +254,20 @@ describe("rankWeeklySuggestedMeals", () => {
       anchor,
     );
     expect(ranked[0]!.meal.id).toBe("better");
+  });
+
+  it("mealMatchesWeeklyAnchor uses exact string equality (meal tag editor lowercases)", () => {
+    const anchor: WeeklyAnchor = {
+      id: "anch",
+      weekday: "Tuesday",
+      label: "Taco night",
+      matchTags: ["taco"],
+      matchStructureTypes: [],
+      enabled: true,
+    };
+    const wrongCase = { ...meal("m1", "M", ["ing-a"]), tags: ["Taco"] };
+    const ok = { ...meal("m2", "M", ["ing-a"]), tags: ["taco"] };
+    expect(mealMatchesWeeklyAnchor(wrongCase, anchor)).toBe(false);
+    expect(mealMatchesWeeklyAnchor(ok, anchor)).toBe(true);
   });
 });

@@ -343,3 +343,72 @@ describe("S007 UX refactor: editor flow hierarchy and actions", () => {
     expect(screen.queryByTestId("meal-modal")).not.toBeInTheDocument();
   });
 });
+
+describe("Base meal theme tags (weekly anchor matching)", () => {
+  it("shows tag editor in planning metadata with helper copy", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderBaseMealManager("h-meals");
+    const modal = await addMeal(user);
+    const planning = within(modal).getByTestId("meal-planning-section");
+    expect(within(planning).getByTestId("meal-tag-input")).toBeInTheDocument();
+    expect(
+      within(planning).getByText(/weekly theme nights/i),
+    ).toBeInTheDocument();
+  });
+
+  it("adds tags trimmed and lowercased; shows header theme chips", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderBaseMealManager("h-meals");
+    const modal = await addMeal(user);
+    const input = within(modal).getByTestId("meal-tag-input");
+    await user.type(input, "  TACO  ");
+    await user.click(within(modal).getByTestId("meal-tag-add"));
+    expect(within(modal).getByTestId("meal-tag-chip-taco")).toBeInTheDocument();
+    expect(within(modal).getByTestId("meal-theme-tag-chips")).toBeInTheDocument();
+  });
+
+  it("persists normalized tags after Save meal", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderBaseMealManager("h-meals");
+    const modal = await addMeal(user);
+    await user.type(within(modal).getByTestId("meal-tag-input"), "Pizza");
+    await user.click(within(modal).getByTestId("meal-tag-add"));
+    await user.click(within(modal).getByText("Save meal"));
+    const h = loadHousehold("h-meals");
+    expect(h).toBeDefined();
+    expect(h!.baseMeals[0]!.tags).toEqual(["pizza"]);
+  });
+
+  it("does not add duplicate tags", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderBaseMealManager("h-meals");
+    const modal = await addMeal(user);
+    const input = within(modal).getByTestId("meal-tag-input");
+    await user.type(input, "taco");
+    await user.click(within(modal).getByTestId("meal-tag-add"));
+    await user.clear(input);
+    await user.type(input, "TACO");
+    await user.click(within(modal).getByTestId("meal-tag-add"));
+    expect(within(modal).getAllByTestId("meal-tag-chip-taco")).toHaveLength(1);
+  });
+
+  it("removes a tag via chip control", async () => {
+    seedHousehold();
+    const user = userEvent.setup();
+    renderBaseMealManager("h-meals");
+    const modal = await addMeal(user);
+    await user.type(within(modal).getByTestId("meal-tag-input"), "bowl");
+    await user.click(within(modal).getByTestId("meal-tag-add"));
+    await user.click(within(modal).getByTestId("meal-tag-remove-bowl"));
+    expect(
+      within(modal).queryByTestId("meal-tag-chip-bowl"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(modal).queryByTestId("meal-theme-tag-chips"),
+    ).not.toBeInTheDocument();
+  });
+});

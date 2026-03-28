@@ -1013,5 +1013,19 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Verification:** `npm run typecheck`, `npm test` — see F068 hardening note for latest counts.
 - **Risks / follow-ups:** In-memory queue is lost if the tab closes mid-debounce (local Dexie still has data; user can manual sync). Still **household JSON blob** upserts — future granular tables would shrink payloads further.
 
+### F069 — Base meal theme tag editor (2026-03-27)
+- **PRD:** F069; milestone M5; P2 functional; depends on F005, F056; acceptance S007.
+- **UI:** [`src/pages/BaseMealManager.tsx`](src/pages/BaseMealManager.tsx) — `MealModal` Planning section: theme tag chips + remove, `TagSuggestInput` (suggestions from other meals’ tags) + Add tag; helper copy → Household → Weekly theme nights. Header row `meal-theme-tag-chips` (neutral chips + “Theme tags” label) when tags non-empty; `meal-summary-chips` unchanged (time / difficulty / rescue).
+- **Data:** `normalizeBaseMealTag` trim + lowercase on add; dedupe; `createEmptyMeal` includes `tags: []`; `EMPTY_MEAL_TAGS` stable ref for `useMemo`.
+- **Planner:** No change to `mealMatchesWeeklyAnchor` (exact string match; UI aligns with anchor lowercasing).
+- **Tests:** [`tests/f005-base-meals.test.tsx`](tests/f005-base-meals.test.tsx) — editor visibility, normalize, persist, dedupe, remove + header chips; [`tests/weekly-suggested-ranking.test.ts`](tests/weekly-suggested-ranking.test.ts) — `mealMatchesWeeklyAnchor` case sensitivity vs lowered UI tags.
+- **Verification:** `npm test` — f005 + weekly-suggested-ranking green.
+
+### Settings — reset ingredients to bundled defaults (2026-03-28)
+- **Storage:** `countSeedIngredientsForHousehold`, `resetHouseholdIngredientsToSeed` in `src/storage.ts` — replaces the household ingredient list with a deep copy from `seed-data.json` when that household id exists in seed data.
+- **UI:** `src/pages/Settings.tsx` — destructive action in Data section (shown when seed ingredient count > 0, same household ids as seed recipes); confirmation explains full catalog replace and possible broken meal/recipe/plan references for custom ids.
+- **Tests:** `tests/f050-settings.test.tsx`, `tests/f062-storage-layer.test.ts`.
+- **Verification:** `npm run typecheck`, `npm test`.
+
 ## Next Task
 - Continue from `PRD.json` implementation order after F068, or open a new scoped feature if product priorities shift.

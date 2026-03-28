@@ -2113,6 +2113,27 @@
         "S007",
         "S010"
       ]
+    },
+    {
+      "id": "F069",
+      "phase": 2,
+      "priority": "P2",
+      "category": "functional",
+      "description": "Base meal tag editor: free-form tags on BaseMeal for weekly theme anchor matchTags (trim/lowercase on add); distinct header theme chips; tests + docs",
+      "steps": [
+        "Base Meals modal (MealModal): theme tags in Planning metadata — chips with remove, TagSuggestInput + Add tag, helper line pointing to Household → Weekly theme nights.",
+        "normalizeBaseMealTag (trim + lowercase) on add; createEmptyMeal sets tags: []; optional header row meal-theme-tag-chips separate from meal-summary-chips.",
+        "Tests: f005-base-meals (editor, persist, dedupe, remove); weekly-suggested-ranking documents exact tag equality vs anchor matchTags.",
+        "README, agent-progress, CHANGELOG."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F005",
+        "F056"
+      ],
+      "acceptanceRefs": [
+        "S007"
+      ]
     }
   ],
   "milestones": [
@@ -2207,7 +2228,8 @@
         "F064",
         "F065",
         "F066",
-        "F067"
+        "F067",
+        "F069"
       ]
     },
     {
@@ -2302,6 +2324,7 @@
     "F065",
     "F066",
     "F067",
+    "F069",
     "F020",
     "F037",
     "F038",
