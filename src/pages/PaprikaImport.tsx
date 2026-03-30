@@ -32,7 +32,7 @@ import type {
   PaprikaGroupResolution,
   PaprikaCreateDraft,
 } from '../paprika-parser';
-import { findNearDuplicates, searchCatalog } from '../catalog';
+import { findNearDuplicates, searchCatalog, type CatalogIngredient } from '@/catalog';
 import { mapPaprikaCategories } from '../lib/paprikaCategoryMap';
 import { recipeTagLabel } from '../lib/recipeTags';
 import PaprikaIngredientPicker from '../components/PaprikaIngredientPicker';
@@ -114,7 +114,7 @@ export default function PaprikaImport() {
   const [createGroupKey, setCreateGroupKey] = useState<string | null>(null);
   const [catalogSearch, setCatalogSearch] = useState('');
 
-  const catalogResults = useMemo(
+  const catalogResults = useMemo<CatalogIngredient[]>(
     () => (catalogSearch ? searchCatalog(catalogSearch) : []).slice(0, 40),
     [catalogSearch],
   );
