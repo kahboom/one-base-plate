@@ -22,6 +22,7 @@ import type { MatchConfidenceBand } from './recipe-parser';
 import { catalogIngredientToHousehold } from './catalog';
 import type { CatalogIngredient } from './catalog';
 import { normalizeIngredientName, normalizeIngredientGroupKey } from './storage';
+import { matchCommonStaple } from './lib/commonStaples';
 import {
   getPaprikaImportSessionMemory,
   rememberAndQueuePaprikaImportSessionPersist,
@@ -80,6 +81,8 @@ export interface PaprikaReviewLine extends ParsedIngredientLine {
   explicitIgnore?: boolean;
   parserSuggestedIngredientId?: string;
   parserSuggestedCatalogId?: string;
+  /** Set by `autoResolveHighConfidence` — line was auto-resolved but user can still override */
+  autoResolved?: boolean;
 }
 
 export interface BulkReviewSummary {
@@ -435,6 +438,123 @@ export function applyGroupResolution(
     });
     return { ...recipe, parsedLines: updatedLines };
   });
+}
+
+export interface AutoResolveStats {
+  householdMatches: number;
+  catalogMatches: number;
+  stapleMatches: number;
+  total: number;
+}
+
+/**
+ * Auto-resolve groups whose parser suggestion is high-confidence (exact or strong),
+ * plus unmatched lines that match a common kitchen staple.
+ *
+ * - Household matches (exact/strong) → resolved as "use"
+ * - Catalog matches (exact/strong) → resolved as "create from catalog"
+ * - Unmatched lines matching common staples → auto-create with known category
+ * - Instruction-only lines with no name → resolved as "ignore"
+ *
+ * This dramatically reduces the pending count on first import
+ * (typically 40–60 %) without violating "no silent completion" —
+ * every auto-resolved line is still visible in the tiered review and
+ * can be changed.
+ */
+export function autoResolveHighConfidence(
+  recipes: ParsedPaprikaRecipe[],
+): ParsedPaprikaRecipe[] {
+  return autoResolveHighConfidenceWithStats(recipes).recipes;
+}
+
+export function autoResolveHighConfidenceWithStats(
+  recipes: ParsedPaprikaRecipe[],
+): { recipes: ParsedPaprikaRecipe[]; stats: AutoResolveStats } {
+  let householdMatches = 0;
+  let catalogMatches = 0;
+  let stapleMatches = 0;
+
+  const resolved = recipes.map((recipe) => {
+    if (!recipe.selected) return recipe;
+    const updatedLines = recipe.parsedLines.map((line) => {
+      if (line.resolutionStatus !== 'pending') return line;
+      if (line.perLineOverride) return line;
+
+      if (!line.name?.trim()) {
+        return {
+          ...line,
+          action: 'ignore' as const,
+          resolutionStatus: 'resolved' as const,
+        };
+      }
+
+      const band = line.confidenceBand;
+      if (
+        line.status === 'matched' &&
+        line.matchedIngredient &&
+        (band === 'exact' || band === 'strong')
+      ) {
+        householdMatches++;
+        return {
+          ...line,
+          action: 'use' as const,
+          resolutionStatus: 'resolved' as const,
+          manualIngredientId: line.matchedIngredient.id,
+          autoResolved: true,
+        };
+      }
+
+      if (
+        line.status === 'catalog' &&
+        line.matchedCatalog &&
+        (band === 'exact' || band === 'strong')
+      ) {
+        catalogMatches++;
+        return {
+          ...line,
+          action: 'create' as const,
+          resolutionStatus: 'resolved' as const,
+          newCategory: line.matchedCatalog.category as IngredientCategory,
+          autoResolved: true,
+        };
+      }
+
+      // Common staples bypass for unmatched lines
+      if (line.status === 'unmatched' && line.action === 'pending' && line.name) {
+        const staple = matchCommonStaple(line.name);
+        if (staple) {
+          stapleMatches++;
+          return {
+            ...line,
+            action: 'create' as const,
+            status: 'unmatched' as const,
+            resolutionStatus: 'resolved' as const,
+            newCategory: staple.category,
+            autoResolved: true,
+            createDraft: {
+              canonicalName: staple.name,
+              category: staple.category,
+              tags: [],
+              retainImportAlias: false,
+            },
+          };
+        }
+      }
+
+      return line;
+    });
+    return { ...recipe, parsedLines: updatedLines };
+  });
+
+  return {
+    recipes: resolved,
+    stats: {
+      householdMatches,
+      catalogMatches,
+      stapleMatches,
+      total: householdMatches + catalogMatches + stapleMatches,
+    },
+  };
 }
 
 export function canFinalizePaprikaImport(recipes: ParsedPaprikaRecipe[]): boolean {

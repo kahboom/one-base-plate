@@ -56,3 +56,7 @@ Align with **`Ingredient`** in **`src/types.ts`**.
 
 - Storage/seed merge: `tests/f062-storage-layer.test.ts`, `tests/f040-seed-pet.test.tsx`.
 - Ingredient/family behaviour: `tests/f075-ingredient-family-groups.test.ts` (uses dedicated test data; still validates `familyKeys` semantics).
+
+## Impact on Paprika import quality (2026-03-31)
+
+Catalog and household ingredient coverage directly affects Paprika import review volume. With a real 100-recipe import, ~55% of ingredient lines were unmatched because neither the household library nor `MASTER_CATALOG` had entries for them. When adding new seed ingredients, consider whether common Paprika ingredients (e.g. "whole wheat pastry flour", "low-sodium soy sauce") should also get `MASTER_CATALOG` entries in `src/catalog.ts` to reduce import review friction. This is a separate step from fixture edits — see the checklist item about catalog evaluation.

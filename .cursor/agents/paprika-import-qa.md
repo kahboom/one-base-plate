@@ -102,3 +102,29 @@ When writing an implementation prompt for another agent or developer, make it **
 
 - Prefer **read-only** analysis and test recommendations unless the user explicitly asks for code changes.
 - Keep scope to Paprika/import/matching/review/drafts unless the user broadens it.
+
+## Known issues — bulk review scaling (2026-03-31)
+
+Tested with a real `Entrees.paprikarecipes` file (100+ recipes). The bulk ingredient review showed **105 pages** (1043 groups at page size 10) with ~55% of lines pending. Root causes and priority fixes are documented here so future sessions don't re-discover them.
+
+### Root causes
+
+1. **Volume amplification.** Every ingredient line across all selected recipes appears in the review list, grouped by normalized name. 100 recipes × 10-15 lines = 1000+ groups.
+2. **First-import cold start.** On first import the household has few ingredients, so most lines are "unmatched" with nothing to match against.
+3. **Catalog threshold gap.** `CATALOG_MIN = 0.86` is conservative; many real ingredients (e.g. "whole wheat pastry flour") don't fuzzy-match any catalog entry. Even when they do, `confidenceBandFromScore` classifies 0.75–0.94 as "strong" but the Paprika flow still marks catalog matches with `confidenceBand !== 'exact'` as pending when band is "low" (< 0.75 is low; 0.75–0.94 is strong but still requires confirmation for catalog-status lines).
+4. **Bulk actions too coarse.** "Approve all matches" only clears already-matched lines. "Create all new" floods the household with unvetted ingredients. Neither meaningfully reduces the pending queue.
+5. **Flat firehose review.** All pending/matched/ignored lines in one paginated list with no triage tiers.
+
+### Priority fixes (descending impact)
+
+1. **Smart auto-resolution pass** — before showing review, auto-resolve: (a) exact/strong household matches → "use"; (b) exact/strong catalog matches → "create from catalog"; (c) common staples (salt, pepper, water, oil, butter, sugar, flour, garlic, onion, etc.) → auto-create with pantry/dairy category. Could resolve 40-60% of pending lines.
+2. **Batch "create all unmatched" with preview** — show a preview list of what will be created (name + guessed category), let user change categories per-row or in bulk, then create all at once. The "I trust my Paprika data" escape hatch.
+3. **Tiered review UX** — replace flat paginated list with progressive triage: Tier 1 (suggestions to confirm), Tier 2 (new ingredients to name), Tier 3 (weird lines to check). Each tier collapses when done.
+4. **Larger page size or virtual scroll** — increase `PAPRIKA_IMPORT_PAGE_SIZE` from 10 to 50, or add a page-size selector, as a quick interim fix.
+5. **Common staples seed list** — small (~50 item) built-in list that auto-matches even when household is empty, bypassing scoring.
+
+### What not to do
+
+- Do not lower `CATALOG_MIN` globally — creates false positive noise in normal recipe entry.
+- Do not auto-resolve everything silently — violates the "no silent good-enough completion" PRD rule.
+- Do not rebuild the entire import page — the grouped resolution, session persistence, and draft gates are solid; the problem is the front-end triage layer.

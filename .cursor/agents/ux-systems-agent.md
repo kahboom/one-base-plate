@@ -118,3 +118,15 @@ When writing an implementation prompt for another agent or developer:
 
 - Align narrative with **`PRD.json`** and **`agent-progress.md`**; flag conflicts between PRD copy and live UI.
 - Parser/import/matching depth work may overlap other agents; stay focused on **presentation, flow, and cognitive load** unless the user expands scope.
+
+## Known UX issues (2026-03-31)
+
+### Paprika bulk ingredient review — firehose at scale
+
+The Paprika import review screen (`src/pages/PaprikaImport.tsx`) becomes overwhelming with real-world files. A 100-recipe Entrees export produced **105 pages** of ingredient groups (1043 groups, page size 10, ~55% pending). The screen is functionally correct but violates "low-stress", "easy to scan", and "not admin-heavy" principles.
+
+**What feels wrong:** The user faces a flat paginated list of 1000+ items with no triage priority. Every line looks equally important. The bulk actions are too blunt to help. It feels like a spreadsheet audit, not a cooking app.
+
+**Recommended interaction model:** Progressive triage — tier the review into (1) suggestions to confirm, (2) new ingredients to name/categorize, (3) odd lines to check. Each tier collapses when done. Add a "create all unmatched" batch action with preview + category assignment. See paprika-import-qa agent for full technical root causes and fix priorities.
+
+**Constraint:** Do not break grouped resolution, session persistence, draft gates, or the "no silent completion" rule. This is a presentation/flow fix on top of solid plumbing.
