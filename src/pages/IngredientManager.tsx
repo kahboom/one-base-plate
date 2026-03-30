@@ -1105,7 +1105,7 @@ function IngredientTableRow({
       {/* Content area */}
       <span className="flex flex-1 items-center gap-3 min-w-0 text-left">
         {/* Thumbnail */}
-        {rowImageUrl && (
+        {rowImageUrl ? (
           <img
             src={rowImageUrl}
             alt=""
@@ -1113,6 +1113,8 @@ function IngredientTableRow({
             className="h-8 w-8 flex-shrink-0 rounded object-cover border border-border-light hidden sm:block"
             data-testid={`ingredient-list-thumb-${ingredient.id}`}
           />
+        ) : (
+          <span className="h-8 w-8 flex-shrink-0 hidden sm:block" />
         )}
 
         {/* Name */}
@@ -1375,13 +1377,6 @@ export default function IngredientManager() {
   const runDuplicateScan = useCallback(() => {
     setDuplicateScanPairs(suggestIngredientMergePairs(ingredients, { minScore: 0.55, limit: 200 }));
   }, [ingredients]);
-
-  useEffect(() => {
-    if (!duplicateReviewOpen) return;
-    if (mergePairSuggestionsVisible.length === 0) {
-      setDuplicateReviewOpen(false);
-    }
-  }, [duplicateReviewOpen, mergePairSuggestionsVisible.length]);
 
   const mergeDuplicateReviewSelectState = useMemo(() => {
     const n = mergePairSuggestionsVisible.length;
@@ -1758,58 +1753,6 @@ export default function IngredientManager() {
         subtitleTo={`/households?edit=${householdId}`}
       />
 
-      <Card className="mb-4" data-testid="ingredient-merge-scan-card">
-        <p className="text-sm font-medium text-text-primary">Duplicate name check</p>
-        <p className="mt-0.5 text-xs text-text-secondary">
-          Fuzzy matching runs only when you click below so this page stays fast after imports and
-          edits. After you change ingredients, run the check again.
-        </p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Button onClick={runDuplicateScan} data-testid="ingredient-merge-check-btn">
-            Check for duplicates
-          </Button>
-          {duplicateScanPairs !== null && (
-            <span className="text-sm text-text-secondary" data-testid="ingredient-merge-scan-summary">
-              {duplicateScanPairs.length === 0 && 'No likely duplicates at the current threshold.'}
-              {duplicateScanPairs.length > 0 && duplicateScanPairsActive.length === 0 && (
-                <>
-                  Last scan included pairs that no longer exist (for example after merges). Run check
-                  again to refresh.
-                </>
-              )}
-              {duplicateScanPairsActive.length > 0 && mergePairSuggestionsVisible.length === 0 && (
-                <>
-                  Found {duplicateScanPairsActive.length} heuristic match
-                  {duplicateScanPairsActive.length !== 1 ? 'es' : ''}; all are on your ignored list.
-                </>
-              )}
-              {mergePairSuggestionsVisible.length > 0 && (
-                <>
-                  {mergePairSuggestionsVisible.length} pair
-                  {mergePairSuggestionsVisible.length !== 1 ? 's' : ''} to review (after ignores).
-                </>
-              )}
-            </span>
-          )}
-        </div>
-        {mergePairSuggestionsVisible.length > 0 && (
-          <button
-            type="button"
-            className="mt-3 w-full rounded-md border border-border-light bg-brand/5 px-4 py-3 text-left transition-colors hover:bg-brand/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            onClick={openDuplicateReview}
-            data-testid="ingredient-merge-notice"
-          >
-            <span className="text-sm font-semibold text-text-primary">
-              Open review list ({mergePairSuggestionsVisible.length} pair
-              {mergePairSuggestionsVisible.length !== 1 ? 's' : ''})
-            </span>
-            <span className="mt-0.5 block text-xs text-text-secondary">
-              Tap a name to merge in one step, or use bulk actions. Ignored pairs stay out of this list.
-            </span>
-          </button>
-        )}
-      </Card>
-
       <AppModal
         open={duplicateReviewOpen}
         onClose={() => setDuplicateReviewOpen(false)}
@@ -1865,7 +1808,9 @@ export default function IngredientManager() {
         <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2 sm:px-4">
           {mergePairSuggestionsVisible.length === 0 ? (
             <p className="px-2 py-6 text-center text-sm text-text-muted" data-testid="merge-review-empty">
-              No pairs left — close or dismiss suggestions from the ingredient list.
+              {duplicateScanPairs?.length === 0
+                ? 'No likely duplicates found.'
+                : 'No pairs left to review.'}
             </p>
           ) : (
             <>
@@ -2080,7 +2025,27 @@ export default function IngredientManager() {
               </option>
             ))}
           </Select>
-          <Button onClick={addIngredient}>Add ingredient</Button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="flex h-[44px] w-[44px] items-center justify-center rounded-sm border border-border-default bg-surface text-text-secondary transition-colors hover:border-brand hover:text-brand focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light"
+              onClick={() => {
+                runDuplicateScan();
+                openDuplicateReview();
+              }}
+              title="Check for duplicates"
+              data-testid="ingredient-merge-check-btn"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                <path d="M5 3v4"/>
+                <path d="M19 17v4"/>
+                <path d="M3 5h4"/>
+                <path d="M17 19h4"/>
+              </svg>
+            </button>
+            <Button onClick={addIngredient}>Add ingredient</Button>
+          </div>
         </div>
       </Card>
 

@@ -2,12 +2,12 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import type { Household, Ingredient } from '../src/types';
-import { saveHousehold, loadHousehold } from '../src/storage';
-import { matchIngredient } from '../src/recipe-parser';
-import { MASTER_CATALOG, catalogIngredientToHousehold } from '../src/catalog';
-import IngredientManager from '../src/pages/IngredientManager';
-import RecipeImport from '../src/pages/RecipeImport';
+import type { Household, Ingredient } from '@/types';
+import { saveHousehold, loadHousehold } from '@/storage';
+import { matchIngredient } from '@/recipe-parser';
+import { MASTER_CATALOG, catalogIngredientToHousehold } from '@/catalog';
+import IngredientManager from '@/pages/IngredientManager';
+import RecipeImport from '@/pages/RecipeImport';
 import {
   openIngredientAddManualFromCatalogPicker,
   pickCatalogItemInAddDialog,
@@ -108,7 +108,7 @@ describe('F070: Ingredient Manager — no eager catalog merge', () => {
   });
 
   it('existing catalog-linked household data still loads and edits', async () => {
-    const pasta = catalogIngredientToHousehold(MASTER_CATALOG.find((i) => i.id === 'cat-pasta')!);
+    const pasta = catalogIngredientToHousehold(MASTER_CATALOG.find((i: { id: string; }) => i.id === 'cat-pasta')!);
     seedHousehold([pasta]);
     const user = userEvent.setup();
     renderIngredients();
