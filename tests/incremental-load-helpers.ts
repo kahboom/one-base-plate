@@ -1,7 +1,7 @@
 import { screen, fireEvent } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 
-/** F070: Add ingredient opens catalog search; use this to open the blank manual-ingredient modal. */
+/** F070: Add ingredient opens catalog search; use this to open the manual-ingredient modal (name empty unless search was typed). */
 export async function openIngredientAddManualFromCatalogPicker(user: UserEvent) {
   await user.click(screen.getAllByText('Add ingredient')[0]!);
   await user.click(screen.getByTestId('catalog-add-create-manual'));

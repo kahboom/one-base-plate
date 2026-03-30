@@ -88,6 +88,18 @@ describe('F070: Ingredient Manager — no eager catalog merge', () => {
     });
   });
 
+  it('Create manual pre-fills name from catalog search text', async () => {
+    seedHousehold([]);
+    const user = userEvent.setup();
+    renderIngredients();
+
+    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    await user.type(screen.getByTestId('catalog-add-search'), 'corn flour');
+    await user.click(screen.getByTestId('catalog-add-create-manual'));
+    const modal = screen.getByTestId('ingredient-modal');
+    expect(within(modal).getByTestId('modal-ingredient-name')).toHaveValue('Corn flour');
+  });
+
   it('Create manually path persists source=manual without catalogId', async () => {
     seedHousehold([]);
     const user = userEvent.setup();
