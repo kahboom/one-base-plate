@@ -252,6 +252,12 @@ function MergeConfirmView({
   /** When set, offer “keep both” so this pair stops appearing in duplicate suggestions. */
   onIgnoreSuggestion?: () => void;
 }) {
+  const autoRulePair = useMemo(
+    () => pickMergeSurvivorHeuristic(ingredientA, ingredientB, refCountA, refCountB),
+    [ingredientA, ingredientB, refCountA, refCountB],
+  );
+  const autoRuleSurvivor = autoRulePair.survivor;
+
   const [survivorId, setSurvivorId] = useState(ingredientA.id);
   const survivor = survivorId === ingredientA.id ? ingredientA : ingredientB;
   const absorbed = survivorId === ingredientA.id ? ingredientB : ingredientA;
@@ -263,6 +269,18 @@ function MergeConfirmView({
   return (
     <div data-testid="merge-confirm-view">
       <h3 className="mb-3 text-sm font-bold text-text-primary">Confirm merge</h3>
+      <p className="mb-3 text-xs text-text-secondary" data-testid="merge-auto-survivor-hint">
+        Bulk duplicate scan would keep &ldquo;{toSentenceCase(autoRuleSurvivor.name)}&rdquo;.
+        {survivorId !== autoRuleSurvivor.id ? (
+          <span className="text-text-muted">
+            {' '}
+            You are keeping &ldquo;{toSentenceCase(survivor.name)}&rdquo; — Confirm uses your radio
+            choice.
+          </span>
+        ) : (
+          <span className="text-text-muted"> Matches that automatic rule.</span>
+        )}
+      </p>
 
       <fieldset className="mb-3" data-testid="merge-survivor-picker">
         <legend className="mb-1.5 text-xs font-medium text-text-secondary">Keep (survivor):</legend>
@@ -774,6 +792,7 @@ function IngredientModal({
           <div className="mt-4 border-t border-border-light pt-4" data-testid="merge-section">
             {mergeTarget ? (
               <MergeConfirmView
+                key={`${ingredient.id}-${mergeTarget.id}`}
                 ingredientA={ingredient}
                 ingredientB={mergeTarget}
                 refCountA={mergeRefCounts.current}
@@ -1231,10 +1250,6 @@ export default function IngredientManager() {
   const [householdRef, setHouseholdRef] = useState<Household | null>(null);
   /** F070: Add ingredient opens catalog search before the edit modal */
   const [catalogPickerOpen, setCatalogPickerOpen] = useState(false);
-  const [suggestedMergeIds, setSuggestedMergeIds] = useState<{
-    idA: string;
-    idB: string;
-  } | null>(null);
   const [dismissVersion, setDismissVersion] = useState(0);
   const [duplicateReviewOpen, setDuplicateReviewOpen] = useState(false);
   const [mergeReviewSelectedKeys, setMergeReviewSelectedKeys] = useState<Set<string>>(() => new Set());
@@ -1294,41 +1309,12 @@ export default function IngredientManager() {
     setDuplicateScanPairs(suggestIngredientMergePairs(ingredients, { minScore: 0.55, limit: 200 }));
   }, [ingredients]);
 
-  const suggestedMergePairResolved = useMemo(() => {
-    if (!suggestedMergeIds) return null;
-    const a = ingredients.find((i) => i.id === suggestedMergeIds.idA);
-    const b = ingredients.find((i) => i.id === suggestedMergeIds.idB);
-    return a && b ? { a, b } : null;
-  }, [suggestedMergeIds, ingredients]);
-
-  useEffect(() => {
-    if (!suggestedMergeIds) return;
-    if (
-      !ingredients.some((i) => i.id === suggestedMergeIds.idA) ||
-      !ingredients.some((i) => i.id === suggestedMergeIds.idB)
-    ) {
-      setSuggestedMergeIds(null);
-    }
-  }, [suggestedMergeIds, ingredients]);
-
   useEffect(() => {
     if (!duplicateReviewOpen) return;
     if (mergePairSuggestionsVisible.length === 0) {
       setDuplicateReviewOpen(false);
     }
   }, [duplicateReviewOpen, mergePairSuggestionsVisible.length]);
-
-  const suggestionRefCounts = useMemo(() => {
-    if (!suggestedMergePairResolved || !householdRef) return { a: 0, b: 0 };
-    const m = findIngredientReferences(
-      new Set([suggestedMergePairResolved.a.id, suggestedMergePairResolved.b.id]),
-      householdRef,
-    );
-    return {
-      a: m.get(suggestedMergePairResolved.a.id)?.length ?? 0,
-      b: m.get(suggestedMergePairResolved.b.id)?.length ?? 0,
-    };
-  }, [suggestedMergePairResolved, householdRef]);
 
   const mergeDuplicateReviewSelectState = useMemo(() => {
     const n = mergePairSuggestionsVisible.length;
@@ -1341,6 +1327,26 @@ export default function IngredientManager() {
     }
     return { all: selected === n, some: selected > 0 && selected < n };
   }, [mergePairSuggestionsVisible, mergeReviewSelectedKeys]);
+
+  /** Ingredient id bulk “Merge selected” would keep (catalog over refs over name). */
+  const mergeReviewBulkSurvivorIdByPairKey = useMemo(() => {
+    if (!householdRef || mergePairSuggestionsVisible.length === 0) return new Map<string, string>();
+    const ids = new Set<string>();
+    for (const s of mergePairSuggestionsVisible) {
+      ids.add(s.ingredientA.id);
+      ids.add(s.ingredientB.id);
+    }
+    const refMap = findIngredientReferences(ids, householdRef);
+    const out = new Map<string, string>();
+    for (const s of mergePairSuggestionsVisible) {
+      const pk = mergePairKey(s.ingredientA.id, s.ingredientB.id);
+      const ra = refMap.get(s.ingredientA.id)?.length ?? 0;
+      const rb = refMap.get(s.ingredientB.id)?.length ?? 0;
+      const { survivor } = pickMergeSurvivorHeuristic(s.ingredientA, s.ingredientB, ra, rb);
+      out.set(pk, survivor.id);
+    }
+    return out;
+  }, [householdRef, mergePairSuggestionsVisible]);
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -1570,6 +1576,20 @@ export default function IngredientManager() {
     setMergeReviewSelectedKeys(new Set());
   }, [householdId, mergeReviewSelectedKeys]);
 
+  const dismissSingleMergeReviewPair = useCallback(
+    (pairKeyStr: string) => {
+      if (!householdId) return;
+      addDismissedMergePairKeys(householdId, [pairKeyStr]);
+      setDismissVersion((v) => v + 1);
+      setMergeReviewSelectedKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(pairKeyStr);
+        return next;
+      });
+    },
+    [householdId],
+  );
+
   const confirmBulkMergeSelected = useCallback(() => {
     if (!householdId || !householdRef || mergeReviewSelectedKeys.size === 0) return;
     const selectedRows = mergePairSuggestionsVisible.filter((s) =>
@@ -1717,7 +1737,7 @@ export default function IngredientManager() {
               {mergePairSuggestionsVisible.length !== 1 ? 's' : ''})
             </span>
             <span className="mt-0.5 block text-xs text-text-secondary">
-              Merge, ignore, or bulk actions. Ignored pairs stay separate and stay out of this list.
+              Tap a name to merge in one step, or use bulk actions. Ignored pairs stay out of this list.
             </span>
           </button>
         )}
@@ -1734,9 +1754,9 @@ export default function IngredientManager() {
         <div className="border-b border-border-light px-4 py-3 sm:px-5">
           <h2 className="text-lg font-bold text-text-primary">Review likely duplicates</h2>
           <p className="mt-1 text-xs text-text-secondary">
-            Matches are fuzzy. Use Review for manual survivor choice, Ignore to keep both names, or
-            bulk Merge to apply automatic survivor rules (catalog row beats manual, then more meal
-            references, then earlier name).
+            Matches are fuzzy. Click a name to keep that ingredient and merge the other into it
+            immediately (no second step). The outlined name is what &ldquo;Merge selected&rdquo;
+            would keep for that row. Use checkboxes + Ignore selected to leave both names separate.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <label className="flex cursor-pointer items-center gap-2 text-sm text-text-primary">
@@ -1787,15 +1807,24 @@ export default function IngredientManager() {
                 data-testid="merge-review-table-header"
               >
                 <span className="w-8 flex-shrink-0" aria-hidden />
-                <span className="flex-[2] min-w-0">Name A</span>
-                <span className="flex-[2] min-w-0">Name B</span>
+                <span className="flex-[2] min-w-0">Keep (tap)</span>
+                <span className="flex-[2] min-w-0">Keep (tap)</span>
                 <span className="w-14 flex-shrink-0 text-center">Match</span>
-                <span className="w-24 flex-shrink-0 text-right">Actions</span>
+                <span className="w-[4.5rem] flex-shrink-0 text-right">Ignore</span>
               </div>
               <div className="space-y-1 sm:space-y-0 sm:[&>div+div]:border-t-0" data-testid="merge-review-rows">
                 {mergePairSuggestionsVisible.map((row, idx) => {
                   const pk = mergePairKey(row.ingredientA.id, row.ingredientB.id);
                   const checked = mergeReviewSelectedKeys.has(pk);
+                  const bulkSurvivorId = mergeReviewBulkSurvivorIdByPairKey.get(pk);
+                  const ia = ingredients.find((i) => i.id === row.ingredientA.id) ?? row.ingredientA;
+                  const ib = ingredients.find((i) => i.id === row.ingredientB.id) ?? row.ingredientB;
+                  const keepBtnBase =
+                    'min-w-0 flex-[2] cursor-pointer truncate rounded-md border px-2 py-1.5 text-left text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand';
+                  const keepBtnDefault =
+                    'border-border-light bg-bg text-text-primary hover:border-brand hover:bg-brand/5';
+                  const keepBtnBulkPick =
+                    'border-brand bg-brand/10 text-text-primary ring-1 ring-brand/35';
                   return (
                     <div
                       key={pk}
@@ -1814,36 +1843,61 @@ export default function IngredientManager() {
                             className="h-5 w-5 accent-brand cursor-pointer"
                             checked={checked}
                             onChange={() => toggleMergeReviewPairKey(pk)}
-                            aria-label={`Select pair ${toSentenceCase(row.ingredientA.name)} and ${toSentenceCase(row.ingredientB.name)}`}
+                            aria-label={`Select pair ${toSentenceCase(ia.name)} and ${toSentenceCase(ib.name)}`}
                             data-testid={`merge-review-row-check-${idx}`}
                           />
                         </label>
-                        <span className="min-w-0 flex-[2] truncate text-sm font-medium text-text-primary">
-                          {toSentenceCase(row.ingredientA.name)}
-                        </span>
-                        <span className="min-w-0 flex-[2] truncate text-sm font-medium text-text-primary">
-                          {toSentenceCase(row.ingredientB.name)}
-                        </span>
+                        <button
+                          type="button"
+                          className={`${keepBtnBase} ${
+                            bulkSurvivorId === ia.id ? keepBtnBulkPick : keepBtnDefault
+                          }`}
+                          onClick={() =>
+                            handleMerge(ia.id, ib.id, { focusSurvivorInEditor: false })
+                          }
+                          aria-label={`Keep ${toSentenceCase(ia.name)} and merge ${toSentenceCase(ib.name)} into it${
+                            bulkSurvivorId === ia.id ? ' (same as bulk merge for this pair)' : ''
+                          }`}
+                          data-testid={`merge-review-keep-a-${idx}`}
+                        >
+                          {toSentenceCase(ia.name)}
+                        </button>
+                        <button
+                          type="button"
+                          className={`${keepBtnBase} ${
+                            bulkSurvivorId === ib.id ? keepBtnBulkPick : keepBtnDefault
+                          }`}
+                          onClick={() =>
+                            handleMerge(ib.id, ia.id, { focusSurvivorInEditor: false })
+                          }
+                          aria-label={`Keep ${toSentenceCase(ib.name)} and merge ${toSentenceCase(ia.name)} into it${
+                            bulkSurvivorId === ib.id ? ' (same as bulk merge for this pair)' : ''
+                          }`}
+                          data-testid={`merge-review-keep-b-${idx}`}
+                        >
+                          {toSentenceCase(ib.name)}
+                        </button>
                         <span className="flex sm:w-14 sm:justify-center">
                           <Chip variant="neutral" className="text-[10px]">
                             {Math.round(row.score * 100)}%
                           </Chip>
                         </span>
-                        <div className="flex flex-1 justify-end sm:w-24 sm:flex-none">
+                        <div className="flex justify-end sm:w-[4.5rem] sm:flex-none">
                           <Button
                             small
-                            variant="primary"
-                            data-testid={`merge-review-row-open-${idx}`}
-                            onClick={() =>
-                              setSuggestedMergeIds({ idA: row.ingredientA.id, idB: row.ingredientB.id })
-                            }
+                            onClick={() => dismissSingleMergeReviewPair(pk)}
+                            data-testid={`merge-review-row-ignore-${idx}`}
                           >
-                            Review
+                            Ignore
                           </Button>
                         </div>
                       </div>
                       <p className="mt-1 text-[11px] leading-snug text-text-muted sm:ml-11">
                         {row.reasons.join(' · ')}
+                        <span className="mt-0.5 block text-text-secondary sm:hidden">
+                          Highlighted name is what bulk merge would keep. Tap a name to merge, or
+                          Ignore to keep both.
+                        </span>
                       </p>
                     </div>
                   );
@@ -2132,40 +2186,6 @@ export default function IngredientManager() {
         onPickCatalog={pickCatalogItemForAdd}
         onCreateManual={startManualIngredientFromPicker}
       />
-
-      <AppModal
-        open={!!suggestedMergePairResolved}
-        onClose={() => setSuggestedMergeIds(null)}
-        ariaLabel="Review suggested ingredient merge"
-        backdropClassName="fixed inset-0 z-[75] flex items-center justify-center bg-black/40 p-4"
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto p-6"
-        panelTestId="ingredient-suggestion-merge-modal"
-      >
-        {suggestedMergePairResolved && (
-          <MergeConfirmView
-            ingredientA={suggestedMergePairResolved.a}
-            ingredientB={suggestedMergePairResolved.b}
-            refCountA={suggestionRefCounts.a}
-            refCountB={suggestionRefCounts.b}
-            onConfirm={(surv, abs) => {
-              handleMerge(surv, abs, { focusSurvivorInEditor: false });
-              setSuggestedMergeIds(null);
-            }}
-            onCancel={() => setSuggestedMergeIds(null)}
-            onIgnoreSuggestion={
-              householdId
-                ? () => {
-                    addDismissedMergePairKeys(householdId, [
-                      mergePairKey(suggestedMergePairResolved.a.id, suggestedMergePairResolved.b.id),
-                    ]);
-                    setDismissVersion((v) => v + 1);
-                    setSuggestedMergeIds(null);
-                  }
-                : undefined
-            }
-          />
-        )}
-      </AppModal>
     </>
   );
 }
