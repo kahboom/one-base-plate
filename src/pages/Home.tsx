@@ -7,6 +7,7 @@ import {
   computeOutcomeScore,
   learnCompatibilityPatterns,
   computePatternScore,
+  computePreferenceScore,
 } from '../planner';
 import MealCard from '../components/MealCard';
 import { PageHeader, Card, Section, Button, Chip } from '../components/ui';
@@ -72,13 +73,16 @@ export default function Home() {
         patternScore: patterns
           ? computePatternScore(meal, patterns, household.members, household.ingredients)
           : 0,
+        preferenceScore: computePreferenceScore(meal, household.members, household.ingredients)
+          .score,
       }))
       .sort(
         (a, b) =>
           b.overlap.score +
           b.outcomeScore +
-          b.patternScore -
-          (a.overlap.score + a.outcomeScore + a.patternScore),
+          b.patternScore +
+          b.preferenceScore -
+          (a.overlap.score + a.outcomeScore + a.patternScore + a.preferenceScore),
       )
       .slice(0, 3);
   }, [household, patterns]);

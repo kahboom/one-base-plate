@@ -101,14 +101,16 @@
   "coreConcepts": {
     "baseMeal": "A flexible meal made of components that can be assembled differently for each household member.",
     "assemblyVariant": "A per-person presentation of the base meal that respects preferences, preparation constraints, and texture needs.",
-    "safeFood": "A reliably accepted ingredient or meal component for a person.",
+    "safeFood": "A reliably accepted ingredient or meal component for a person. In the data model, safe foods are member-selected references to household Ingredient rows (ids); the planner uses direct ingredient identity for ranking and compatibility contracts.",
     "rescueMeal": "A low-effort meal generated for high-stress or low-time situations using pantry/freezer staples first.",
-    "overlapScore": "A score showing how many household members can eat a given ingredient or base meal with acceptable modifications.",
+    "overlapScore": "A score showing how many household members can eat a given ingredient or base meal with acceptable modifications. Incorporates explicit safe-food fit and hard-no conflicts derived from member-linked ingredient ids, including assembly variant paths that legitimately deliver a safe component; remains explainable from the same deterministic rules as ranking.",
+    "memberIngredientPreferenceMatch": "Deterministic id-based fit check between a member's safeFoods / hardNoFoods ids and base meal components plus assembly variant paths. Separate from tag-based heuristics and from alias-driven grouping features. Extended by F075 to include weaker family-level matches via Ingredient.familyKeys and HouseholdMember.safeFoodFamilyKeys / hardNoFoodFamilyKeys.",
     "multiProteinBaseMeal": "A base meal with one shared structure and multiple selectable protein paths so household members can receive different proteins without splitting the meal into separate dinners.",
     "recipeLink": "An optional external or internal link attached to a base meal to support repeatable preparation, shortcuts, or meal-kit references.",
     "componentRecipeRef": "Optional per-component preparation pointer (internal base meal, imported recipe row, external URL, or freeform note). Stored on MealComponent.recipeRefs for defaults and copied or overridden per night on DayPlan.componentRecipeOverrides.",
     "weeklyThemeAnchor": "Optional soft weekday theme (label, tags, structure hints, optional meal ids) on Household.weeklyAnchors; ranking uses it only as a late tie-breaker so themes never override strong household fit signals.",
-    "rescueMode": "A planning mode for nights when time, energy, or household tolerance is low, prioritizing the fastest acceptable dinner using staples first."
+    "rescueMode": "A planning mode for nights when time, energy, or household tolerance is low, prioritizing the fastest acceptable dinner using staples first.",
+    "ingredientFamilyGroup": "A curated, normalized grouping key (e.g. sausage, pasta, yogurt) that links specific canonical ingredients to a broader ingredient family for planner preference matching. Distinct from aliases (which serve import/search/matching only), from free-form tags (which serve organization), and from recipe/theme tags. Household members may express preferences at the family level (safeFoodFamilyKeys, hardNoFoodFamilyKeys) in addition to exact ingredient preferences (safeFoods, hardNoFoods). The planner uses family matches as a weaker but meaningful signal, never overriding exact hard-no conflicts."
   },
   "dataModel": {
     "entities": [
@@ -118,8 +120,10 @@
           "id",
           "name",
           "role (adult|toddler|baby|pet)",
-          "safeFoods[]",
-          "hardNoFoods[]",
+          "safeFoods[] (household Ingredient id; used by planner for deterministic ranking boosts — exact ingredient match)",
+          "hardNoFoods[] (household Ingredient id; used by planner for penalty or exclusion — exact ingredient match)",
+          "safeFoodFamilyKeys[] (optional; normalized ingredient-family keys — e.g. sausage, pasta — for grouped planner preference boosts; weaker than exact safeFoods match, stronger than no match)",
+          "hardNoFoodFamilyKeys[] (optional; normalized ingredient-family keys for grouped planner exclusion/penalty; weaker than exact hardNoFoods match but still produces a meaningful penalty; must never override an exact safeFoods match for another member)",
           "preparationRules[]",
           "textureLevel",
           "allergens[]",
@@ -131,7 +135,8 @@
         "fields": [
           "id",
           "name",
-          "aliases[] (optional; alternate match/search/import names)",
+          "aliases[] (optional; alternate match/search/import display names — not used for inferring member safe/hard-no preferences or family group matching)",
+          "familyKeys[] (optional; curated normalized ingredient-family grouping keys for planner preference matching — e.g. sausage, pasta, yogurt; an ingredient may belong to multiple families; distinct from aliases and from free-form tags)",
           "category (protein|carb|veg|fruit|dairy|snack|freezer|pantry)",
           "tags[]",
           "shelfLifeHint",
@@ -478,6 +483,8 @@
     "architectureNotes": [
       "Prefer local-first storage for rapid MVP delivery and privacy.",
       "Keep the rule engine explicit and deterministic before adding AI generation.",
+      "Planner ranking, overlap scoring, and user-visible recommendation explanations must share one deterministic scoring ledger derived from stored member ingredient ids and meal structure; explanation strings are rendered from the same structured reasons used for ordering, not free-written or model-generated text.",
+      "Outcome-based learning (F015) may combine with the id-based safe-food/hard-no ledger (F074) only as a documented tie-breaker; learned weights must never override or replace deterministic hard-no exclusions or safe-food priority rules.",
       "Ship fixtures for 3-5 representative households to support repeatable development and testing.",
       "Treat the PRD feature list as the source of truth for incremental implementation.",
       "Model multi-protein meals explicitly so the planner can treat one shared structure as a single dinner with different protein paths.",
@@ -490,7 +497,8 @@
       "The web build uses Dexie-backed IndexedDB for primary persisted aggregates; a future React Native port should implement the same repository ports with Expo SQLite (or equivalent) behind the abstraction.",
       "First-run bootstrap continues to use the existing bundled seed-data.json (generated from fixtures); do not replace shipped seed content with ad hoc placeholder households.",
       "Tiny UI-only preferences (e.g. theme flash, guided tour completion) may remain on localStorage when documented as web-only; they are not the primary datastore.",
-      "Supabase Auth + Postgres provides optional authenticated cross-browser sync. The local Dexie store remains the fast local cache and the portability boundary. Signed-out mode works fully locally. Signed-in mode syncs household snapshots as JSONB to Supabase with household-level last-write-wins. First login includes a safe migration flow that never silently destroys data."
+      "Supabase Auth + Postgres provides optional authenticated cross-browser sync. The local Dexie store remains the fast local cache and the portability boundary. Signed-out mode works fully locally. Signed-in mode syncs household snapshots as JSONB to Supabase with household-level last-write-wins. First login includes a safe migration flow that never silently destroys data.",
+      "Ingredient familyKeys are a curated planner-semantic grouping distinct from three other tagging/matching systems: (a) aliases remain strictly for import/search/display matching and must not drive preference logic, (b) free-form tags remain for ingredient organization and filtering but are too loose for deterministic planner preference grouping, (c) recipe tags and weekly theme anchor tags serve recipe library organization and weekly planning themes respectively. Family grouping keys are normalized lowercase strings managed through the ingredient editor; member-level family preferences (safeFoodFamilyKeys, hardNoFoodFamilyKeys) reference these keys. Family match provides a weaker but explicit planner signal that complements exact id-based safe-food/hard-no matching and must never override exact hard-no conflicts."
     ]
   },
   "features": [
@@ -670,7 +678,8 @@
         "View overlap score, compatibility summary, and quick visual indicators on a meal card or details view.",
         "Verify score reflects how many household members can eat it directly or with acceptable adaptation",
         "Verify members with hard-no conflicts are clearly identified",
-        "Verify overlap score is used in meal ranking"
+        "Verify overlap score is used in meal ranking",
+        "See F074 for the canonical id-based safe-food/hard-no ranking and explanation contract that builds on overlap scoring"
       ],
       "passes": true,
       "dependencies": [
@@ -2236,6 +2245,86 @@
         "S007",
         "S010"
       ]
+    },
+    {
+      "id": "F074",
+      "phase": 1,
+      "priority": "P0",
+      "category": "functional",
+      "description": "Member-linked ingredient selections deterministically influence planner ranking, overlap summaries, and recommendation explanations",
+      "steps": [
+        "Define a single explicit rule ledger (no opaque or generative scoring): planner code resolves HouseholdMember.safeFoods[] and hardNoFoods[] as household Ingredient entity ids. Matching is direct id equality against base meal components and allowable assembly variant paths (including selected protein/carb/sauce options where those reference ingredients). Ingredient.aliases[] MUST NOT be treated as preference logic for safe/hard-no; free-form tags MUST NOT be the only source of truth for direct preference matching. Grouped or family-level ingredient equivalence is out of scope for F074 and is covered by F075 (ingredient family group preferences).",
+        "Ranking hooks: meals that satisfy a member's safe food via base structure or a valid assembly variant path receive a positive, documented score boost; meals with an unresolved hard-no conflict receive a strong penalty or exclusion from eligible suggestions. Coefficients are fixed and testable (not learned weights).",
+        "Role weighting: where both apply, toddler-role (and baby where relevant) safe-food boosts use stronger coefficients than adult-role safe-food boosts so mild adult preferences do not outweigh a toddler's listed safe food.",
+        "Surface parity: apply the same ledger to base meal suggestions (meal planner and Home top picks), weekly planner suggested trays, rescue mode shortlists, overlap score inputs, compatibility summaries, and recommendation explanation text so users never see contradictory signals across screens.",
+        "Toddler gap: if no candidate meal can include a toddler's safe food through base or variant path, surface an explicit fallback safe food or a concise trade-off explanation (aligned with F008); never omit silently.",
+        "Verification — safe food: with two otherwise equivalent base meals, one containing a member's safe-food ingredient id and one not, assert the safe-food meal ranks higher when other signals are equal.",
+        "Verification — hard-no: with a hard-no ingredient id on a member, assert conflicting meals are excluded or strongly deprioritized and that overlap / compatibility copy identifies the conflict.",
+        "Verification — weighting: configure one toddler safe food and one adult safe food under controlled parity; assert toddler-linked influence on ordering is stronger than adult-only mild safe-food influence.",
+        "Verification — explanations: assert explanation strings cite concrete reasons traceable to the ledger (e.g. member name + linked ingredient display name, such as 'includes Indy-safe sausage'), using the same deterministic facts as ranking.",
+        "Automated tests: add or extend tests that lock ordering and explanation fragments for the scenarios above (fixtures preferred)."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F003",
+        "F005",
+        "F006",
+        "F008",
+        "F009",
+        "F010",
+        "F012",
+        "F018"
+      ],
+      "acceptanceRefs": [
+        "S001",
+        "S002",
+        "S003",
+        "S005"
+      ]
+    },
+    {
+      "id": "F075",
+      "phase": 1,
+      "priority": "P1",
+      "category": "functional",
+      "description": "Grouped ingredient-family preferences for household members: curated family keys on ingredients, family-level safe/hard-no preferences on members, and planner ranking with explicit grouped-match semantics",
+      "steps": [
+        "Data model — Ingredient.familyKeys[]: add an optional array of curated, normalized ingredient-family grouping keys to the Ingredient entity (e.g. italian sausage → familyKeys: [\"sausage\"], penne → familyKeys: [\"pasta\"], greek yogurt → familyKeys: [\"yogurt\"]). An ingredient may belong to zero or more families. Family keys are lowercase normalized strings managed through the ingredient editor. They are distinct from aliases (import/search/matching only), from free-form tags (organization/filtering), and from recipe/theme tags.",
+        "Data model — HouseholdMember.safeFoodFamilyKeys[]: add an optional array of normalized ingredient-family keys representing grouped positive preferences (e.g. a toddler who likes sausage generally, not just one canonical sausage ingredient). These produce a weaker but meaningful planner boost compared to exact safeFoods[] id matches.",
+        "Data model — HouseholdMember.hardNoFoodFamilyKeys[]: add an optional array of normalized ingredient-family keys representing grouped negative preferences (e.g. an adult who dislikes all yogurt). These produce a meaningful planner penalty, weaker than exact hardNoFoods[] id exclusions. A grouped hard-no must never override an exact safeFoods[] match for another member in the same household.",
+        "Planner ranking — family match semantics: extend the deterministic scoring ledger from F074 to incorporate family-level signals. Exact safeFoods id match remains the strongest positive signal. Grouped safeFoodFamilyKeys match (meal contains an ingredient whose familyKeys include a member's preferred family) provides a smaller but documented positive boost. Exact hardNoFoods id match remains the strongest negative signal (exclusion or heavy penalty). Grouped hardNoFoodFamilyKeys match provides a weaker but explicit penalty. Grouped family match must never override an exact hard-no conflict. Coefficients are fixed, testable, and documented alongside the F074 ledger.",
+        "Planner ranking — precedence rules: (1) exact hard-no exclusion is strongest negative — always excludes or heavily penalizes, (2) grouped family hard-no is weaker penalty but still meaningful, (3) exact safe-food match is strongest positive boost, (4) grouped family safe-food match is weaker positive boost, (5) grouped family hard-no must never suppress or override a different member's exact safe-food match for the same ingredient, (6) aliases do not create accidental family preference matches — an ingredient is only matched by family if it has an explicit familyKeys entry for that family.",
+        "Recommendation explanations: extend explanation strings to cite grouped family matches where relevant using the same deterministic ledger. Examples: 'matches toddler-safe sausage family via italian sausage', 'partial match: fits preferred pasta family', 'grouped conflict: yogurt family hard-no via greek yogurt'. Explanations must distinguish exact ingredient match from grouped family match so users are never misled about why a meal ranked the way it did.",
+        "Overlap / compatibility summaries: when family-level matches contribute to a meal's score, overlap summaries and compatibility chips may optionally reflect the grouped match (e.g. 'sausage family match for Indy') but must clearly indicate it is a grouped/family-level match, not an exact safe-food hit.",
+        "Surface parity: apply grouped family match semantics consistently across base meal suggestions, weekly planner suggested trays, rescue mode shortlists, Home top picks, overlap scoring, compatibility summaries, and recommendation explanation text — matching the surface parity requirement from F074.",
+        "Ingredient editor UX: the ingredient detail editor (S010) allows assigning one or more familyKeys to an ingredient via a curated multi-select or tag-style input. The editor must make clear that family keys are planner-meaningful grouping, not free-form organizational tags. Suggest from existing familyKeys in the household to encourage reuse and consistency.",
+        "Member profile UX: the member profile editor (S006) allows selecting both exact ingredient preferences (safeFoods, hardNoFoods — existing) and grouped ingredient-family preferences (safeFoodFamilyKeys, hardNoFoodFamilyKeys — new). The UI must visually distinguish exact ingredient selections from grouped family selections so the user understands the difference in planner behavior. Family key pickers should suggest from familyKeys already assigned to household ingredients.",
+        "No duplicate ingredient requirement: users must not need to create a generic 'sausage' canonical ingredient in order to express a preference for the sausage family. The family grouping mechanism works by keys on existing specific ingredients (e.g. italian sausage has familyKey 'sausage') and by family keys on the member profile, without requiring a canonical ingredient row for the family itself.",
+        "Alias isolation: Ingredient.aliases[] remain strictly for import/search/display matching. An alias like 'mild italian sausage' on the 'italian sausage' ingredient must not cause accidental family-level preference matches. Family matching is driven exclusively by Ingredient.familyKeys[] and HouseholdMember.safeFoodFamilyKeys[] / hardNoFoodFamilyKeys[].",
+        "Recipe and theme tag isolation: recipe tags (Recipe.tags, BaseMeal.tags) and weekly theme anchor tags (WeeklyAnchor.matchTags) are not affected by ingredient family grouping. Family keys live on Ingredient, not on recipes or themes.",
+        "Examples — sausage family: canonical ingredient 'italian sausage' (aliases: ['mild italian sausage'], familyKeys: ['sausage']). Toddler member has safeFoodFamilyKeys: ['sausage']. A meal using 'italian sausage' receives a grouped family preference boost for the toddler even though 'sausage' is not a separate canonical ingredient. The explanation says 'matches toddler-safe sausage family via italian sausage'.",
+        "Examples — pasta family: canonical ingredients 'penne' (familyKeys: ['pasta']), 'fusilli' (familyKeys: ['pasta']), 'spaghetti' (familyKeys: ['pasta']). Toddler member has safeFoodFamilyKeys: ['pasta']. Any meal containing penne, fusilli, or spaghetti receives a grouped family preference boost. The explanation says 'partial match: fits preferred pasta family'.",
+        "Examples — yogurt family: canonical ingredients 'greek yogurt' (familyKeys: ['yogurt']), 'strawberry yogurt' (familyKeys: ['yogurt']). Adult member has hardNoFoodFamilyKeys: ['yogurt']. Any meal containing greek yogurt or strawberry yogurt receives a grouped family hard-no penalty for that adult. The explanation says 'grouped conflict: yogurt family hard-no via greek yogurt'.",
+        "Verification — grouped safe-food boost: with two otherwise equivalent base meals, one containing an ingredient with familyKeys matching a member's safeFoodFamilyKeys and one not, assert the family-matched meal ranks higher when other signals are equal.",
+        "Verification — exact beats grouped: with a meal containing a member's exact safeFoods id ingredient and a meal containing only a family-level match for the same member, assert the exact-match meal ranks higher.",
+        "Verification — exact hard-no overrides grouped safe: with a member who has an exact hardNoFoods entry for an ingredient and a different member who has a safeFoodFamilyKeys entry matching that ingredient's family, assert the exact hard-no conflict still excludes or heavily penalizes the meal; the grouped family match does not override the hard-no.",
+        "Verification — alias isolation: with an ingredient that has an alias containing a family-key string (e.g. alias 'sausage patty' on an ingredient without familyKeys: ['sausage']), assert the ingredient is not matched as a sausage-family preference. Family matching uses only explicit familyKeys.",
+        "Verification — no duplicate ingredient: assert that a household can express a preference for the 'sausage' family without having a canonical ingredient named 'sausage' in their ingredient list. The family key exists on specific ingredients and on member profiles, not as an ingredient row.",
+        "Verification — import/search unchanged: assert that existing alias-based import matching and search behavior is not affected by the addition of familyKeys. Aliases continue to work for matching/import/search; familyKeys are used only for planner preference semantics.",
+        "Automated tests: add or extend tests covering grouped family boost ordering, exact-vs-grouped precedence, hard-no override safety, alias isolation, no-duplicate-ingredient requirement, and explanation string content for family matches. Fixtures preferred."
+      ],
+      "passes": false,
+      "dependencies": [
+        "F003",
+        "F004",
+        "F074"
+      ],
+      "acceptanceRefs": [
+        "S002",
+        "S003",
+        "S006",
+        "S010"
+      ]
     }
   ],
   "milestones": [
@@ -2260,6 +2349,8 @@
         "F008",
         "F009",
         "F018",
+        "F074",
+        "F075",
         "F019",
         "F021",
         "F023",
@@ -2379,6 +2470,8 @@
     "F007",
     "F008",
     "F018",
+    "F074",
+    "F075",
     "F019",
     "F009",
     "F010",
@@ -2504,7 +2597,7 @@
         "acceptance": [
           "User can reach a tonight decision in two taps or fewer from the home screen",
           "Home screen does not require scrolling to find the main action",
-          "At least one suggestion clearly explains why it fits the household",
+          "At least one suggestion clearly explains why it fits the household, citing deterministic reasons from the ranking ledger (e.g. member name + ingredient) where applicable",
           "Child screens (Weekly planner, Meal planner, etc.) have a back/Home control that returns to this screen, not to HouseholdSetup"
         ]
       },
@@ -2519,7 +2612,7 @@
           "Effort level",
           "Overlap score",
           "Compatibility chips for ARFID adult, toddler, baby, and other adult",
-          "Short reason such as 'sauce separate works' or 'toddler safe food included'",
+          "Short reason such as 'sauce separate works', 'toddler safe food included', member-named boosts like 'includes Indy-safe sausage' when driven by member-linked ingredient ids, or grouped family match reasons like 'matches toddler-safe sausage family via italian sausage' when driven by ingredient familyKeys and member safeFoodFamilyKeys (F075)",
           "Quick actions: assign, save, open details"
         ],
         "states": [
@@ -2545,7 +2638,7 @@
           "Suggested meal tray below the week showing only a small ranked subset by default (not the entire recipe library)",
           "Header on suggested section with title, count summary such as top N of total, and Browse all meals entry point",
           "Browse all meals path (modal or equivalent) with search and lightweight filtering; full library loaded in pages, not all cards on the main planner",
-          "Suggested ranking uses household fit first, then learned outcomes and patterns, ingredient reuse vs current plan, pins, and lower prep/effort as tie-breakers",
+          "Suggested ranking uses household fit first (including member-linked safe-food/hard-no ingredient id signals per F074), then learned outcomes and patterns, ingredient reuse vs current plan, pins, and lower prep/effort as tie-breakers",
           "Drag-and-drop or tap-to-assign interaction",
           "Visible effort balance for the week",
           "Grocery preview summary",
@@ -2622,8 +2715,11 @@
         "goal": "Capture constraints quickly without feeling like admin.",
         "requiredElements": [
           "Member cards for each household member",
-          "Safe foods input",
-          "Hard-no foods input",
+          "Safe foods input (exact ingredient selection)",
+          "Hard-no foods input (exact ingredient selection)",
+          "Grouped ingredient-family preferences input (safeFoodFamilyKeys — select from family keys already assigned to household ingredients, with option to type a new key)",
+          "Grouped ingredient-family hard-no input (hardNoFoodFamilyKeys — select from family keys already assigned to household ingredients, with option to type a new key)",
+          "Visual distinction between exact ingredient preferences and grouped family preferences so users understand the planner behavior difference",
           "Preparation rules input",
           "Role selector (adult, toddler, baby, pet)",
           "Quick edit entry points",
@@ -2633,7 +2729,9 @@
           "User can edit one member without reopening the full household flow",
           "Inputs feel guided and forgiving",
           "The screen avoids giant forms where possible",
-          "Navigation links to Home, Weekly planner, Meal planner, etc. feel integrated into the layout, not strange or out of place"
+          "Navigation links to Home, Weekly planner, Meal planner, etc. feel integrated into the layout, not strange or out of place",
+          "Exact ingredient preferences and grouped family preferences are visually separated so users understand one is a specific ingredient and the other is a broader family",
+          "Family key suggestions are drawn from familyKeys already assigned to household ingredients, reducing free-form typing and improving consistency"
         ]
       },
       {
@@ -2709,6 +2807,7 @@
           "Tap or click to open ingredient detail modal or drawer",
           "Modal or drawer form for full editing",
           "Optional household-managed ingredient aliases (Also matches) for import/search, with validation and compact list hint",
+          "Optional ingredient family keys (familyKeys) for planner preference grouping, editable via curated multi-select or tag-style input that suggests from existing household familyKeys; visually distinguished from aliases and from free-form tags",
           "Traditional pagination controls (page numbers, prev/next, first/last) instead of infinite scroll",
           "Bulk selection: per-row checkbox, select-all-on-page, select-all-filtered, clear selection",
           "Bulk actions bar with bulk delete and clear selection",
@@ -2725,7 +2824,8 @@
           "Bulk delete is safe: referenced ingredients are protected, only unreferenced items can be deleted",
           "No orphaned ingredient references are created by bulk delete",
           "Selection persists across page changes and filter changes within a session",
-          "Search finds ingredients by canonical name or any saved alias; list still emphasizes the primary name"
+          "Search finds ingredients by canonical name or any saved alias; list still emphasizes the primary name",
+          "Family keys are visually distinct from aliases and free-form tags in the ingredient editor so users understand family keys drive planner preference grouping while aliases drive import/search matching"
         ]
       }
     ],
@@ -2784,7 +2884,8 @@
       "F057",
       "F058",
       "F059",
-      "F066"
+      "F066",
+      "F075"
     ],
     "S003": [
       "F010",
@@ -2803,7 +2904,8 @@
       "F055",
       "F056",
       "F058",
-      "F059"
+      "F059",
+      "F075"
     ],
     "S004": [
       "F006",
@@ -2833,7 +2935,8 @@
       "F038",
       "F041",
       "F052",
-      "F053"
+      "F053",
+      "F075"
     ],
     "S007": [
       "F005",
@@ -2895,7 +2998,8 @@
       "F070",
       "F071",
       "F072",
-      "F073"
+      "F073",
+      "F075"
     ]
   },
   "agentExecutionRules": [

@@ -24,6 +24,89 @@ function matchesFood(food: string, ingredientName: string): boolean {
   return food.toLowerCase() === ingredientName.toLowerCase();
 }
 
+/**
+ * Resolve an array of food name strings (from member safeFoods / hardNoFoods)
+ * to a Set of household Ingredient entity IDs via case-insensitive name lookup.
+ * F074: matching is direct id equality, not opaque name comparison.
+ */
+function resolveFoodIds(foods: string[], ingredients: Ingredient[]): Set<string> {
+  const ids = new Set<string>();
+  for (const food of foods) {
+    const lower = food.toLowerCase();
+    const match = ingredients.find((i) => i.name.toLowerCase() === lower);
+    if (match) ids.add(match.id);
+  }
+  return ids;
+}
+
+// ── F074 Preference Scoring ────────────────────────────────────────────────
+// Fixed, testable coefficients — not learned weights.
+
+const SAFE_FOOD_BOOST_CHILD = 5; // toddler / baby
+const SAFE_FOOD_BOOST_ADULT = 2; // adult
+const HARD_NO_PENALTY = -10; // strong deprioritisation
+
+export interface PreferenceMatch {
+  memberName: string;
+  memberId: string;
+  ingredientName: string;
+}
+
+export interface PreferenceScore {
+  score: number;
+  safeFoodMatches: PreferenceMatch[];
+  hardNoConflicts: PreferenceMatch[];
+}
+
+/**
+ * Compute a deterministic preference score for a meal based on member
+ * safeFoods / hardNoFoods resolved as ingredient IDs.
+ * Role weighting: toddler/baby boosts are stronger than adult boosts.
+ */
+export function computePreferenceScore(
+  meal: BaseMeal,
+  members: HouseholdMember[],
+  ingredients: Ingredient[],
+): PreferenceScore {
+  let score = 0;
+  const safeFoodMatches: PreferenceMatch[] = [];
+  const hardNoConflicts: PreferenceMatch[] = [];
+
+  const mealIngredientIds = new Set(
+    meal.components.flatMap((c) => getAllIngredientIds(c)),
+  );
+
+  for (const member of members.filter(isHumanMember)) {
+    const safeIds = resolveFoodIds(member.safeFoods, ingredients);
+    const hardNoIds = resolveFoodIds(member.hardNoFoods, ingredients);
+    const boost =
+      member.role === 'toddler' || member.role === 'baby'
+        ? SAFE_FOOD_BOOST_CHILD
+        : SAFE_FOOD_BOOST_ADULT;
+
+    for (const id of mealIngredientIds) {
+      if (safeIds.has(id)) {
+        score += boost;
+        safeFoodMatches.push({
+          memberName: member.name,
+          memberId: member.id,
+          ingredientName: resolveIngredientName(id, ingredients),
+        });
+      }
+      if (hardNoIds.has(id)) {
+        score += HARD_NO_PENALTY;
+        hardNoConflicts.push({
+          memberName: member.name,
+          memberId: member.id,
+          ingredientName: resolveIngredientName(id, ingredients),
+        });
+      }
+    }
+  }
+
+  return { score, safeFoodMatches, hardNoConflicts };
+}
+
 export function getAllIngredientIds(component: MealComponent): string[] {
   const ids = [component.ingredientId];
   if (component.alternativeIngredientIds) {
@@ -52,21 +135,23 @@ function pickBestIngredient(
   const ids = getAllIngredientIds(component);
   if (ids.length === 1) return ids[0]!;
 
+  const safeIds = resolveFoodIds(member.safeFoods, ingredients);
+
   let bestId = ids[0]!;
   let bestScore = -Infinity;
 
   for (const id of ids) {
     const name = resolveIngredientName(id, ingredients);
     const ing = ingredients.find((i) => i.id === id);
-    const { compatibility } = getMemberIngredientCompatibility(name, ing, member);
+    const { compatibility } = getMemberIngredientCompatibility(name, ing, member, ingredients);
 
     let score = 0;
     if (compatibility === 'direct') score = 3;
     else if (compatibility === 'with-adaptation') score = 1;
     else score = -1; // conflict
 
-    // Bonus for safe food match
-    if (member.safeFoods.some((s) => matchesFood(s, name))) score += 2;
+    // F074: ID-based safe food bonus
+    if (safeIds.has(id)) score += 2;
 
     if (score > bestScore) {
       bestScore = score;
@@ -82,8 +167,8 @@ function isComponentExcluded(
   member: HouseholdMember,
   ingredients: Ingredient[],
 ): boolean {
-  const name = resolveIngredientName(component.ingredientId, ingredients);
-  return member.hardNoFoods.some((h) => matchesFood(h, name));
+  const hardNoIds = resolveFoodIds(member.hardNoFoods, ingredients);
+  return getAllIngredientIds(component).some((id) => hardNoIds.has(id));
 }
 
 function getPreparationInstruction(
@@ -158,8 +243,8 @@ function isSafeFoodComponent(
   member: HouseholdMember,
   ingredients: Ingredient[],
 ): boolean {
-  const name = resolveIngredientName(component.ingredientId, ingredients);
-  return member.safeFoods.some((s) => matchesFood(s, name));
+  const safeIds = resolveFoodIds(member.safeFoods, ingredients);
+  return getAllIngredientIds(component).some((id) => safeIds.has(id));
 }
 
 export type MemberCompatibility = 'direct' | 'with-adaptation' | 'conflict';
@@ -181,8 +266,15 @@ function getMemberIngredientCompatibility(
   ingredientName: string,
   ingredient: Ingredient | undefined,
   member: HouseholdMember,
+  allIngredients?: Ingredient[],
 ): { compatibility: MemberCompatibility; conflict: string | null } {
-  if (member.hardNoFoods.some((h) => matchesFood(h, ingredientName))) {
+  // F074: ID-based hard-no matching when ingredient entity is available
+  if (ingredient && allIngredients) {
+    const hardNoIds = resolveFoodIds(member.hardNoFoods, allIngredients);
+    if (hardNoIds.has(ingredient.id)) {
+      return { compatibility: 'conflict', conflict: `${ingredientName} (hard-no)` };
+    }
+  } else if (member.hardNoFoods.some((h) => matchesFood(h, ingredientName))) {
     return { compatibility: 'conflict', conflict: `${ingredientName} (hard-no)` };
   }
   if (member.role === 'baby' && ingredient && !ingredient.babySafeWithAdaptation) {
@@ -207,7 +299,7 @@ export function computeIngredientOverlap(
   const ing = ingredients.find((i) => i.id === ingredientId);
 
   const memberDetails: MemberOverlap[] = humanMembers.map((member) => {
-    const { compatibility, conflict } = getMemberIngredientCompatibility(name, ing, member);
+    const { compatibility, conflict } = getMemberIngredientCompatibility(name, ing, member, ingredients);
     return {
       memberId: member.id,
       memberName: member.name,
@@ -240,7 +332,7 @@ export function computeMealOverlap(
       const bestId = pickBestIngredient(component, member, ingredients);
       const name = resolveIngredientName(bestId, ingredients);
       const ing = ingredients.find((i) => i.id === bestId);
-      const { compatibility, conflict } = getMemberIngredientCompatibility(name, ing, member);
+      const { compatibility, conflict } = getMemberIngredientCompatibility(name, ing, member, ingredients);
 
       if (compatibility === 'conflict') {
         hasConflict = true;
@@ -321,16 +413,36 @@ export function generateMealExplanation(
     tradeOffs.push(`Extra prep needed for ${names}`);
   }
 
-  // Trade-offs: toddler/baby safe food coverage
+  // F074: preference-based explanations from the deterministic ledger
+  const prefScore = computePreferenceScore(meal, humanMembers, ingredients);
+
+  // Safe food matches (cite member name + ingredient display name)
+  if (prefScore.safeFoodMatches.length > 0) {
+    const grouped = new Map<string, string[]>();
+    for (const m of prefScore.safeFoodMatches) {
+      const arr = grouped.get(m.memberName) ?? [];
+      arr.push(m.ingredientName);
+      grouped.set(m.memberName, arr);
+    }
+    for (const [name, foods] of grouped) {
+      tradeOffs.push(`includes ${name}-safe ${foods.join(', ')}`);
+    }
+  }
+
+  // Trade-offs: toddler/baby safe food coverage gap
   for (const member of humanMembers) {
     if (member.role !== 'toddler' && member.role !== 'baby') continue;
-    const hasSafeFood = meal.components.some((c) => {
-      const bestId = pickBestIngredient(c, member, ingredients);
-      const name = resolveIngredientName(bestId, ingredients);
-      return member.safeFoods.some((s) => matchesFood(s, name));
-    });
+    const hasSafeFood = meal.components.some((c) =>
+      isSafeFoodComponent(c, member, ingredients),
+    );
     if (!hasSafeFood) {
-      tradeOffs.push(`${member.name} has no safe food in this meal — add a side`);
+      if (member.safeFoods.length > 0) {
+        tradeOffs.push(
+          `${member.name} has no safe food in this meal — add on the side: ${member.safeFoods.slice(0, 3).join(', ')}`,
+        );
+      } else {
+        tradeOffs.push(`${member.name} has no safe food in this meal — add a side`);
+      }
     }
   }
 
@@ -387,20 +499,28 @@ export function generateShortReason(
     if (patternScore <= -3) return 'Clashes with learned preferences';
   }
 
+  // F074: preference-based short reasons
+  const prefScore = computePreferenceScore(meal, humanMembers, ingredients);
+
   const overlap = computeMealOverlap(meal, humanMembers, ingredients);
 
   if (overlap.score === overlap.total) {
     const adaptMembers = overlap.memberDetails.filter((d) => d.compatibility === 'with-adaptation');
-    if (adaptMembers.length === 0) return 'Works for everyone';
+    if (adaptMembers.length === 0) {
+      // Surface safe food match as reason when all members fit
+      if (prefScore.safeFoodMatches.length > 0) {
+        const first = prefScore.safeFoodMatches[0]!;
+        return `includes ${first.memberName}-safe ${first.ingredientName}`;
+      }
+      return 'Works for everyone';
+    }
 
     // Find the most interesting adaptation reason
     for (const member of humanMembers) {
       if (member.role === 'toddler' || member.role === 'baby') {
-        const hasSafe = meal.components.some((c) => {
-          const bestId = pickBestIngredient(c, member, ingredients);
-          const name = resolveIngredientName(bestId, ingredients);
-          return member.safeFoods.some((s) => matchesFood(s, name));
-        });
+        const hasSafe = meal.components.some((c) =>
+          isSafeFoodComponent(c, member, ingredients),
+        );
         if (hasSafe) return `${member.name}'s safe food included`;
       }
       if (member.preparationRules.length > 0) {
@@ -416,7 +536,19 @@ export function generateShortReason(
     return 'Works with small adaptations';
   }
 
-  if (overlap.score === 0) return 'Conflicts for all members';
+  if (overlap.score === 0) {
+    if (prefScore.hardNoConflicts.length > 0) {
+      const first = prefScore.hardNoConflicts[0]!;
+      return `${first.memberName} hard-no: ${first.ingredientName}`;
+    }
+    return 'Conflicts for all members';
+  }
+
+  // F074: surface hard-no detail in partial-fit reason
+  if (prefScore.hardNoConflicts.length > 0) {
+    const first = prefScore.hardNoConflicts[0]!;
+    return `Fits ${overlap.score} of ${overlap.total} — ${first.memberName} hard-no: ${first.ingredientName}`;
+  }
 
   return `Fits ${overlap.score} of ${overlap.total} members`;
 }
@@ -544,6 +676,12 @@ export function generateWeeklyPlan(
     patternScores.set(meal.id, computePatternScore(meal, patterns, members, ingredients));
   }
 
+  // F074: pre-compute preference scores for all meals
+  const preferenceScores = new Map<string, number>();
+  for (const meal of meals) {
+    preferenceScores.set(meal.id, computePreferenceScore(meal, members, ingredients).score);
+  }
+
   const rankedMeals = [...meals]
     .map((meal) => ({
       meal,
@@ -584,13 +722,19 @@ export function generateWeeklyPlan(
         // Pattern-based bonus from learned compatibility patterns
         const patternBonus = patternScores.get(meal.id) ?? 0;
 
+        // F074: member preference bonus (safe food boosts, hard-no penalties)
+        // Scaled to 0.1× so it acts as a meaningful tiebreaker without
+        // overwhelming overlap, pinned, or outcome signals.
+        const preferenceBonus = (preferenceScores.get(meal.id) ?? 0) * 0.1;
+
         const score =
           overlap.score +
           reuseBonus * 0.5 -
           repeatPenalty +
           pinnedBonus +
           outcomeBonus +
-          patternBonus;
+          patternBonus +
+          preferenceBonus;
         if (score > bestScore) {
           bestScore = score;
           bestMeal = meal;
@@ -652,6 +796,8 @@ export interface WeeklySuggestedMealRow {
   tier: number;
   outcomeScore: number;
   patternScore: number;
+  /** F074: deterministic score from member safeFoods/hardNoFoods ID matching */
+  preferenceScore: number;
   ingredientReuse: number;
   pinned: boolean;
   /** True when an optional weekly theme anchor matches; used only as a late tie-breaker. */
@@ -717,6 +863,7 @@ export function rankWeeklySuggestedMeals(
     const overlap = computeMealOverlap(meal, members, ingredients);
     const os = computeOutcomeScore(meal.id, outcomes);
     const patternScore = computePatternScore(meal, patterns, members, ingredients);
+    const prefScore = computePreferenceScore(meal, members, ingredients);
     const ingredientReuse = countMealIngredientReuse(meal, planIngredientIds);
     const pinned = pinnedSet.has(meal.id);
     const inWeek = assignedMealIds.has(meal.id);
@@ -738,6 +885,7 @@ export function rankWeeklySuggestedMeals(
       tier,
       outcomeScore: os.score,
       patternScore,
+      preferenceScore: prefScore.score,
       ingredientReuse,
       pinned,
       themeMatch,
@@ -752,6 +900,7 @@ export function rankWeeklySuggestedMeals(
     if (a.overlap.total !== b.overlap.total) return b.overlap.total - a.overlap.total;
     if (a.outcomeScore !== b.outcomeScore) return b.outcomeScore - a.outcomeScore;
     if (a.patternScore !== b.patternScore) return b.patternScore - a.patternScore;
+    if (a.preferenceScore !== b.preferenceScore) return b.preferenceScore - a.preferenceScore;
     if (a.ingredientReuse !== b.ingredientReuse) return b.ingredientReuse - a.ingredientReuse;
     const pa = a.pinned ? 1 : 0;
     const pb = b.pinned ? 1 : 0;
@@ -930,6 +1079,10 @@ export function generateRescueMeals(
     // Base score: overlap
     let score = overlap.score * 10;
 
+    // F074: preference score (safe food boosts + hard-no penalties)
+    const prefScore = computePreferenceScore(meal, humanMembers, ingredients);
+    score += prefScore.score;
+
     // Bonus for using freezer/pantry staples
     const stapleCount = meal.components.filter((c) => {
       const ing = ingredients.find((i) => i.id === c.ingredientId);
@@ -950,11 +1103,9 @@ export function generateRescueMeals(
       // everyone-melting-down: maximize safe food coverage
       for (const member of humanMembers) {
         if (member.role !== 'toddler' && member.role !== 'baby') continue;
-        const hasSafe = meal.components.some((c) => {
-          const bestId = pickBestIngredient(c, member, ingredients);
-          const name = resolveIngredientName(bestId, ingredients);
-          return member.safeFoods.some((s) => matchesFood(s, name));
-        });
+        const hasSafe = meal.components.some((c) =>
+          isSafeFoodComponent(c, member, ingredients),
+        );
         if (hasSafe) score += 5;
       }
       if (meal.difficulty === 'easy') score += 5;

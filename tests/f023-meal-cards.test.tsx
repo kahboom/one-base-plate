@@ -263,6 +263,7 @@ describe('F023: generateShortReason', () => {
       },
     ];
     const reason = generateShortReason(mealWithConflict, allConflict, ingredients);
-    expect(reason).toContain('Conflicts');
+    // F074: hard-no detail surfaces instead of generic conflict message
+    expect(reason).toContain('hard-no');
   });
 });

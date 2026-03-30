@@ -6,6 +6,20 @@
 - Run tests before marking any feature as passing
 - Commit after each completed feature
 
+### 2026-03-30 — Member-linked ingredient preference scoring (F074)
+
+- **Why:** Planner ranking, overlap summaries, and recommendation explanations need to deterministically reflect member safeFoods/hardNoFoods preferences using direct ingredient ID matching, with role-weighted boosts (toddler/baby > adult).
+- **Implementation:**
+  - `resolveFoodIds()`: resolves food name strings → ingredient ID sets via case-insensitive name lookup.
+  - `computePreferenceScore()`: exported function with fixed coefficients — `SAFE_FOOD_BOOST_CHILD=5`, `SAFE_FOOD_BOOST_ADULT=2`, `HARD_NO_PENALTY=-10`. Returns score + `safeFoodMatches[]` + `hardNoConflicts[]` with member/ingredient detail.
+  - ID-based matching wired into `pickBestIngredient`, `isComponentExcluded`, `isSafeFoodComponent`, `getMemberIngredientCompatibility` (backward-compatible optional `allIngredients` param).
+  - Preference score integrated into: `generateWeeklyPlan` (0.1× scale), `rankWeeklySuggestedMeals` (new `preferenceScore` field + sort key), `generateRescueMeals`, Home.tsx top picks.
+  - `generateMealExplanation` trade-offs cite `includes {member}-safe {ingredient}` and toddler gap with fallback food suggestions.
+  - `generateShortReason` surfaces safe food match (`includes Alex-safe chicken breast`) and hard-no detail (`Alex hard-no: mushrooms`).
+- **Tests:** `tests/f074-preference-scoring.test.ts` — 15 tests covering preference scoring, safe food ranking, hard-no deprioritisation, role weighting, explanation citations, and surface parity (weekly suggested, rescue mode).
+- **Verified:** `npm test` (1334 passed, 13 skipped), `npm run typecheck`.
+- **Next:** F075 — Ingredient family group preferences (depends on F074).
+
 ### 2026-03-29 — Regional ingredient synonym matching (F073)
 
 - **Why:** Recipe/Paprika lines using US vs UK names (eggplant/aubergine, etc.) failed automatic match against household rows on the other variant; fuzzy scores were zero with no shared tokens.
@@ -1148,7 +1162,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Heuristics:** `src/lib/suggestIngredientMergePairs.ts` — token / Jaccard / subset / phrase containment; skips pairs already linked as name↔alias.
 - **Dismissals:** `src/lib/ingredientMergeDismissals.ts` — `mergePairKey`, localStorage-dismissed pairs per household, `pickMergeSurvivorHeuristic` for bulk merge.
 - **CLI:** `npm run suggest:ingredient-merges -- fixtures/households/H001-mcg.json` (`--min-score`, `--limit`); script avoids importing `storage` (no Vite env).
-- **UI:** `IngredientManager` — **Check for duplicates** runs the heuristic on demand (not on every render); cached scan is cleared when switching household and pruned when ingredient rows disappear after merges. When matches remain, **Open review list** → modal (table rows, select all, bulk Ignore/Merge, per-row Review); detail modal adds **Keep both (ignore)**.
+- **UI:** `IngredientManager` — duplicate review modal: **tap either name** to merge immediately (no confirm); per-row **Ignore**; select all + bulk Ignore / **Merge selected** (still one confirm for multi-merge). Merge-confirm modal remains only for merging from an ingredient’s edit screen.
 - **Tests:** `tests/f075-suggest-ingredient-merge-pairs.test.ts`, `tests/f076-ingredient-merge-dismissals.test.ts`.
 
 ## Next Task
