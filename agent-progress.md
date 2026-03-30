@@ -6,6 +6,22 @@
 - Run tests before marking any feature as passing
 - Commit after each completed feature
 
+### 2026-03-30 — Grouped ingredient-family preferences (F075)
+
+- **Why:** Members need to express preferences at the ingredient-family level (e.g. "likes sausage generally") without creating canonical ingredients for every family. Family-level matches provide weaker but meaningful planner signals alongside exact ingredient preferences.
+- **Implementation:**
+  - Data model: `Ingredient.familyKeys[]`, `HouseholdMember.safeFoodFamilyKeys[]`, `HouseholdMember.hardNoFoodFamilyKeys[]` added to `src/types.ts`.
+  - `computePreferenceScore()` extended with family-level matching via `buildFamilyKeyMap()`. Fixed coefficients: `SAFE_FOOD_FAMILY_BOOST_CHILD=2`, `SAFE_FOOD_FAMILY_BOOST_ADULT=1`, `HARD_NO_FAMILY_PENALTY=-3`. Avoids double-counting when ingredient matches both exact and family. Grouped family hard-no never overrides another member's exact safeFoods match.
+  - `PreferenceScore` extended with `safeFoodFamilyMatches[]` and `hardNoFamilyConflicts[]` (each with `familyKey` field on `PreferenceMatch`).
+  - `generateMealExplanation()` cites family matches: "matches Indy-safe sausage family via italian sausage", "grouped conflict: yogurt family hard-no via greek yogurt".
+  - `generateShortReason()` surfaces family match when no exact match available.
+  - Surface parity: family scores flow through `rankWeeklySuggestedMeals`, `generateWeeklyPlan`, `generateRescueMeals`, Home top picks (all via `computePreferenceScore`).
+  - **IngredientManager modal:** familyKeys tag-style editor with suggestions from existing household familyKeys, visually distinct from aliases and tags (warning-colored chips, explanatory label).
+  - **MemberProfile:** "Safe Food Families" and "Hard-No Food Families" sections with `TagSuggestInput`, visually separated from exact ingredient sections with descriptive text.
+- **Tests:** `tests/f075-ingredient-family-groups.test.ts` — 16 tests covering grouped safe-food boost, exact-vs-grouped precedence, hard-no family penalty, no double-counting, role weighting, exact hard-no override, grouped hard-no suppression by exact safe, alias isolation, no-duplicate-ingredient requirement, explanation strings, short reason, surface parity (weekly suggested + rescue mode), import/search unchanged.
+- **Verified:** `npm test` (1350 passed, 13 skipped), `npm run typecheck`.
+- **Next:** No remaining features with `passes: false` in PRD.
+
 ### 2026-03-30 — Member-linked ingredient preference scoring (F074)
 
 - **Why:** Planner ranking, overlap summaries, and recommendation explanations need to deterministically reflect member safeFoods/hardNoFoods preferences using direct ingredient ID matching, with role-weighted boosts (toddler/baby > adult).

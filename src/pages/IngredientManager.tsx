@@ -393,6 +393,7 @@ function IngredientModal({
   const [tagInput, setTagInput] = useState('');
   const [aliasInput, setAliasInput] = useState('');
   const [aliasCommitError, setAliasCommitError] = useState('');
+  const [familyKeyInput, setFamilyKeyInput] = useState('');
   const [mergeMode, setMergeMode] = useState(false);
   const [mergeSearch, setMergeSearch] = useState('');
   const [mergeTarget, setMergeTarget] = useState<Ingredient | null>(null);
@@ -456,6 +457,16 @@ function IngredientModal({
     };
   }, [mergeTarget, householdRef, ingredient.id]);
 
+  const familyKeySuggestions = useMemo(() => {
+    const set = new Set<string>();
+    for (const ing of allIngredients) {
+      for (const fk of ing.familyKeys ?? []) {
+        set.add(fk);
+      }
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [allIngredients]);
+
   function addTag(tag: string) {
     const trimmed = tag.trim();
     if (!trimmed || ingredient.tags.includes(trimmed)) return;
@@ -465,6 +476,19 @@ function IngredientModal({
 
   function removeTag(tag: string) {
     onChange({ ...ingredient, tags: ingredient.tags.filter((t) => t !== tag) });
+  }
+
+  function addFamilyKey(key: string) {
+    const normalized = key.trim().toLowerCase();
+    if (!normalized) return;
+    const current = ingredient.familyKeys ?? [];
+    if (current.includes(normalized)) return;
+    onChange({ ...ingredient, familyKeys: [...current, normalized] });
+    setFamilyKeyInput('');
+  }
+
+  function removeFamilyKey(key: string) {
+    onChange({ ...ingredient, familyKeys: (ingredient.familyKeys ?? []).filter((k) => k !== key) });
   }
 
   function commitAlias() {
@@ -782,6 +806,49 @@ function IngredientModal({
               />
               <Button small onClick={() => addTag(tagInput)}>
                 Add tag
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <span className="mb-1 block text-sm font-medium text-text-secondary">
+              Ingredient families
+            </span>
+            <p className="mb-2 text-xs text-text-muted">
+              Planner preference grouping (e.g. &quot;sausage&quot;, &quot;pasta&quot;). Not tags or aliases.
+            </p>
+            <div className="flex flex-wrap gap-1" data-testid="ingredient-family-key-list">
+              {(ingredient.familyKeys ?? []).map((fk) => (
+                <span key={fk} className="inline-flex items-center gap-1">
+                  <Chip variant="warning" data-testid="ingredient-family-key-chip">{fk}</Chip>
+                  <Button
+                    variant="ghost"
+                    small
+                    type="button"
+                    aria-label={`Remove family key ${fk}`}
+                    data-testid={`family-key-remove-${fk}`}
+                    onClick={() => removeFamilyKey(fk)}
+                  >
+                    x
+                  </Button>
+                </span>
+              ))}
+            </div>
+            <div className="mt-2 flex gap-2">
+              <TagSuggestInput
+                mode="single"
+                value={familyKeyInput}
+                onChange={setFamilyKeyInput}
+                suggestions={familyKeySuggestions}
+                exclude={new Set(ingredient.familyKeys ?? [])}
+                placeholder="Add family key"
+                className="max-w-[200px]"
+                data-testid="family-key-add-input"
+                onPick={(key) => addFamilyKey(key)}
+                onSubmitPlain={() => addFamilyKey(familyKeyInput)}
+              />
+              <Button small onClick={() => addFamilyKey(familyKeyInput)} data-testid="family-key-add-btn">
+                Add
               </Button>
             </div>
           </div>

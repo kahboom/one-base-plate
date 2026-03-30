@@ -13,6 +13,10 @@ export interface HouseholdMember {
   role: MemberRole;
   safeFoods: string[];
   hardNoFoods: string[];
+  /** Grouped ingredient-family positive preferences (e.g. 'sausage', 'pasta'). Weaker than exact safeFoods. */
+  safeFoodFamilyKeys?: string[];
+  /** Grouped ingredient-family negative preferences (e.g. 'yogurt'). Weaker than exact hardNoFoods. */
+  hardNoFoodFamilyKeys?: string[];
   preparationRules: PreparationRule[];
   textureLevel: TextureLevel;
   allergens: string[];
@@ -41,6 +45,8 @@ export interface Ingredient {
   name: string;
   /** Alternate match/search/import names; canonical display remains `name`. */
   aliases?: string[];
+  /** Curated ingredient-family grouping keys for planner preference matching (e.g. 'sausage', 'pasta'). */
+  familyKeys?: string[];
   category: IngredientCategory;
   tags: string[];
   shelfLifeHint: string;

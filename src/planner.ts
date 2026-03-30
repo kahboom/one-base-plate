@@ -46,21 +46,54 @@ const SAFE_FOOD_BOOST_CHILD = 5; // toddler / baby
 const SAFE_FOOD_BOOST_ADULT = 2; // adult
 const HARD_NO_PENALTY = -10; // strong deprioritisation
 
+// F075: Family-level preference coefficients (weaker than exact matches)
+const SAFE_FOOD_FAMILY_BOOST_CHILD = 2; // toddler / baby grouped family boost
+const SAFE_FOOD_FAMILY_BOOST_ADULT = 1; // adult grouped family boost
+const HARD_NO_FAMILY_PENALTY = -3; // grouped family hard-no (weaker than exact)
+
 export interface PreferenceMatch {
   memberName: string;
   memberId: string;
   ingredientName: string;
+  /** F075: when present, this is a grouped family-level match, not an exact ingredient match. */
+  familyKey?: string;
 }
 
 export interface PreferenceScore {
   score: number;
   safeFoodMatches: PreferenceMatch[];
   hardNoConflicts: PreferenceMatch[];
+  /** F075: grouped family-level safe food matches (weaker signal). */
+  safeFoodFamilyMatches: PreferenceMatch[];
+  /** F075: grouped family-level hard-no conflicts (weaker signal). */
+  hardNoFamilyConflicts: PreferenceMatch[];
+}
+
+/**
+ * F075: Build a map from familyKey → ingredient IDs for all meal ingredients.
+ * Only explicit Ingredient.familyKeys entries count — aliases are excluded.
+ */
+function buildFamilyKeyMap(
+  mealIngredientIds: Set<string>,
+  ingredients: Ingredient[],
+): Map<string, string[]> {
+  const map = new Map<string, string[]>();
+  for (const id of mealIngredientIds) {
+    const ing = ingredients.find((i) => i.id === id);
+    if (!ing?.familyKeys) continue;
+    for (const fk of ing.familyKeys) {
+      const arr = map.get(fk) ?? [];
+      arr.push(id);
+      map.set(fk, arr);
+    }
+  }
+  return map;
 }
 
 /**
  * Compute a deterministic preference score for a meal based on member
- * safeFoods / hardNoFoods resolved as ingredient IDs.
+ * safeFoods / hardNoFoods resolved as ingredient IDs, plus F075 family-level
+ * preferences via Ingredient.familyKeys and member safeFoodFamilyKeys / hardNoFoodFamilyKeys.
  * Role weighting: toddler/baby boosts are stronger than adult boosts.
  */
 export function computePreferenceScore(
@@ -71,10 +104,23 @@ export function computePreferenceScore(
   let score = 0;
   const safeFoodMatches: PreferenceMatch[] = [];
   const hardNoConflicts: PreferenceMatch[] = [];
+  const safeFoodFamilyMatches: PreferenceMatch[] = [];
+  const hardNoFamilyConflicts: PreferenceMatch[] = [];
 
   const mealIngredientIds = new Set(
     meal.components.flatMap((c) => getAllIngredientIds(c)),
   );
+
+  // F075: family key → ingredient IDs in this meal
+  const familyKeyMap = buildFamilyKeyMap(mealIngredientIds, ingredients);
+
+  // Collect all exact safe-food IDs across all members for override safety check
+  const allExactSafeIds = new Set<string>();
+  for (const member of members.filter(isHumanMember)) {
+    for (const id of resolveFoodIds(member.safeFoods, ingredients)) {
+      allExactSafeIds.add(id);
+    }
+  }
 
   for (const member of members.filter(isHumanMember)) {
     const safeIds = resolveFoodIds(member.safeFoods, ingredients);
@@ -83,10 +129,18 @@ export function computePreferenceScore(
       member.role === 'toddler' || member.role === 'baby'
         ? SAFE_FOOD_BOOST_CHILD
         : SAFE_FOOD_BOOST_ADULT;
+    const familyBoost =
+      member.role === 'toddler' || member.role === 'baby'
+        ? SAFE_FOOD_FAMILY_BOOST_CHILD
+        : SAFE_FOOD_FAMILY_BOOST_ADULT;
+
+    // Track which ingredient IDs already matched exactly (avoid double-counting family)
+    const exactMatchedIds = new Set<string>();
 
     for (const id of mealIngredientIds) {
       if (safeIds.has(id)) {
         score += boost;
+        exactMatchedIds.add(id);
         safeFoodMatches.push({
           memberName: member.name,
           memberId: member.id,
@@ -95,6 +149,7 @@ export function computePreferenceScore(
       }
       if (hardNoIds.has(id)) {
         score += HARD_NO_PENALTY;
+        exactMatchedIds.add(id);
         hardNoConflicts.push({
           memberName: member.name,
           memberId: member.id,
@@ -102,9 +157,46 @@ export function computePreferenceScore(
         });
       }
     }
+
+    // F075: family-level safe food matches
+    const memberSafeFamilyKeys = member.safeFoodFamilyKeys ?? [];
+    for (const fk of memberSafeFamilyKeys) {
+      const matchedIds = familyKeyMap.get(fk);
+      if (!matchedIds) continue;
+      for (const id of matchedIds) {
+        if (exactMatchedIds.has(id)) continue; // already counted as exact
+        score += familyBoost;
+        safeFoodFamilyMatches.push({
+          memberName: member.name,
+          memberId: member.id,
+          ingredientName: resolveIngredientName(id, ingredients),
+          familyKey: fk,
+        });
+      }
+    }
+
+    // F075: family-level hard-no matches
+    const memberHardNoFamilyKeys = member.hardNoFoodFamilyKeys ?? [];
+    for (const fk of memberHardNoFamilyKeys) {
+      const matchedIds = familyKeyMap.get(fk);
+      if (!matchedIds) continue;
+      for (const id of matchedIds) {
+        if (exactMatchedIds.has(id)) continue; // already counted as exact
+        // Precedence rule: grouped family hard-no must never override
+        // another member's exact safeFoods match for the same ingredient
+        if (allExactSafeIds.has(id)) continue;
+        score += HARD_NO_FAMILY_PENALTY;
+        hardNoFamilyConflicts.push({
+          memberName: member.name,
+          memberId: member.id,
+          ingredientName: resolveIngredientName(id, ingredients),
+          familyKey: fk,
+        });
+      }
+    }
   }
 
-  return { score, safeFoodMatches, hardNoConflicts };
+  return { score, safeFoodMatches, hardNoConflicts, safeFoodFamilyMatches, hardNoFamilyConflicts };
 }
 
 export function getAllIngredientIds(component: MealComponent): string[] {
@@ -429,6 +521,27 @@ export function generateMealExplanation(
     }
   }
 
+  // F075: family-level safe food matches
+  if (prefScore.safeFoodFamilyMatches.length > 0) {
+    const grouped = new Map<string, string[]>();
+    for (const m of prefScore.safeFoodFamilyMatches) {
+      const key = m.memberName;
+      const arr = grouped.get(key) ?? [];
+      arr.push(`${m.familyKey} family via ${m.ingredientName}`);
+      grouped.set(key, arr);
+    }
+    for (const [name, descs] of grouped) {
+      tradeOffs.push(`matches ${name}-safe ${descs.join(', ')}`);
+    }
+  }
+
+  // F075: family-level hard-no conflicts
+  if (prefScore.hardNoFamilyConflicts.length > 0) {
+    for (const m of prefScore.hardNoFamilyConflicts) {
+      tradeOffs.push(`grouped conflict: ${m.familyKey} family hard-no via ${m.ingredientName} (${m.memberName})`);
+    }
+  }
+
   // Trade-offs: toddler/baby safe food coverage gap
   for (const member of humanMembers) {
     if (member.role !== 'toddler' && member.role !== 'baby') continue;
@@ -512,6 +625,11 @@ export function generateShortReason(
         const first = prefScore.safeFoodMatches[0]!;
         return `includes ${first.memberName}-safe ${first.ingredientName}`;
       }
+      // F075: surface family match when no exact match
+      if (prefScore.safeFoodFamilyMatches.length > 0) {
+        const first = prefScore.safeFoodFamilyMatches[0]!;
+        return `matches ${first.memberName}-safe ${first.familyKey} family via ${first.ingredientName}`;
+      }
       return 'Works for everyone';
     }
 
@@ -548,6 +666,12 @@ export function generateShortReason(
   if (prefScore.hardNoConflicts.length > 0) {
     const first = prefScore.hardNoConflicts[0]!;
     return `Fits ${overlap.score} of ${overlap.total} — ${first.memberName} hard-no: ${first.ingredientName}`;
+  }
+
+  // F075: surface family hard-no detail
+  if (prefScore.hardNoFamilyConflicts.length > 0) {
+    const first = prefScore.hardNoFamilyConflicts[0]!;
+    return `Fits ${overlap.score} of ${overlap.total} — ${first.memberName} ${first.familyKey} family hard-no`;
   }
 
   return `Fits ${overlap.score} of ${overlap.total} members`;

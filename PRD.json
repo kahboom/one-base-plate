@@ -2313,7 +2313,7 @@
         "Verification — import/search unchanged: assert that existing alias-based import matching and search behavior is not affected by the addition of familyKeys. Aliases continue to work for matching/import/search; familyKeys are used only for planner preference semantics.",
         "Automated tests: add or extend tests covering grouped family boost ordering, exact-vs-grouped precedence, hard-no override safety, alias isolation, no-duplicate-ingredient requirement, and explanation string content for family matches. Fixtures preferred."
       ],
-      "passes": false,
+      "passes": true,
       "dependencies": [
         "F003",
         "F004",
