@@ -1,3 +1,31 @@
+### 2026-03-29 — Regional ingredient synonym matching (F073)
+
+- **Problem:** Import matching treated regional pairs (e.g. eggplant vs aubergine) as unrelated strings because `matchScore` had no shared tokens; catalog aliases alone do not help manual household names on the other variant.
+- **Fix:** [`applyRegionalSynonyms`](src/recipe-parser.ts) maps curated singular tokens to a canonical form; applied to the query in `matchIngredient` and to each candidate in `scoreMatchAgainstCandidate` (including vetoes) so matching is symmetric. **Catalog:** `cat-aubergine` with `eggplant` alias; `cat-prawns` gains `shrimp`; `cat-cilantro` gains bare `coriander`; `cat-peppers` gains `capsicum`.
+- **Tests:** [`tests/f073-regional-synonyms.test.ts`](tests/f073-regional-synonyms.test.ts). **PRD** F073, M5, S007/S010 screen map.
+
+### 2026-03-29 — Recipe modal vs Base Meal Editor separation (F072)
+
+- **Problem:** Recipe library modal reused `ComponentForm`, exposing base-meal-only UX (alternatives, “How to make this component” / attach recipe, etc.).
+- **Fix:** New [`RecipeIngredientRow`](src/components/meals/RecipeIngredientRow.tsx) for recipe ingredient lines only; [`InlineIngredientForm`](src/components/meals/InlineIngredientForm.tsx) extracted and shared with [`ComponentForm`](src/components/meals/ComponentForm.tsx). [`RecipeLibrary`](src/pages/RecipeLibrary.tsx) `RecipeModal` no longer imports `ComponentForm`; copy: **3. Ingredients**, **Add ingredient**, **Remove ingredient**. Dropped unused `baseMeals` state on Recipe Library page.
+- **Unchanged:** [`BaseMealManager`](src/pages/BaseMealManager.tsx) `MealModal` + full `ComponentForm` planning controls.
+- **Tests:** [`tests/f072-recipe-modal-separation.test.tsx`](tests/f072-recipe-modal-separation.test.tsx). **PRD** F072, M5, S007/S010 screen map.
+
+### 2026-03-28 — Catalog default ingredient images (F071)
+
+- **Master catalog:** optional `imageUrl` on `CatalogIngredient`; ~28 common entries seeded with static Unsplash thumbnails. **Not** copied into household rows on add-from-catalog (`catalogIngredientToHousehold`). **Flour** gains match aliases (e.g. all-purpose / whole wheat pastry) for import matching quality.
+- **Display:** `resolveIngredientImageUrl` / `getCatalogDefaultImageUrl` in [`src/lib/ingredientImage.ts`](src/lib/ingredientImage.ts) — household `imageUrl` overrides, else linked catalog image by `catalogId`.
+- **Ingredient Manager:** list row thumbs use effective URL + `loading="lazy"`; modal shows **From catalog (default)** vs **Custom household image**, **Remove custom image** to clear override and fall back to catalog.
+- **Import review:** catalog suggestion thumbnails on [`RecipeImport`](src/pages/RecipeImport.tsx). **Paprika** grouped review: show **catalog** ingredient thumbnail in the card header when `matchedCatalog.imageUrl` exists (lazy-load, hide on error); **removed** misleading recipe hero images from Paprika `image_url` / `photo_data` in that row (often unrelated or dead links). Duplicate small thumbs removed from the catalog chip and **Will create as** box.
+- **Tests:** [`tests/f071-ingredient-images.test.tsx`](tests/f071-ingredient-images.test.tsx). **PRD** F071, M5, S007/S010 screen map.
+
+### 2026-03-28 — Catalog materialization correction (F070)
+
+- **Ingredient Manager** no longer merges **MASTER_CATALOG** into the browse list. Only **persisted household** ingredients appear; empty state prompts **Add ingredient**, which opens **catalog search** first with **Create manually** as an escape hatch.
+- **Recipe import** review: clearer **household vs catalog suggestion** copy (“Catalog suggestion”, “Not yet in your household”), summary chips for add-from-catalog vs manual create, and action labels **Use household match** / **Add from catalog** / **Create new (manual)**.
+- **Paprika import** review: catalog chip uses the same suggestion copy; per-line select uses **Add from catalog** when a catalog match backs the line.
+- **Persistence:** removed `suppressedCatalogIds` updates from ingredient delete/merge/bulk-delete (field may remain in legacy JSON; unused for display). **Tests:** `f070-catalog-materialization.test.tsx`; updates to `f004`, `f043`, `f044`, `f045`, `f025`, `f046`, `f060`, `f061`, `incremental-load-helpers`. **PRD** F070 (M5), S010 uiSpec note.
+
 ### 2026-03-27 — Base meal theme tags editor (F069)
 
 - **Base Meals** meal modal: optional **theme tags** under Planning metadata (chips, remove, typeahead from other meals’ tags, Add tag). Values trimmed + lowercased on add so they align with **Weekly theme nights** anchor `matchTags`. Separate header chip row `meal-theme-tag-chips` when tags exist; summary chips unchanged.

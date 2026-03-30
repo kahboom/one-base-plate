@@ -99,7 +99,7 @@ function manyIngredients(count: number): Ingredient[] {
   }));
 }
 
-/** Filter to source=manual to isolate test items from auto-populated catalog */
+/** Filter to source=manual when the household mixes manual and catalog-sourced rows */
 async function filterToManual(user: ReturnType<typeof userEvent.setup>) {
   await user.selectOptions(screen.getByTestId('ingredient-source-filter'), 'manual');
 }
@@ -625,7 +625,7 @@ describe('F060: Recovery after bulk delete', () => {
     await user.click(screen.getByTestId('bulk-delete-btn'));
     await user.click(screen.getByTestId('bulk-delete-confirm-btn'));
 
-    expect(screen.getByText('No ingredients match your filters.')).toBeInTheDocument();
+    expect(screen.getByText(/No household ingredients yet/i)).toBeInTheDocument();
   });
 });
 

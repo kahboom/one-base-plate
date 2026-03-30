@@ -99,7 +99,7 @@ export interface PaprikaImportSession {
 }
 
 /** Increment when Paprika line parsing / matching rules change so saved sessions refresh from `raw`. */
-export const PAPRIKA_INGREDIENT_PARSER_VERSION = 9;
+export const PAPRIKA_INGREDIENT_PARSER_VERSION = 10;
 
 const MAX_PREP_CHARS = 120_000;
 const MAX_NOTES_CHARS = 32_000;

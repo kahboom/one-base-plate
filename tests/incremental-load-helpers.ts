@@ -1,4 +1,22 @@
 import { screen, fireEvent } from '@testing-library/react';
+import type { UserEvent } from '@testing-library/user-event';
+
+/** F070: Add ingredient opens catalog search; use this to open the blank manual-ingredient modal. */
+export async function openIngredientAddManualFromCatalogPicker(user: UserEvent) {
+  await user.click(screen.getAllByText('Add ingredient')[0]!);
+  await user.click(screen.getByTestId('catalog-add-create-manual'));
+}
+
+/** F070: Search master catalog in add dialog and pick one row (by data-testid on the result button). */
+export async function pickCatalogItemInAddDialog(
+  user: UserEvent,
+  searchQuery: string,
+  resultTestId: string,
+) {
+  await user.click(screen.getAllByText('Add ingredient')[0]!);
+  await user.type(screen.getByTestId('catalog-add-search'), searchQuery);
+  await user.click(screen.getByTestId(resultTestId));
+}
 
 /**
  * Legacy helper: clicks "Load more" until gone (infinite scroll).

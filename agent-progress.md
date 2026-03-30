@@ -6,6 +6,39 @@
 - Run tests before marking any feature as passing
 - Commit after each completed feature
 
+### 2026-03-29 — Regional ingredient synonym matching (F073)
+
+- **Why:** Recipe/Paprika lines using US vs UK names (eggplant/aubergine, etc.) failed automatic match against household rows on the other variant; fuzzy scores were zero with no shared tokens.
+- **Implementation:** `REGIONAL_SYNONYM_CANONICAL` + exported `applyRegionalSynonyms` in [`src/recipe-parser.ts`](src/recipe-parser.ts); wired into `matchIngredient` query pipeline and `scoreMatchAgainstCandidate` for symmetric normalization before `matchScore` / vetoes. Catalog updates in [`src/catalog.ts`](src/catalog.ts).
+- **Tests:** `tests/f073-regional-synonyms.test.ts`.
+- **Verified:** `npm test`, `npm run typecheck`.
+
+### 2026-03-29 — Recipe modal vs Base Meal Editor separation (F072)
+
+- **Why:** Recipe rows must edit library/cooking content, not mirror the structure-first Base Meal Editor (components, alternatives, component recipe refs).
+- **Implementation:** `RecipeIngredientRow` (ingredient select, role, quantity, prep, inline new ingredient, remove) — no `ComponentRecipePicker` or planning copy. `InlineIngredientForm` moved to `src/components/meals/InlineIngredientForm.tsx`; `ComponentForm` imports it. `RecipeModal` uses only `RecipeIngredientRow` for `Recipe.components`; removed `baseMeals` prop/state from Recipe Library where only the modal consumed it.
+- **Tests:** `tests/f072-recipe-modal-separation.test.tsx`.
+- **Verified:** `npm test`, `npm run typecheck`.
+
+### 2026-03-28 — Catalog default ingredient images (F071)
+
+- **Why:** Show default pictures for common ingredients from the master catalog without copying URLs into every household row or doing runtime image search.
+- **Data:** `CatalogIngredient.imageUrl` optional; seeded ~28 Unsplash URLs in [`src/catalog.ts`](src/catalog.ts). `catalogIngredientToHousehold` intentionally omits catalog `imageUrl` (commented).
+- **Helpers:** [`src/lib/ingredientImage.ts`](src/lib/ingredientImage.ts) — `resolveIngredientImageUrl`, `getCatalogDefaultImageUrl`.
+- **UI:** Ingredient Manager row + modal (inherited vs custom, remove override); Recipe import + Paprika review catalog thumbnails (`loading="lazy"`); Paprika **Will create as** row shows catalog thumb when `matchedCatalog` has image.
+- **Tests:** [`tests/f071-ingredient-images.test.tsx`](tests/f071-ingredient-images.test.tsx).
+- **Verified:** `npm test -- tests/f071-ingredient-images.test.tsx`, `npm test` (1290 passed, 13 skipped), `npm run typecheck`.
+- **Next:** Optional: more catalog thumbnails; ingredient thumbnails in combobox/planner only if product wants (currently no ingredient images there).
+
+### 2026-03-28 — Catalog materialization correction (F070)
+
+- **Why:** Master catalog must stay searchable for matching/suggestions without **eagerly** filling the household ingredient list on Ingredient Manager load.
+- **IngredientManager:** Removed `populateFromCatalog`, `persistedIngredientIdsRef`, and `suppressedCatalogIds` side effects on delete/merge/bulk delete. **Add ingredient** → `CatalogAddDialog` (`searchCatalog`) → pick row (`catalogIngredientToHousehold`) or **Create manually**. Empty state explains catalog is separate.
+- **RecipeImport / PaprikaImport:** UI copy distinguishes **household match** vs **catalog suggestion (not yet in household)**; recipe review summary chips split add-from-catalog vs manual create.
+- **Unchanged:** `matchIngredient` tiers/thresholds; `buildDraftRecipe` / finalize materialization; `ImportMapping` audit fields.
+- **Tests:** `tests/f070-catalog-materialization.test.tsx`; adjusted `f004`, `f043`, `f044`, `f045`, `f025`, `f046`, `f060`, `f061`; helpers `openIngredientAddManualFromCatalogPicker`, `pickCatalogItemInAddDialog` in `incremental-load-helpers.ts`.
+- **Verified:** `npm test` (1279 passed, 13 skipped), `npm run typecheck`.
+
 ## Completed Features
 
 ### F001 - Repository scaffold (2026-03-12)
@@ -664,10 +697,7 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - Added `searchCatalog` function for case-insensitive name search, `getCatalogByCategory` for category filtering
 - Added `catalogIngredientToHousehold` converter that creates a valid `Ingredient` with unique ID from a catalog entry, supporting optional overrides for pre-save edits
 - Catalog is separate from household ingredients — it's a static module, not stored in localStorage
-- **Auto-population**: `populateFromCatalog` merges catalog items into the ingredient list on page load, deduplicating by name (case-insensitive)
-- Users see all 70 catalog ingredients immediately when opening the Ingredient Manager — no "Add from catalog" button needed
-- Existing household ingredients are preserved; only catalog items not already present are added
-- Preserved "Add ingredient" button for manual creation of uncommon items
+- **Superseded (F070, 2026-03-28):** Auto-population via `populateFromCatalog` was removed — the manager lists **only** saved household rows; **Add ingredient** opens **catalog search** first (see F070 note under Conventions).
 - Updated 4 existing test files (f004, f025, f035, f043) to account for auto-populated catalog items in count assertions
 - Created 16 tests: 7 catalog engine tests (categories covered, separation, search, empty query, category filter, conversion, overrides), 4 auto-population tests (empty household, deduplication, custom+catalog mix, no button), 1 manual creation test, 4 flow compatibility tests (persistence, edit via modal, valid structure, search/filter)
 - Verified: tsc --noEmit passes, vitest passes (588 tests, 2 pre-existing f033 failures unrelated to F044), all F044 steps satisfied
@@ -1111,6 +1141,15 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **Storage:** `resetToDefaultState()` in `src/storage.ts` — clears households + default id, removes `onebaseplate_seeded`, awaits `seedIfNeeded()` (bundled `seed-data.json`), sets default household to the first seed household.
 - **UI:** `src/pages/Settings.tsx` — Data section “Reset to default state” (danger) with confirm; clears Paprika import session; navigates to `/households`. `data-testid="settings-reset-default-btn"`.
 - **Verification:** `npm run typecheck`, `npm test`.
+
+### Ingredient merge suggestions — lib, CLI, Ingredients UI (2026-03-30)
+
+- **Lib:** `src/lib/ingredientNameNormalize.ts` — `normalizeIngredientName` + `normalizeIngredientGroupKey` (no Dexie/sync) for reuse from CLI; `storage.ts` re-exports unchanged API.
+- **Heuristics:** `src/lib/suggestIngredientMergePairs.ts` — token / Jaccard / subset / phrase containment; skips pairs already linked as name↔alias.
+- **Dismissals:** `src/lib/ingredientMergeDismissals.ts` — `mergePairKey`, localStorage-dismissed pairs per household, `pickMergeSurvivorHeuristic` for bulk merge.
+- **CLI:** `npm run suggest:ingredient-merges -- fixtures/households/H001-mcg.json` (`--min-score`, `--limit`); script avoids importing `storage` (no Vite env).
+- **UI:** `IngredientManager` — **Check for duplicates** runs the heuristic on demand (not on every render); cached scan is cleared when switching household and pruned when ingredient rows disappear after merges. When matches remain, **Open review list** → modal (table rows, select all, bulk Ignore/Merge, per-row Review); detail modal adds **Keep both (ignore)**.
+- **Tests:** `tests/f075-suggest-ingredient-merge-pairs.test.ts`, `tests/f076-ingredient-merge-dismissals.test.ts`.
 
 ## Next Task
 

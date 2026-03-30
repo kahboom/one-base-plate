@@ -290,6 +290,13 @@ function parseSingleNumericValue(s: string): number | undefined {
   if (!t) return undefined;
   if (UNICODE_FRACTIONS[t] !== undefined) return UNICODE_FRACTIONS[t];
 
+  const unicodeMixed = t.match(/^(\d+)([¼½¾⅓⅔⅛⅜⅝⅞])$/);
+  if (unicodeMixed) {
+    const whole = parseInt(unicodeMixed[1]!, 10);
+    const frac = UNICODE_FRACTIONS[unicodeMixed[2]!];
+    if (frac !== undefined) return whole + frac;
+  }
+
   const mixedMatch = t.match(/^(\d+)\s+(\d+)\/(\d+)$/);
   if (mixedMatch) {
     const whole = parseInt(mixedMatch[1]!, 10);
@@ -338,10 +345,18 @@ const NUM_ATOM = `(?:\\d+\\.\\d+|\\.\\d+|\\d+\\/\\d+|\\d+|[¼½¾⅓⅔⅛⅜⅝
 function parseLeadingNumberCluster(s: string): { raw: string; end: number } | null {
   const rangeFirst = s.match(new RegExp(`^(${NUM_ATOM}${RANGE_SEP}${NUM_ATOM})(?=\\s|$)`));
   if (rangeFirst) {
-    return { raw: rangeFirst[1]!, end: rangeFirst[0]!.length };
+    let raw = rangeFirst[1]!;
+    let end = rangeFirst[0]!.length;
+    const mixedTail = s.slice(end).match(/^\s+(\d+\/\d+)(?=\s|$)/);
+    if (mixedTail) {
+      raw += mixedTail[0]!;
+      end += mixedTail[0]!.length;
+    }
+    return { raw, end };
   }
 
-  const re = /^(\d+\.\d+|\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\s+\d+\/\d+)?|\.\d+|\d+|¼|½|¾|⅓|⅔|⅛|⅜|⅝|⅞)/;
+  const re =
+    /^(\d+\.\d+|\d+\s+\d+\/\d+|\d+\/\d+|\d+[¼½¾⅓⅔⅛⅜⅝⅞]|\d+(?:\s+\d+\/\d+)?|\.\d+|\d+|¼|½|¾|⅓|⅔|⅛|⅜|⅝|⅞)/;
   const m = s.match(re);
   if (!m) return null;
   let raw = m[1]!;
@@ -586,7 +601,7 @@ function stripTrailingPrepPhrases(name: string, notes: string[]): string {
   while (progress) {
     progress = false;
     const trailingPatterns = [
-      /\s+(?:to\s+taste|optional|for\s+serving|for\s+garnish|to\s+serve)$/i,
+      /\s+(?:to\s+taste|optional|for\s+serving|for\s+garnish|to\s+serve|for\s+coating|for\s+dusting|for\s+frying|for\s+dipping|for\s+drizzling|for\s+topping|for\s+rolling|for\s+brushing|for\s+greasing|for\s+dredging|for\s+breading|for\s+sprinkling|for\s+finishing|for\s+basting|for\s+marinating|for\s+glazing)$/i,
       /\s+(?:in\s+water|in\s+brine|in\s+oil)(?:,.*)?$/i,
       /\s+(?:drained\s+but\s+liquid\s+reserved)$/i,
       /\s+(?:cut\s+into\s+(?:wedges|strips|pieces|chunks|cubes|rounds|rings|slices))$/i,
@@ -645,6 +660,10 @@ export function isInstructionLine(line: string): boolean {
 
 function finalizeCanonicalName(namePart: string, unitRaw: string, prepNotes: string[]): string {
   let namePart2 = namePart.replace(/^of\s+/i, '').trim();
+
+  namePart2 = namePart2.replace(/\[[\d.,]+\s*(?:kg|g|oz|lbs?|ml)\s*\]/gi, ' ').trim();
+  namePart2 = namePart2.replace(/^of\s+/i, '').trim();
+  namePart2 = namePart2.replace(/^\d+(?:\/\d+)?\s+(?=[a-z])/i, '').trim();
 
   namePart2 = namePart2.replace(/\(([^)]*)\)/g, (_, note: string) => {
     if (note.trim()) prepNotes.push(note.trim().toLowerCase());
@@ -853,6 +872,15 @@ export function parseIngredientLine(line: string): {
 
     let unitRaw = pq.unitRaw;
 
+    if (!unitRaw && /^[-–—]\s*/.test(namePart)) {
+      const afterDash = namePart.replace(/^[-–—]\s*/, '');
+      const dashUnit = matchUnitAt(afterDash, 0);
+      if (dashUnit) {
+        unitRaw = dashUnit.unit.replace(/\.$/, '').trim();
+        namePart = afterDash.slice(dashUnit.end).trim();
+      }
+    }
+
     if (unitRaw && /^[-–—]\s*\d/.test(namePart)) {
       const uEsc = unitRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const rangeCont = namePart.match(
@@ -940,6 +968,8 @@ export function parseIngredientLine(line: string): {
     prepNotes.push(...commaParts.map((part) => part.toLowerCase()));
   }
   canonical = canonical.replace(/^\.\s+/, '').trim();
+  canonical = canonical.replace(/\[[\d.,]+\s*(?:kg|g|oz|lbs?|ml)\s*\]/gi, ' ').trim();
+  canonical = canonical.replace(/^of\s+/i, '').trim();
   canonical = stripLeadingQualifiers(canonical, prepNotes);
   canonical = stripLeadingPrepDescriptors(canonical, prepNotes);
   canonical = stripLeadingSizeDescriptors(canonical, prepNotes);
@@ -996,6 +1026,41 @@ export function singularize(word: string): string {
   return w;
 }
 
+/**
+ * Singular lowercase ingredient tokens → canonical regional form for matching only.
+ * Keeps import lines and household display names unchanged; `matchIngredient` applies
+ * this to the query and each candidate so pairs like eggplant/aubergine match both ways.
+ */
+const REGIONAL_SYNONYM_CANONICAL: Readonly<Record<string, string>> = {
+  aubergine: 'aubergine',
+  eggplant: 'aubergine',
+  courgette: 'courgette',
+  zucchini: 'courgette',
+  coriander: 'coriander',
+  cilantro: 'coriander',
+  rocket: 'rocket',
+  arugula: 'rocket',
+  prawns: 'prawns',
+  prawn: 'prawns',
+  shrimp: 'prawns',
+  shrimps: 'prawns',
+};
+
+export function applyRegionalSynonyms(name: string): string {
+  const out = name.trim().replace(/\s+/g, ' ');
+  if (!out) return out;
+  const parts = out.split(/\s+/);
+  const mapped = parts.map((raw) => {
+    const w = raw.toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+    if (!w) return raw;
+    const stem = singularize(w);
+    const canon = REGIONAL_SYNONYM_CANONICAL[stem] ?? REGIONAL_SYNONYM_CANONICAL[w];
+    if (!canon) return raw;
+    return canon;
+  });
+  return mapped.join(' ');
+}
+
 function tokenize(s: string): string[] {
   return normalizeForMatch(s).split(/\s+/).filter(Boolean);
 }
@@ -1019,6 +1084,9 @@ const MATCH_STRIP_STYLE_WORDS = new Set([
   'baked',
   'steamed',
   'hot',
+  'tuscan',
+  'lacinato',
+  'dinosaur',
 ]);
 
 export function normalizeForMatching(s: string): string {
@@ -1274,6 +1342,7 @@ function scoreMatchAgainstCandidate(
   vetoFn: (queryNorm: string, queryTokens: string[], candidateName: string) => boolean,
   minForStrippedBoost: number,
 ): number {
+  candidateName = applyRegionalSynonyms(candidateName);
   const vetoed = vetoFn(queryNorm, queryTokens, candidateName);
   const strippedVetoed =
     strippedQuery !== matchName ? vetoFn(strippedNorm, strippedTokens, candidateName) : true;
@@ -1314,7 +1383,9 @@ export function matchIngredient(
     };
   }
 
-  const matchName = applyMatchAliases(applyIngredientMatchSynonyms(name.trim()));
+  const matchName = applyMatchAliases(
+    applyIngredientMatchSynonyms(applyRegionalSynonyms(name.trim())),
+  );
   const queryNorm = normalizeForMatch(matchName);
   const queryTokens = tokenize(matchName);
   const querySingular = normalizeForMatching(matchName);

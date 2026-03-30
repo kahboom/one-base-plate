@@ -323,7 +323,7 @@ describe('RecipeImport page', () => {
     );
     await user.click(screen.getByTestId('import-parse-btn'));
 
-    expect(screen.getByText(/1 matched/)).toBeInTheDocument();
+    expect(screen.getByText(/1 household match/)).toBeInTheDocument();
     expect(screen.getByText(/1 ignored/)).toBeInTheDocument();
   });
 
@@ -404,7 +404,12 @@ describe('RecipeImport page', () => {
     await user.click(screen.getByTestId('import-parse-btn'));
 
     // Should find catalog match
-    expect(screen.getByText(/Catalog: Pasta/)).toBeInTheDocument();
+    expect(screen.getByTestId('review-catalog-suggestion-0')).toHaveTextContent(
+      /Catalog suggestion: Pasta/i,
+    );
+    expect(screen.getByTestId('review-catalog-suggestion-0')).toHaveTextContent(
+      /Not yet in your household/i,
+    );
 
     await user.click(screen.getByTestId('import-build-draft-btn'));
     await user.type(screen.getByTestId('draft-meal-name'), 'Pasta Dish');

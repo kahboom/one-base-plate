@@ -6,6 +6,10 @@ import type { Household, Ingredient } from '../src/types';
 import { saveHousehold, loadHousehold } from '../src/storage';
 import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from '../src/catalog';
 import IngredientManager from '../src/pages/IngredientManager';
+import {
+  pickCatalogItemInAddDialog,
+  openIngredientAddManualFromCatalogPicker,
+} from './incremental-load-helpers';
 
 function makeIngredient(overrides: Partial<Ingredient> & { name: string }): Ingredient {
   return {
@@ -72,9 +76,11 @@ describe('F045: Catalog linkage stored on ingredients', () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.type(screen.getByTestId('ingredient-search'), 'Chicken breast');
-    const rows = screen.getAllByTestId(/^ingredient-row-/);
-    await user.click(rows[0]!);
+    await pickCatalogItemInAddDialog(
+      user,
+      'chicken breast',
+      'catalog-add-result-cat-chicken-breast',
+    );
     const modal = screen.getByTestId('ingredient-modal');
     await user.click(within(modal).getByText('Done'));
 
@@ -92,7 +98,7 @@ describe('F045: Catalog linkage stored on ingredients', () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    await openIngredientAddManualFromCatalogPicker(user);
     const modal = screen.getByTestId('ingredient-modal');
     await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Unicorn meat');
     await user.click(within(modal).getByText('Done'));
@@ -110,9 +116,7 @@ describe('F045: Catalog linkage stored on ingredients', () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.type(screen.getByTestId('ingredient-search'), 'Pasta');
-    const rows = screen.getAllByTestId(/^ingredient-row-/);
-    await user.click(rows[0]!);
+    await pickCatalogItemInAddDialog(user, 'pasta', 'catalog-add-result-cat-pasta');
 
     expect(screen.getByTestId('ingredient-source-label')).toHaveTextContent('From catalog');
   });
@@ -122,7 +126,7 @@ describe('F045: Catalog linkage stored on ingredients', () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    await openIngredientAddManualFromCatalogPicker(user);
 
     expect(screen.getByTestId('ingredient-source-label')).toHaveTextContent('Manual');
   });
@@ -159,7 +163,7 @@ describe.skip('F045: Near-duplicate detection', () => {
     renderPage();
 
     // Add a new ingredient
-    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    await openIngredientAddManualFromCatalogPicker(user);
     const modal = screen.getByTestId('ingredient-modal');
 
     // Type a name that matches a catalog-populated ingredient
@@ -175,7 +179,7 @@ describe.skip('F045: Merge or cancel duplicate additions', () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    await openIngredientAddManualFromCatalogPicker(user);
     const modal = screen.getByTestId('ingredient-modal');
     await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Pasta');
     await user.click(within(modal).getByText('Done'));
@@ -188,8 +192,7 @@ describe.skip('F045: Merge or cancel duplicate additions', () => {
     const user = userEvent.setup();
     renderPage();
 
-    const countBefore = MASTER_CATALOG.length;
-    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    await openIngredientAddManualFromCatalogPicker(user);
     const modal = screen.getByTestId('ingredient-modal');
     await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Pasta');
     await user.click(within(modal).getByText('Done'));
@@ -200,8 +203,7 @@ describe.skip('F045: Merge or cancel duplicate additions', () => {
     expect(screen.queryByTestId('duplicate-warning-dialog')).not.toBeInTheDocument();
     expect(screen.queryByTestId('ingredient-modal')).not.toBeInTheDocument();
 
-    // Only one Pasta should exist
-    expect(screen.getByText(`Items (${countBefore})`)).toBeInTheDocument();
+    expect(screen.getByText('Items (0)')).toBeInTheDocument();
   });
 
   it('Cancel on duplicate warning keeps both and returns to modal', async () => {
@@ -209,7 +211,7 @@ describe.skip('F045: Merge or cancel duplicate additions', () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    await openIngredientAddManualFromCatalogPicker(user);
     const modal = screen.getByTestId('ingredient-modal');
     await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Pasta');
     await user.click(within(modal).getByText('Done'));
@@ -226,7 +228,7 @@ describe.skip('F045: Household-specific edits do not mutate catalog', () => {
     const catalogPastaBefore = MASTER_CATALOG.find((i) => i.name === 'pasta')!;
     const originalTags = [...catalogPastaBefore.tags];
 
-    seedHousehold();
+    seedHousehold([catalogIngredientToHousehold(MASTER_CATALOG.find((i) => i.name === 'pasta')!)]);
     const user = userEvent.setup();
     renderPage();
 
@@ -235,7 +237,6 @@ describe.skip('F045: Household-specific edits do not mutate catalog', () => {
     await user.click(rows[0]!);
 
     const modal = screen.getByTestId('ingredient-modal');
-    // Add a custom tag
     const tagInput = within(modal).getByPlaceholderText('Custom tag');
     await user.type(tagInput, 'my-custom-tag');
     await user.click(within(modal).getByText('Add tag'));

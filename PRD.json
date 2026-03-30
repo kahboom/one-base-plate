@@ -2134,6 +2134,108 @@
       "acceptanceRefs": [
         "S007"
       ]
+    },
+    {
+      "id": "F070",
+      "phase": 2,
+      "priority": "P0",
+      "category": "functional",
+      "description": "Catalog materialization correction: master catalog stays searchable for matching and suggestions; household ingredients are not auto-filled from the catalog; explicit add-from-catalog and import review materialize catalog-linked rows only on user accept or import finalize",
+      "steps": [
+        "Remove eager merge of MASTER_CATALOG into Ingredient Manager list state; show only persisted household ingredients (browse-first pagination unchanged).",
+        "Default Add ingredient opens catalog search first (searchCatalog); picking a catalog row opens the existing edit modal pre-filled via catalogIngredientToHousehold; Create manually opens a blank manual ingredient.",
+        "Recipe text import and Paprika review: keep household-first matchIngredient tiers and confidence bands; when the best match is catalog-only, label it clearly as a catalog suggestion not yet in the household; actions read Add from catalog / Use household match / Create new / Ignore as appropriate.",
+        "Do not persist household Ingredient rows from catalog until the user saves from Ingredient Manager or finalizes import with an action that adds from catalog; preserve parserSuggestedCatalogId and ImportMapping audit fields.",
+        "Conservative legacy: do not bulk-delete existing catalog-sourced household rows; optional suppressedCatalogIds on Household may remain in stored JSON but Ingredient Manager no longer depends on it for display.",
+        "Tests: no eager catalog population in UI storage; add flow catalog-first; import review labels; accepted vs ignored catalog paths; household beats catalog in matcher; regressions F044/F004/F043/F045/F046/F050/F064/F065.",
+        "PRD uiSpec S010/S007 alignment, CHANGELOG, agent-progress; mark passes only after verification."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F044",
+        "F046",
+        "F050",
+        "F060",
+        "F064",
+        "F065"
+      ],
+      "acceptanceRefs": [
+        "S007",
+        "S010"
+      ]
+    },
+    {
+      "id": "F071",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "Default ingredient imagery from master catalog with optional household override; no runtime image search; compact browse-first list preserved",
+      "steps": [
+        "Add optional imageUrl on CatalogIngredient / master catalog entries; seed static URLs for common items; do not copy catalog URLs into household Ingredient rows on add-from-catalog.",
+        "Implement resolveIngredientImageUrl (household imageUrl first, else linked catalog imageUrl by catalogId) and use for Ingredient Manager row thumbs and modal preview.",
+        "Ingredient Manager modal: distinguish inherited catalog image vs custom household image; URL/upload sets override; Remove custom image clears stored imageUrl and restores catalog fallback.",
+        "Recipe import and Paprika review: show catalog thumbnail when suggesting a catalog match without materializing a household row.",
+        "Lazy-load thumbnails where appropriate; no network calls beyond static image URLs.",
+        "Tests: resolution, override/remove, import review thumbnails, backward compatibility for explicit imageUrl; mark passes after verification."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F037",
+        "F044",
+        "F046",
+        "F070"
+      ],
+      "acceptanceRefs": [
+        "S007",
+        "S010"
+      ]
+    },
+    {
+      "id": "F072",
+      "phase": 2,
+      "priority": "P1",
+      "category": "ux",
+      "description": "Recipe library modal is a cooking/library editor with its own render tree; Base Meal Editor remains the only place for structure-first planning controls (components, alternatives, component/meal recipe refs)",
+      "steps": [
+        "Introduce RecipeIngredientRow for recipe ingredient lines only (ingredient, role, quantity, prep note, inline new ingredient, remove) — no ComponentRecipePicker, no alternatives, no per-component library recipe attachment.",
+        "Extract InlineIngredientForm as a shared primitive used by RecipeIngredientRow and ComponentForm.",
+        "RecipeModal in RecipeLibrary must not import ComponentForm; BaseMealManager MealModal continues to use ComponentForm unchanged.",
+        "Copy: recipe section reads Ingredients / Add ingredient; no base-meal-style Add component or planning-structure CTAs in the recipe modal.",
+        "Tests: recipe modal omits base-meal-only controls; base meal editor retains them; promoteRecipeToBaseMeal linkage unchanged."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F051",
+        "F057",
+        "F058",
+        "F066"
+      ],
+      "acceptanceRefs": [
+        "S007"
+      ]
+    },
+    {
+      "id": "F073",
+      "phase": 2,
+      "priority": "P1",
+      "category": "functional",
+      "description": "Regional ingredient synonyms: match-time equivalence for well-known variant pairs (eggplant/aubergine, cilantro/coriander, etc.)",
+      "steps": [
+        "Maintain a curated map of regional lexical variants to a single canonical token set used only during matching (not for parsed display names or persisted ingredient names).",
+        "Apply regional synonym normalization to the import/query string and to each household name, household alias, and catalog canonical name or alias before fuzzy scoring so matching is bidirectional.",
+        "Extend the master catalog where helpful: e.g. Aubergine with eggplant alias; fill gaps such as shrimp on Prawns, bare coriander on Cilantro, capsicum on Peppers.",
+        "Verify recipe import and Paprika bulk review resolve lines that differ only by regional naming without requiring user-defined aliases.",
+        "Add tests for bidirectional household matches, catalog-only matches, catalog search by alias, and regressions for compound names (e.g. cream cheese, olive oil)."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F064",
+        "F065"
+      ],
+      "acceptanceRefs": [
+        "S007",
+        "S010"
+      ]
     }
   ],
   "milestones": [
@@ -2229,7 +2331,11 @@
         "F065",
         "F066",
         "F067",
-        "F069"
+        "F069",
+        "F070",
+        "F071",
+        "F072",
+        "F073"
       ]
     },
     {
@@ -2325,6 +2431,10 @@
     "F066",
     "F067",
     "F069",
+    "F070",
+    "F071",
+    "F072",
+    "F073",
     "F020",
     "F037",
     "F038",
@@ -2594,7 +2704,7 @@
         "requiredElements": [
           "Integrated household navigation using the shared navigation pattern",
           "Sticky compact control bar with search, category filter, tag filter, source filter, sort, and page-size controls",
-          "Primary actions: Add ingredient, Add from catalog",
+          "Primary action: Add ingredient opens master catalog search first with optional create manually; household list shows only persisted ingredients (catalog is separate, queryable)",
           "Compact ingredient rows with selection checkbox, name, category, tags, source, key flags, and optional thumbnail",
           "Tap or click to open ingredient detail modal or drawer",
           "Modal or drawer form for full editing",
@@ -2746,7 +2856,11 @@
       "F064",
       "F065",
       "F066",
-      "F067"
+      "F067",
+      "F070",
+      "F071",
+      "F072",
+      "F073"
     ],
     "S008": [
       "F011",
@@ -2777,7 +2891,11 @@
       "F064",
       "F065",
       "F066",
-      "F067"
+      "F067",
+      "F070",
+      "F071",
+      "F072",
+      "F073"
     ]
   },
   "agentExecutionRules": [

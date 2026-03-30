@@ -1,3 +1,14 @@
+/**
+ * Master ingredient catalog (`MASTER_CATALOG`): static reference rows for browse/search,
+ * import matching (plain-text and Paprika recipes), near-duplicate hints, and creating
+ * household ingredients via `catalogIngredientToHousehold`.
+ *
+ * This is not the same as first-run storage: `seed-data.json` is loaded by `seedIfNeeded()`
+ * in `storage.ts` when the app has no households yet, and that snapshot includes each
+ * household’s persisted `ingredients` array. The catalog does not automatically populate
+ * IndexedDB. To change shipped seed ingredients, edit `fixtures/households/` and run
+ * `npm run db:seed`.
+ */
 import type { Ingredient, IngredientCategory } from './types';
 
 export interface CatalogIngredient {
@@ -9,7 +20,52 @@ export interface CatalogIngredient {
   babySafeWithAdaptation: boolean;
   /** Alternative names for matching during import / search. */
   aliases?: string[];
+  /** Optional default thumbnail (static URL); not copied to household rows unless user overrides. */
+  imageUrl?: string;
 }
+
+/** Unsplash-hosted thumbnails (Unsplash License); display-only catalog defaults. */
+const CAT_IMG = {
+  chickenBreast:
+    'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=128&h=128&fit=crop&q=80',
+  chickenThigh:
+    'https://images.unsplash.com/photo-1587593818170-4d4fd48427e5?w=128&h=128&fit=crop&q=80',
+  groundBeef:
+    'https://images.unsplash.com/photo-1603048588665-791ca8d61732?w=128&h=128&fit=crop&q=80',
+  salmon: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=128&h=128&fit=crop&q=80',
+  tuna: 'https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=128&h=128&fit=crop&q=80',
+  eggs: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=128&h=128&fit=crop&q=80',
+  chickpeas:
+    'https://images.unsplash.com/photo-1596797038530-2c107229654b?w=128&h=128&fit=crop&q=80',
+  pasta: 'https://images.unsplash.com/photo-1551462147-85805da1cdb5?w=128&h=128&fit=crop&q=80',
+  rice: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=128&h=128&fit=crop&q=80',
+  bread: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=128&h=128&fit=crop&q=80',
+  potatoes:
+    'https://images.unsplash.com/photo-1518977822533-641ea4f59c03?w=128&h=128&fit=crop&q=80',
+  broccoli:
+    'https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?w=128&h=128&fit=crop&q=80',
+  carrots: 'https://images.unsplash.com/photo-1445282768818-728615cc910a?w=128&h=128&fit=crop&q=80',
+  onion: 'https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31?w=128&h=128&fit=crop&q=80',
+  garlic: 'https://images.unsplash.com/photo-1547514701-427821017420?w=128&h=128&fit=crop&q=80',
+  tomatoes: 'https://images.unsplash.com/photo-1546470427-e26264939801?w=128&h=128&fit=crop&q=80',
+  milk: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=128&h=128&fit=crop&q=80',
+  cheese: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=128&h=128&fit=crop&q=80',
+  butter: 'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=128&h=128&fit=crop&q=80',
+  oliveOil:
+    'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=128&h=128&fit=crop&q=80',
+  flour: 'https://images.unsplash.com/photo-1598626430994-067a10d1d7b8?w=128&h=128&fit=crop&q=80',
+  banana: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=128&h=128&fit=crop&q=80',
+  apple: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=128&h=128&fit=crop&q=80',
+  strawberries:
+    'https://images.unsplash.com/photo-1464965911861-ce-a9effa5daa8?w=128&h=128&fit=crop&q=80',
+  lettuce: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=128&h=128&fit=crop&q=80',
+  mozzarella:
+    'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=128&h=128&fit=crop&q=80',
+  blackBeans:
+    'https://images.unsplash.com/photo-1596797038530-2c107229654b?w=128&h=128&fit=crop&q=80',
+  lime: 'https://images.unsplash.com/photo-1580052614034-c55d20bfee3b?w=128&h=128&fit=crop&q=80',
+  yogurt: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=128&h=128&fit=crop&q=80',
+} as const;
 
 function c(
   id: string,
@@ -19,6 +75,7 @@ function c(
   freezerFriendly = false,
   babySafeWithAdaptation = false,
   aliases?: string[],
+  imageUrl?: string,
 ): CatalogIngredient {
   const item: CatalogIngredient = {
     id,
@@ -29,28 +86,61 @@ function c(
     babySafeWithAdaptation,
   };
   if (aliases) item.aliases = aliases.map((a) => a.toLowerCase());
+  if (imageUrl) item.imageUrl = imageUrl;
   return item;
 }
 
 export const MASTER_CATALOG: CatalogIngredient[] = [
   // Proteins
-  c('cat-chicken-breast', 'Chicken breast', 'protein', ['quick'], true, true),
-  c('cat-chicken-thigh', 'Chicken thigh', 'protein', ['batch-friendly'], true, true),
-  c('cat-ground-beef', 'Ground beef', 'protein', ['quick'], true, false, [
-    'beef mince',
-    'mince meat',
-    'mince beef',
-  ]),
+  c(
+    'cat-chicken-breast',
+    'Chicken breast',
+    'protein',
+    ['quick'],
+    true,
+    true,
+    undefined,
+    CAT_IMG.chickenBreast,
+  ),
+  c(
+    'cat-chicken-thigh',
+    'Chicken thigh',
+    'protein',
+    ['batch-friendly'],
+    true,
+    true,
+    undefined,
+    CAT_IMG.chickenThigh,
+  ),
+  c(
+    'cat-ground-beef',
+    'Ground beef',
+    'protein',
+    ['quick'],
+    true,
+    false,
+    ['beef mince', 'mince meat', 'mince beef', 'ground meat'],
+    CAT_IMG.groundBeef,
+  ),
   c('cat-ground-turkey', 'Ground turkey', 'protein', ['quick'], true, true),
-  c('cat-salmon', 'Salmon', 'protein', ['quick'], true, true, [
-    'salmon fillets',
-    'salmon steaks',
-    'salmon chunks',
-    'salmon pieces',
-    'salmon',
-    'salmon fish',
-    'salmon seafood',
-  ]),
+  c(
+    'cat-salmon',
+    'Salmon',
+    'protein',
+    ['quick'],
+    true,
+    true,
+    [
+      'salmon fillets',
+      'salmon steaks',
+      'salmon chunks',
+      'salmon pieces',
+      'salmon',
+      'salmon fish',
+      'salmon seafood',
+    ],
+    CAT_IMG.salmon,
+  ),
   c('cat-cod', 'Cod', 'protein', ['quick'], true, true, [
     'cod fillets',
     'cod steaks',
@@ -60,25 +150,70 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'cod fish',
     'cod seafood',
   ]),
-  c('cat-tuna', 'Tuna (canned)', 'protein', ['quick', 'staple', 'rescue'], false, true),
-  c('cat-prawns', 'Prawns', 'protein', ['quick'], true, false),
+  c(
+    'cat-tuna',
+    'Tuna (canned)',
+    'protein',
+    ['quick', 'staple', 'rescue'],
+    false,
+    true,
+    undefined,
+    CAT_IMG.tuna,
+  ),
+  c('cat-prawns', 'Prawns', 'protein', ['quick'], true, false, ['shrimp']),
   c('cat-tofu', 'Tofu', 'protein', ['quick'], false, true),
-  c('cat-eggs', 'Eggs', 'protein', ['quick', 'rescue', 'staple'], false, true),
+  c(
+    'cat-eggs',
+    'Eggs',
+    'protein',
+    ['quick', 'rescue', 'staple'],
+    false,
+    true,
+    undefined,
+    CAT_IMG.eggs,
+  ),
   c('cat-lentils', 'Lentils', 'protein', ['batch-friendly', 'staple'], false, true),
-  c('cat-chickpeas', 'Chickpeas', 'protein', ['batch-friendly', 'staple'], false, true),
+  c(
+    'cat-chickpeas',
+    'Chickpeas',
+    'protein',
+    ['batch-friendly', 'staple'],
+    false,
+    true,
+    undefined,
+    CAT_IMG.chickpeas,
+  ),
   c('cat-pork-mince', 'Pork mince', 'protein', ['batch-friendly'], true, false),
   c('cat-sausages', 'Sausages', 'protein', ['quick', 'rescue'], true, false),
   c('cat-fish-fingers', 'Fish fingers', 'protein', ['quick', 'rescue'], true, true),
 
   // Carbs
-  c('cat-pasta', 'Pasta', 'carb', ['quick', 'staple'], false, true),
-  c('cat-rice', 'Rice', 'carb', ['staple', 'batch-friendly'], false, true),
-  c('cat-bread', 'Bread', 'carb', ['quick', 'staple', 'rescue'], true, true),
+  c('cat-pasta', 'Pasta', 'carb', ['quick', 'staple'], false, true, undefined, CAT_IMG.pasta),
+  c('cat-rice', 'Rice', 'carb', ['staple', 'batch-friendly'], false, true, undefined, CAT_IMG.rice),
+  c(
+    'cat-bread',
+    'Bread',
+    'carb',
+    ['quick', 'staple', 'rescue'],
+    true,
+    true,
+    undefined,
+    CAT_IMG.bread,
+  ),
   c('cat-wraps', 'Tortillas', 'carb', ['quick'], false, false, [
     'flour tortillas',
     'soft tortillas',
   ]),
-  c('cat-potatoes', 'Potatoes', 'carb', ['staple', 'batch-friendly', 'mashable'], false, true),
+  c(
+    'cat-potatoes',
+    'Potatoes',
+    'carb',
+    ['staple', 'batch-friendly', 'mashable'],
+    false,
+    true,
+    undefined,
+    CAT_IMG.potatoes,
+  ),
   c('cat-sweet-potato', 'Sweet potato', 'carb', ['batch-friendly', 'mashable'], false, true),
   c('cat-couscous', 'Couscous', 'carb', ['quick'], false, true),
   c('cat-noodles', 'Noodles', 'carb', ['quick'], false, true, [
@@ -124,16 +259,34 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'asparagus spear',
   ]),
   c('cat-beetroot', 'Beetroot', 'veg', ['quick'], true, true, ['beetroots', 'beetroot']),
-  c('cat-broccoli', 'Broccoli', 'veg', ['quick', 'mashable'], true, true, [
-    'broccoli florets',
-    'broccoli floret',
-    'broccoli buds',
-    'broccoli bud',
-    'broccoli stems',
-    'broccoli stem',
-    'broccolini',
-  ]),
-  c('cat-carrots', 'Carrots', 'veg', ['staple', 'mashable'], false, true),
+  c(
+    'cat-broccoli',
+    'Broccoli',
+    'veg',
+    ['quick', 'mashable'],
+    true,
+    true,
+    [
+      'broccoli florets',
+      'broccoli floret',
+      'broccoli buds',
+      'broccoli bud',
+      'broccoli stems',
+      'broccoli stem',
+      'broccolini',
+    ],
+    CAT_IMG.broccoli,
+  ),
+  c(
+    'cat-carrots',
+    'Carrots',
+    'veg',
+    ['staple', 'mashable'],
+    false,
+    true,
+    undefined,
+    CAT_IMG.carrots,
+  ),
   c('cat-peas', 'Peas', 'veg', ['quick'], true, true, ['green peas']),
   c('cat-sweetcorn', 'Sweetcorn', 'veg', ['quick'], true, true, ['sweetcorn', 'sweet corn']),
   c('cat-spinach', 'Spinach', 'veg', ['quick', 'mashable'], true, true, [
@@ -141,34 +294,48 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'spinach leaves',
     'baby spinach',
   ]),
-  c('cat-peppers', 'Peppers', 'veg', ['quick'], true, false, ['bell peppers']),
+  c('cat-peppers', 'Peppers', 'veg', ['quick'], true, false, ['bell peppers', 'capsicum']),
+  c('cat-aubergine', 'Aubergine', 'veg', ['mashable'], false, true, ['eggplant']),
   c('cat-courgette', 'Courgette', 'veg', ['mashable'], false, true, [
     'zucchini',
     'courgette',
     'zucchini squash',
     'courgette squash',
   ]),
-  c('cat-tomatoes', 'Tomatoes', 'veg', ['staple'], false, true, [
-    'chopped tomatoes',
-    'plum tomatoes',
-    'stewed tomatoes',
-    'cherry tomatoes',
-    'grape tomatoes',
-    'tomatoes on the vine',
-    'vine-ripened tomatoes',
-  ]),
+  c(
+    'cat-tomatoes',
+    'Tomatoes',
+    'veg',
+    ['staple'],
+    false,
+    true,
+    [
+      'chopped tomatoes',
+      'plum tomatoes',
+      'stewed tomatoes',
+      'cherry tomatoes',
+      'grape tomatoes',
+      'tomatoes on the vine',
+      'vine-ripened tomatoes',
+    ],
+    CAT_IMG.tomatoes,
+  ),
   c('cat-green-beans', 'Green beans', 'veg', ['quick'], true, true),
   c('cat-cucumber', 'Cucumber', 'veg', ['quick'], false, false, [
     'cucumbers',
     'cucumber',
     'cucumber slices',
   ]),
-  c('cat-onion', 'Onion', 'veg', ['staple'], false, false, [
-    'onions',
-    'onion',
-    'onion slices',
-    'onion pieces',
-  ]),
+  c(
+    'cat-onion',
+    'Onion',
+    'veg',
+    ['staple'],
+    false,
+    false,
+    ['onions', 'onion', 'onion slices', 'onion pieces'],
+    CAT_IMG.onion,
+  ),
   c('cat-brussels-sprouts', 'Brussels sprouts', 'veg', ['quick'], true, true, [
     'brussels sprouts',
     'brussels sprout',
@@ -190,7 +357,16 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'celery stalks',
     'celery stalk',
   ]),
-  c('cat-garlic', 'Garlic', 'veg', ['staple'], false, false, ['garlic', 'garlic cloves']),
+  c(
+    'cat-garlic',
+    'Garlic',
+    'veg',
+    ['staple'],
+    false,
+    false,
+    ['garlic', 'garlic cloves'],
+    CAT_IMG.garlic,
+  ),
   c('cat-mushrooms', 'Mushrooms', 'veg', ['quick'], false, false),
   c('cat-avocado', 'Avocado', 'veg', ['quick', 'mashable'], false, true),
   c('cat-leek', 'Leek', 'veg', ['quick'], false, true, ['leeks', 'baby leeks']),
@@ -203,10 +379,19 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c('cat-kale', 'Kale', 'veg', ['quick', 'mashable'], true, true),
 
   // Fruit
-  c('cat-banana', 'Banana', 'fruit', ['quick', 'mashable'], false, true),
-  c('cat-apple', 'Apple', 'fruit', ['quick'], false, true),
+  c('cat-banana', 'Banana', 'fruit', ['quick', 'mashable'], false, true, undefined, CAT_IMG.banana),
+  c('cat-apple', 'Apple', 'fruit', ['quick'], false, true, undefined, CAT_IMG.apple),
   c('cat-blueberries', 'Blueberries', 'fruit', ['quick'], true, true),
-  c('cat-strawberries', 'Strawberries', 'fruit', ['quick'], true, true),
+  c(
+    'cat-strawberries',
+    'Strawberries',
+    'fruit',
+    ['quick'],
+    true,
+    true,
+    undefined,
+    CAT_IMG.strawberries,
+  ),
   c('cat-grapes', 'Grapes', 'fruit', ['quick'], false, false),
   c('cat-orange', 'Orange', 'fruit', ['quick'], false, true, [
     'navel oranges',
@@ -220,14 +405,28 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   ]),
 
   // Dairy
-  c('cat-milk', 'Milk', 'dairy', ['staple'], false, true),
-  c('cat-cheese', 'Cheese', 'dairy', ['quick', 'staple', 'rescue'], true, true),
-  c('cat-yogurt', 'Yogurt', 'dairy', ['quick'], false, true, [
-    'plain yogurt',
-    'greek yogurt',
-    'yoghurt',
-  ]),
-  c('cat-butter', 'Butter', 'dairy', ['staple'], true, true),
+  c('cat-milk', 'Milk', 'dairy', ['staple'], false, true, undefined, CAT_IMG.milk),
+  c(
+    'cat-cheese',
+    'Cheese',
+    'dairy',
+    ['quick', 'staple', 'rescue'],
+    true,
+    true,
+    undefined,
+    CAT_IMG.cheese,
+  ),
+  c(
+    'cat-yogurt',
+    'Yogurt',
+    'dairy',
+    ['quick'],
+    false,
+    true,
+    ['plain yogurt', 'greek yogurt', 'yoghurt'],
+    CAT_IMG.yogurt,
+  ),
+  c('cat-butter', 'Butter', 'dairy', ['staple'], true, true, undefined, CAT_IMG.butter),
   c('cat-cream-cheese', 'Cream cheese', 'dairy', ['quick'], false, true),
 
   // Snacks
@@ -257,9 +456,25 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'vegetable broth',
   ]),
   c('cat-beef-stock', 'Beef stock', 'pantry', ['staple'], false, false, ['beef broth']),
-  c('cat-olive-oil', 'Olive oil', 'pantry', ['staple'], false, true),
+  c('cat-olive-oil', 'Olive oil', 'pantry', ['staple'], false, true, undefined, CAT_IMG.oliveOil),
   c('cat-soy-sauce', 'Soy sauce', 'pantry', ['staple'], false, false),
-  c('cat-flour', 'Flour', 'pantry', ['staple'], false, false),
+  c(
+    'cat-flour',
+    'Flour',
+    'pantry',
+    ['staple'],
+    false,
+    false,
+    [
+      'all purpose flour',
+      'all-purpose flour',
+      'whole wheat flour',
+      'whole wheat pastry flour',
+      'plain flour',
+      'bread flour',
+    ],
+    CAT_IMG.flour,
+  ),
   c('cat-baked-beans', 'Baked beans', 'pantry', ['quick', 'rescue', 'staple'], false, true),
   c('cat-pesto', 'Pesto', 'pantry', ['quick'], false, false),
   c('cat-garlic-powder', 'Garlic powder', 'pantry', ['staple'], false, false),
@@ -282,28 +497,51 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c('cat-french-onion-soup', 'French onion soup', 'pantry', ['staple'], false, true),
 
   // Taco ingredients
-  c('cat-black-beans', 'Black beans', 'protein', ['batch-friendly', 'staple'], false, true, [
-    'canned black beans',
-  ]),
+  c(
+    'cat-black-beans',
+    'Black beans',
+    'protein',
+    ['batch-friendly', 'staple'],
+    false,
+    true,
+    ['canned black beans'],
+    CAT_IMG.blackBeans,
+  ),
   c('cat-corn-tortillas', 'Corn tortillas', 'carb', ['quick'], false, false, ['taco shells']),
   c('cat-cilantro', 'Cilantro', 'veg', ['quick'], false, false, [
+    'coriander',
     'fresh coriander',
     'coriander leaves',
     'cilantro leaves',
   ]),
-  c('cat-lime', 'Lime', 'fruit', ['quick'], false, true),
+  c('cat-lime', 'Lime', 'fruit', ['quick'], false, true, undefined, CAT_IMG.lime),
   c('cat-jalapeno', 'Jalapeño', 'veg', ['quick'], false, false, ['jalapeno pepper']),
   c('cat-cumin', 'Cumin', 'pantry', ['staple'], false, false, ['ground cumin']),
   c('cat-chili-powder', 'Chili powder', 'pantry', ['staple'], false, false),
   c('cat-sour-cream', 'Sour cream', 'dairy', ['quick'], false, false),
   c('cat-taco-seasoning', 'Taco seasoning', 'pantry', ['quick', 'staple'], false, false),
-  c('cat-lettuce', 'Lettuce', 'veg', ['quick'], false, false, ['iceberg lettuce', 'romaine']),
+  c(
+    'cat-lettuce',
+    'Lettuce',
+    'veg',
+    ['quick'],
+    false,
+    false,
+    ['iceberg lettuce', 'romaine'],
+    CAT_IMG.lettuce,
+  ),
 
   // Pizza ingredients
-  c('cat-mozzarella', 'Mozzarella', 'dairy', ['quick'], true, true, [
-    'mozzarella cheese',
-    'fresh mozzarella',
-  ]),
+  c(
+    'cat-mozzarella',
+    'Mozzarella',
+    'dairy',
+    ['quick'],
+    true,
+    true,
+    ['mozzarella cheese', 'fresh mozzarella'],
+    CAT_IMG.mozzarella,
+  ),
   c('cat-yeast', 'Yeast', 'pantry', ['staple'], false, false, [
     'active dry instant yeast',
     'active dry yeast',
@@ -358,6 +596,8 @@ export function catalogIngredientToHousehold(
   catalogItem: CatalogIngredient,
   overrides?: Partial<Ingredient>,
 ): Ingredient {
+  // Do not copy catalogItem.imageUrl: household imageUrl is only for explicit user overrides;
+  // display uses resolveIngredientImageUrl() for catalog fallback.
   return {
     id: crypto.randomUUID(),
     name: catalogItem.name,

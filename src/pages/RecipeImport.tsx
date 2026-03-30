@@ -84,8 +84,12 @@ export default function RecipeImport() {
     () => reviewLines.filter((l) => l.action === 'use').length,
     [reviewLines],
   );
-  const createCount = useMemo(
-    () => reviewLines.filter((l) => l.action === 'create').length,
+  const addFromCatalogCount = useMemo(
+    () => reviewLines.filter((l) => l.action === 'create' && l.matchedCatalog).length,
+    [reviewLines],
+  );
+  const createManualCount = useMemo(
+    () => reviewLines.filter((l) => l.action === 'create' && !l.matchedCatalog).length,
     [reviewLines],
   );
   const ignoredCount = useMemo(
@@ -236,8 +240,13 @@ export default function RecipeImport() {
       {step === 'review' && (
         <div data-testid="import-review-step">
           <div className="mb-4 flex flex-wrap gap-2">
-            <Chip variant="success">{matchedCount} matched</Chip>
-            <Chip variant="warning">{createCount} to create</Chip>
+            <Chip variant="success">{matchedCount} household match</Chip>
+            {addFromCatalogCount > 0 && (
+              <Chip variant="info">{addFromCatalogCount} add from catalog</Chip>
+            )}
+            {createManualCount > 0 && (
+              <Chip variant="warning">{createManualCount} create new (manual)</Chip>
+            )}
             <Chip variant="neutral">{ignoredCount} ignored</Chip>
           </div>
 
@@ -262,13 +271,30 @@ export default function RecipeImport() {
                     </p>
                     {line.matchedIngredient && (
                       <Chip variant="success" className="mt-1 text-[10px]">
-                        Matched: {line.matchedIngredient.name}
+                        Household: {line.matchedIngredient.name}
                       </Chip>
                     )}
                     {line.matchedCatalog && !line.matchedIngredient && (
-                      <Chip variant="info" className="mt-1 text-[10px]">
-                        Catalog: {toSentenceCase(line.matchedCatalog.name)}
-                      </Chip>
+                      <div
+                        className="mt-1 flex items-start gap-2"
+                        data-testid={`review-catalog-suggestion-${i}`}
+                      >
+                        {line.matchedCatalog.imageUrl && (
+                          <img
+                            src={line.matchedCatalog.imageUrl}
+                            alt=""
+                            loading="lazy"
+                            className="mt-0.5 h-6 w-6 shrink-0 rounded object-cover border border-border-light"
+                            data-testid={`review-catalog-suggestion-thumb-${i}`}
+                          />
+                        )}
+                        <div className="min-w-0 space-y-0.5">
+                          <Chip variant="info" className="text-[10px]">
+                            Catalog suggestion: {toSentenceCase(line.matchedCatalog.name)}
+                          </Chip>
+                          <p className="text-[10px] text-text-muted">Not yet in your household</p>
+                        </div>
+                      </div>
                     )}
                   </div>
 
@@ -281,8 +307,12 @@ export default function RecipeImport() {
                       className="w-28"
                       data-testid={`review-action-${i}`}
                     >
-                      {line.matchedIngredient && <option value="use">Use match</option>}
-                      <option value="create">Create new</option>
+                      {line.matchedIngredient && <option value="use">Use household match</option>}
+                      <option value="create">
+                        {line.matchedCatalog && !line.matchedIngredient
+                          ? 'Add from catalog'
+                          : 'Create new (manual)'}
+                      </option>
                       <option value="ignore">Ignore</option>
                     </Select>
 

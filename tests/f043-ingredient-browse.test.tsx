@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import type { Household, Ingredient } from '../src/types';
 import { saveHousehold } from '../src/storage';
-import { MASTER_CATALOG } from '../src/catalog';
 import IngredientManager from '../src/pages/IngredientManager';
-import { showAllIngredientRows } from './incremental-load-helpers';
-
-const CATALOG_SIZE = MASTER_CATALOG.length;
+import {
+  showAllIngredientRows,
+  openIngredientAddManualFromCatalogPicker,
+} from './incremental-load-helpers';
 
 function makeIngredient(overrides: Partial<Ingredient> & { name: string }): Ingredient {
   return {
@@ -47,15 +47,6 @@ function seedWithIngredients(ingredients: Ingredient[]): Household {
   return household;
 }
 
-function catalogOverlap(ingredients: Ingredient[]): number {
-  const names = new Set(ingredients.map((i) => i.name.toLowerCase()));
-  return MASTER_CATALOG.filter((ci) => names.has(ci.name.toLowerCase())).length;
-}
-
-function expectedTotal(ingredients: Ingredient[]): number {
-  return ingredients.length + CATALOG_SIZE - catalogOverlap(ingredients);
-}
-
 function renderPage(householdId = 'h-browse') {
   return render(
     <MemoryRouter initialEntries={[`/household/${householdId}/ingredients`]}>
@@ -71,7 +62,7 @@ beforeEach(() => {
 });
 
 describe('F043: Browse-first compact list', () => {
-  it('renders ingredients as compact rows including catalog items', async () => {
+  it('renders ingredients as compact rows for household list only', async () => {
     const ingredients = [
       makeIngredient({
         name: 'Chicken',
@@ -87,8 +78,7 @@ describe('F043: Browse-first compact list', () => {
     renderPage();
     showAllIngredientRows();
 
-    const total = expectedTotal(ingredients);
-    expect(screen.getByText(`Items (${total})`)).toBeInTheDocument();
+    expect(screen.getByText('Items (3)')).toBeInTheDocument();
 
     // Paginated: page 1 shows up to 100 items; verify seeded items via search
     await user.type(screen.getByTestId('ingredient-search'), 'Chicken');
@@ -160,8 +150,7 @@ describe('F043: Search and filter controls', () => {
     await user.type(screen.getByTestId('ingredient-search'), 'Chicken breast');
 
     const rows = screen.getAllByTestId(/^ingredient-row-/);
-    // Should find our custom "Chicken breast" (and catalog "Chicken breast" is deduplicated)
-    expect(rows.length).toBeGreaterThanOrEqual(1);
+    expect(rows).toHaveLength(1);
     expect(screen.getByText('Chicken breast')).toBeInTheDocument();
     // Rice should be filtered out
     expect(screen.queryByTestId('ingredient-row-ing-rice')).not.toBeInTheDocument();
@@ -180,8 +169,7 @@ describe('F043: Search and filter controls', () => {
     await user.selectOptions(screen.getByTestId('ingredient-category-filter'), 'protein');
 
     const rows = screen.getAllByTestId(/^ingredient-row-/);
-    // All shown items should be protein (custom + catalog proteins)
-    expect(rows.length).toBeGreaterThanOrEqual(2);
+    expect(rows).toHaveLength(2);
     expect(screen.getByText('Chicken')).toBeInTheDocument();
     expect(screen.getByText('Salmon')).toBeInTheDocument();
     // Rice (carb) should not be shown
@@ -201,8 +189,7 @@ describe('F043: Search and filter controls', () => {
     await user.selectOptions(screen.getByTestId('ingredient-tag-filter'), 'rescue');
 
     const rows = screen.getAllByTestId(/^ingredient-row-/);
-    // Our custom "Chicken" has rescue, plus catalog items with rescue tag
-    expect(rows.length).toBeGreaterThanOrEqual(1);
+    expect(rows).toHaveLength(1);
     expect(screen.getByText('Chicken')).toBeInTheDocument();
   });
 
@@ -216,8 +203,7 @@ describe('F043: Search and filter controls', () => {
     const user = userEvent.setup();
     renderPage();
 
-    const total = expectedTotal(ingredients);
-    expect(screen.getByText(`Items (${total})`)).toBeInTheDocument();
+    expect(screen.getByText('Items (3)')).toBeInTheDocument();
 
     await user.selectOptions(screen.getByTestId('ingredient-category-filter'), 'protein');
 
@@ -296,12 +282,15 @@ describe('F043: Modal editing', () => {
     expect(within(modal).queryByText('Remove ingredient')).not.toBeInTheDocument();
   });
 
-  it('add ingredient opens modal immediately for the new ingredient', async () => {
+  it('add ingredient opens catalog search first; manual path opens blank modal', async () => {
     seedWithIngredients([]);
     const user = userEvent.setup();
     renderPage();
 
     await user.click(screen.getAllByText('Add ingredient')[0]!);
+    expect(screen.getByTestId('catalog-add-dialog')).toBeInTheDocument();
+
+    await openIngredientAddManualFromCatalogPicker(user);
 
     const modal = screen.getByTestId('ingredient-modal');
     expect(modal).toBeInTheDocument();
@@ -311,19 +300,19 @@ describe('F043: Modal editing', () => {
 });
 
 describe('F043: Comfortable with many ingredients', () => {
-  it('handles many ingredients (catalog + custom) without rendering expanded forms', () => {
-    seedWithIngredients([]);
+  it('handles many household ingredients without rendering expanded forms', () => {
+    const many = Array.from({ length: 55 }, (_, i) =>
+      makeIngredient({ name: `pantry item ${i}`, category: 'pantry' }),
+    );
+    seedWithIngredients(many);
     renderPage();
 
-    // Catalog items auto-populated
-    expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
+    expect(screen.getByText('Items (55)')).toBeInTheDocument();
 
-    // Paginated — only one page of rows visible, not the full list
     const rows = screen.getAllByTestId(/^ingredient-row-/);
     expect(rows.length).toBeLessThanOrEqual(100);
     expect(rows.length).toBeGreaterThan(0);
 
-    // No expanded form inputs visible
     expect(screen.queryByPlaceholderText('Ingredient name')).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Custom tag')).not.toBeInTheDocument();
   });
@@ -339,34 +328,24 @@ describe('F043: Comfortable with many ingredients', () => {
   });
 });
 
-describe('F043: Auto-populated catalog', () => {
-  it('auto-populates catalog items on load for empty households', async () => {
+describe('F043: Master catalog stays out of household list', () => {
+  it('empty household shows no catalog rows until user adds them', () => {
     seedWithIngredients([]);
-    const user = userEvent.setup();
     renderPage();
 
-    // Should see all catalog items in total count
-    expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
-    // Search for specific catalog items to verify population
-    await user.type(screen.getByTestId('ingredient-search'), 'Chicken breast');
-    expect(screen.getByText('Chicken breast')).toBeInTheDocument();
-    await user.clear(screen.getByTestId('ingredient-search'));
-    await user.type(screen.getByTestId('ingredient-search'), 'Broccoli');
-    expect(screen.getByText('Broccoli')).toBeInTheDocument();
+    expect(screen.getByText('Items (0)')).toBeInTheDocument();
+    expect(screen.getByText(/No household ingredients yet/)).toBeInTheDocument();
   });
 
-  it('does not duplicate existing household ingredients that match catalog names', async () => {
+  it('single household row stays a single row when name matches a catalog entry', async () => {
     const ingredients = [makeIngredient({ name: 'Pasta', category: 'carb', tags: ['custom-tag'] })];
     seedWithIngredients(ingredients);
     const user = userEvent.setup();
     renderPage();
 
-    const total = expectedTotal(ingredients);
-    expect(screen.getByText(`Items (${total})`)).toBeInTheDocument();
+    expect(screen.getByText('Items (1)')).toBeInTheDocument();
 
-    // Search for Pasta specifically
     await user.type(screen.getByTestId('ingredient-search'), 'Pasta');
-    // Should have exactly one Pasta (the household version, not duplicated)
     const pastaRows = screen.getAllByText('Pasta');
     expect(pastaRows).toHaveLength(1);
   });

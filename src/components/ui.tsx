@@ -418,12 +418,9 @@ export function useConfirm() {
     action: () => void | Promise<void>;
   } | null>(null);
 
-  const requestConfirm = useCallback(
-    (entityName: string, action: () => void | Promise<void>) => {
-      setPending({ entityName, action });
-    },
-    [],
-  );
+  const requestConfirm = useCallback((entityName: string, action: () => void | Promise<void>) => {
+    setPending({ entityName, action });
+  }, []);
 
   const confirm = useCallback(async () => {
     await pending?.action();

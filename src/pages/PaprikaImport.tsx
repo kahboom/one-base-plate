@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import type { BaseMeal, Ingredient, IngredientCategory, Recipe } from '../types';
+import type { Ingredient, IngredientCategory, Recipe } from '../types';
 import {
   loadHousehold,
   saveHouseholdAsync,
@@ -24,7 +24,6 @@ import {
   groupKeyForParsedName,
   countLowConfidencePending,
   refreshPaprikaSessionParsedLines,
-  paprikaRecipeImageUrl,
   PAPRIKA_INGREDIENT_PARSER_VERSION,
 } from '../paprika-parser';
 import type {
@@ -40,7 +39,7 @@ import PaprikaIngredientPicker from '../components/PaprikaIngredientPicker';
 import TagSuggestInput from '../components/TagSuggestInput';
 import { useListKeyNav } from '../hooks/useListKeyNav';
 import AppModal from '../components/AppModal';
-import PostImportDestination from '../components/PostImportDestination';
+import PostImportPaprikaCategories from '../components/PostImportPaprikaCategories';
 import {
   PageHeader,
   Card,
@@ -101,9 +100,9 @@ export default function PaprikaImport() {
   const [step, setStep] = useState<Step>('upload');
   const [parsedRecipes, setParsedRecipes] = useState<ParsedPaprikaRecipe[]>([]);
   const [importedCount, setImportedCount] = useState(0);
-  const [savedImportedRecipes, setSavedImportedRecipes] = useState<Recipe[]>([]);
-  const [doneBaseMeals, setDoneBaseMeals] = useState<BaseMeal[]>([]);
-  const [doneAllRecipes, setDoneAllRecipes] = useState<Recipe[]>([]);
+  /** Recipes from the last successful import; drives post-import category → tag mapping. */
+  const [postImportRecipes, setPostImportRecipes] = useState<Recipe[]>([]);
+  const [postImportBatchId, setPostImportBatchId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('all');
   const [sessionSavedAt, setSessionSavedAt] = useState<string | null>(null);
@@ -682,6 +681,7 @@ export default function PaprikaImport() {
     let allNewIngredients: Ingredient[] = [];
     const newRecipes: Recipe[] = [];
     let currentIngredients = [...household.ingredients];
+    const importedRecipeIds: string[] = [];
 
     for (const parsed of selectedRecipes) {
       const { recipe: libraryRecipe, newIngredients } = buildDraftRecipe(
@@ -689,6 +689,8 @@ export default function PaprikaImport() {
         parsed.parsedLines,
         currentIngredients,
       );
+
+      importedRecipeIds.push(libraryRecipe.id);
 
       if (parsed.isDuplicate && parsed.existingRecipeId) {
         const existingIdx = household.recipes.findIndex((r) => r.id === parsed.existingRecipeId);
@@ -731,23 +733,16 @@ export default function PaprikaImport() {
     household.ingredients = [...household.ingredients, ...dedupedIngredients];
     household.recipes = [...household.recipes, ...newRecipes];
 
+    const postImportSnapshot = importedRecipeIds
+      .map((id) => household.recipes.find((r) => r.id === id))
+      .filter((r): r is Recipe => r != null);
+
     try {
       await saveHouseholdAsync(household);
       clearImportSession();
       setImportedCount(selectedRecipes.length);
-
-      const allSaved: Recipe[] = [];
-      for (const parsed of selectedRecipes) {
-        const recipeId =
-          parsed.isDuplicate && parsed.existingRecipeId ? parsed.existingRecipeId : undefined;
-        const found = recipeId
-          ? household.recipes.find((r) => r.id === recipeId)
-          : newRecipes.find((r) => r.name === parsed.raw.name);
-        if (found) allSaved.push(found);
-      }
-      setSavedImportedRecipes(allSaved);
-      setDoneBaseMeals(household.baseMeals);
-      setDoneAllRecipes(household.recipes);
+      setPostImportRecipes(postImportSnapshot);
+      setPostImportBatchId(crypto.randomUUID());
 
       setStep('done');
     } catch {
@@ -1156,33 +1151,17 @@ export default function PaprikaImport() {
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-start gap-2.5">
-                        {(() => {
-                          const seen = new Set<number>();
-                          const imgs: string[] = [];
-                          for (const ref of group.lines) {
-                            if (seen.has(ref.globalRecipeIdx)) continue;
-                            seen.add(ref.globalRecipeIdx);
-                            const recipe = parsedRecipes[ref.globalRecipeIdx]!;
-                            const img = paprikaRecipeImageUrl(
-                              recipe.raw.image_url,
-                              recipe.raw.photo_data,
-                            );
-                            if (img) imgs.push(img);
-                          }
-                          if (imgs.length === 0) return null;
-                          return (
-                            <div className="flex shrink-0 gap-1">
-                              {imgs.slice(0, 3).map((src, imgIdx) => (
-                                <img
-                                  key={imgIdx}
-                                  src={src}
-                                  alt=""
-                                  className="h-10 w-10 rounded-md object-cover"
-                                />
-                              ))}
-                            </div>
-                          );
-                        })()}
+                        {sample.matchedCatalog?.imageUrl ? (
+                          <img
+                            src={sample.matchedCatalog.imageUrl}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            className="h-10 w-10 shrink-0 rounded-md border border-border-light bg-bg object-cover"
+                            data-testid={`review-group-catalog-suggestion-thumb-${i}`}
+                            onError={(e) => e.currentTarget.classList.add('hidden')}
+                          />
+                        ) : null}
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-text-primary">
                             {toSentenceCase(group.parsedName)}
@@ -1252,9 +1231,19 @@ export default function PaprikaImport() {
                           </Chip>
                         )}
                         {sample.resolutionStatus === 'pending' && sample.matchedCatalog && (
-                          <Chip variant="info" className="max-w-full truncate text-[10px]">
-                            Catalog: {toSentenceCase(sample.matchedCatalog.name)}
-                          </Chip>
+                          <div
+                            className="max-w-full space-y-0.5"
+                            data-testid={`review-group-catalog-suggestion-${i}`}
+                          >
+                            <div className="min-w-0 space-y-0.5">
+                              <Chip variant="info" className="max-w-full truncate text-[10px]">
+                                Catalog suggestion: {toSentenceCase(sample.matchedCatalog.name)}
+                              </Chip>
+                              <p className="text-[10px] text-text-muted">
+                                Not yet in your household
+                              </p>
+                            </div>
+                          </div>
                         )}
                       </div>
                       {sample.action === 'create' && sample.createDraft && (
@@ -1262,31 +1251,33 @@ export default function PaprikaImport() {
                           className="rounded-md border border-brand/25 bg-brand/5 px-2.5 py-2"
                           data-testid={`review-group-create-preview-${i}`}
                         >
-                          <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-                            Will create as
-                          </p>
-                          <p
-                            className="text-sm font-medium text-text-primary"
-                            data-testid={`review-group-create-canonical-${i}`}
-                          >
-                            {toSentenceCase(
-                              normalizeIngredientName(sample.createDraft.canonicalName),
-                            )}
-                          </p>
-                          <p className="mt-0.5 text-[11px] text-text-muted">
-                            {sample.createDraft.category}
-                            {(sample.createDraft.tags?.length ?? 0) > 0 &&
-                              ` · ${(sample.createDraft.tags ?? []).join(', ')}`}
-                            {sample.createDraft.retainImportAlias && ' · alias from import kept'}
-                          </p>
-                          <Button
-                            small
-                            className="mt-2"
-                            onClick={() => openCreateModalForGroup(group.groupKey)}
-                            data-testid={`group-edit-create-${i}`}
-                          >
-                            Edit name &amp; details
-                          </Button>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                              Will create as
+                            </p>
+                            <p
+                              className="text-sm font-medium text-text-primary"
+                              data-testid={`review-group-create-canonical-${i}`}
+                            >
+                              {toSentenceCase(
+                                normalizeIngredientName(sample.createDraft.canonicalName),
+                              )}
+                            </p>
+                            <p className="mt-0.5 text-[11px] text-text-muted">
+                              {sample.createDraft.category}
+                              {(sample.createDraft.tags?.length ?? 0) > 0 &&
+                                ` · ${(sample.createDraft.tags ?? []).join(', ')}`}
+                              {sample.createDraft.retainImportAlias && ' · alias from import kept'}
+                            </p>
+                            <Button
+                              small
+                              className="mt-2"
+                              onClick={() => openCreateModalForGroup(group.groupKey)}
+                              data-testid={`group-edit-create-${i}`}
+                            >
+                              Edit name &amp; details
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1380,7 +1371,7 @@ export default function PaprikaImport() {
                                   <option value="use">Use household match</option>
                                 )}
                                 <option value="create">
-                                  {line.matchedCatalog ? 'Create from catalog' : 'Create new'}
+                                  {line.matchedCatalog ? 'Add from catalog' : 'Create new (manual)'}
                                 </option>
                                 <option value="ignore">Ignore</option>
                               </Select>
@@ -1705,14 +1696,12 @@ export default function PaprikaImport() {
               Paprika.
             </p>
           </Card>
-          {savedImportedRecipes.length > 0 && householdId ? (
-            <PostImportDestination
+          {postImportBatchId && postImportRecipes.length > 0 && householdId ? (
+            <PostImportPaprikaCategories
+              key={postImportBatchId}
               householdId={householdId}
-              recipes={savedImportedRecipes}
-              baseMeals={doneBaseMeals}
-              allRecipes={doneAllRecipes}
-              ingredients={ingredients}
-              onComplete={() => navigate(`/household/${householdId}/home`)}
+              importedRecipes={postImportRecipes}
+              onComplete={() => navigate(`/household/${householdId}/recipes`)}
             />
           ) : (
             <ActionGroup>

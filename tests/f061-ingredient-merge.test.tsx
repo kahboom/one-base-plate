@@ -10,6 +10,7 @@ import {
   remapIngredientReferences,
 } from '../src/storage';
 import IngredientManager from '../src/pages/IngredientManager';
+import { openIngredientAddManualFromCatalogPicker } from './incremental-load-helpers';
 
 function makeIngredient(overrides: Partial<Ingredient> & { name: string }): Ingredient {
   return {
@@ -282,7 +283,7 @@ describe('F061: Merge button visibility', () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    await openIngredientAddManualFromCatalogPicker(user);
     const modal = screen.getByTestId('ingredient-modal');
     expect(within(modal).queryByTestId('merge-open-btn')).not.toBeInTheDocument();
   });
@@ -662,7 +663,7 @@ describe('F061: Merge execution', () => {
     expect(confirm).toHaveTextContent('1 reference will be remapped');
   });
 
-  it('suppresses absorbed catalog ingredient so it does not reappear', async () => {
+  it('merging away a catalog-linked duplicate leaves a single row; nothing reappears on reload', async () => {
     seedHousehold({
       ingredients: [
         makeIngredient({
@@ -688,7 +689,6 @@ describe('F061: Merge execution', () => {
     await user.click(within(modal).getByTestId('merge-confirm-btn'));
 
     const saved = loadHousehold('h-merge')!;
-    expect(saved.suppressedCatalogIds).toContain('cat-wraps');
     expect(saved.ingredients.some((i) => i.id === 'ing-wraps')).toBe(false);
 
     view.unmount();

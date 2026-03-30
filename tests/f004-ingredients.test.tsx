@@ -4,11 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import type { Household, Ingredient } from '../src/types';
 import { saveHousehold, loadHousehold } from '../src/storage';
-import { MASTER_CATALOG } from '../src/catalog';
 import IngredientManager from '../src/pages/IngredientManager';
 import { DEFAULT_PAGE_SIZE } from '../src/hooks/usePaginatedList';
-
-const CATALOG_SIZE = MASTER_CATALOG.length;
+import { openIngredientAddManualFromCatalogPicker } from './incremental-load-helpers';
 
 /** Unique names so catalog merge still yields a list larger than one incremental page. */
 function manyExtraIngredients(count: number): Ingredient[] {
@@ -69,15 +67,15 @@ describe('F004: Add ingredients across categories', () => {
     const user = userEvent.setup();
     renderIngredientManager('h-ing');
 
-    expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
+    expect(screen.getByText('Items (0)')).toBeInTheDocument();
 
-    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    await openIngredientAddManualFromCatalogPicker(user);
     const modal = screen.getByTestId('ingredient-modal');
     await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Quinoa');
     await user.selectOptions(within(modal).getByTestId('modal-ingredient-category'), 'carb');
     await user.click(within(modal).getByText('Done'));
 
-    expect(screen.getByText(`Items (${CATALOG_SIZE + 1})`)).toBeInTheDocument();
+    expect(screen.getByText('Items (1)')).toBeInTheDocument();
 
     const saved = loadHousehold('h-ing')!;
     const quinoa = saved.ingredients.find((i) => i.name === 'quinoa');
@@ -92,7 +90,7 @@ describe('F004: Tag ingredients', () => {
     const user = userEvent.setup();
     renderIngredientManager('h-ing');
 
-    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    await openIngredientAddManualFromCatalogPicker(user);
     const modal = screen.getByTestId('ingredient-modal');
     await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Farro');
     await user.click(within(modal).getByText('+quick'));
@@ -117,7 +115,7 @@ describe('F004: Tag ingredients', () => {
     const user = userEvent.setup();
     renderIngredientManager('h-ing');
 
-    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    await openIngredientAddManualFromCatalogPicker(user);
     const modal = screen.getByTestId('ingredient-modal');
     await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Test');
     await user.click(within(modal).getByText('+mashable'));
@@ -185,11 +183,7 @@ describe('F004: Ingredients persist across re-open', () => {
 
     renderIngredientManager('h-ing');
 
-    const catalogDupes = MASTER_CATALOG.filter((ci) =>
-      ['oats', 'salmon'].includes(ci.name.toLowerCase()),
-    ).length;
-    const expected = 2 + CATALOG_SIZE - catalogDupes;
-    expect(screen.getByText(`Items (${expected})`)).toBeInTheDocument();
+    expect(screen.getByText('Items (2)')).toBeInTheDocument();
     await user.type(screen.getByTestId('ingredient-search'), 'Oats');
     expect(screen.getByText('Oats')).toBeInTheDocument();
     await user.clear(screen.getByTestId('ingredient-search'));
@@ -204,7 +198,7 @@ describe('F004: Ingredient delete behavior', () => {
     const user = userEvent.setup();
     renderIngredientManager('h-ing');
 
-    await user.click(screen.getAllByText('Add ingredient')[0]!);
+    await openIngredientAddManualFromCatalogPicker(user);
     const modal = screen.getByTestId('ingredient-modal');
 
     expect(within(modal).queryByTestId('delete-ingredient-btn')).not.toBeInTheDocument();

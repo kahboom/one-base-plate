@@ -520,3 +520,143 @@ describe('F064 — Group key normalization', () => {
     );
   });
 });
+
+describe('F064 — Inline metric bracket stripping', () => {
+  it('½ lb [0.23 kg] of ground meat → ground meat', () => {
+    const r = parseIngredientLine('½ lb [0.23 kg] of ground meat');
+    expect(r.name).toBe('ground meat');
+    expect(r.quantity).toBe('½ lb');
+    expect(r.unit).toBe('lb');
+    expect(r.quantityValue).toBe(0.5);
+  });
+
+  it('[0.23 kg] of ground meat (no leading qty) → ground meat', () => {
+    const r = parseIngredientLine('[0.23 kg] of ground meat');
+    expect(r.name).toBe('ground meat');
+  });
+
+  it('ground meat matches catalog ground beef', () => {
+    const m = matchIngredient('ground meat', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-ground-beef');
+    expect(m.confidenceBand).toBe('exact');
+  });
+});
+
+describe('F064 — "of N" quantity modifier stripping', () => {
+  it('1/2 of 1 celery stalk, diced → celery stalk', () => {
+    const r = parseIngredientLine('1/2 of 1 celery stalk, diced');
+    expect(r.name).toBe('celery stalk');
+    expect(r.quantity).toBe('1/2');
+    expect(r.prepNotes).toContain('diced');
+  });
+
+  it('celery stalk matches catalog celery', () => {
+    const m = matchIngredient('celery stalk', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-celery');
+    expect(m.confidenceBand).toBe('exact');
+  });
+});
+
+describe('F064 — Digit + unicode fraction quantity parsing', () => {
+  it('1½ cups packed thinly sliced kale → kale', () => {
+    const r = parseIngredientLine('1½ cups packed thinly sliced kale');
+    expect(r.name).toBe('kale');
+    expect(r.unit).toBe('cups');
+    expect(r.quantityValue).toBe(1.5);
+  });
+
+  it('2¾ cups flour → flour', () => {
+    const r = parseIngredientLine('2¾ cups flour');
+    expect(r.name.toLowerCase()).toBe('flour');
+    expect(r.quantityValue).toBe(2.75);
+  });
+});
+
+describe('F064 — Cultivar/style descriptors stripped during matching', () => {
+  it('Tuscan kale matches catalog kale', () => {
+    const m = matchIngredient('Tuscan kale', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-kale');
+    expect(m.confidenceBand).toBe('exact');
+  });
+
+  it('lacinato kale matches catalog kale', () => {
+    const m = matchIngredient('lacinato kale', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-kale');
+  });
+
+  it('full Paprika line: 2 bunches Tuscan (lacinato) kale → kale', () => {
+    const r = parseIngredientLine(
+      '2 bunches Tuscan (lacinato) kale, stems removed and leaves chopped',
+    );
+    expect(r.name).toBe('Tuscan kale');
+    const m = matchIngredient(r.name, [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-kale');
+  });
+});
+
+describe('F064 — Dash/hyphen between quantity and unit', () => {
+  it('1/4-cup fresh chopped herbs → herbs', () => {
+    const r = parseIngredientLine('1/4-cup fresh chopped herbs');
+    expect(r.name).toBe('herbs');
+    expect(r.quantity).toBe('1/4');
+    expect(r.unit).toBe('cup');
+    expect(r.prepNotes).toContain('fresh');
+    expect(r.prepNotes).toContain('chopped');
+  });
+
+  it('10 -ounce package frozen peas → peas', () => {
+    const r = parseIngredientLine('10 -ounce package frozen peas');
+    expect(r.name).toBe('peas');
+    expect(r.unit).toBe('ounce');
+    expect(r.quantityValue).toBe(10);
+  });
+});
+
+describe('F064 — Range with mixed-number right side', () => {
+  it('1 – 1 3/4 cup whole wheat pastry flour → whole wheat pastry flour', () => {
+    const r = parseIngredientLine('1 – 1 3/4 cup whole wheat pastry flour');
+    expect(r.name).toBe('whole wheat pastry flour');
+    expect(r.unit).toBe('cup');
+    expect(r.quantityValue).toBe(1);
+  });
+});
+
+describe('F064 — Trailing "for X" prep phrases', () => {
+  it('All-purpose flour for coating → All-purpose flour', () => {
+    const r = parseIngredientLine('All-purpose flour for coating');
+    expect(r.name).toBe('All-purpose flour');
+    expect(r.prepNotes).toContain('for coating');
+  });
+
+  it('All-purpose flour for dusting → All-purpose flour', () => {
+    const r = parseIngredientLine('All-purpose flour for dusting');
+    expect(r.name).toBe('All-purpose flour');
+    expect(r.prepNotes).toContain('for dusting');
+  });
+
+  it('olive oil for drizzling → olive oil', () => {
+    const r = parseIngredientLine('olive oil for drizzling');
+    expect(r.name).toBe('olive oil');
+    expect(r.prepNotes).toContain('for drizzling');
+  });
+});
+
+describe('F064 — Flour variant catalog aliases', () => {
+  it('All-purpose flour matches catalog flour', () => {
+    const m = matchIngredient('All-purpose flour', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-flour');
+    expect(m.confidenceBand).toBe('exact');
+  });
+
+  it('whole wheat pastry flour matches catalog flour', () => {
+    const m = matchIngredient('whole wheat pastry flour', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-flour');
+    expect(m.confidenceBand).toBe('exact');
+  });
+});

@@ -1,3 +1,13 @@
+/**
+ * Local persistence (Dexie meta store + localStorage flags). First-run bootstrap: when
+ * there are no households and `onebaseplate_seeded` is unset, `seedIfNeeded()` imports
+ * `seed-data.json` and stores that full household list — including each household’s
+ * `ingredients` — as the initial app data.
+ *
+ * The static master list used for import/browse matching lives in `MASTER_CATALOG` in
+ * `catalog.ts`; it is separate from these seeded rows. Regenerate `seed-data.json` with
+ * `npm run db:seed` from `fixtures/households/`.
+ */
 import type {
   BaseMeal,
   ComponentRecipeRef,
@@ -9,6 +19,10 @@ import type {
   RecipeRef,
 } from './types';
 import { normalizeRecipeTagForCurated } from './lib/recipeTags';
+import {
+  normalizeIngredientGroupKey,
+  normalizeIngredientName,
+} from './lib/ingredientNameNormalize';
 import seedData from './seed-data.json';
 import {
   DEFAULT_HOUSEHOLD_KEY,
@@ -455,13 +469,7 @@ export function toSentenceCase(name: string): string {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-export function normalizeIngredientName(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, ' ')
-    .replace(/[.,;:!?]+$/, '');
-}
+export { normalizeIngredientName, normalizeIngredientGroupKey };
 
 /**
  * Normalize alias strings for persistence: same rules as names, deduped, no blanks,
@@ -593,53 +601,6 @@ function normalizeHouseholdIngredientNames(household: Household): Household {
   });
   if (!changed) return household;
   return { ...household, ingredients };
-}
-
-const SINGULAR_EXCEPTIONS_GK = new Set([
-  'hummus',
-  'couscous',
-  'lentils',
-  'chickpeas',
-  'oats',
-  'peas',
-  'noodles',
-  'greens',
-  'grits',
-  'grains',
-  'sprouts',
-  'capers',
-  'molasses',
-  'quinoa',
-  'edamame',
-  'gnocchi',
-  'tortellini',
-  'rigatoni',
-  'penne',
-  'fusilli',
-]);
-
-function singularizeForGroupKey(word: string): string {
-  const w = word.toLowerCase();
-  if (w.length < 3) return w;
-  if (SINGULAR_EXCEPTIONS_GK.has(w)) return w;
-  if (w.endsWith('ies') && w.length > 4) return w.slice(0, -3) + 'y';
-  if (w.endsWith('ves')) return w.slice(0, -3) + 'f';
-  if (w.endsWith('oes') && w.length > 4) return w.slice(0, -2);
-  if (w.endsWith('ses') && w.length > 4) return w.slice(0, -2);
-  if (w.endsWith('ches') || w.endsWith('shes') || w.endsWith('xes') || w.endsWith('zes'))
-    return w.slice(0, -2);
-  if (w.endsWith('s') && !w.endsWith('ss') && !w.endsWith('us')) return w.slice(0, -1);
-  return w;
-}
-
-export function normalizeIngredientGroupKey(name: string): string {
-  return normalizeIngredientName(name)
-    .replace(/-/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .split(/\s+/)
-    .map(singularizeForGroupKey)
-    .join(' ');
 }
 
 function pickSurvivor(duplicates: Ingredient[]): Ingredient {

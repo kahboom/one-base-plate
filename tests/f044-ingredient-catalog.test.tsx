@@ -11,9 +11,10 @@ import {
   getCatalogByCategory,
 } from '../src/catalog';
 import IngredientManager from '../src/pages/IngredientManager';
-import { showAllIngredientRows } from './incremental-load-helpers';
-
-const CATALOG_SIZE = MASTER_CATALOG.length;
+import {
+  pickCatalogItemInAddDialog,
+  openIngredientAddManualFromCatalogPicker,
+} from './incremental-load-helpers';
 
 function makeIngredient(overrides: Partial<Ingredient> & { name: string }): Ingredient {
   return {
@@ -78,7 +79,7 @@ describe('F044: Master ingredient catalog', () => {
     expect(categories).toContain('snack');
     expect(categories).toContain('freezer');
     expect(categories).toContain('pantry');
-    expect(CATALOG_SIZE).toBeGreaterThanOrEqual(50);
+    expect(MASTER_CATALOG.length).toBeGreaterThanOrEqual(50);
   });
 
   it('catalog is separate from household ingredients in storage', () => {
@@ -131,20 +132,15 @@ describe('F044: Master ingredient catalog', () => {
   });
 });
 
-describe('F044: Catalog auto-populates on the ingredient page', () => {
-  it('ingredient list auto-populates with all catalog items for empty household', async () => {
+describe('F044: Household list excludes master catalog until explicit add', () => {
+  it('empty household shows zero items; catalog is not merged into the list', async () => {
     seedHousehold();
-    const user = userEvent.setup();
     renderPage();
-    showAllIngredientRows();
 
-    expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
-    // Spot-check specific items via search since list is paginated
-    await user.type(screen.getByTestId('ingredient-search'), 'Chicken breast');
-    expect(screen.getByText('Chicken breast')).toBeInTheDocument();
-    await user.clear(screen.getByTestId('ingredient-search'));
-    await user.type(screen.getByTestId('ingredient-search'), 'Cheese');
-    expect(screen.getByText('Cheese')).toBeInTheDocument();
+    expect(screen.getByText('Items (0)')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(loadHousehold('h-catalog')!.ingredients).toHaveLength(0);
+    });
   });
 
   it('does not duplicate household items that match catalog names', async () => {
@@ -152,45 +148,37 @@ describe('F044: Catalog auto-populates on the ingredient page', () => {
     const user = userEvent.setup();
     renderPage();
 
-    // Total = household(1) + catalog - overlap(1)
-    expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
+    expect(screen.getByText('Items (1)')).toBeInTheDocument();
 
-    // Search for Pasta — should exist only once
     await user.type(screen.getByTestId('ingredient-search'), 'Pasta');
     const pastaMatches = screen.getAllByText('Pasta');
     expect(pastaMatches).toHaveLength(1);
   });
 
-  it('household items appear alongside catalog items', async () => {
+  it('custom household items are listed without auto-adding catalog entries', async () => {
     seedHousehold([makeIngredient({ name: 'Unicorn meat', category: 'protein' })]);
     const user = userEvent.setup();
     renderPage();
 
-    expect(screen.getByText(`Items (${CATALOG_SIZE + 1})`)).toBeInTheDocument();
-    // Search for custom item to verify
+    expect(screen.getByText('Items (1)')).toBeInTheDocument();
     await user.type(screen.getByTestId('ingredient-search'), 'Unicorn meat');
     expect(screen.getByText('Unicorn meat')).toBeInTheDocument();
-    // Search for a catalog item to verify it's present
     await user.clear(screen.getByTestId('ingredient-search'));
     await user.type(screen.getByTestId('ingredient-search'), 'Chicken breast');
-    expect(screen.getByText('Chicken breast')).toBeInTheDocument();
-  });
-
-  it("there is no 'Add from catalog' button", () => {
-    seedHousehold();
-    renderPage();
-
-    expect(screen.queryByText('Add from catalog')).not.toBeInTheDocument();
+    expect(screen.queryByText('Chicken breast')).not.toBeInTheDocument();
   });
 });
 
 describe('F044: Manual creation preserved', () => {
-  it("'Add ingredient' button creates a blank ingredient and opens modal", async () => {
+  it("'Add ingredient' opens catalog search; manual path opens blank modal", async () => {
     seedHousehold();
     const user = userEvent.setup();
     renderPage();
 
     await user.click(screen.getAllByText('Add ingredient')[0]!);
+    expect(screen.getByTestId('catalog-add-dialog')).toBeInTheDocument();
+
+    await openIngredientAddManualFromCatalogPicker(user);
 
     const modal = screen.getByTestId('ingredient-modal');
     expect(within(modal).getByText('New ingredient')).toBeInTheDocument();
@@ -199,18 +187,7 @@ describe('F044: Manual creation preserved', () => {
 });
 
 describe('F044: Catalog ingredients work with existing flows', () => {
-  it('master catalog fills the UI but does not bulk-write into household storage', async () => {
-    seedHousehold();
-    renderPage();
-
-    expect(screen.getByText(`Items (${CATALOG_SIZE})`)).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(loadHousehold('h-catalog')!.ingredients).toHaveLength(0);
-    });
-  });
-
-  it('saving a catalog row from the modal promotes it into household storage', async () => {
+  it('explicit catalog pick then Done persists a catalog-linked household row', async () => {
     seedHousehold();
     const user = userEvent.setup();
     renderPage();
@@ -219,9 +196,7 @@ describe('F044: Catalog ingredients work with existing flows', () => {
       expect(loadHousehold('h-catalog')!.ingredients).toHaveLength(0);
     });
 
-    await user.type(screen.getByTestId('ingredient-search'), 'eggs');
-    const rows = screen.getAllByTestId((id) => id.startsWith('ingredient-row-'));
-    await user.click(rows[0]!);
+    await pickCatalogItemInAddDialog(user, 'eggs', 'catalog-add-result-cat-eggs');
     const modal = screen.getByTestId('ingredient-modal');
     await user.click(within(modal).getByText('Done'));
 
@@ -232,16 +207,15 @@ describe('F044: Catalog ingredients work with existing flows', () => {
       expect(eggs).toBeDefined();
       expect(eggs!.category).toBe('protein');
       expect(eggs!.tags).toContain('quick');
+      expect(eggs!.source).toBe('catalog');
     });
   });
 
-  it('catalog-populated ingredient can be edited via modal', async () => {
-    seedHousehold();
+  it('catalog-backed row can be edited via modal', async () => {
+    seedHousehold([catalogIngredientToHousehold(MASTER_CATALOG.find((i) => i.name === 'pasta')!)]);
     const user = userEvent.setup();
     renderPage();
 
-    // Find and click a catalog item (Pasta)
-    // Use search to narrow down
     await user.type(screen.getByTestId('ingredient-search'), 'Pasta');
     const rows = screen.getAllByTestId((id) => id.startsWith('ingredient-row-'));
     await user.click(rows[0]!);
@@ -249,7 +223,6 @@ describe('F044: Catalog ingredients work with existing flows', () => {
     const modal = screen.getByTestId('ingredient-modal');
     expect(within(modal).getByTestId('modal-ingredient-name')).toHaveValue('pasta');
 
-    // Edit it
     await user.clear(within(modal).getByTestId('modal-ingredient-name'));
     await user.type(within(modal).getByTestId('modal-ingredient-name'), 'Fusilli pasta');
     await user.click(within(modal).getByText('Done'));
@@ -270,26 +243,29 @@ describe('F044: Catalog ingredients work with existing flows', () => {
     expect(typeof ing.babySafeWithAdaptation).toBe('boolean');
   });
 
-  it('search and filter work on auto-populated catalog items', async () => {
-    seedHousehold();
+  it('search and category filter work on persisted household ingredients', async () => {
+    const salmon = catalogIngredientToHousehold(MASTER_CATALOG.find((i) => i.name === 'salmon')!);
+    const apple = catalogIngredientToHousehold(MASTER_CATALOG.find((i) => i.name === 'apple')!);
+    seedHousehold([salmon, apple]);
     const user = userEvent.setup();
     renderPage();
 
-    // Search for a catalog item
     await user.type(screen.getByTestId('ingredient-search'), 'salmon');
     expect(screen.getByText('Salmon')).toBeInTheDocument();
 
-    // Clear search and use category filter
     await user.clear(screen.getByTestId('ingredient-search'));
     await user.selectOptions(screen.getByTestId('ingredient-category-filter'), 'fruit');
 
     const rows = screen.getAllByTestId((id) => id.startsWith('ingredient-row-'));
-    const catalogFruits = MASTER_CATALOG.filter((i) => i.category === 'fruit').length;
-    expect(rows).toHaveLength(catalogFruits);
+    expect(rows).toHaveLength(1);
+    expect(screen.getByText('Apple')).toBeInTheDocument();
   });
 
-  it('deleting a catalog ingredient suppresses re-population on revisit', async () => {
-    seedHousehold();
+  it('deleting a catalog-sourced ingredient removes it and it stays gone on revisit', async () => {
+    const tortillas = catalogIngredientToHousehold(
+      MASTER_CATALOG.find((i) => i.id === 'cat-wraps')!,
+    );
+    seedHousehold([tortillas]);
     const user = userEvent.setup();
     const view = renderPage();
 
@@ -301,10 +277,11 @@ describe('F044: Catalog ingredients work with existing flows', () => {
     await user.click(within(deleteConfirm).getByRole('button', { name: 'Delete' }));
 
     const saved = loadHousehold('h-catalog')!;
-    expect(saved.suppressedCatalogIds).toContain('cat-wraps');
+    expect(saved.ingredients).toHaveLength(0);
 
     view.unmount();
     renderPage();
+    expect(screen.getByText('Items (0)')).toBeInTheDocument();
     await user.type(screen.getByTestId('ingredient-search'), 'tortillas');
     expect(screen.queryByRole('button', { name: /^Edit Tortillas$/i })).not.toBeInTheDocument();
   });

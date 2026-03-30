@@ -17,7 +17,7 @@ import {
 } from '../components/ui';
 import AppModal from '../components/AppModal';
 import MealImageSlot from '../components/MealImageSlot';
-import ComponentForm from '../components/meals/ComponentForm';
+import RecipeIngredientRow from '../components/meals/RecipeIngredientRow';
 import RecipeLinksEditor from '../components/meals/RecipeLinksEditor';
 import { useIncrementalList } from '../hooks/useIncrementalList';
 import { sortRecipes, type RecipeSortKey, type SortDir } from '../lib/listSort';
@@ -138,7 +138,6 @@ function RecipeRow({ recipe, onClick }: { recipe: Recipe; onClick: () => void })
 function RecipeModal({
   recipe,
   ingredients,
-  baseMeals,
   onChange,
   onClose,
   onRemove,
@@ -147,7 +146,6 @@ function RecipeModal({
 }: {
   recipe: Recipe;
   ingredients: Ingredient[];
-  baseMeals: BaseMeal[];
   onChange: (updated: Recipe) => void;
   onClose: () => void;
   onRemove: () => void;
@@ -392,20 +390,25 @@ function RecipeModal({
           <section data-testid="recipe-structure-section" className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
-                3. Mapped ingredients
+                3. Ingredients
               </h3>
-              <Button small onClick={addComponent}>
-                Add component
+              <Button
+                small
+                onClick={addComponent}
+                aria-label="Add another ingredient"
+                data-testid="recipe-add-ingredient-btn"
+              >
+                Add ingredient
               </Button>
             </div>
             {recipe.components.length === 0 ? (
               <div className="rounded-sm border border-dashed border-border-default bg-bg p-3 text-sm text-text-muted">
-                No components yet. Add ingredients the same way as base meals.
+                No ingredients yet. Use Add ingredient to list this recipe&apos;s ingredients.
               </div>
             ) : (
               <div className="space-y-2">
                 {recipe.components.map((comp, i) => (
-                  <ComponentForm
+                  <RecipeIngredientRow
                     key={comp.id ?? i}
                     index={i}
                     defaultExpanded={openComponentIndexes.includes(i)}
@@ -414,8 +417,6 @@ function RecipeModal({
                     onChange={(updated) => updateComponent(i, updated)}
                     onRemove={() => removeComponent(i)}
                     onAddIngredient={onAddIngredient}
-                    allMeals={baseMeals}
-                    excludeMealId=""
                   />
                 ))}
               </div>
@@ -620,7 +621,6 @@ export default function RecipeLibrary() {
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [baseMeals, setBaseMeals] = useState<BaseMeal[]>([]);
   const [householdName, setHouseholdName] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -636,7 +636,6 @@ export default function RecipeLibrary() {
       const n = normalizeHousehold(h);
       setRecipes(n.recipes);
       setIngredients(n.ingredients);
-      setBaseMeals(n.baseMeals);
       setHouseholdName(n.name);
     }
     setLoaded(true);
@@ -861,7 +860,6 @@ export default function RecipeLibrary() {
         <RecipeModal
           recipe={editingRecipe}
           ingredients={ingredients}
-          baseMeals={baseMeals}
           onChange={updateRecipe}
           onClose={() => setEditingId(null)}
           onRemove={() => removeRecipe(editingRecipe.id)}

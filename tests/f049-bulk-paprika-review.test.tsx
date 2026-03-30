@@ -672,6 +672,9 @@ describe('PaprikaImport bulk review UI', () => {
     await user.click(screen.getByTestId('import-save-all-btn'));
 
     expect(await screen.findByTestId('paprika-done-step')).toBeInTheDocument();
+    expect(await screen.findByTestId('post-import-paprika-categories')).toBeInTheDocument();
+    expect(screen.getByText(/Map Paprika categories to tags/i)).toBeInTheDocument();
+    await user.click(screen.getByTestId('paprika-cat-skip-btn'));
     expect(loadImportSession('h-bulk')).toBeNull();
 
     const saved = loadHousehold('h-bulk')!;

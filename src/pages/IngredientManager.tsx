@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, useRef, type FormEvent } from 'react';
+import { useEffect, useState, useMemo, useCallback, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import type { Ingredient, IngredientCategory, Household } from '../types';
 import {
@@ -13,7 +13,8 @@ import {
   ingredientMatchesQuery,
   sanitizeIngredientAliasesAgainstHousehold,
 } from '../storage';
-import { MASTER_CATALOG, catalogIngredientToHousehold, findNearDuplicates } from '../catalog';
+import type { CatalogIngredient } from '../catalog';
+import { catalogIngredientToHousehold, findNearDuplicates, searchCatalog } from '../catalog';
 import {
   PageHeader,
   Card,
@@ -31,7 +32,18 @@ import TagSuggestInput from '../components/TagSuggestInput';
 import { sortIngredients, type IngredientSortKey, type SortDir } from '../lib/listSort';
 import { usePaginatedList, PAGE_SIZE_OPTIONS, type PageSize } from '../hooks/usePaginatedList';
 import { findIngredientReferences, type IngredientReference } from '../lib/ingredientRefs';
+import { getCatalogDefaultImageUrl, resolveIngredientImageUrl } from '../lib/ingredientImage';
 import { useListKeyNav } from '../hooks/useListKeyNav';
+import {
+  suggestIngredientMergePairs,
+  type IngredientMergePairSuggestion,
+} from '../lib/suggestIngredientMergePairs';
+import {
+  addDismissedMergePairKeys,
+  loadDismissedMergePairKeys,
+  mergePairKey,
+  pickMergeSurvivorHeuristic,
+} from '../lib/ingredientMergeDismissals';
 
 const INGREDIENT_SORT_OPTIONS: {
   value: string;
@@ -87,22 +99,97 @@ const CATEGORY_CHIP_VARIANT: Record<
   pantry: 'neutral',
 };
 
-function populateFromCatalog(
-  existing: Ingredient[],
-  suppressedCatalogIds: string[] = [],
-): Ingredient[] {
-  const existingNames = new Set(existing.map((i) => i.name.toLowerCase()));
-  const existingCatalogIds = new Set(
-    existing.map((i) => i.catalogId).filter((id): id is string => !!id),
+const CATALOG_PICKER_RESULT_CAP = 50;
+
+/* ---------- Add from catalog: search master catalog (F070) ---------- */
+function CatalogAddDialog({
+  open,
+  onClose,
+  onPickCatalog,
+  onCreateManual,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onPickCatalog: (item: CatalogIngredient) => void;
+  onCreateManual: () => void;
+}) {
+  const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    if (open) setQuery('');
+  }, [open]);
+
+  const results = useMemo(() => {
+    const all = searchCatalog(query);
+    return all.slice(0, CATALOG_PICKER_RESULT_CAP);
+  }, [query]);
+
+  if (!open) return null;
+
+  return (
+    <AppModal
+      open
+      onClose={onClose}
+      ariaLabel="Add ingredient from catalog"
+      backdropClassName="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+      className="max-h-[85vh] w-full max-w-md flex flex-col overflow-hidden p-0"
+      panelTestId="catalog-add-dialog"
+    >
+      <div className="border-b border-border-light px-4 py-3">
+        <h2 className="text-base font-bold text-text-primary">Add ingredient</h2>
+        <p className="mt-1 text-xs text-text-secondary">
+          Search the master catalog first, or create a manual ingredient if it is not listed.
+        </p>
+        <Input
+          type="search"
+          className="mt-3"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search catalog…"
+          data-testid="catalog-add-search"
+          autoFocus
+        />
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+        {query.trim() && results.length === 0 && (
+          <p className="px-2 py-4 text-center text-sm text-text-muted">No catalog matches.</p>
+        )}
+        {!query.trim() && (
+          <p className="px-2 py-4 text-center text-sm text-text-muted">
+            Type to search the master ingredient catalog.
+          </p>
+        )}
+        <ul className="space-y-1" data-testid="catalog-add-results">
+          {results.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                className="flex w-full items-center justify-between gap-2 rounded-md border border-border-light bg-surface-card px-3 py-2.5 text-left text-sm text-text-primary transition-colors hover:bg-bg"
+                data-testid={`catalog-add-result-${item.id}`}
+                onClick={() => onPickCatalog(item)}
+              >
+                <span className="min-w-0 truncate font-medium">{toSentenceCase(item.name)}</span>
+                <Chip
+                  variant={CATEGORY_CHIP_VARIANT[item.category]}
+                  className="flex-shrink-0 text-[10px]"
+                >
+                  {item.category}
+                </Chip>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="flex flex-col gap-2 border-t border-border-light bg-bg px-4 py-3">
+        <Button variant="primary" onClick={onCreateManual} data-testid="catalog-add-create-manual">
+          Create manually (not in catalog)
+        </Button>
+        <Button onClick={onClose} data-testid="catalog-add-cancel">
+          Cancel
+        </Button>
+      </div>
+    </AppModal>
   );
-  const suppressed = new Set(suppressedCatalogIds);
-  const newFromCatalog = MASTER_CATALOG.filter(
-    (ci) =>
-      !existingNames.has(ci.name.toLowerCase()) &&
-      !existingCatalogIds.has(ci.id) &&
-      !suppressed.has(ci.id),
-  ).map((ci) => catalogIngredientToHousehold(ci));
-  return [...existing, ...newFromCatalog];
 }
 
 /* ---------- Duplicate warning dialog ---------- */
@@ -154,6 +241,7 @@ function MergeConfirmView({
   refCountB,
   onConfirm,
   onCancel,
+  onIgnoreSuggestion,
 }: {
   ingredientA: Ingredient;
   ingredientB: Ingredient;
@@ -161,6 +249,8 @@ function MergeConfirmView({
   refCountB: number;
   onConfirm: (survivorId: string, absorbedId: string) => void;
   onCancel: () => void;
+  /** When set, offer “keep both” so this pair stops appearing in duplicate suggestions. */
+  onIgnoreSuggestion?: () => void;
 }) {
   const [survivorId, setSurvivorId] = useState(ingredientA.id);
   const survivor = survivorId === ingredientA.id ? ingredientA : ingredientB;
@@ -235,7 +325,7 @@ function MergeConfirmView({
         &ldquo;{toSentenceCase(absorbed.name)}&rdquo; will be removed after merging. This cannot be
         undone.
       </p>
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <Button
           variant="primary"
           onClick={() => onConfirm(survivor.id, absorbed.id)}
@@ -243,6 +333,11 @@ function MergeConfirmView({
         >
           Confirm merge
         </Button>
+        {onIgnoreSuggestion && (
+          <Button onClick={onIgnoreSuggestion} data-testid="merge-ignore-suggestion-btn">
+            Keep both (ignore)
+          </Button>
+        )}
         <Button onClick={onCancel} data-testid="merge-cancel-btn">
           Cancel
         </Button>
@@ -302,6 +397,15 @@ function IngredientModal({
     const canon = normalizeIngredientName(ingredient.name);
     return validateIngredientAliases({ ...ingredient, name: canon }, allIngredients);
   }, [ingredient, allIngredients]);
+
+  const catalogDefaultImageUrl = useMemo(
+    () => getCatalogDefaultImageUrl(ingredient),
+    [ingredient.catalogId],
+  );
+  const effectiveImageUrl = useMemo(
+    () => resolveIngredientImageUrl(ingredient),
+    [ingredient.imageUrl, ingredient.catalogId],
+  );
 
   const mergeResults = useMemo(() => {
     if (!mergeMode || !mergeSearch.trim()) return [];
@@ -542,12 +646,32 @@ function IngredientModal({
           </div>
 
           <FieldLabel label="Image">
+            <p className="mb-1 text-xs text-text-muted">
+              Linked catalog entries can supply a default image. Set a URL or upload only when you
+              want a custom household image.
+            </p>
+            {!ingredient.imageUrl && catalogDefaultImageUrl && (
+              <p
+                className="mb-2 text-xs font-medium text-text-secondary"
+                data-testid="ingredient-catalog-image-label"
+              >
+                From catalog (default)
+              </p>
+            )}
+            {ingredient.imageUrl && (
+              <p
+                className="mb-2 text-xs font-medium text-text-secondary"
+                data-testid="ingredient-custom-image-label"
+              >
+                Custom household image
+              </p>
+            )}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Input
                 type="url"
                 value={ingredient.imageUrl ?? ''}
                 onChange={(e) => onChange({ ...ingredient, imageUrl: e.target.value || undefined })}
-                placeholder="Image URL"
+                placeholder="Custom image URL (optional)"
                 data-testid="ingredient-image-url"
               />
               <label className="inline-flex cursor-pointer items-center">
@@ -570,14 +694,34 @@ function IngredientModal({
                   }}
                 />
               </label>
+              {ingredient.imageUrl && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  small
+                  data-testid="ingredient-remove-custom-image"
+                  onClick={() => onChange({ ...ingredient, imageUrl: undefined })}
+                >
+                  Remove custom image
+                </Button>
+              )}
             </div>
-            {ingredient.imageUrl && (
+            {effectiveImageUrl && (
               <div className="mt-2">
                 <img
-                  src={ingredient.imageUrl}
+                  src={effectiveImageUrl}
                   alt={ingredient.name || 'Ingredient'}
-                  className="h-20 w-20 rounded-md border border-border-light object-cover"
-                  data-testid="ingredient-image-preview"
+                  loading="lazy"
+                  className={`h-20 w-20 rounded-md border object-cover ${
+                    ingredient.imageUrl
+                      ? 'border-border-light'
+                      : 'border-border-light opacity-90 ring-1 ring-border-default'
+                  }`}
+                  data-testid={
+                    ingredient.imageUrl
+                      ? 'ingredient-image-preview'
+                      : 'ingredient-catalog-image-preview'
+                  }
                 />
               </div>
             )}
@@ -839,6 +983,7 @@ function IngredientTableRow({
   onToggleSelect: () => void;
   onClick: () => void;
 }) {
+  const rowImageUrl = resolveIngredientImageUrl(ingredient);
   return (
     <button
       type="button"
@@ -874,11 +1019,13 @@ function IngredientTableRow({
       {/* Content area */}
       <span className="flex flex-1 items-center gap-3 min-w-0 text-left">
         {/* Thumbnail */}
-        {ingredient.imageUrl && (
+        {rowImageUrl && (
           <img
-            src={ingredient.imageUrl}
+            src={rowImageUrl}
             alt=""
+            loading="lazy"
             className="h-8 w-8 flex-shrink-0 rounded object-cover border border-border-light hidden sm:block"
+            data-testid={`ingredient-list-thumb-${ingredient.id}`}
           />
         )}
 
@@ -1082,21 +1229,26 @@ export default function IngredientManager() {
 
   // Household ref for reference checking
   const [householdRef, setHouseholdRef] = useState<Household | null>(null);
-
-  /**
-   * Ingredient ids that belong in persisted household storage (not master-catalog display fillers).
-   * Initialized from storage on load; grows when the user adds an ingredient or saves/dismisses an edit
-   * on a row. Prevents `populateFromCatalog` virtual rows from being written back — which used to
-   * undo Settings "reset ingredients to defaults" as soon as this page mounted.
-   */
-  const persistedIngredientIdsRef = useRef<Set<string>>(new Set());
+  /** F070: Add ingredient opens catalog search before the edit modal */
+  const [catalogPickerOpen, setCatalogPickerOpen] = useState(false);
+  const [suggestedMergeIds, setSuggestedMergeIds] = useState<{
+    idA: string;
+    idB: string;
+  } | null>(null);
+  const [dismissVersion, setDismissVersion] = useState(0);
+  const [duplicateReviewOpen, setDuplicateReviewOpen] = useState(false);
+  const [mergeReviewSelectedKeys, setMergeReviewSelectedKeys] = useState<Set<string>>(() => new Set());
+  const [bulkMergeConfirmOpen, setBulkMergeConfirmOpen] = useState(false);
+  /** `null` = user has not run a scan since load / last ingredient change. */
+  const [duplicateScanPairs, setDuplicateScanPairs] = useState<
+    IngredientMergePairSuggestion[] | null
+  >(null);
 
   useEffect(() => {
     if (!householdId) return;
     const household = loadHousehold(householdId);
     if (household) {
-      persistedIngredientIdsRef.current = new Set(household.ingredients.map((i) => i.id));
-      setIngredients(populateFromCatalog(household.ingredients, household.suppressedCatalogIds));
+      setIngredients([...household.ingredients]);
       setHouseholdName(household.name);
       setHouseholdRef(household);
     }
@@ -1107,11 +1259,88 @@ export default function IngredientManager() {
     if (!loaded || !householdId) return;
     const household = loadHousehold(householdId);
     if (!household) return;
-    const toPersist = ingredients.filter((i) => persistedIngredientIdsRef.current.has(i.id));
-    household.ingredients = sanitizeIngredientAliasesAgainstHousehold(toPersist);
+    household.ingredients = sanitizeIngredientAliasesAgainstHousehold(ingredients);
     saveHousehold(household);
     setHouseholdRef(household);
   }, [loaded, householdId, ingredients]);
+
+  const dismissedMergeKeys = useMemo(() => {
+    if (!householdId) return new Set<string>();
+    return loadDismissedMergePairKeys(householdId);
+  }, [householdId, dismissVersion]);
+
+  useEffect(() => {
+    setDuplicateScanPairs(null);
+  }, [householdId]);
+
+  /** Pairs from last scan that still exist (drops absorbed ids after merges without re-scanning). */
+  const duplicateScanPairsActive = useMemo(() => {
+    if (!duplicateScanPairs) return [];
+    const idSet = new Set(ingredients.map((i) => i.id));
+    return duplicateScanPairs.filter(
+      (s) => idSet.has(s.ingredientA.id) && idSet.has(s.ingredientB.id),
+    );
+  }, [duplicateScanPairs, ingredients]);
+
+  const mergePairSuggestionsVisible = useMemo(
+    () =>
+      duplicateScanPairsActive.filter(
+        (s) => !dismissedMergeKeys.has(mergePairKey(s.ingredientA.id, s.ingredientB.id)),
+      ),
+    [duplicateScanPairsActive, dismissedMergeKeys],
+  );
+
+  const runDuplicateScan = useCallback(() => {
+    setDuplicateScanPairs(suggestIngredientMergePairs(ingredients, { minScore: 0.55, limit: 200 }));
+  }, [ingredients]);
+
+  const suggestedMergePairResolved = useMemo(() => {
+    if (!suggestedMergeIds) return null;
+    const a = ingredients.find((i) => i.id === suggestedMergeIds.idA);
+    const b = ingredients.find((i) => i.id === suggestedMergeIds.idB);
+    return a && b ? { a, b } : null;
+  }, [suggestedMergeIds, ingredients]);
+
+  useEffect(() => {
+    if (!suggestedMergeIds) return;
+    if (
+      !ingredients.some((i) => i.id === suggestedMergeIds.idA) ||
+      !ingredients.some((i) => i.id === suggestedMergeIds.idB)
+    ) {
+      setSuggestedMergeIds(null);
+    }
+  }, [suggestedMergeIds, ingredients]);
+
+  useEffect(() => {
+    if (!duplicateReviewOpen) return;
+    if (mergePairSuggestionsVisible.length === 0) {
+      setDuplicateReviewOpen(false);
+    }
+  }, [duplicateReviewOpen, mergePairSuggestionsVisible.length]);
+
+  const suggestionRefCounts = useMemo(() => {
+    if (!suggestedMergePairResolved || !householdRef) return { a: 0, b: 0 };
+    const m = findIngredientReferences(
+      new Set([suggestedMergePairResolved.a.id, suggestedMergePairResolved.b.id]),
+      householdRef,
+    );
+    return {
+      a: m.get(suggestedMergePairResolved.a.id)?.length ?? 0,
+      b: m.get(suggestedMergePairResolved.b.id)?.length ?? 0,
+    };
+  }, [suggestedMergePairResolved, householdRef]);
+
+  const mergeDuplicateReviewSelectState = useMemo(() => {
+    const n = mergePairSuggestionsVisible.length;
+    if (n === 0) return { all: false, some: false };
+    let selected = 0;
+    for (const s of mergePairSuggestionsVisible) {
+      if (mergeReviewSelectedKeys.has(mergePairKey(s.ingredientA.id, s.ingredientB.id))) {
+        selected++;
+      }
+    }
+    return { all: selected === n, some: selected > 0 && selected < n };
+  }, [mergePairSuggestionsVisible, mergeReviewSelectedKeys]);
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -1157,6 +1386,19 @@ export default function IngredientManager() {
 
   function addIngredient() {
     setEditingId(null);
+    setDraftNewIngredient(null);
+    setCatalogPickerOpen(true);
+  }
+
+  function pickCatalogItemForAdd(item: CatalogIngredient) {
+    setCatalogPickerOpen(false);
+    setEditingId(null);
+    setDraftNewIngredient(catalogIngredientToHousehold(item));
+  }
+
+  function startManualIngredientFromPicker() {
+    setCatalogPickerOpen(false);
+    setEditingId(null);
     setDraftNewIngredient(createEmptyIngredient());
   }
 
@@ -1180,7 +1422,6 @@ export default function IngredientManager() {
     if (editingIngredient?.name) {
       const normalized = normalizeIngredientForStorage(editingIngredient);
       updateIngredient(normalized);
-      persistedIngredientIdsRef.current.add(normalized.id);
     }
     setEditingId(null);
   }
@@ -1195,7 +1436,6 @@ export default function IngredientManager() {
       }
       const v = validateIngredientAliases(normalized, ingredients);
       if (v.blockingReason) return;
-      persistedIngredientIdsRef.current.add(normalized.id);
       setIngredients((prev) => [...prev, normalized]);
       setDraftNewIngredient(null);
       return;
@@ -1208,7 +1448,6 @@ export default function IngredientManager() {
           ingredients.map((i) => (i.id === normalized.id ? normalized : i)),
         );
         if (v.blockingReason) return;
-        persistedIngredientIdsRef.current.add(normalized.id);
         updateIngredient(normalized);
       }
       setEditingId(null);
@@ -1219,17 +1458,6 @@ export default function IngredientManager() {
     const ing = ingredients.find((i) => i.id === ingredientId);
     const displayName = ing?.name.trim() ? toSentenceCase(ing.name) : 'this ingredient';
     requestConfirm(displayName, () => {
-      persistedIngredientIdsRef.current.delete(ingredientId);
-      if (householdId && ing?.catalogId) {
-        const household = loadHousehold(householdId);
-        if (household) {
-          household.suppressedCatalogIds = [
-            ...new Set([...(household.suppressedCatalogIds ?? []), ing.catalogId]),
-          ];
-          saveHousehold(household);
-          setHouseholdRef(household);
-        }
-      }
       setIngredients((prev) => prev.filter((item) => item.id !== ingredientId));
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -1241,7 +1469,11 @@ export default function IngredientManager() {
   }
 
   const handleMerge = useCallback(
-    (survivorId: string, absorbedId: string) => {
+    (
+      survivorId: string,
+      absorbedId: string,
+      options?: { focusSurvivorInEditor?: boolean },
+    ) => {
       if (!householdId) return;
       const survivor = ingredients.find((i) => i.id === survivorId);
       const absorbed = ingredients.find((i) => i.id === absorbedId);
@@ -1257,27 +1489,119 @@ export default function IngredientManager() {
       household.ingredients = household.ingredients
         .map((i) => (i.id === survivor.id ? merged : i))
         .filter((i) => i.id !== absorbed.id);
-      if (absorbed.catalogId) {
-        household.suppressedCatalogIds = [
-          ...new Set([...(household.suppressedCatalogIds ?? []), absorbed.catalogId]),
-        ];
-      }
       saveHousehold(household);
 
-      persistedIngredientIdsRef.current = new Set(household.ingredients.map((i) => i.id));
-      setIngredients(
-        populateFromCatalog(household.ingredients, household.suppressedCatalogIds ?? []),
-      );
+      setIngredients([...household.ingredients]);
       setHouseholdRef(household);
       setSelectedIds((prev) => {
         const next = new Set(prev);
         next.delete(absorbed.id);
         return next;
       });
-      setEditingId(merged.id);
+      if (options?.focusSurvivorInEditor ?? true) {
+        setEditingId(merged.id);
+      } else {
+        setEditingId(null);
+      }
     },
     [householdId, ingredients],
   );
+
+  const applySequentialMergesToHousehold = useCallback(
+    (ops: Array<{ survivorId: string; absorbedId: string }>) => {
+      if (!householdId) return 0;
+      const household = loadHousehold(householdId);
+      if (!household) return 0;
+      let applied = 0;
+      for (const { survivorId, absorbedId } of ops) {
+        const survivor = household.ingredients.find((i) => i.id === survivorId);
+        const absorbed = household.ingredients.find((i) => i.id === absorbedId);
+        if (!survivor || !absorbed) continue;
+        const merged = mergeDuplicateMetadata(survivor, [absorbed]);
+        remapIngredientReferences(household, new Map([[absorbedId, survivorId]]));
+        household.ingredients = household.ingredients
+          .map((i) => (i.id === survivorId ? merged : i))
+          .filter((i) => i.id !== absorbedId);
+        applied += 1;
+      }
+      if (applied === 0) return 0;
+      saveHousehold(household);
+      setIngredients([...household.ingredients]);
+      setHouseholdRef(household);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        for (const op of ops) next.delete(op.absorbedId);
+        return next;
+      });
+      return applied;
+    },
+    [householdId],
+  );
+
+  const openDuplicateReview = useCallback(() => {
+    setMergeReviewSelectedKeys(new Set());
+    setDuplicateReviewOpen(true);
+  }, []);
+
+  const toggleMergeReviewPairKey = useCallback((pairKeyStr: string) => {
+    setMergeReviewSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(pairKeyStr)) next.delete(pairKeyStr);
+      else next.add(pairKeyStr);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAllMergeReview = useCallback(() => {
+    setMergeReviewSelectedKeys((prev) => {
+      const allKeys = mergePairSuggestionsVisible.map((s) =>
+        mergePairKey(s.ingredientA.id, s.ingredientB.id),
+      );
+      const allSelected = allKeys.length > 0 && allKeys.every((k) => prev.has(k));
+      if (allSelected) return new Set();
+      return new Set(allKeys);
+    });
+  }, [mergePairSuggestionsVisible]);
+
+  const handleBulkIgnoreMergeSuggestions = useCallback(() => {
+    if (!householdId || mergeReviewSelectedKeys.size === 0) return;
+    addDismissedMergePairKeys(householdId, mergeReviewSelectedKeys);
+    setDismissVersion((v) => v + 1);
+    setMergeReviewSelectedKeys(new Set());
+  }, [householdId, mergeReviewSelectedKeys]);
+
+  const confirmBulkMergeSelected = useCallback(() => {
+    if (!householdId || !householdRef || mergeReviewSelectedKeys.size === 0) return;
+    const selectedRows = mergePairSuggestionsVisible.filter((s) =>
+      mergeReviewSelectedKeys.has(mergePairKey(s.ingredientA.id, s.ingredientB.id)),
+    );
+    selectedRows.sort((a, b) => b.score - a.score);
+    const ops: Array<{ survivorId: string; absorbedId: string }> = [];
+    for (const row of selectedRows) {
+      const refMap = findIngredientReferences(
+        new Set([row.ingredientA.id, row.ingredientB.id]),
+        householdRef,
+      );
+      const ra = refMap.get(row.ingredientA.id)?.length ?? 0;
+      const rb = refMap.get(row.ingredientB.id)?.length ?? 0;
+      const { survivor, absorbed } = pickMergeSurvivorHeuristic(
+        row.ingredientA,
+        row.ingredientB,
+        ra,
+        rb,
+      );
+      ops.push({ survivorId: survivor.id, absorbedId: absorbed.id });
+    }
+    applySequentialMergesToHousehold(ops);
+    setMergeReviewSelectedKeys(new Set());
+    setBulkMergeConfirmOpen(false);
+  }, [
+    householdId,
+    householdRef,
+    mergeReviewSelectedKeys,
+    mergePairSuggestionsVisible,
+    applySequentialMergesToHousehold,
+  ]);
 
   // Selection helpers
   const toggleSelect = useCallback((id: string) => {
@@ -1326,38 +1650,16 @@ export default function IngredientManager() {
     return findIngredientReferences(selectedIds, householdRef);
   }, [bulkDeleteOpen, selectedIds, householdRef]);
 
-  const handleBulkDeleteConfirm = useCallback(
-    (idsToDelete: string[]) => {
-      const deleteSet = new Set(idsToDelete);
-      if (householdId) {
-        const household = loadHousehold(householdId);
-        if (household) {
-          const absorbedCatalogIds = ingredients
-            .filter((i) => deleteSet.has(i.id))
-            .map((i) => i.catalogId)
-            .filter((id): id is string => !!id);
-          if (absorbedCatalogIds.length > 0) {
-            household.suppressedCatalogIds = [
-              ...new Set([...(household.suppressedCatalogIds ?? []), ...absorbedCatalogIds]),
-            ];
-            saveHousehold(household);
-            setHouseholdRef(household);
-          }
-        }
-      }
-      for (const id of idsToDelete) {
-        persistedIngredientIdsRef.current.delete(id);
-      }
-      setIngredients((prev) => prev.filter((i) => !deleteSet.has(i.id)));
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        for (const id of idsToDelete) next.delete(id);
-        return next;
-      });
-      setBulkDeleteOpen(false);
-    },
-    [householdId, ingredients],
-  );
+  const handleBulkDeleteConfirm = useCallback((idsToDelete: string[]) => {
+    const deleteSet = new Set(idsToDelete);
+    setIngredients((prev) => prev.filter((i) => !deleteSet.has(i.id)));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const id of idsToDelete) next.delete(id);
+      return next;
+    });
+    setBulkDeleteOpen(false);
+  }, []);
 
   if (!loaded) return null;
 
@@ -1368,6 +1670,219 @@ export default function IngredientManager() {
         subtitle={`Household: ${householdName}`}
         subtitleTo={`/households?edit=${householdId}`}
       />
+
+      <Card className="mb-4" data-testid="ingredient-merge-scan-card">
+        <p className="text-sm font-medium text-text-primary">Duplicate name check</p>
+        <p className="mt-0.5 text-xs text-text-secondary">
+          Fuzzy matching runs only when you click below so this page stays fast after imports and
+          edits. After you change ingredients, run the check again.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Button onClick={runDuplicateScan} data-testid="ingredient-merge-check-btn">
+            Check for duplicates
+          </Button>
+          {duplicateScanPairs !== null && (
+            <span className="text-sm text-text-secondary" data-testid="ingredient-merge-scan-summary">
+              {duplicateScanPairs.length === 0 && 'No likely duplicates at the current threshold.'}
+              {duplicateScanPairs.length > 0 && duplicateScanPairsActive.length === 0 && (
+                <>
+                  Last scan included pairs that no longer exist (for example after merges). Run check
+                  again to refresh.
+                </>
+              )}
+              {duplicateScanPairsActive.length > 0 && mergePairSuggestionsVisible.length === 0 && (
+                <>
+                  Found {duplicateScanPairsActive.length} heuristic match
+                  {duplicateScanPairsActive.length !== 1 ? 'es' : ''}; all are on your ignored list.
+                </>
+              )}
+              {mergePairSuggestionsVisible.length > 0 && (
+                <>
+                  {mergePairSuggestionsVisible.length} pair
+                  {mergePairSuggestionsVisible.length !== 1 ? 's' : ''} to review (after ignores).
+                </>
+              )}
+            </span>
+          )}
+        </div>
+        {mergePairSuggestionsVisible.length > 0 && (
+          <button
+            type="button"
+            className="mt-3 w-full rounded-md border border-border-light bg-brand/5 px-4 py-3 text-left transition-colors hover:bg-brand/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            onClick={openDuplicateReview}
+            data-testid="ingredient-merge-notice"
+          >
+            <span className="text-sm font-semibold text-text-primary">
+              Open review list ({mergePairSuggestionsVisible.length} pair
+              {mergePairSuggestionsVisible.length !== 1 ? 's' : ''})
+            </span>
+            <span className="mt-0.5 block text-xs text-text-secondary">
+              Merge, ignore, or bulk actions. Ignored pairs stay separate and stay out of this list.
+            </span>
+          </button>
+        )}
+      </Card>
+
+      <AppModal
+        open={duplicateReviewOpen}
+        onClose={() => setDuplicateReviewOpen(false)}
+        ariaLabel="Review likely duplicate ingredients"
+        backdropClassName="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+        className="max-h-[90vh] w-full max-w-3xl overflow-hidden flex flex-col p-0"
+        panelTestId="ingredient-merge-review-modal"
+      >
+        <div className="border-b border-border-light px-4 py-3 sm:px-5">
+          <h2 className="text-lg font-bold text-text-primary">Review likely duplicates</h2>
+          <p className="mt-1 text-xs text-text-secondary">
+            Matches are fuzzy. Use Review for manual survivor choice, Ignore to keep both names, or
+            bulk Merge to apply automatic survivor rules (catalog row beats manual, then more meal
+            references, then earlier name).
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-text-primary">
+              <input
+                type="checkbox"
+                className="h-5 w-5 accent-brand"
+                checked={mergeDuplicateReviewSelectState.all}
+                ref={(el) => {
+                  if (el) el.indeterminate = mergeDuplicateReviewSelectState.some;
+                }}
+                onChange={toggleSelectAllMergeReview}
+                aria-label="Select all duplicate pairs on this list"
+                data-testid="merge-review-select-all"
+              />
+              Select all
+            </label>
+            <Button
+              small
+              disabled={mergeReviewSelectedKeys.size === 0}
+              onClick={handleBulkIgnoreMergeSuggestions}
+              data-testid="merge-review-bulk-ignore"
+            >
+              Ignore selected
+            </Button>
+            <Button
+              small
+              variant="primary"
+              disabled={mergeReviewSelectedKeys.size === 0}
+              onClick={() => setBulkMergeConfirmOpen(true)}
+              data-testid="merge-review-bulk-merge"
+            >
+              Merge selected
+            </Button>
+            <Button small onClick={runDuplicateScan} data-testid="merge-review-scan-again">
+              Scan again
+            </Button>
+          </div>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2 sm:px-4">
+          {mergePairSuggestionsVisible.length === 0 ? (
+            <p className="px-2 py-6 text-center text-sm text-text-muted" data-testid="merge-review-empty">
+              No pairs left — close or dismiss suggestions from the ingredient list.
+            </p>
+          ) : (
+            <>
+              <div
+                className="mb-1 hidden items-center gap-3 rounded-t-md border border-border-light bg-bg px-3 py-2 text-xs font-medium text-text-muted sm:flex"
+                data-testid="merge-review-table-header"
+              >
+                <span className="w-8 flex-shrink-0" aria-hidden />
+                <span className="flex-[2] min-w-0">Name A</span>
+                <span className="flex-[2] min-w-0">Name B</span>
+                <span className="w-14 flex-shrink-0 text-center">Match</span>
+                <span className="w-24 flex-shrink-0 text-right">Actions</span>
+              </div>
+              <div className="space-y-1 sm:space-y-0 sm:[&>div+div]:border-t-0" data-testid="merge-review-rows">
+                {mergePairSuggestionsVisible.map((row, idx) => {
+                  const pk = mergePairKey(row.ingredientA.id, row.ingredientB.id);
+                  const checked = mergeReviewSelectedKeys.has(pk);
+                  return (
+                    <div
+                      key={pk}
+                      className={`rounded-md border px-3 py-2 sm:py-2.5 ${
+                        checked ? 'border-brand bg-brand/5' : 'border-border-light bg-surface'
+                      }`}
+                      data-testid={`merge-review-row-${idx}`}
+                    >
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                        <label
+                          className="flex flex-shrink-0 items-center justify-center sm:w-8"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            className="h-5 w-5 accent-brand cursor-pointer"
+                            checked={checked}
+                            onChange={() => toggleMergeReviewPairKey(pk)}
+                            aria-label={`Select pair ${toSentenceCase(row.ingredientA.name)} and ${toSentenceCase(row.ingredientB.name)}`}
+                            data-testid={`merge-review-row-check-${idx}`}
+                          />
+                        </label>
+                        <span className="min-w-0 flex-[2] truncate text-sm font-medium text-text-primary">
+                          {toSentenceCase(row.ingredientA.name)}
+                        </span>
+                        <span className="min-w-0 flex-[2] truncate text-sm font-medium text-text-primary">
+                          {toSentenceCase(row.ingredientB.name)}
+                        </span>
+                        <span className="flex sm:w-14 sm:justify-center">
+                          <Chip variant="neutral" className="text-[10px]">
+                            {Math.round(row.score * 100)}%
+                          </Chip>
+                        </span>
+                        <div className="flex flex-1 justify-end sm:w-24 sm:flex-none">
+                          <Button
+                            small
+                            variant="primary"
+                            data-testid={`merge-review-row-open-${idx}`}
+                            onClick={() =>
+                              setSuggestedMergeIds({ idA: row.ingredientA.id, idB: row.ingredientB.id })
+                            }
+                          >
+                            Review
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="mt-1 text-[11px] leading-snug text-text-muted sm:ml-11">
+                        {row.reasons.join(' · ')}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+        <div className="border-t border-border-light px-4 py-3 sm:px-5">
+          <Button onClick={() => setDuplicateReviewOpen(false)} data-testid="merge-review-close">
+            Close
+          </Button>
+        </div>
+      </AppModal>
+
+      <AppModal
+        open={bulkMergeConfirmOpen}
+        onClose={() => setBulkMergeConfirmOpen(false)}
+        ariaLabel="Confirm bulk merge"
+        backdropClassName="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4"
+        className="max-w-md p-6"
+        panelTestId="merge-review-bulk-confirm-modal"
+      >
+        <h2 className="mb-2 text-lg font-bold text-text-primary">Merge selected pairs?</h2>
+        <p className="mb-6 text-sm text-text-secondary">
+          This will merge {mergeReviewSelectedKeys.size} pair
+          {mergeReviewSelectedKeys.size !== 1 ? 's' : ''}. For each pair, the survivor is chosen
+          automatically: catalog ingredient over manual, then the one used in more meals/recipes,
+          then the earlier name alphabetically. This cannot be undone.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="primary" onClick={confirmBulkMergeSelected} data-testid="merge-bulk-confirm-yes">
+            Merge
+          </Button>
+          <Button onClick={() => setBulkMergeConfirmOpen(false)} data-testid="merge-bulk-confirm-cancel">
+            Cancel
+          </Button>
+        </div>
+      </AppModal>
 
       {/* Sticky control bar */}
       <Card className="mb-4 sticky top-0 z-10" data-testid="ingredient-control-bar">
@@ -1519,7 +2034,14 @@ export default function IngredientManager() {
 
       {/* Browse list */}
       {ingredients.length === 0 ? (
-        <EmptyState>No ingredients yet. Add one to get started.</EmptyState>
+        <EmptyState>
+          <p className="mb-3">
+            No household ingredients yet. The master catalog stays separate — add only what you use.
+          </p>
+          <Button onClick={addIngredient} data-testid="empty-add-ingredient">
+            Add ingredient
+          </Button>
+        </EmptyState>
       ) : filteredIngredients.length === 0 ? (
         <EmptyState>No ingredients match your filters.</EmptyState>
       ) : (
@@ -1574,7 +2096,6 @@ export default function IngredientManager() {
         existingIngredient={duplicateWarning?.existingIngredient ?? null}
         onMerge={() => {
           if (duplicateWarning) {
-            persistedIngredientIdsRef.current.delete(duplicateWarning.newIngredient.id);
             setIngredients((prev) =>
               prev.filter((i) => i.id !== duplicateWarning.newIngredient.id),
             );
@@ -1604,6 +2125,47 @@ export default function IngredientManager() {
         onConfirm={handleBulkDeleteConfirm}
         onCancel={() => setBulkDeleteOpen(false)}
       />
+
+      <CatalogAddDialog
+        open={catalogPickerOpen}
+        onClose={() => setCatalogPickerOpen(false)}
+        onPickCatalog={pickCatalogItemForAdd}
+        onCreateManual={startManualIngredientFromPicker}
+      />
+
+      <AppModal
+        open={!!suggestedMergePairResolved}
+        onClose={() => setSuggestedMergeIds(null)}
+        ariaLabel="Review suggested ingredient merge"
+        backdropClassName="fixed inset-0 z-[75] flex items-center justify-center bg-black/40 p-4"
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto p-6"
+        panelTestId="ingredient-suggestion-merge-modal"
+      >
+        {suggestedMergePairResolved && (
+          <MergeConfirmView
+            ingredientA={suggestedMergePairResolved.a}
+            ingredientB={suggestedMergePairResolved.b}
+            refCountA={suggestionRefCounts.a}
+            refCountB={suggestionRefCounts.b}
+            onConfirm={(surv, abs) => {
+              handleMerge(surv, abs, { focusSurvivorInEditor: false });
+              setSuggestedMergeIds(null);
+            }}
+            onCancel={() => setSuggestedMergeIds(null)}
+            onIgnoreSuggestion={
+              householdId
+                ? () => {
+                    addDismissedMergePairKeys(householdId, [
+                      mergePairKey(suggestedMergePairResolved.a.id, suggestedMergePairResolved.b.id),
+                    ]);
+                    setDismissVersion((v) => v + 1);
+                    setSuggestedMergeIds(null);
+                  }
+                : undefined
+            }
+          />
+        )}
+      </AppModal>
     </>
   );
 }

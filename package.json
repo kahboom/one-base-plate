@@ -14,7 +14,8 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "seed": "npx tsx scripts/seed.ts",
-    "db:seed": "npx tsx scripts/db-seed.ts"
+    "db:seed": "npx tsx scripts/db-seed.ts",
+    "suggest:ingredient-merges": "npx tsx scripts/suggest-ingredient-merge-pairs.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.100.0",

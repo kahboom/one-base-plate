@@ -1,3 +1,11 @@
+/**
+ * Writes `src/seed-data.json`: the bundled household snapshot (including each household’s
+ * `ingredients`) that `seedIfNeeded()` in `src/storage.ts` loads on first app run.
+ *
+ * The master ingredient list for import/browse matching is `MASTER_CATALOG` in
+ * `src/catalog.ts` — separate from this file. Plain JSON cannot contain comments, so
+ * that split is documented in `storage.ts` and `catalog.ts`.
+ */
 import { readFileSync, readdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 

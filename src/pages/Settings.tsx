@@ -1,6 +1,6 @@
-import { useRef } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { PageHeader, Card, Button, ConfirmDialog, useConfirm } from "../components/ui";
+import { useRef } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { PageHeader, Card, Button, ConfirmDialog, useConfirm } from '../components/ui';
 import {
   clearAllHouseholdsAndDefault,
   clearDefaultHouseholdId,
@@ -9,8 +9,8 @@ import {
   loadDefaultHouseholdId,
   resetToDefaultState,
   saveDefaultHouseholdId,
-} from "../storage";
-import { clearImportSession } from "../paprika-parser";
+} from '../storage';
+import { clearImportSession } from '../paprika-parser';
 
 export default function Settings() {
   const { householdId } = useParams<{ householdId: string }>();
@@ -26,11 +26,11 @@ export default function Settings() {
 
   function handleExport() {
     const json = exportHouseholdsJSON();
-    const blob = new Blob([json], { type: "application/json" });
+    const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = "onebaseplate-export.json";
+    a.download = 'onebaseplate-export.json';
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -45,7 +45,7 @@ export default function Settings() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const result = importHouseholdsJSON(reader.result as string, "merge");
+        const result = importHouseholdsJSON(reader.result as string, 'merge');
         const storedDefault = loadDefaultHouseholdId();
         if (!storedDefault || !result.some((h) => h.id === storedDefault)) {
           const fallbackId = result[0]?.id ?? null;
@@ -56,26 +56,26 @@ export default function Settings() {
           }
         }
       } catch {
-        alert("Invalid JSON file. Please check the file format.");
+        alert('Invalid JSON file. Please check the file format.');
       }
     };
     reader.readAsText(file);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
   function handleClearClick() {
-    requestConfirm("", () => {
+    requestConfirm('', () => {
       clearAllHouseholdsAndDefault();
       clearImportSession();
-      navigate("/households");
+      navigate('/households');
     });
   }
 
   function handleResetToDefaultClick() {
-    requestConfirmResetDefault("", async () => {
+    requestConfirmResetDefault('', async () => {
       await resetToDefaultState();
       clearImportSession();
-      navigate("/households");
+      navigate('/households');
     });
   }
 
@@ -86,8 +86,8 @@ export default function Settings() {
       <Card className="mb-6">
         <h2 className="mb-3 text-sm font-semibold text-text-primary">Data</h2>
         <p className="mb-4 text-sm text-text-secondary">
-          Export or import all households (members, ingredients, base meals, weekly plans). Import merges with
-          existing data by household id.
+          Export or import all households (members, ingredients, base meals, weekly plans). Import
+          merges with existing data by household id.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button data-testid="settings-export-btn" onClick={handleExport}>
