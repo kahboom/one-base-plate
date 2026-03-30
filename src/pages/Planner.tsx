@@ -541,109 +541,115 @@ export default function Planner() {
                 </div>
               )}
 
-              {ROLE_ORDER.map((role) => {
-                const roleComponents = selectedMeal.components.filter((c) => c.role === role);
-                if (roleComponents.length === 0) return null;
-                const roleLabel: Record<string, string> = {
-                  protein: 'Protein',
-                  carb: 'Carb',
-                  sauce: 'Sauce',
-                  veg: 'Veg / toppings',
-                  topping: 'Toppings',
-                };
-                return (
-                  <div key={role} className="mb-3" data-testid={`how-to-group-${role}`}>
-                    <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
-                      {roleLabel[role] ?? role}
-                    </h4>
-                    <ul className="space-y-2">
-                      {roleComponents.map((c, idx) => {
-                        const ing = household.ingredients.find((x) => x.id === c.ingredientId);
-                        const ingName = ing ? toSentenceCase(ing.name) : c.ingredientId;
-                        const resolution = resolveFullCookingRef(
-                          c,
-                          selectedMeal,
-                          household.ingredients,
-                          { sessionOverrides },
-                        );
-                        const defaultRef = getDefaultRecipeRef(c);
-                        const defaultLine = defaultRef
-                          ? summarizeRecipeRef(defaultRef, {
-                              linkedMealName: linkedMealName(defaultRef.linkedBaseMealId),
-                            })
-                          : c.prepNote || '\u2014';
-                        const tonightLine = resolution.effective
-                          ? summarizeRecipeRef(resolution.effective, {
-                              linkedMealName: linkedMealName(resolution.effective.linkedBaseMealId),
-                            })
-                          : '\u2014';
-                        const showTonight = resolution.source === 'session';
-                        return (
-                          <li
-                            key={c.id ?? idx}
-                            className="rounded-md border border-border-light bg-surface-card p-3 text-sm"
-                            data-testid={`how-to-row-${c.role}-${idx}`}
-                          >
-                            <div className="font-medium text-text-primary capitalize">
-                              {ingName}
-                            </div>
-                            <div className="mt-1 text-text-secondary">
-                              <span className="text-text-muted">Default: </span>
-                              {defaultLine}
-                            </div>
-                            <div className="mt-1 text-text-secondary">
-                              <span className="text-text-muted">Tonight: </span>
-                              {showTonight
-                                ? tonightLine
-                                : resolution.effective
-                                  ? tonightLine
-                                  : defaultLine}
-                              {showTonight && (
-                                <Chip variant="info" className="ml-2">
-                                  override
-                                </Chip>
-                              )}
-                              {!showTonight &&
-                                resolution.source !== 'none' &&
-                                resolution.source !== 'component' && (
-                                  <span className="ml-2 text-[10px] text-text-muted">
-                                    ({resolution.sourceLabel})
-                                  </span>
-                                )}
-                            </div>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              <Button
-                                type="button"
-                                small
-                                data-testid={`tonight-override-${c.id ?? idx}`}
-                                onClick={() => setPickerComponent(c)}
-                              >
-                                {showTonight ? 'Change tonight' : 'Set tonight'}
-                              </Button>
-                              {showTonight && c.id && (
+              <div className="overflow-hidden rounded-md border border-border-light bg-surface">
+                {ROLE_ORDER.map((role) => {
+                  const roleComponents = selectedMeal.components.filter((c) => c.role === role);
+                  if (roleComponents.length === 0) return null;
+                  const roleLabel: Record<string, string> = {
+                    protein: 'Protein',
+                    carb: 'Carb',
+                    sauce: 'Sauce',
+                    veg: 'Veg / toppings',
+                    topping: 'Toppings',
+                  };
+                  return (
+                    <div key={role} data-testid={`how-to-group-${role}`}>
+                      <h4 className="border-y border-border-light bg-bg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted first:border-t-0">
+                        {roleLabel[role] ?? role}
+                      </h4>
+                      <ul className="divide-y divide-border-light">
+                        {roleComponents.map((c, idx) => {
+                          const ing = household.ingredients.find((x) => x.id === c.ingredientId);
+                          const ingName = ing ? toSentenceCase(ing.name) : c.ingredientId;
+                          const resolution = resolveFullCookingRef(
+                            c,
+                            selectedMeal,
+                            household.ingredients,
+                            { sessionOverrides },
+                          );
+                          const defaultRef = getDefaultRecipeRef(c);
+                          const defaultLine = defaultRef
+                            ? summarizeRecipeRef(defaultRef, {
+                                linkedMealName: linkedMealName(defaultRef.linkedBaseMealId),
+                              })
+                            : c.prepNote || '\u2014';
+                          const tonightLine = resolution.effective
+                            ? summarizeRecipeRef(resolution.effective, {
+                                linkedMealName: linkedMealName(
+                                  resolution.effective.linkedBaseMealId,
+                                ),
+                              })
+                            : '\u2014';
+                          const showTonight = resolution.source === 'session';
+                          return (
+                            <li
+                              key={c.id ?? idx}
+                              className="flex flex-col justify-between gap-3 p-3 text-sm sm:flex-row sm:items-center"
+                              data-testid={`how-to-row-${c.role}-${idx}`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="font-medium capitalize text-text-primary">
+                                  {ingName}
+                                </div>
+                                <div className="mt-0.5 text-text-secondary">
+                                  {showTonight ? (
+                                    <>
+                                      <span className="mr-2 text-text-muted line-through">
+                                        {defaultLine}
+                                      </span>
+                                      <span className="text-text-primary">{tonightLine}</span>
+                                      <Chip variant="info" className="ml-2">
+                                        override
+                                      </Chip>
+                                    </>
+                                  ) : (
+                                    <>
+                                      {resolution.effective ? tonightLine : defaultLine}
+                                      {resolution.source !== 'none' &&
+                                        resolution.source !== 'component' && (
+                                          <span className="ml-2 text-[10px] text-text-muted">
+                                            ({resolution.sourceLabel})
+                                          </span>
+                                        )}
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex shrink-0 flex-wrap gap-2">
                                 <Button
                                   type="button"
-                                  small
                                   variant="ghost"
-                                  onClick={() => {
-                                    setSessionOverrides((prev) => {
-                                      const next = new Map(prev);
-                                      next.delete(c.id!);
-                                      return next;
-                                    });
-                                  }}
+                                  small
+                                  data-testid={`tonight-override-${c.id ?? idx}`}
+                                  onClick={() => setPickerComponent(c)}
                                 >
-                                  Clear tonight
+                                  {showTonight ? 'Change tonight' : 'Set tonight'}
                                 </Button>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                );
-              })}
+                                {showTonight && c.id && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    small
+                                    onClick={() => {
+                                      setSessionOverrides((prev) => {
+                                        const next = new Map(prev);
+                                        next.delete(c.id!);
+                                        return next;
+                                      });
+                                    }}
+                                  >
+                                    Clear
+                                  </Button>
+                                )}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
 
               {selectedMeal.recipeLinks && selectedMeal.recipeLinks.length > 0 && (
                 <div className="mt-2 text-sm text-text-secondary">
@@ -664,40 +670,51 @@ export default function Planner() {
             </section>
 
             <Section title="Per-person assembly">
-              {variants.map((variant) => {
-                const member = household.members.find((m) => m.id === variant.memberId);
-                if (!member) return null;
-                return (
-                  <div
-                    key={variant.id}
-                    data-testid={`variant-${member.id}`}
-                    className="mb-4 rounded-sm border border-border-light p-3"
-                  >
-                    <h4 className="mb-1 text-sm font-semibold text-text-primary">
-                      {member.name} ({member.role})
-                      {variant.requiresExtraPrep && (
-                        <Chip variant="warning" className="ml-2">
-                          extra prep needed
-                        </Chip>
-                      )}
-                    </h4>
-                    {variant.safeFoodIncluded && (
-                      <p className="mb-1 text-xs text-success">Safe food included</p>
-                    )}
-                    <ul className="mb-2 space-y-0.5 pl-5 text-sm">
-                      {variant.instructions.map((instr, i) => (
-                        <li key={i}>{instr}</li>
-                      ))}
-                    </ul>
-                    <Link
-                      to={`/household/${householdId}/member/${member.id}`}
-                      className="text-xs font-medium text-brand hover:underline"
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {variants.map((variant) => {
+                  const member = household.members.find((m) => m.id === variant.memberId);
+                  if (!member) return null;
+                  return (
+                    <div
+                      key={variant.id}
+                      data-testid={`variant-${member.id}`}
+                      className="rounded-sm border border-border-light p-3"
                     >
-                      Quick edit {member.name}
-                    </Link>
-                  </div>
-                );
-              })}
+                      <div className="mb-2 flex items-start justify-between gap-2">
+                        <div>
+                          <h4 className="text-sm font-semibold text-text-primary">
+                            {member.name}{' '}
+                            <span className="font-normal text-text-secondary">
+                              ({member.role})
+                            </span>
+                            {variant.safeFoodIncluded && (
+                              <Chip variant="success" className="ml-2">
+                                Safe food included
+                              </Chip>
+                            )}
+                            {variant.requiresExtraPrep && (
+                              <Chip variant="warning" className="ml-2">
+                                extra prep needed
+                              </Chip>
+                            )}
+                          </h4>
+                        </div>
+                        <Link
+                          to={`/household/${householdId}/member/${member.id}`}
+                          className="shrink-0 text-xs font-medium text-brand hover:underline"
+                        >
+                          Quick edit {member.name}
+                        </Link>
+                      </div>
+                      <ul className="list-disc space-y-0.5 pl-5 text-sm text-text-secondary">
+                        {variant.instructions.map((instr, i) => (
+                          <li key={i}>{instr}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
             </Section>
           </Card>
         </div>

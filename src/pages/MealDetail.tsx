@@ -335,7 +335,7 @@ export function MealDetailContent({
       )}
 
       <Section title="Per-member assembly">
-        <div className="space-y-3" data-testid="member-variants">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" data-testid="member-variants">
           {variants.map((variant) => {
             const member = household.members.find((m) => m.id === variant.memberId);
             if (!member) return null;
@@ -349,9 +349,10 @@ export function MealDetailContent({
 
             return (
               <Card key={variant.id} data-testid={`variant-${member.id}`}>
-                <div className="mb-2 flex items-center gap-2">
-                  <h3 className="text-base font-semibold text-text-primary">
-                    {member.name} ({member.role})
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-semibold text-text-primary">
+                    {member.name}{' '}
+                    <span className="font-normal text-text-secondary">({member.role})</span>
                   </h3>
                   <Chip variant={compatVariant as 'success' | 'warning' | 'danger'}>
                     {memberOverlap?.compatibility === 'direct'
@@ -362,7 +363,7 @@ export function MealDetailContent({
                   </Chip>
                   {variant.requiresExtraPrep && <Chip variant="warning">extra prep</Chip>}
                 </div>
-                <ul className="space-y-0.5 pl-5 text-sm">
+                <ul className="list-disc space-y-0.5 pl-5 text-sm text-text-secondary">
                   {variant.instructions.map((instr, i) => (
                     <li key={i}>{instr}</li>
                   ))}

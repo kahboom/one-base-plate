@@ -266,6 +266,18 @@ export function stripLeadingIngredientNoise(line: string): string {
       progress = true;
     }
   }
+  /** "Or 3 sprigs …" / "and/or 2 cups …" — list alternatives before a quantity, not "or oregano". */
+  while (true) {
+    const orAlt = s.match(/^(?:or|and\/or)\b\s+/i);
+    if (!orAlt) break;
+    const rest = s.slice(orAlt[0]!.length).trimStart();
+    const quantityLed =
+      /^[\d¼½¾⅓⅔⅛⅜⅝⅞.]/.test(rest) ||
+      /^(a\s+few|a\s+couple(?:\s+of)?|several|some|few)\b/i.test(rest) ||
+      /^an?\b\s+/i.test(rest);
+    if (!quantityLed) break;
+    s = s.slice(orAlt[0]!.length).trim();
+  }
   if (/^lbs?\s+of\s+/i.test(s)) {
     s = `1 ${s}`;
   }
@@ -452,6 +464,16 @@ export function parseLeadingQuantityPrefix(
     consumed: unitMatch.end,
     parenPrepNotes: [],
   };
+}
+
+/** "Rosemary 3 sprigs" → name rosemary, move count+unit into prep notes. */
+function stripTrailingCountMeasureSuffix(name: string, prepNotes: string[]): string {
+  const re =
+    /\s+(\d+)\s+(sprigs?|stalks?|stems?|bunches?|heads?|cloves?|slices?|pieces?|sticks?|fillets?|leaves?)\s*$/i;
+  const m = name.match(re);
+  if (!m || m.index === undefined) return name;
+  prepNotes.push(`${m[1]} ${m[2]!.toLowerCase()}`);
+  return name.slice(0, m.index).trim();
 }
 
 function stripRedundantPackagingLead(name: string): string {
@@ -660,6 +682,7 @@ export function isInstructionLine(line: string): boolean {
 
 function finalizeCanonicalName(namePart: string, unitRaw: string, prepNotes: string[]): string {
   let namePart2 = namePart.replace(/^of\s+/i, '').trim();
+  namePart2 = namePart2.replace(/^(?:or|and\/or)\b\s+(?=[\d¼½¾⅓⅔⅛⅜⅝⅞.])/i, '').trim();
 
   namePart2 = namePart2.replace(/\[[\d.,]+\s*(?:kg|g|oz|lbs?|ml)\s*\]/gi, ' ').trim();
   namePart2 = namePart2.replace(/^of\s+/i, '').trim();
@@ -685,6 +708,7 @@ function finalizeCanonicalName(namePart: string, unitRaw: string, prepNotes: str
   canonical = stripLeadingSizeDescriptors(canonical, prepNotes);
   canonical = canonical.replace(/^quantity\s+/i, '').trim();
   canonical = stripTrailingPrepPhrases(canonical, prepNotes);
+  canonical = stripTrailingCountMeasureSuffix(canonical, prepNotes);
   canonical = canonical.replace(/\s+leaves?\b/i, '').trim();
   canonical = canonical.replace(/\s+/g, ' ').trim();
   canonical = applyIngredientMatchSynonyms(canonical);
@@ -970,10 +994,12 @@ export function parseIngredientLine(line: string): {
   canonical = canonical.replace(/^\.\s+/, '').trim();
   canonical = canonical.replace(/\[[\d.,]+\s*(?:kg|g|oz|lbs?|ml)\s*\]/gi, ' ').trim();
   canonical = canonical.replace(/^of\s+/i, '').trim();
+  canonical = canonical.replace(/^(?:or|and\/or)\b\s+(?=[\d¼½¾⅓⅔⅛⅜⅝⅞.])/i, '').trim();
   canonical = stripLeadingQualifiers(canonical, prepNotes);
   canonical = stripLeadingPrepDescriptors(canonical, prepNotes);
   canonical = stripLeadingSizeDescriptors(canonical, prepNotes);
   canonical = stripTrailingPrepPhrases(canonical, prepNotes);
+  canonical = stripTrailingCountMeasureSuffix(canonical, prepNotes);
   canonical = canonical.replace(/\s+/g, ' ').trim();
   canonical = applyIngredientMatchSynonyms(canonical);
 

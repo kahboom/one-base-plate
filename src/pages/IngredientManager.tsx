@@ -1,5 +1,13 @@
-import { useEffect, useState, useMemo, useCallback, type FormEvent } from 'react';
-import { useParams } from 'react-router-dom';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useMemo,
+  useCallback,
+  type FormEvent,
+} from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import type { Ingredient, IngredientCategory, Household } from '../types';
 import {
   loadHousehold,
@@ -30,7 +38,7 @@ import {
 import AppModal from '../components/AppModal';
 import TagSuggestInput from '../components/TagSuggestInput';
 import { sortIngredients, type IngredientSortKey, type SortDir } from '../lib/listSort';
-import { usePaginatedList, PAGE_SIZE_OPTIONS, type PageSize } from '../hooks/usePaginatedList';
+import { PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE, type PageSize } from '../hooks/usePaginatedList';
 import { findIngredientReferences, type IngredientReference } from '../lib/ingredientRefs';
 import { getCatalogDefaultImageUrl, resolveIngredientImageUrl } from '../lib/ingredientImage';
 import { useListKeyNav } from '../hooks/useListKeyNav';
@@ -71,6 +79,18 @@ const CATEGORY_OPTIONS: IngredientCategory[] = [
 const COMMON_TAGS = ['quick', 'mashable', 'rescue', 'staple', 'batch-friendly'];
 
 type SourceFilter = '' | 'manual' | 'catalog' | 'pending-import';
+
+function parseIngredientListPage(sp: URLSearchParams): number {
+  const raw = sp.get('page');
+  const n = raw ? Number.parseInt(raw, 10) : NaN;
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
+}
+
+function parseIngredientListPerPage(sp: URLSearchParams): PageSize | undefined {
+  const raw = sp.get('perPage');
+  const n = raw ? Number.parseInt(raw, 10) : NaN;
+  return PAGE_SIZE_OPTIONS.includes(n as PageSize) ? (n as PageSize) : undefined;
+}
 
 function createEmptyIngredient(): Ingredient {
   return {
@@ -1195,6 +1215,35 @@ function IngredientTableRow({
   );
 }
 
+/** Page buttons for large lists: current ± siblingCount, plus first/last with ellipses when needed. */
+function paginationPageNumbers(
+  page: number,
+  totalPages: number,
+  siblingCount: number,
+): (number | 'ellipsis')[] {
+  const showAllThreshold = 11;
+  if (totalPages <= showAllThreshold) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const result: (number | 'ellipsis')[] = [];
+  const left = Math.max(2, page - siblingCount);
+  const right = Math.min(totalPages - 1, page + siblingCount);
+
+  result.push(1);
+  if (left > 2) {
+    result.push('ellipsis');
+  }
+  for (let i = left; i <= right; i++) {
+    result.push(i);
+  }
+  if (right < totalPages - 1) {
+    result.push('ellipsis');
+  }
+  result.push(totalPages);
+  return result;
+}
+
 /* ---------- Pagination controls ---------- */
 function PaginationControls({
   page,
@@ -1205,94 +1254,121 @@ function PaginationControls({
   totalPages: number;
   onPageChange: (p: number) => void;
 }) {
-  const pages = useMemo(() => {
-    const result: (number | 'ellipsis')[] = [];
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) result.push(i);
-    } else {
-      result.push(1);
-      if (page > 3) result.push('ellipsis');
-      const start = Math.max(2, page - 1);
-      const end = Math.min(totalPages - 1, page + 1);
-      for (let i = start; i <= end; i++) result.push(i);
-      if (page < totalPages - 2) result.push('ellipsis');
-      result.push(totalPages);
-    }
-    return result;
-  }, [page, totalPages]);
+  const [goToDraft, setGoToDraft] = useState('');
+
+  const pages = useMemo(
+    () => paginationPageNumbers(page, totalPages, 2),
+    [page, totalPages],
+  );
 
   if (totalPages <= 1) return null;
 
   return (
-    <nav
-      className="flex items-center justify-center gap-1 pt-4"
-      aria-label="Pagination"
+    <div
+      className="flex flex-col items-center gap-3 pt-4 sm:flex-row sm:flex-wrap sm:justify-center"
       data-testid="pagination-controls"
     >
-      <Button
-        small
-        onClick={() => onPageChange(1)}
-        disabled={page === 1}
-        aria-label="First page"
-        data-testid="pagination-first"
-      >
-        ««
-      </Button>
-      <Button
-        small
-        onClick={() => onPageChange(page - 1)}
-        disabled={page === 1}
-        aria-label="Previous page"
-        data-testid="pagination-prev"
-      >
-        «
-      </Button>
+      <nav className="flex flex-wrap items-center justify-center gap-1" aria-label="Pagination">
+        <Button
+          small
+          onClick={() => onPageChange(1)}
+          disabled={page === 1}
+          aria-label="First page"
+          data-testid="pagination-first"
+        >
+          ««
+        </Button>
+        <Button
+          small
+          onClick={() => onPageChange(page - 1)}
+          disabled={page === 1}
+          aria-label="Previous page"
+          data-testid="pagination-prev"
+        >
+          «
+        </Button>
 
-      {pages.map((p, i) =>
-        p === 'ellipsis' ? (
-          <span key={`e${i}`} className="px-1 text-sm text-text-muted">
-            …
-          </span>
-        ) : (
-          <Button
-            key={p}
-            small
-            variant={p === page ? 'primary' : 'default'}
-            onClick={() => onPageChange(p)}
-            aria-label={`Page ${p}`}
-            aria-current={p === page ? 'page' : undefined}
-            data-testid={`pagination-page-${p}`}
-          >
-            {p}
-          </Button>
-        ),
-      )}
+        {pages.map((p, i) =>
+          p === 'ellipsis' ? (
+            <span key={`e${i}`} className="px-1 text-sm text-text-muted">
+              …
+            </span>
+          ) : (
+            <Button
+              key={p}
+              small
+              variant={p === page ? 'primary' : 'default'}
+              onClick={() => onPageChange(p)}
+              aria-label={`Page ${p}`}
+              aria-current={p === page ? 'page' : undefined}
+              data-testid={`pagination-page-${p}`}
+            >
+              {p}
+            </Button>
+          ),
+        )}
 
-      <Button
-        small
-        onClick={() => onPageChange(page + 1)}
-        disabled={page === totalPages}
-        aria-label="Next page"
-        data-testid="pagination-next"
+        <Button
+          small
+          onClick={() => onPageChange(page + 1)}
+          disabled={page === totalPages}
+          aria-label="Next page"
+          data-testid="pagination-next"
+        >
+          »
+        </Button>
+        <Button
+          small
+          onClick={() => onPageChange(totalPages)}
+          disabled={page === totalPages}
+          aria-label="Last page"
+          data-testid="pagination-last"
+        >
+          »»
+        </Button>
+      </nav>
+
+      <form
+        className="flex items-center gap-2"
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault();
+          const n = Number.parseInt(goToDraft.trim(), 10);
+          if (!Number.isFinite(n)) return;
+          onPageChange(Math.min(Math.max(1, n), totalPages));
+          setGoToDraft('');
+        }}
       >
-        »
-      </Button>
-      <Button
-        small
-        onClick={() => onPageChange(totalPages)}
-        disabled={page === totalPages}
-        aria-label="Last page"
-        data-testid="pagination-last"
-      >
-        »»
-      </Button>
-    </nav>
+        <Input
+          type="number"
+          min={1}
+          max={totalPages}
+          inputMode="numeric"
+          value={goToDraft}
+          onChange={(e) => setGoToDraft(e.target.value)}
+          placeholder={`1–${totalPages}`}
+          aria-label="Go to page number"
+          className="h-8 w-[4.5rem] py-0 text-center text-sm"
+          data-testid="pagination-go-to-input"
+        />
+        <Button
+          type="submit"
+          small
+          aria-label="Go to entered page"
+          data-testid="pagination-go-to-submit"
+        >
+          Go
+        </Button>
+      </form>
+    </div>
   );
 }
 
 /* ---------- Main component ---------- */
 export default function IngredientManager() {
   const { householdId } = useParams<{ householdId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const prevHouseholdIdForPaginationRef = useRef<string | undefined>(undefined);
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [householdName, setHouseholdName] = useState('');
@@ -1438,15 +1514,107 @@ export default function IngredientManager() {
     return sortIngredients(filteredIngredients, opt.key, opt.dir);
   }, [filteredIngredients, ingredientSort]);
 
-  const paginationResetDeps = useMemo(
-    () => [searchQuery, categoryFilter, tagFilter, sourceFilter, ingredientSort] as const,
+  const paginationResetDepsStr = useMemo(
+    () =>
+      JSON.stringify([searchQuery, categoryFilter, tagFilter, sourceFilter, ingredientSort]),
     [searchQuery, categoryFilter, tagFilter, sourceFilter, ingredientSort],
   );
 
-  const { pageItems, page, totalPages, pageSize, setPage, setPageSize } = usePaginatedList(
-    sortedIngredients,
-    { resetDeps: [...paginationResetDeps] },
+  const urlPageFromUrl = useMemo(() => parseIngredientListPage(searchParams), [searchParams]);
+  const pageSize = useMemo(
+    () => parseIngredientListPerPage(searchParams) ?? DEFAULT_PAGE_SIZE,
+    [searchParams],
   );
+
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(sortedIngredients.length / pageSize)),
+    [sortedIngredients.length, pageSize],
+  );
+
+  const page = Math.min(Math.max(1, urlPageFromUrl), totalPages);
+
+  const pageItems = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return sortedIngredients.slice(start, start + pageSize);
+  }, [sortedIngredients, page, pageSize]);
+
+  const setPage = useCallback(
+    (p: number) => {
+      const next = Math.max(1, Math.min(p, totalPages));
+      setSearchParams(
+        (prev) => {
+          const n = new URLSearchParams(prev);
+          if (next <= 1) n.delete('page');
+          else n.set('page', String(next));
+          return n.toString() === prev.toString() ? prev : n;
+        },
+        { replace: true },
+      );
+    },
+    [totalPages, setSearchParams],
+  );
+
+  const setPageSize = useCallback(
+    (size: PageSize) => {
+      setSearchParams(
+        (prev) => {
+          const n = new URLSearchParams(prev);
+          n.delete('page');
+          if (size === DEFAULT_PAGE_SIZE) n.delete('perPage');
+          else n.set('perPage', String(size));
+          return n.toString() === prev.toString() ? prev : n;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  const paginationResetSkipFirst = useRef(true);
+  useEffect(() => {
+    if (paginationResetSkipFirst.current) {
+      paginationResetSkipFirst.current = false;
+      return;
+    }
+    setSearchParams(
+      (prev) => {
+        const n = new URLSearchParams(prev);
+        if (!n.has('page')) return prev;
+        n.delete('page');
+        return n;
+      },
+      { replace: true },
+    );
+  }, [paginationResetDepsStr]);
+
+  useLayoutEffect(() => {
+    if (urlPageFromUrl === page) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (page <= 1) next.delete('page');
+        else next.set('page', String(page));
+        return next.toString() === prev.toString() ? prev : next;
+      },
+      { replace: true },
+    );
+  }, [page, urlPageFromUrl]);
+
+  useEffect(() => {
+    if (!householdId) return;
+    const prev = prevHouseholdIdForPaginationRef.current;
+    prevHouseholdIdForPaginationRef.current = householdId;
+    if (prev === undefined || prev === householdId) return;
+    setSearchParams(
+      (prevParams) => {
+        const n = new URLSearchParams(prevParams);
+        if (!n.has('page')) return prevParams;
+        n.delete('page');
+        return n;
+      },
+      { replace: true },
+    );
+  }, [householdId]);
 
   const editingIngredient =
     draftNewIngredient ??
@@ -2026,24 +2194,27 @@ export default function IngredientManager() {
             ))}
           </Select>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="flex h-[44px] w-[44px] items-center justify-center rounded-sm border border-border-default bg-surface text-text-secondary transition-colors hover:border-brand hover:text-brand focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light"
-              onClick={() => {
-                runDuplicateScan();
-                openDuplicateReview();
-              }}
-              title="Check for duplicates"
-              data-testid="ingredient-merge-check-btn"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-                <path d="M5 3v4"/>
-                <path d="M19 17v4"/>
-                <path d="M3 5h4"/>
-                <path d="M17 19h4"/>
-              </svg>
-            </button>
+            <div className="relative group flex items-center">
+              <button
+                type="button"
+                className="cursor-pointer flex h-[44px] w-[44px] items-center justify-center rounded-sm border border-border-default bg-surface text-text-secondary transition-colors hover:border-brand hover:text-brand focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light"
+                onClick={() => {
+                  runDuplicateScan();
+                  openDuplicateReview();
+                }}
+                aria-label="Check for duplicates"
+                data-testid="ingredient-merge-check-btn"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+              <div className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 z-50 shadow-lg">
+                Check for duplicates
+                <div className="absolute left-1/2 bottom-full -translate-x-1/2 border-4 border-transparent border-b-gray-800" />
+              </div>
+            </div>
             <Button onClick={addIngredient}>Add ingredient</Button>
           </div>
         </div>

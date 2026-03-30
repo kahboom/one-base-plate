@@ -69,12 +69,20 @@ const STOPWORDS = new Set([
   'leaf',
 ]);
 
+const UNICODE_FRACTION_CHARS = /^[¼½¾⅓⅔⅛⅜⅝⅞]+$/;
+
+function isNumericLikeToken(t: string): boolean {
+  if (/^\d+(\.\d+)?$/.test(t)) return true;
+  if (/^\d+\/\d+$/.test(t)) return true;
+  return UNICODE_FRACTION_CHARS.test(t);
+}
+
 function coreTokens(name: string): string[] {
   const key = normalizeIngredientGroupKey(name);
   return key
     .split(/\s+/)
     .map((t) => t.trim())
-    .filter((t) => t.length > 0 && !STOPWORDS.has(t));
+    .filter((t) => t.length > 0 && !STOPWORDS.has(t) && !isNumericLikeToken(t));
 }
 
 function aliasNormSet(ing: Ingredient): Set<string> {

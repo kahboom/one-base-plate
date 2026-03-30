@@ -227,7 +227,7 @@ export default function RescueMode() {
                   <p className="mb-2 text-sm font-medium text-text-secondary">
                     Per-person assembly
                   </p>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {r.variants.map((v) => {
                       const member = household.members.find((m) => m.id === v.memberId);
                       return (
@@ -236,7 +236,9 @@ export default function RescueMode() {
                           className="rounded border border-border-light bg-bg p-2 text-sm"
                           data-testid={`rescue-variant-${v.memberId}`}
                         >
-                          <strong>{member?.name ?? v.memberId}</strong>
+                          <strong className="text-text-primary">
+                            {member?.name ?? v.memberId}
+                          </strong>
                           <ul className="mt-1 list-disc pl-5 text-text-secondary">
                             {v.instructions.map((inst, i) => (
                               <li key={i}>{inst}</li>

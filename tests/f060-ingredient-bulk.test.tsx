@@ -172,6 +172,30 @@ describe('F060: Paginated rendering', () => {
     await user.click(screen.getByTestId('pagination-first'));
     expect(screen.getByTestId('ingredient-list-summary')).toHaveTextContent('page 1 of 3');
   });
+
+  it('shows a wider page window and jump-to-page for long lists', async () => {
+    seedHousehold({ ingredients: manyIngredients(300) });
+    const user = userEvent.setup();
+    renderPage();
+    await filterToManual(user);
+
+    expect(screen.getByTestId('ingredient-list-summary')).toHaveTextContent('page 1 of 12');
+    expect(screen.getByTestId('pagination-page-1')).toBeInTheDocument();
+    expect(screen.getByTestId('pagination-page-2')).toBeInTheDocument();
+    expect(screen.getByTestId('pagination-page-3')).toBeInTheDocument();
+    expect(screen.getByTestId('pagination-page-12')).toBeInTheDocument();
+
+    const goTo = screen.getByTestId('pagination-go-to-input');
+    await user.clear(goTo);
+    await user.type(goTo, '8');
+    await user.click(screen.getByTestId('pagination-go-to-submit'));
+    expect(screen.getByTestId('ingredient-list-summary')).toHaveTextContent('page 8 of 12');
+
+    await user.clear(goTo);
+    await user.type(goTo, '999');
+    await user.click(screen.getByTestId('pagination-go-to-submit'));
+    expect(screen.getByTestId('ingredient-list-summary')).toHaveTextContent('page 12 of 12');
+  });
 });
 
 describe('F060: Page size changes', () => {

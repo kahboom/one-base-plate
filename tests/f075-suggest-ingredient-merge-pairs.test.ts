@@ -60,4 +60,14 @@ describe('suggestIngredientMergePairs', () => {
     const pairs = suggestIngredientMergePairs(list, { limit: 1 });
     expect(pairs.length).toBe(1);
   });
+
+  it('matches rosemary lines that only differ by stray numeric tokens', () => {
+    const list = [
+      ing({ id: '1', name: 'Or 3 sprigs fresh rosemary' }),
+      ing({ id: '2', name: 'Rosemary 3 sprigs' }),
+    ];
+    const pairs = suggestIngredientMergePairs(list);
+    expect(pairs.length).toBe(1);
+    expect(pairs[0]!.score).toBeGreaterThanOrEqual(0.55);
+  });
 });

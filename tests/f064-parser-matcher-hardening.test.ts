@@ -62,6 +62,33 @@ describe('F064 — Packaging word stripping', () => {
   });
 });
 
+describe('F064 — List alternative "Or" and trailing count+unit', () => {
+  it('Or 3 sprigs fresh rosemary → rosemary', () => {
+    const r = parseIngredientLine('Or 3 sprigs fresh rosemary');
+    expect(r.name.toLowerCase()).toBe('rosemary');
+    expect(r.quantity).toMatch(/3/);
+    expect(r.unit.toLowerCase()).toMatch(/sprig/);
+    expect(r.prepNotes?.some((n) => n.includes('fresh'))).toBe(true);
+  });
+
+  it('and/or 2 stalks celery → celery', () => {
+    const r = parseIngredientLine('and/or 2 stalks celery');
+    expect(r.name.toLowerCase()).toBe('celery');
+    expect(r.quantity).toMatch(/2/);
+  });
+
+  it('does not strip "or" from or oregano (no quantity after)', () => {
+    const r = parseIngredientLine('or oregano');
+    expect(r.name.toLowerCase()).toContain('oregano');
+  });
+
+  it('Rosemary 3 sprigs → rosemary (trailing count+unit)', () => {
+    const r = parseIngredientLine('Rosemary 3 sprigs');
+    expect(r.name.toLowerCase()).toBe('rosemary');
+    expect(r.prepNotes?.some((n) => n.includes('3') && n.includes('sprig'))).toBe(true);
+  });
+});
+
 describe('F064 — Trailing quantity parsing', () => {
   it('chicken stock 200ml → name=chicken stock, qty=200, unit=ml', () => {
     const r = parseIngredientLine('chicken stock 200ml');
