@@ -6,6 +6,18 @@
 - Run tests before marking any feature as passing
 - Commit after each completed feature
 
+### 2026-03-31 — Seed image style update (watercolor)
+
+- **What:** Replaced the editorial/photorealistic seed image style with a simple watercolor food illustration aesthetic.
+- **Skills:** Created `skills/watercolor-food-illustration/SKILL.md` to hold the visual rules and examples. Updated `skills/seed-image-stylist/SKILL.md` to delegate styling to the new watercolor skill.
+- **Script:** Updated `scripts/generate-seed-image.mjs` to use the new watercolor style prompt. Regenerated the `ing-avocado.png` seed image.
+
+### 2026-03-31 — First seed ingredient image (avocado)
+
+- **What:** Generated `public/images/seed/ing-avocado.png` via OpenAI Images API (DALL-E 3), wired `ing-avocado` in `fixtures/households/H001-mcg.json` with `imageUrl: /images/seed/ing-avocado.png`, regenerated `src/seed-data.json`.
+- **Script:** `scripts/generate-seed-image.mjs` — run `node --env-file=.env scripts/generate-seed-image.mjs` (requires `OPENAI_API_KEY` in `.env`).
+- **Verified:** `npm test`, `npm run typecheck`.
+
 ### 2026-03-30 — Grouped ingredient-family preferences (F075)
 
 - **Why:** Members need to express preferences at the ingredient-family level (e.g. "likes sausage generally") without creating canonical ingredients for every family. Family-level matches provide weaker but meaningful planner signals alongside exact ingredient preferences.
@@ -1180,6 +1192,11 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **CLI:** `npm run suggest:ingredient-merges -- fixtures/households/H001-mcg.json` (`--min-score`, `--limit`); script avoids importing `storage` (no Vite env).
 - **UI:** `IngredientManager` — duplicate review modal: **tap either name** to merge immediately (no confirm); per-row **Ignore**; select all + bulk Ignore / **Merge selected** (still one confirm for multi-merge). Merge-confirm modal remains only for merging from an ingredient’s edit screen.
 - **Tests:** `tests/f075-suggest-ingredient-merge-pairs.test.ts`, `tests/f076-ingredient-merge-dismissals.test.ts`.
+
+### Agent docs — layered `docs/ai/` (2026-03-31)
+
+- **Refactor:** Split monolithic `AGENTS.md` / `CLAUDE.md` / `GEMINI.md` into a short shared [`AGENTS.md`](AGENTS.md) plus [`docs/ai/project-context.md`](docs/ai/project-context.md), [`repo-map.md`](docs/ai/repo-map.md), [`conventions.md`](docs/ai/conventions.md), [`ingredient-seed.md`](docs/ai/ingredient-seed.md), [`global-rules.md`](docs/ai/global-rules.md), [`decision-log.md`](docs/ai/decision-log.md). Vendor files point at `AGENTS.md` and Claude-specific memory/subagent paths.
+- **Rules model:** Global numbered rules → `docs/ai/global-rules.md`; decisions → `decision-log.md`; specialist → `.claude/agent-memory/`.
 
 ## Next Task
 

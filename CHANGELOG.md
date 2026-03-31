@@ -1,3 +1,8 @@
+### 2026-03-31 — Agent instruction docs layered under `docs/ai/`
+
+- **Change:** `AGENTS.md` is the short shared entrypoint; `CLAUDE.md` and `GEMINI.md` are thin vendor overlays. Heavy reference (product context, repo map, conventions, ingredient seed, global rules, decision log) lives in [`docs/ai/`](docs/ai/).
+- **Rules:** Ongoing corrections append to [`docs/ai/global-rules.md`](docs/ai/global-rules.md); architectural notes use [`docs/ai/decision-log.md`](docs/ai/decision-log.md); specialist memory stays under `.claude/agent-memory/`.
+
 ### 2026-03-29 — Regional ingredient synonym matching (F073)
 
 - **Problem:** Import matching treated regional pairs (e.g. eggplant vs aubergine) as unrelated strings because `matchScore` had no shared tokens; catalog aliases alone do not help manual household names on the other variant.

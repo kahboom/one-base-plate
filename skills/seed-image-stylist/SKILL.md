@@ -27,21 +27,13 @@ designed.
 2. Identify which items need images (missing `imageUrl` or explicit request).
 3. Classify each item: **ingredient** / **recipe** / **base meal**.
 
-## Visual system defaults
+## Visual system
 
-| Property    | Ingredients                                 | Recipes / base meals                       |
-| ----------- | ------------------------------------------- | ------------------------------------------ |
-| Background  | Soft neutral surface, minimal context       | Cozy kitchen setting, uncluttered          |
-| Composition | Centered subject, square-friendly           | Plated/tray-style, landscape or square     |
-| Light       | Soft natural editorial, clean shadows       | Soft daylight, shallow (not extreme) DoF   |
-| Props       | Minimal — bowl, pile, or portion for pantry | Practical plating, not restaurant-fussy    |
-| Tone        | Calm, recognizable at thumbnail size        | Appetizing, practical, home-cooking warmth |
+**IMPORTANT:** We use a simple watercolor illustration style for all seed images.
+You MUST read and apply the `watercolor-food-illustration` skill for all visual
+styling, prompt generation rules, and examples.
 
-All images share: warm color balance, consistent editorial food photography,
-no text/logos/labels/watermarks/hands/faces.
-
-For detailed visual rules, composition guidance, and prompt-writing conventions,
-see [style-guide.md](style-guide.md).
+Do not use photorealistic, 3D, or editorial photography styles.
 
 ## Workflow
 
@@ -62,31 +54,26 @@ For each item, determine:
 1. **Image category**: ingredient / recipe / base meal
 2. **Subject interpretation**: What canonical visual form? (e.g. raw vs cooked,
    bowl vs pile, plated vs container)
-3. **Aspect ratio**: square (1:1) for ingredients; 4:3 or 16:9 for meal heroes;
-   propose both if unsure
-4. **Background treatment**: neutral surface / soft kitchen context / none
-5. **Composition style**: centered / slightly art-directed / overhead / 3/4 angle
+3. **Aspect ratio**: square (1:1) is preferred for the watercolor spot art style.
+4. **Composition style**: centered, isolated, minimal props (following the watercolor skill).
 
 ### Step 3: Write prompts
 
-Follow these rules (detail in [style-guide.md](style-guide.md)):
+Follow the prompting rules and examples in the `watercolor-food-illustration` skill.
 
-- **Subject first**, then composition, then light/background, then style.
-- Specific enough to produce good results; not bloated with random adjectives.
-- Optimize for small-thumbnail recognizability.
+- **Subject first**, then the watercolor style phrases, then background/composition.
+- Include the negative guidance specified in the skill.
 - Disambiguate visually similar items explicitly.
-- Add a short negative prompt when useful.
 
 ### Step 4: Output the full plan
 
 Structure output as:
 
-1. **Visual system** — shared art direction summary
-2. **Item-by-item image plan** — classification, ratio, composition, background
+1. **Visual system** — brief note that we are using the watercolor illustration style
+2. **Item-by-item image plan** — classification, ratio, composition
 3. **Final prompts** — polished generation prompts with negative guidance
 4. **Filenames and mapping** — suggested filename, alt text, target id, `imageUrl` destination
-5. **Consistency notes** — how items relate visually across the library
-6. **Open ambiguities** — only if genuinely needed (vague items, multiple forms)
+5. **Open ambiguities** — only if genuinely needed (vague items, multiple forms)
 
 ### Mapping target format
 
@@ -103,22 +90,9 @@ For each image, provide:
 ## Guardrails
 
 - Do not output random or inconsistent art directions.
-- Do not default to luxury restaurant plating or generic stock-photo clichés.
+- Do not default to photorealism, luxury restaurant plating, or generic stock-photo clichés.
 - Do not generate prompts with labels, text overlays, watermarks, or branded packaging.
 - Do not silently overwrite existing `imageUrl` mappings unless explicitly asked.
 - If asked to update seed data, prefer append/update instructions that preserve
   existing ids and references.
-- If a seed item is too vague to image confidently, say so and propose 1–2
-  canonical interpretations.
 - Use the app's real seeded naming wherever possible — do not invent variants.
-
-## Consistency checklist
-
-- [ ] All ingredient images share the same background/light/style family
-- [ ] All meal images share the same background/light/style family
-- [ ] Ingredient and meal families feel related but distinct
-- [ ] Similar items are visually disambiguated (e.g. white rice vs brown rice)
-- [ ] Pantry items shown as portions, not retail packaging
-- [ ] Sauces/condiments shown in bowls/ramekins, not labeled bottles
-- [ ] Rescue meals feel simple and cozy, not fancy
-- [ ] Batch-prep components shown in practical containers

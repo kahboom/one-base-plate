@@ -126,7 +126,8 @@
       "tags": ["quick", "mashable"],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-avocado.png"
     },
     {
       "id": "ing-bacon",
