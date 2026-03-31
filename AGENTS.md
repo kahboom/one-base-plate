@@ -11,6 +11,9 @@
 | Stack, commands, repo layout | [`docs/ai/repo-map.md`](docs/ai/repo-map.md) |
 | Conventions, PRD session loop, Paprika test data | [`docs/ai/conventions.md`](docs/ai/conventions.md) |
 | Ingredient fixtures / seed workflow | [`docs/ai/ingredient-seed.md`](docs/ai/ingredient-seed.md) |
+| Shared facts (canonical) | [`docs/ai/canonical-state.md`](docs/ai/canonical-state.md) |
+| Layered memory (what goes where) | [`docs/ai/memory-system.md`](docs/ai/memory-system.md) |
+| Reusable workflows | [`docs/ai/workflows/`](docs/ai/workflows/) |
 | Global rules (corrections, constraints) | [`docs/ai/global-rules.md`](docs/ai/global-rules.md) |
 | Architectural decisions | [`docs/ai/decision-log.md`](docs/ai/decision-log.md) |
 
@@ -23,4 +26,4 @@
 3. **Verify** — `npm test` + `npm run typecheck` (and `npm run lint` when style matters); `./init.sh` for a full cold check.
 4. **Progress** — Note meaningful slices in `agent-progress.md`; use clear commit messages.
 
-**Vendor overlays:** Claude → [`CLAUDE.md`](CLAUDE.md). Gemini → [`GEMINI.md`](GEMINI.md).
+**Vendor overlays:** Claude → [`CLAUDE.md`](CLAUDE.md) (`.claude/agents/` + `.claude/agent-memory/`). Gemini → [`GEMINI.md`](GEMINI.md).

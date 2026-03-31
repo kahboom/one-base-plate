@@ -1193,6 +1193,11 @@ All completed features satisfy their referenced screen acceptance criteria for t
 - **UI:** `IngredientManager` — duplicate review modal: **tap either name** to merge immediately (no confirm); per-row **Ignore**; select all + bulk Ignore / **Merge selected** (still one confirm for multi-merge). Merge-confirm modal remains only for merging from an ingredient’s edit screen.
 - **Tests:** `tests/f075-suggest-ingredient-merge-pairs.test.ts`, `tests/f076-ingredient-merge-dismissals.test.ts`.
 
+### Multi-agent memory — `.claude/agents/` + nested `MEMORY.md` (2026-03-31)
+
+- **Added:** [`docs/ai/canonical-state.md`](docs/ai/canonical-state.md), [`docs/ai/memory-system.md`](docs/ai/memory-system.md), [`docs/ai/workflows/`](docs/ai/workflows/) (`prd-feature-slice.md`). Five Claude subagents in [`.claude/agents/`](.claude/agents/) with matching [`.claude/agent-memory/<name>/MEMORY.md`](.claude/agent-memory/README.md) + `<name>.md`; [`.claude/agent-memory/README.md`](.claude/agent-memory/README.md) documents editing rules.
+- **Routing:** orchestrator (coordination) → import-agent, ux-agent, data-agent, sync-agent by domain; shared facts stay in `docs/ai/`. Legacy import-performance memory path unchanged.
+
 ### Agent docs — layered `docs/ai/` (2026-03-31)
 
 - **Refactor:** Split monolithic `AGENTS.md` / `CLAUDE.md` / `GEMINI.md` into a short shared [`AGENTS.md`](AGENTS.md) plus [`docs/ai/project-context.md`](docs/ai/project-context.md), [`repo-map.md`](docs/ai/repo-map.md), [`conventions.md`](docs/ai/conventions.md), [`ingredient-seed.md`](docs/ai/ingredient-seed.md), [`global-rules.md`](docs/ai/global-rules.md), [`decision-log.md`](docs/ai/decision-log.md). Vendor files point at `AGENTS.md` and Claude-specific memory/subagent paths.

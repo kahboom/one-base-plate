@@ -1,3 +1,8 @@
+### 2026-03-31 — Layered multi-agent memory (Claude subagents + `MEMORY.md`)
+
+- **Structure:** [`docs/ai/canonical-state.md`](docs/ai/canonical-state.md), [`docs/ai/memory-system.md`](docs/ai/memory-system.md), [`docs/ai/workflows/`](docs/ai/workflows/). Per-agent: [`.claude/agents/`](.claude/agents/) (orchestrator, import-agent, ux-agent, data-agent, sync-agent) and [`.claude/agent-memory/<agent>/MEMORY.md`](.claude/agent-memory/README.md) plus supporting `.md` files.
+- **Routing:** Orchestrator decomposes work; specialists own import, UI, local data/seed, or sync — see `docs/ai/memory-system.md`. Legacy `import-performance-scaling` memory kept under `.claude/agent-memory/import-performance-scaling/` until merged into import-agent.
+
 ### 2026-03-31 — Agent instruction docs layered under `docs/ai/`
 
 - **Change:** `AGENTS.md` is the short shared entrypoint; `CLAUDE.md` and `GEMINI.md` are thin vendor overlays. Heavy reference (product context, repo map, conventions, ingredient seed, global rules, decision log) lives in [`docs/ai/`](docs/ai/).

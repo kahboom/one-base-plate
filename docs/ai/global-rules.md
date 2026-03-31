@@ -10,8 +10,10 @@ If two rules conflict, the **higher-numbered (newer)** rule wins. Do not delete 
 
 | Kind of learning | Where |
 | ---------------- | ----- |
+| Stable shared facts (stack, paths) | [`canonical-state.md`](./canonical-state.md) |
 | Short constraint every agent should follow | This file (`docs/ai/global-rules.md`) |
-| Specialist / deep-dive findings for one agent | `.claude/agent-memory/<agent-name>/` (or path named in that agent’s doc) |
+| Specialist / deep-dive findings for one agent | `.claude/agent-memory/<agent-name>/` (`MEMORY.md` + supporting files; see [`memory-system.md`](./memory-system.md)) |
+| Repeatable multi-step procedures | [`workflows/`](./workflows/) |
 | Architectural or product decision with context | [`decision-log.md`](./decision-log.md) |
 | Session / shipped work narrative | `agent-progress.md`, `CHANGELOG.md` |
 
@@ -19,4 +21,4 @@ If two rules conflict, the **higher-numbered (newer)** rule wins. Do not delete 
 
 <!-- Append new rules below. Do not renumber existing entries. -->
 
-1. [ARCH] Agent-specific memory belongs in `.claude/agent-memory/<agent-name>.md`, not in global rules — keeps shared context small. When a specialist agent (e.g. import-performance-scaling) produces durable findings, write them to its memory file and add a “read that file at session start” instruction in that agent’s body.
+1. [ARCH] Agent-specific memory belongs under `.claude/agent-memory/<agent-name>/` (short `MEMORY.md` + supporting `.md` files), not in global rules. Specialist definitions in `.claude/agents/` should point at that folder’s `MEMORY.md`.

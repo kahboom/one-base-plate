@@ -311,7 +311,8 @@
         "tags": [],
         "shelfLifeHint": "5 days",
         "freezerFriendly": true,
-        "babySafeWithAdaptation": true
+        "babySafeWithAdaptation": true,
+        "imageUrl": "/images/seed/ing-broccoli.png"
       },
       {
         "id": "ing-brown-lentils",
@@ -717,7 +718,8 @@
         ],
         "shelfLifeHint": "2 weeks",
         "freezerFriendly": false,
-        "babySafeWithAdaptation": false
+        "babySafeWithAdaptation": false,
+        "imageUrl": "/images/seed/ing-garlic.png"
       },
       {
         "id": "ing-garlic-powder",
@@ -884,7 +886,8 @@
         ],
         "shelfLifeHint": "2 weeks",
         "freezerFriendly": false,
-        "babySafeWithAdaptation": true
+        "babySafeWithAdaptation": true,
+        "imageUrl": "/images/seed/ing-lemon.png"
       },
       {
         "id": "ing-lettuce",
@@ -1315,7 +1318,8 @@
         "tags": [],
         "shelfLifeHint": "2 days",
         "freezerFriendly": true,
-        "babySafeWithAdaptation": true
+        "babySafeWithAdaptation": true,
+        "imageUrl": "/images/seed/ing-salmon.png"
       },
       {
         "id": "ing-sesame-oil",
