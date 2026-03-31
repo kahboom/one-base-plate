@@ -30,7 +30,7 @@ Use a repeatable block per finding:
 
 1. **Severity** — `suggestion` | `worth doing` | `should fix` (use `should fix` for correctness, real bugs, or risky patterns).
 2. **Category** — one of: Readability | Performance | Best practices.
-3. **Explanation** — short, concrete: *why* this matters in this context.
+3. **Explanation** — short, concrete: _why_ this matters in this context.
 4. **Location** — file path and line range (or function/component name).
 5. **Current code** — quote the existing snippet in a fenced block (or the project’s preferred citation style if instructed).
 6. **Improved version** — show the **full suggested replacement** for that snippet (or a minimal diff-style before/after if the change is tiny). The improved code must compile and match local conventions.

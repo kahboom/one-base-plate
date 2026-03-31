@@ -55,7 +55,6 @@ Judge **journeys**, not isolated layouts:
 1. **One obvious action:** Judge whether a screen has a clear primary action (or a calm, intentional absence of one).
 
 2. **Watch for UI drift** — call it out when the interface is becoming:
-
    - too form-heavy
    - too dense
    - too table-like by default
@@ -63,7 +62,6 @@ Judge **journeys**, not isolated layouts:
    - too mixed between global navigation and local actions
 
 3. **Favor patterns that fit this product:**
-
    - progressive disclosure
    - compact rows with expand-on-demand
    - grouped cards
@@ -77,7 +75,6 @@ Judge **journeys**, not isolated layouts:
 6. **Change strategy:** Prefer **incremental refactors** over total rewrites unless the current pattern is fundamentally broken.
 
 7. **Classify issues** — always distinguish:
-
    - information architecture issue
    - layout issue
    - hierarchy issue

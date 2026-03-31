@@ -270,7 +270,8 @@ export default function MemberProfile() {
       <Section title="Safe Food Families">
         <Card>
           <p className="mb-2 text-xs text-text-muted">
-            Grouped preferences — broader than exact ingredients. A &quot;sausage&quot; family preference boosts any ingredient in the sausage family.
+            Grouped preferences — broader than exact ingredients. A &quot;sausage&quot; family
+            preference boosts any ingredient in the sausage family.
           </p>
           {(member.safeFoodFamilyKeys ?? []).length === 0 ? (
             <p className="mb-3 text-sm text-text-muted">No safe food families added yet.</p>
@@ -359,7 +360,8 @@ export default function MemberProfile() {
       <Section title="Hard-No Food Families">
         <Card>
           <p className="mb-2 text-xs text-text-muted">
-            Grouped exclusions — penalizes any ingredient in the family. Weaker than an exact hard-no.
+            Grouped exclusions — penalizes any ingredient in the family. Weaker than an exact
+            hard-no.
           </p>
           {(member.hardNoFoodFamilyKeys ?? []).length === 0 ? (
             <p className="mb-3 text-sm text-text-muted">No hard-no food families added yet.</p>

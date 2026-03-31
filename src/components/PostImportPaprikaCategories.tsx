@@ -39,7 +39,7 @@ export default function PostImportPaprikaCategories({
     const h = loadHousehold(householdId);
     if (!h) return householdRecipeTagCandidates({ recipes: [], baseMeals: [] });
     return householdRecipeTagCandidates(normalizeHousehold(h));
-  }, [householdId, importedRecipes]);
+  }, [householdId]);
 
   const [choices, setChoices] = useState<Record<string, string>>(() =>
     initialChoicesFromRows(rows, tagCandidates),
@@ -72,11 +72,7 @@ export default function PostImportPaprikaCategories({
     }
     setSaving(true);
     try {
-      const updated = applyPaprikaCategoryTagMappings(
-        normalizeHousehold(h),
-        importedIds,
-        mappings,
-      );
+      const updated = applyPaprikaCategoryTagMappings(normalizeHousehold(h), importedIds, mappings);
       await saveHouseholdAsync(updated);
       onComplete();
     } catch {
@@ -107,11 +103,13 @@ export default function PostImportPaprikaCategories({
   return (
     <div data-testid="post-import-paprika-categories">
       <Card className="mb-4">
-        <h3 className="text-lg font-semibold text-text-primary mb-2">Map Paprika categories to tags</h3>
+        <h3 className="text-lg font-semibold text-text-primary mb-2">
+          Map Paprika categories to tags
+        </h3>
         <p className="text-sm text-text-secondary mb-4">
-          Each label below came from your Paprika export. Pick an existing recipe tag or create a new
-          one. Suggestions are ranked with fuzzy matching. Tags are applied to every imported recipe that
-          had that category.
+          Each label below came from your Paprika export. Pick an existing recipe tag or create a
+          new one. Suggestions are ranked with fuzzy matching. Tags are applied to every imported
+          recipe that had that category.
         </p>
 
         <ul className="space-y-6">
@@ -131,7 +129,9 @@ export default function PostImportPaprikaCategories({
                 data-testid={rowTestId}
               >
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="font-medium text-text-primary">&quot;{row.displayLabel}&quot;</span>
+                  <span className="font-medium text-text-primary">
+                    &quot;{row.displayLabel}&quot;
+                  </span>
                   <Chip variant="neutral">
                     {row.recipeCount} recipe{row.recipeCount !== 1 ? 's' : ''}
                   </Chip>
@@ -222,7 +222,12 @@ export default function PostImportPaprikaCategories({
         >
           {saving ? 'Saving…' : 'Save tag mappings'}
         </Button>
-        <Button type="button" onClick={onComplete} disabled={saving} data-testid="paprika-cat-skip-btn">
+        <Button
+          type="button"
+          onClick={onComplete}
+          disabled={saving}
+          data-testid="paprika-cat-skip-btn"
+        >
           Skip — continue
         </Button>
       </ActionGroup>

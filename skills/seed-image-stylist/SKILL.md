@@ -29,13 +29,13 @@ designed.
 
 ## Visual system defaults
 
-| Property        | Ingredients                                  | Recipes / base meals                            |
-| --------------- | -------------------------------------------- | ----------------------------------------------- |
-| Background      | Soft neutral surface, minimal context         | Cozy kitchen setting, uncluttered               |
-| Composition     | Centered subject, square-friendly             | Plated/tray-style, landscape or square          |
-| Light           | Soft natural editorial, clean shadows         | Soft daylight, shallow (not extreme) DoF        |
-| Props           | Minimal — bowl, pile, or portion for pantry   | Practical plating, not restaurant-fussy         |
-| Tone            | Calm, recognizable at thumbnail size          | Appetizing, practical, home-cooking warmth      |
+| Property    | Ingredients                                 | Recipes / base meals                       |
+| ----------- | ------------------------------------------- | ------------------------------------------ |
+| Background  | Soft neutral surface, minimal context       | Cozy kitchen setting, uncluttered          |
+| Composition | Centered subject, square-friendly           | Plated/tray-style, landscape or square     |
+| Light       | Soft natural editorial, clean shadows       | Soft daylight, shallow (not extreme) DoF   |
+| Props       | Minimal — bowl, pile, or portion for pantry | Practical plating, not restaurant-fussy    |
+| Tone        | Calm, recognizable at thumbnail size        | Appetizing, practical, home-cooking warmth |
 
 All images share: warm color balance, consistent editorial food photography,
 no text/logos/labels/watermarks/hands/faces.

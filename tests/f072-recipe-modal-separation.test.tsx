@@ -88,7 +88,9 @@ describe('F072: Recipe modal vs Base Meal Editor separation', () => {
     const modal = screen.getByTestId('recipe-modal');
 
     expect(within(modal).getByText('3. Ingredients')).toBeInTheDocument();
-    expect(within(modal).getByTestId('recipe-add-ingredient-btn')).toHaveTextContent('Add ingredient');
+    expect(within(modal).getByTestId('recipe-add-ingredient-btn')).toHaveTextContent(
+      'Add ingredient',
+    );
     expect(within(modal).queryByText('Add component')).not.toBeInTheDocument();
     expect(within(modal).queryByText('Add mapping')).not.toBeInTheDocument();
     expect(within(modal).queryByText('Mapped ingredients')).not.toBeInTheDocument();

@@ -298,7 +298,12 @@ describe('F074: surface parity across ranking surfaces', () => {
       { ...mealA, rescueEligible: true } as BaseMeal,
       { ...mealD, rescueEligible: true, estimatedTimeMinutes: 30, difficulty: 'easy' as const },
     ];
-    const results = generateRescueMeals(rescueMeals, allMembers, ingredients, 'everyone-melting-down');
+    const results = generateRescueMeals(
+      rescueMeals,
+      allMembers,
+      ingredients,
+      'everyone-melting-down',
+    );
     // mealA has safe food matches, should rank first
     expect(results[0]!.meal.id).toBe('meal-a');
   });

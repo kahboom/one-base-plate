@@ -684,9 +684,7 @@ export default function Planner() {
                         <div>
                           <h4 className="text-sm font-semibold text-text-primary">
                             {member.name}{' '}
-                            <span className="font-normal text-text-secondary">
-                              ({member.role})
-                            </span>
+                            <span className="font-normal text-text-secondary">({member.role})</span>
                             {variant.safeFoodIncluded && (
                               <Chip variant="success" className="ml-2">
                                 Safe food included

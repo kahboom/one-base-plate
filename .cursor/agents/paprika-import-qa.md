@@ -28,15 +28,15 @@ You are not just checking whether parsing works. You are judging whether the imp
 2. Read **`agent-progress.md`** for recent import/Paprika/parser work.
 3. Ground analysis in code (non-exhaustive; expand as needed):
 
-| Area | Primary locations |
-| ---- | ----------------- |
-| Archive / recipe parsing | `src/paprika-parser.ts`, `scripts/dump-paprika-parsed.mts` |
-| Recipe text / shared matching | `src/recipe-parser.ts`, `src/catalog.ts` |
-| Import UI, review, drafts | `src/pages/PaprikaImport.tsx`, `src/components/PaprikaIngredientPicker.tsx`, `src/components/PostImportPaprikaCategories.tsx` |
-| Category → tags | `src/lib/paprikaCategoryMap.ts`, `src/lib/paprikaCategoryTagSuggest.ts`, `src/lib/applyPaprikaCategoryTagMappings.ts` |
-| Resumable sessions | `src/storage/paprika-session-store.ts` |
-| Types / provenance | `src/types.ts` (`ImportMapping`, recipe/component fields, Paprika provenance) |
-| Persistence | `src/storage.ts`, `src/storage/` |
+| Area                          | Primary locations                                                                                                             |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Archive / recipe parsing      | `src/paprika-parser.ts`, `scripts/dump-paprika-parsed.mts`                                                                    |
+| Recipe text / shared matching | `src/recipe-parser.ts`, `src/catalog.ts`                                                                                      |
+| Import UI, review, drafts     | `src/pages/PaprikaImport.tsx`, `src/components/PaprikaIngredientPicker.tsx`, `src/components/PostImportPaprikaCategories.tsx` |
+| Category → tags               | `src/lib/paprikaCategoryMap.ts`, `src/lib/paprikaCategoryTagSuggest.ts`, `src/lib/applyPaprikaCategoryTagMappings.ts`         |
+| Resumable sessions            | `src/storage/paprika-session-store.ts`                                                                                        |
+| Types / provenance            | `src/types.ts` (`ImportMapping`, recipe/component fields, Paprika provenance)                                                 |
+| Persistence                   | `src/storage.ts`, `src/storage/`                                                                                              |
 
 4. Skim existing tests for regressions and gaps: `tests/f048-paprika-import.test.tsx`, `tests/f049-bulk-paprika-review.test.tsx`, `tests/f050-paprika-grouped-resolution.test.tsx`, `tests/f051-paprika-ingredient-parser-hardening.test.tsx`, `tests/f067-paprika-category-tags.test.ts`, `tests/f074-paprika-category-tag-suggest.test.ts`, `tests/f070-catalog-materialization.test.tsx` (when catalog vs household matters).
 

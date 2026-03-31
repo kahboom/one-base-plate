@@ -107,9 +107,7 @@ export function computePreferenceScore(
   const safeFoodFamilyMatches: PreferenceMatch[] = [];
   const hardNoFamilyConflicts: PreferenceMatch[] = [];
 
-  const mealIngredientIds = new Set(
-    meal.components.flatMap((c) => getAllIngredientIds(c)),
-  );
+  const mealIngredientIds = new Set(meal.components.flatMap((c) => getAllIngredientIds(c)));
 
   // F075: family key → ingredient IDs in this meal
   const familyKeyMap = buildFamilyKeyMap(mealIngredientIds, ingredients);
@@ -391,7 +389,12 @@ export function computeIngredientOverlap(
   const ing = ingredients.find((i) => i.id === ingredientId);
 
   const memberDetails: MemberOverlap[] = humanMembers.map((member) => {
-    const { compatibility, conflict } = getMemberIngredientCompatibility(name, ing, member, ingredients);
+    const { compatibility, conflict } = getMemberIngredientCompatibility(
+      name,
+      ing,
+      member,
+      ingredients,
+    );
     return {
       memberId: member.id,
       memberName: member.name,
@@ -424,7 +427,12 @@ export function computeMealOverlap(
       const bestId = pickBestIngredient(component, member, ingredients);
       const name = resolveIngredientName(bestId, ingredients);
       const ing = ingredients.find((i) => i.id === bestId);
-      const { compatibility, conflict } = getMemberIngredientCompatibility(name, ing, member, ingredients);
+      const { compatibility, conflict } = getMemberIngredientCompatibility(
+        name,
+        ing,
+        member,
+        ingredients,
+      );
 
       if (compatibility === 'conflict') {
         hasConflict = true;
@@ -538,16 +546,16 @@ export function generateMealExplanation(
   // F075: family-level hard-no conflicts
   if (prefScore.hardNoFamilyConflicts.length > 0) {
     for (const m of prefScore.hardNoFamilyConflicts) {
-      tradeOffs.push(`grouped conflict: ${m.familyKey} family hard-no via ${m.ingredientName} (${m.memberName})`);
+      tradeOffs.push(
+        `grouped conflict: ${m.familyKey} family hard-no via ${m.ingredientName} (${m.memberName})`,
+      );
     }
   }
 
   // Trade-offs: toddler/baby safe food coverage gap
   for (const member of humanMembers) {
     if (member.role !== 'toddler' && member.role !== 'baby') continue;
-    const hasSafeFood = meal.components.some((c) =>
-      isSafeFoodComponent(c, member, ingredients),
-    );
+    const hasSafeFood = meal.components.some((c) => isSafeFoodComponent(c, member, ingredients));
     if (!hasSafeFood) {
       if (member.safeFoods.length > 0) {
         tradeOffs.push(
@@ -636,9 +644,7 @@ export function generateShortReason(
     // Find the most interesting adaptation reason
     for (const member of humanMembers) {
       if (member.role === 'toddler' || member.role === 'baby') {
-        const hasSafe = meal.components.some((c) =>
-          isSafeFoodComponent(c, member, ingredients),
-        );
+        const hasSafe = meal.components.some((c) => isSafeFoodComponent(c, member, ingredients));
         if (hasSafe) return `${member.name}'s safe food included`;
       }
       if (member.preparationRules.length > 0) {
@@ -1227,9 +1233,7 @@ export function generateRescueMeals(
       // everyone-melting-down: maximize safe food coverage
       for (const member of humanMembers) {
         if (member.role !== 'toddler' && member.role !== 'baby') continue;
-        const hasSafe = meal.components.some((c) =>
-          isSafeFoodComponent(c, member, ingredients),
-        );
+        const hasSafe = meal.components.some((c) => isSafeFoodComponent(c, member, ingredients));
         if (hasSafe) score += 5;
       }
       if (meal.difficulty === 'easy') score += 5;

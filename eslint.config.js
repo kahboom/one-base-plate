@@ -22,4 +22,11 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  {
+    files: ['src/auth/AuthContext.tsx', 'src/components/GuidedTour.tsx', 'src/components/ui.tsx'],
+    rules: {
+      // These modules intentionally export helpers/hooks alongside components; splitting only for Fast Refresh is not worth the churn.
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 );

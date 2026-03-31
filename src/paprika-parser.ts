@@ -461,15 +461,14 @@ export interface AutoResolveStats {
  * every auto-resolved line is still visible in the tiered review and
  * can be changed.
  */
-export function autoResolveHighConfidence(
-  recipes: ParsedPaprikaRecipe[],
-): ParsedPaprikaRecipe[] {
+export function autoResolveHighConfidence(recipes: ParsedPaprikaRecipe[]): ParsedPaprikaRecipe[] {
   return autoResolveHighConfidenceWithStats(recipes).recipes;
 }
 
-export function autoResolveHighConfidenceWithStats(
-  recipes: ParsedPaprikaRecipe[],
-): { recipes: ParsedPaprikaRecipe[]; stats: AutoResolveStats } {
+export function autoResolveHighConfidenceWithStats(recipes: ParsedPaprikaRecipe[]): {
+  recipes: ParsedPaprikaRecipe[];
+  stats: AutoResolveStats;
+} {
   let householdMatches = 0;
   let catalogMatches = 0;
   let stapleMatches = 0;

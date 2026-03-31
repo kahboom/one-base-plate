@@ -1,9 +1,5 @@
 import { normalizePaprikaCategory } from './paprikaCategoryMap';
-import {
-  CURATED_RECIPE_TAGS,
-  normalizeRecipeTagForCurated,
-  recipeTagLabel,
-} from './recipeTags';
+import { CURATED_RECIPE_TAGS, normalizeRecipeTagForCurated, recipeTagLabel } from './recipeTags';
 import type { Household } from '../types';
 
 export interface TagCandidate {
@@ -12,12 +8,7 @@ export interface TagCandidate {
 }
 
 function normWords(s: string): string {
-  return s
-    .trim()
-    .toLowerCase()
-    .replace(/-/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return s.trim().toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function tokenize(s: string): string[] {
@@ -95,10 +86,7 @@ export function scorePaprikaCategoryToTag(
 
   // Single-edit matches on 4+ character tokens (e.g. "quik" ↔ "quick")
   const qt = tokenize(paprikaCategory);
-  const vt = new Set([
-    ...tokenize(candidate.value),
-    ...tokenize(candidate.label),
-  ]);
+  const vt = new Set([...tokenize(candidate.value), ...tokenize(candidate.label)]);
   for (const a of qt) {
     if (a.length < 4) continue;
     for (const b of vt) {
@@ -172,7 +160,9 @@ export interface PaprikaCategoryRow {
 /**
  * Unique Paprika `rawCategories` entries across imported recipes, deduped by normalized key.
  */
-export function collectPaprikaCategoryRows(importedRecipes: readonly { id: string; provenance?: { rawCategories?: string[] } }[]): PaprikaCategoryRow[] {
+export function collectPaprikaCategoryRows(
+  importedRecipes: readonly { id: string; provenance?: { rawCategories?: string[] } }[],
+): PaprikaCategoryRow[] {
   const recipeCountByKey = new Map<string, Set<string>>();
   const displayByKey = new Map<string, string>();
 

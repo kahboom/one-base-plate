@@ -36,18 +36,18 @@ You are a careful seed-data curator working with semi-real household data, not a
 
 Read the fixture data and extract:
 
-| Signal | Where to look |
-| ------ | ------------- |
-| Recurring ingredients | `baseMeals[].components`, `recipes[].components` |
-| Member safe foods | `members[].safeFoods`, `members[].safeFoodFamilyKeys` |
-| Hard-no foods | `members[].hardNoFoods`, `members[].hardNoFoodFamilyKeys` |
-| Child/toddler/baby suitability | `members[].role`, `members[].textureLevel`, ingredient `babySafeWithAdaptation` |
-| Preparation preferences | `members[].preparationRules` |
-| Cuisine / structure patterns | `baseMeals[].tags`, `recipes[].tags`, component roles and ingredient families |
-| Rescue / low-effort patterns | `baseMeals[].rescueEligible`, `recipes[].tags` containing `rescue-friendly`, `quick` |
-| Batch-prep / reuse patterns | `recipes[].tags` containing `batch-friendly`, `freezer-friendly`, `prep-ahead` |
-| Effort levels | `baseMeals[].difficulty`, `baseMeals[].estimatedTimeMinutes`, `recipes[].prepTimeMinutes` / `cookTimeMinutes` |
-| Recipe types and roles | `recipeRefs[].role` values: `primary`, `assembly`, `shortcut`, `component`, `sub-recipe`, `batch-prep` |
+| Signal                         | Where to look                                                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Recurring ingredients          | `baseMeals[].components`, `recipes[].components`                                                              |
+| Member safe foods              | `members[].safeFoods`, `members[].safeFoodFamilyKeys`                                                         |
+| Hard-no foods                  | `members[].hardNoFoods`, `members[].hardNoFoodFamilyKeys`                                                     |
+| Child/toddler/baby suitability | `members[].role`, `members[].textureLevel`, ingredient `babySafeWithAdaptation`                               |
+| Preparation preferences        | `members[].preparationRules`                                                                                  |
+| Cuisine / structure patterns   | `baseMeals[].tags`, `recipes[].tags`, component roles and ingredient families                                 |
+| Rescue / low-effort patterns   | `baseMeals[].rescueEligible`, `recipes[].tags` containing `rescue-friendly`, `quick`                          |
+| Batch-prep / reuse patterns    | `recipes[].tags` containing `batch-friendly`, `freezer-friendly`, `prep-ahead`                                |
+| Effort levels                  | `baseMeals[].difficulty`, `baseMeals[].estimatedTimeMinutes`, `recipes[].prepTimeMinutes` / `cookTimeMinutes` |
+| Recipe types and roles         | `recipeRefs[].role` values: `primary`, `assembly`, `shortcut`, `component`, `sub-recipe`, `batch-prep`        |
 
 ## Recipe generation rules
 
@@ -75,13 +75,13 @@ Read the fixture data and extract:
 
 Follow existing fixture conventions:
 
-| Entity | Pattern | Example |
-| ------ | ------- | ------- |
-| Recipe | `rec-{slug}` | `rec-taco-chicken` |
-| Base meal | `bm-{slug}` | `bm-taco-night` |
-| Ingredient | `ing-{slug}` | `ing-chicken` |
-| MealComponent id | `mc-{parent-abbrev}-{n}` | `mc-rtc-1` |
-| ComponentRecipeRef id | `cr-{parent-abbrev}-{slug}` | `cr-tn-chicken` |
+| Entity                | Pattern                     | Example            |
+| --------------------- | --------------------------- | ------------------ |
+| Recipe                | `rec-{slug}`                | `rec-taco-chicken` |
+| Base meal             | `bm-{slug}`                 | `bm-taco-night`    |
+| Ingredient            | `ing-{slug}`                | `ing-chicken`      |
+| MealComponent id      | `mc-{parent-abbrev}-{n}`    | `mc-rtc-1`         |
+| ComponentRecipeRef id | `cr-{parent-abbrev}-{slug}` | `cr-tn-chicken`    |
 
 Check for id uniqueness against existing data before proposing new ids.
 
@@ -90,6 +90,7 @@ Check for id uniqueness against existing data before proposing new ids.
 ### Step 1 — Observed household signals
 
 Summarize the preference signals found in the seed data:
+
 - Recurring proteins, carbs, veg
 - Member constraints (safe foods, hard-no foods, texture, prep rules)
 - Cuisine tendencies
@@ -98,6 +99,7 @@ Summarize the preference signals found in the seed data:
 ### Step 2 — Recommended recipe additions
 
 Propose 3–8 recipe additions that fit those signals. For each recipe, explain:
+
 - **Why it fits** this household
 - **Role** — whole-meal recipe, component, sauce, sub-recipe, or batch-prep
 - **Planner flexibility** — whether it supports protein swaps, reuse, rescue eligibility, or weekly-theme fit
@@ -106,6 +108,7 @@ Propose 3–8 recipe additions that fit those signals. For each recipe, explain:
 ### Step 3 — Append plan
 
 State exactly what will be appended and where:
+
 - New `recipes[]` entries
 - New `baseMeals[]` entries (if applicable)
 - New `recipeRefs` wiring (if applicable)
@@ -118,6 +121,7 @@ Produce the exact JSON to append, in the project's existing structure, matching 
 ### Step 5 — Integrity checks
 
 Before finalizing, verify:
+
 - [ ] All `ingredientId` references point to existing or newly-proposed ingredients
 - [ ] All `recipeId` references in `recipeRefs` / `ComponentRecipeRef` point to existing or newly-proposed recipes
 - [ ] No duplicate `id` values across existing + new records
@@ -137,11 +141,12 @@ Flag anything ambiguous that the user should confirm before appending.
 - **Append plan**
 - **Append-ready data**
 - **Integrity checks**
-- **Questions / uncertainties** *(only if truly necessary)*
+- **Questions / uncertainties** _(only if truly necessary)_
 
 ## Secondary suggestions (when useful)
 
 You may also suggest:
+
 - A matching base meal entry for a new recipe
 - `recipeRefs` wiring between base meals and recipes
 - `ComponentRecipeRef` entries for component recipes

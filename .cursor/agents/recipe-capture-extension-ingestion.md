@@ -27,13 +27,13 @@ You should think in terms of **extraction**, **provenance**, **normalization**, 
 2. Read **`agent-progress.md`** for recent import, parser, or UI work.
 3. Ground proposals in code (expand as needed):
 
-| Area | Primary locations |
-| ---- | ----------------- |
-| Domain model | `src/types.ts` — `Recipe`, `RecipeRef`, `RecipeProvenance`, `ImportMapping`, `BaseMeal`, `MealComponent`, `ComponentRecipeRef`, `RecipeLink` |
-| Shared text / matching | `src/recipe-parser.ts`, `src/catalog.ts` |
+| Area                                | Primary locations                                                                                                                            |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Domain model                        | `src/types.ts` — `Recipe`, `RecipeRef`, `RecipeProvenance`, `ImportMapping`, `BaseMeal`, `MealComponent`, `ComponentRecipeRef`, `RecipeLink` |
+| Shared text / matching              | `src/recipe-parser.ts`, `src/catalog.ts`                                                                                                     |
 | Paprika import (reference pipeline) | `src/paprika-parser.ts`, `src/pages/PaprikaImport.tsx`, `src/components/PaprikaIngredientPicker.tsx`, `src/storage/paprika-session-store.ts` |
-| Persistence | `src/storage.ts`, `src/storage/` |
-| Tests | e.g. `tests/f048-paprika-import.test.tsx`, `tests/f070-catalog-materialization.test.tsx` and other import/review tests |
+| Persistence                         | `src/storage.ts`, `src/storage/`                                                                                                             |
+| Tests                               | e.g. `tests/f048-paprika-import.test.tsx`, `tests/f070-catalog-materialization.test.tsx` and other import/review tests                       |
 
 4. Coordinate with specialized agents when scope overlaps:
    - **Paprika import QA** (`.cursor/agents/paprika-import-qa.md`) — parser quality, grouped review, draft gates, catalog vs household matching.

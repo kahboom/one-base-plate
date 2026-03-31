@@ -105,6 +105,38 @@ export default function WeeklyPlanner() {
     setLoaded(true);
   }, [householdId]);
 
+  const assignMealToDay = useCallback(
+    (mealId: string, dayLabel: string, componentRecipeOverrides?: ComponentRecipeRef[]) => {
+      if (!household) return;
+      const meal = household.baseMeals.find((m) => m.id === mealId);
+      if (!meal) return;
+
+      const variants = generateAssemblyVariants(meal, household.members, household.ingredients);
+      const newDayPlan: DayPlan = {
+        day: dayLabel,
+        baseMealId: mealId,
+        variants,
+        ...(componentRecipeOverrides?.length ? { componentRecipeOverrides } : {}),
+      };
+
+      setPlan((prev) => {
+        const existingDays = prev?.days ?? [];
+        const filtered = existingDays.filter((d) => d.day !== dayLabel);
+        const updatedDays = [...filtered, newDayPlan];
+        return {
+          id: prev?.id ?? crypto.randomUUID(),
+          days: updatedDays,
+          selectedBaseMeals: [...new Set(updatedDays.map((d) => d.baseMealId))],
+          generatedGroceryList: prev?.generatedGroceryList ?? [],
+          notes: prev?.notes ?? '',
+        };
+      });
+
+      setSelectedMealId(null);
+    },
+    [household],
+  );
+
   useEffect(() => {
     loadData();
   }, [loadData]);
@@ -124,7 +156,7 @@ export default function WeeklyPlanner() {
     processedNavState.current = true;
     assignMealToDay(st.preselectAssignMealId, st.assignTargetDay, st.assignComponentOverrides);
     navigate(location.pathname, { replace: true, state: {} });
-  }, [household, location.state, location.pathname, navigate]);
+  }, [household, location.state, location.pathname, navigate, assignMealToDay]);
 
   function handleGenerate() {
     if (!household) return;
@@ -153,39 +185,6 @@ export default function WeeklyPlanner() {
     if (!plan) return;
     const updatedDays = plan.days.filter((_, i) => i !== dayIndex);
     setPlan({ ...plan, days: updatedDays });
-  }
-
-  function assignMealToDay(
-    mealId: string,
-    dayLabel: string,
-    componentRecipeOverrides?: ComponentRecipeRef[],
-  ) {
-    if (!household) return;
-    const meal = household.baseMeals.find((m) => m.id === mealId);
-    if (!meal) return;
-
-    const variants = generateAssemblyVariants(meal, household.members, household.ingredients);
-    const newDayPlan: DayPlan = {
-      day: dayLabel,
-      baseMealId: mealId,
-      variants,
-      ...(componentRecipeOverrides?.length ? { componentRecipeOverrides } : {}),
-    };
-
-    setPlan((prev) => {
-      const existingDays = prev?.days ?? [];
-      const filtered = existingDays.filter((d) => d.day !== dayLabel);
-      const updatedDays = [...filtered, newDayPlan];
-      return {
-        id: prev?.id ?? crypto.randomUUID(),
-        days: updatedDays,
-        selectedBaseMeals: [...new Set(updatedDays.map((d) => d.baseMealId))],
-        generatedGroceryList: prev?.generatedGroceryList ?? [],
-        notes: prev?.notes ?? '',
-      };
-    });
-
-    setSelectedMealId(null);
   }
 
   function handleTogglePin(mealId: string) {

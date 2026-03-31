@@ -289,7 +289,7 @@ describe('F071 — Recipe import catalog suggestion thumbnail', () => {
 });
 
 describe('F071 — Paprika import catalog suggestion thumbnail', () => {
-  it('shows catalog image on pending catalog suggestion (no household ingredient materialized)', () => {
+  it('shows catalog image on pending catalog suggestion (no household ingredient materialized)', async () => {
     const hh = makeHousehold([]);
     saveHousehold(hh);
     const recipe: PaprikaRecipe = {
@@ -336,11 +336,18 @@ describe('F071 — Paprika import catalog suggestion thumbnail', () => {
       step: 'review',
       savedAt: new Date().toISOString(),
     });
+    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={['/household/h-f071/import-paprika']}>
         <App />
       </MemoryRouter>,
     );
+    for (const id of ['tier-confirm-toggle', 'tier-create-toggle', 'tier-check-toggle'] as const) {
+      const btn = screen.queryByTestId(id);
+      if (btn?.getAttribute('aria-expanded') === 'false') {
+        await user.click(btn);
+      }
+    }
     const thumb = screen.getByTestId('review-group-catalog-suggestion-thumb-0');
     expect(thumb).toHaveAttribute('src', catFlour.imageUrl!);
     expect(thumb).toHaveAttribute('loading', 'lazy');

@@ -440,14 +440,8 @@ function IngredientModal({
     return validateIngredientAliases({ ...ingredient, name: canon }, allIngredients);
   }, [ingredient, allIngredients]);
 
-  const catalogDefaultImageUrl = useMemo(
-    () => getCatalogDefaultImageUrl(ingredient),
-    [ingredient.catalogId],
-  );
-  const effectiveImageUrl = useMemo(
-    () => resolveIngredientImageUrl(ingredient),
-    [ingredient.imageUrl, ingredient.catalogId],
-  );
+  const catalogDefaultImageUrl = useMemo(() => getCatalogDefaultImageUrl(ingredient), [ingredient]);
+  const effectiveImageUrl = useMemo(() => resolveIngredientImageUrl(ingredient), [ingredient]);
 
   const mergeResults = useMemo(() => {
     if (!mergeMode || !mergeSearch.trim()) return [];
@@ -571,11 +565,19 @@ function IngredientModal({
           <h2 className="text-xl font-bold text-text-primary">
             {toSentenceCase(ingredient.name) || 'New ingredient'}
           </h2>
-          <span className="text-xs font-medium text-text-muted uppercase tracking-wider" data-testid="ingredient-source-label">
+          <span
+            className="text-xs font-medium text-text-muted uppercase tracking-wider"
+            data-testid="ingredient-source-label"
+          >
             {ingredient.source === 'catalog' ? 'From catalog' : 'Manual'}
           </span>
         </div>
-        <Button variant="ghost" onClick={onDismiss} aria-label="Close modal" className="h-8 w-8 rounded-full p-0 flex items-center justify-center bg-bg hover:bg-border-light">
+        <Button
+          variant="ghost"
+          onClick={onDismiss}
+          aria-label="Close modal"
+          className="h-8 w-8 rounded-full p-0 flex items-center justify-center bg-bg hover:bg-border-light"
+        >
           ✕
         </Button>
       </div>
@@ -589,7 +591,10 @@ function IngredientModal({
             <span className="text-warning">⚠️</span>
             <div>
               <p className="font-medium">Possible duplicate</p>
-              <p className="text-text-secondary">A similar ingredient &ldquo;{duplicates[0]!.name}&rdquo; already exists in your list.</p>
+              <p className="text-text-secondary">
+                A similar ingredient &ldquo;{duplicates[0]!.name}&rdquo; already exists in your
+                list.
+              </p>
             </div>
           </div>
         )}
@@ -627,11 +632,13 @@ function IngredientModal({
               </FieldLabel>
 
               <div>
-                <span className="mb-1 block text-sm font-medium text-text-secondary">Also matches</span>
+                <span className="mb-1 block text-sm font-medium text-text-secondary">
+                  Also matches
+                </span>
                 <p className="mb-3 text-xs text-text-muted">
                   Used for recipe import and search. Example: cilantro, fresh coriander.
                 </p>
-                
+
                 {(aliasValidation.blockingReason || aliasCommitError) && (
                   <div
                     className="mb-3 rounded-md border border-danger bg-conflict-bg px-3 py-2 text-sm text-conflict-text"
@@ -653,10 +660,13 @@ function IngredientModal({
                     </ul>
                   </div>
                 )}
-                
+
                 <div className="flex flex-wrap gap-2 mb-3" data-testid="ingredient-alias-list">
                   {(ingredient.aliases ?? []).map((a) => (
-                    <span key={a} className="inline-flex items-center gap-1 rounded-md bg-bg border border-border-light px-2 py-1 text-sm">
+                    <span
+                      key={a}
+                      className="inline-flex items-center gap-1 rounded-md bg-bg border border-border-light px-2 py-1 text-sm"
+                    >
                       {toSentenceCase(a)}
                       <button
                         type="button"
@@ -670,7 +680,7 @@ function IngredientModal({
                     </span>
                   ))}
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Input
                     type="text"
@@ -696,27 +706,35 @@ function IngredientModal({
               </div>
 
               <div>
-                <span className="mb-3 block text-sm font-medium text-text-secondary">Properties</span>
+                <span className="mb-3 block text-sm font-medium text-text-secondary">
+                  Properties
+                </span>
                 <div className="flex flex-col gap-3">
                   <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border-light p-3 transition-colors hover:bg-bg">
                     <div className="flex h-5 items-center">
-                        <input
+                      <input
                         type="checkbox"
                         aria-label="Freezer friendly"
                         className="h-4 w-4 rounded border-gray-300 accent-brand"
                         checked={ingredient.freezerFriendly}
-                        onChange={(e) => onChange({ ...ingredient, freezerFriendly: e.target.checked })}
+                        onChange={(e) =>
+                          onChange({ ...ingredient, freezerFriendly: e.target.checked })
+                        }
                       />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium text-text-primary">Freezer friendly</span>
-                      <span className="text-xs text-text-muted">Can be stored in the freezer for later use</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        Freezer friendly
+                      </span>
+                      <span className="text-xs text-text-muted">
+                        Can be stored in the freezer for later use
+                      </span>
                     </div>
                   </label>
 
                   <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border-light p-3 transition-colors hover:bg-bg">
                     <div className="flex h-5 items-center">
-                        <input
+                      <input
                         type="checkbox"
                         aria-label="Baby safe with adaptation"
                         className="h-4 w-4 rounded border-gray-300 accent-brand"
@@ -727,8 +745,12 @@ function IngredientModal({
                       />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium text-text-primary">Baby safe with adaptation</span>
-                      <span className="text-xs text-text-muted">Safe for babies with adaptation</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        Baby safe with adaptation
+                      </span>
+                      <span className="text-xs text-text-muted">
+                        Safe for babies with adaptation
+                      </span>
                     </div>
                   </label>
                 </div>
@@ -740,10 +762,10 @@ function IngredientModal({
               <div>
                 <span className="mb-1 block text-sm font-medium text-text-secondary">Image</span>
                 <p className="mb-3 text-xs text-text-muted">
-                  Linked catalog entries can supply a default image. Set a URL or upload only when you
-                  want a custom household image.
+                  Linked catalog entries can supply a default image. Set a URL or upload only when
+                  you want a custom household image.
                 </p>
-                
+
                 <div className="rounded-lg border border-border-light bg-surface p-4">
                   <div className="flex items-start gap-4">
                     {effectiveImageUrl ? (
@@ -773,15 +795,31 @@ function IngredientModal({
                       </div>
                     ) : (
                       <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-md border border-dashed border-border-default bg-bg text-text-muted">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                          <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
                       </div>
                     )}
-                    
+
                     <div className="flex flex-1 flex-col gap-2">
                       <Input
                         type="url"
                         value={ingredient.imageUrl ?? ''}
-                        onChange={(e) => onChange({ ...ingredient, imageUrl: e.target.value || undefined })}
+                        onChange={(e) =>
+                          onChange({ ...ingredient, imageUrl: e.target.value || undefined })
+                        }
                         placeholder="Image URL"
                         className="h-9 text-sm"
                         data-testid="ingredient-image-url"
@@ -807,14 +845,20 @@ function IngredientModal({
                           />
                         </label>
                       </div>
-                      
+
                       {!ingredient.imageUrl && catalogDefaultImageUrl && (
-                        <span className="mt-1 text-[10px] font-medium text-success" data-testid="ingredient-catalog-image-label">
+                        <span
+                          className="mt-1 text-[10px] font-medium text-success"
+                          data-testid="ingredient-catalog-image-label"
+                        >
                           From catalog (default)
                         </span>
                       )}
                       {ingredient.imageUrl && (
-                        <span className="mt-1 text-[10px] font-medium text-brand" data-testid="ingredient-custom-image-label">
+                        <span
+                          className="mt-1 text-[10px] font-medium text-brand"
+                          data-testid="ingredient-custom-image-label"
+                        >
                           Custom household image
                         </span>
                       )}
@@ -833,7 +877,13 @@ function IngredientModal({
                       className="inline-flex items-center gap-1 rounded-full bg-info-bg px-2.5 py-1 text-xs font-medium text-info-text"
                     >
                       {tag}
-                      <button type="button" onClick={() => removeTag(tag)} className="ml-0.5 hover:text-info-text/70">x</button>
+                      <button
+                        type="button"
+                        onClick={() => removeTag(tag)}
+                        className="ml-0.5 hover:text-info-text/70"
+                      >
+                        x
+                      </button>
                     </span>
                   ))}
                 </div>
@@ -872,12 +922,18 @@ function IngredientModal({
                   Ingredient families
                 </span>
                 <p className="mb-3 text-xs text-text-muted">
-                  Planner preference grouping (e.g. &quot;sausage&quot;, &quot;pasta&quot;). Not tags or
-                  aliases.
+                  Planner preference grouping (e.g. &quot;sausage&quot;, &quot;pasta&quot;). Not
+                  tags or aliases.
                 </p>
-                <div className="mb-3 flex flex-wrap gap-1.5" data-testid="ingredient-family-key-list">
+                <div
+                  className="mb-3 flex flex-wrap gap-1.5"
+                  data-testid="ingredient-family-key-list"
+                >
                   {(ingredient.familyKeys ?? []).map((fk) => (
-                    <span key={fk} className="inline-flex items-center gap-1 rounded-md bg-warning-bg px-2.5 py-1 text-xs font-medium text-warning-text">
+                    <span
+                      key={fk}
+                      className="inline-flex items-center gap-1 rounded-md bg-warning-bg px-2.5 py-1 text-xs font-medium text-warning-text"
+                    >
                       {fk}
                       <button
                         type="button"
@@ -918,7 +974,10 @@ function IngredientModal({
 
           {/* Merge section */}
           {!isNewIngredient && (
-            <div className="mt-8 rounded-lg border border-border-light bg-bg p-4" data-testid="merge-section">
+            <div
+              className="mt-8 rounded-lg border border-border-light bg-bg p-4"
+              data-testid="merge-section"
+            >
               {mergeTarget ? (
                 <MergeConfirmView
                   key={`${ingredient.id}-${mergeTarget.id}`}
@@ -979,7 +1038,10 @@ function IngredientModal({
                             <span className="flex-1 truncate font-medium">
                               {toSentenceCase(r.name)}
                             </span>
-                            <Chip variant={CATEGORY_CHIP_VARIANT[r.category]} className="text-[10px]">
+                            <Chip
+                              variant={CATEGORY_CHIP_VARIANT[r.category]}
+                              className="text-[10px]"
+                            >
                               {r.category}
                             </Chip>
                           </button>
@@ -992,7 +1054,9 @@ function IngredientModal({
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-sm font-medium text-text-primary">Merge ingredients</h4>
-                    <p className="text-xs text-text-muted">Combine this ingredient with another one</p>
+                    <p className="text-xs text-text-muted">
+                      Combine this ingredient with another one
+                    </p>
                   </div>
                   <Button onClick={() => setMergeMode(true)} data-testid="merge-open-btn">
                     Merge...
@@ -1007,7 +1071,12 @@ function IngredientModal({
             {isNewIngredient ? (
               <span />
             ) : (
-              <Button variant="danger" type="button" onClick={onDelete} data-testid="delete-ingredient-btn">
+              <Button
+                variant="danger"
+                type="button"
+                onClick={onDelete}
+                data-testid="delete-ingredient-btn"
+              >
                 Delete ingredient
               </Button>
             )}
@@ -1015,7 +1084,12 @@ function IngredientModal({
               <Button variant="default" type="button" onClick={onDismiss}>
                 Cancel
               </Button>
-              <Button type="submit" variant="primary" data-testid="ingredient-modal-done" className="px-8">
+              <Button
+                type="submit"
+                variant="primary"
+                data-testid="ingredient-modal-done"
+                className="px-8"
+              >
                 Done
               </Button>
             </div>
@@ -1480,6 +1554,7 @@ export default function IngredientManager() {
   }, [loaded, householdId, ingredients]);
 
   const dismissedMergeKeys = useMemo(() => {
+    void dismissVersion;
     if (!householdId) return new Set<string>();
     return loadDismissedMergePairKeys(householdId);
   }, [householdId, dismissVersion]);
@@ -1639,6 +1714,8 @@ export default function IngredientManager() {
       },
       { replace: true },
     );
+    // setSearchParams is stable from react-router; omitting avoids spurious effect runs in tests.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- paginationResetDepsStr only
   }, [paginationResetDepsStr]);
 
   useLayoutEffect(() => {
@@ -1652,6 +1729,7 @@ export default function IngredientManager() {
       },
       { replace: true },
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setSearchParams stable; page/urlPageFromUrl drive sync
   }, [page, urlPageFromUrl]);
 
   useEffect(() => {
@@ -1668,6 +1746,7 @@ export default function IngredientManager() {
       },
       { replace: true },
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setSearchParams stable
   }, [householdId]);
 
   const editingIngredient =

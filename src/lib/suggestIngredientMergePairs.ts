@@ -128,9 +128,7 @@ function scorePair(a: Ingredient, b: Ingredient): { score: number; reasons: stri
     const smaller = Ta.size <= Tb.size ? Ta : Tb;
     const larger = Ta.size <= Tb.size ? Tb : Ta;
     const strictSubset =
-      smaller.size >= 1 &&
-      smaller.size < larger.size &&
-      [...smaller].every((t) => larger.has(t));
+      smaller.size >= 1 && smaller.size < larger.size && [...smaller].every((t) => larger.has(t));
 
     score = jaccard;
     if (jaccard >= 0.45) {
@@ -139,8 +137,7 @@ function scorePair(a: Ingredient, b: Ingredient): { score: number; reasons: stri
 
     if (strictSubset) {
       const single = smaller.size === 1 ? [...smaller][0]! : '';
-      const allowSingleTokenBoost =
-        smaller.size > 1 || single.length >= 4 || larger.size <= 2;
+      const allowSingleTokenBoost = smaller.size > 1 || single.length >= 4 || larger.size <= 2;
       if (allowSingleTokenBoost) {
         const subsetScore = 0.75 + 0.2 * (intersection.size / larger.size);
         if (subsetScore > score) {

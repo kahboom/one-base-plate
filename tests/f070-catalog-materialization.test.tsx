@@ -120,7 +120,9 @@ describe('F070: Ingredient Manager — no eager catalog merge', () => {
   });
 
   it('existing catalog-linked household data still loads and edits', async () => {
-    const pasta = catalogIngredientToHousehold(MASTER_CATALOG.find((i: { id: string; }) => i.id === 'cat-pasta')!);
+    const pasta = catalogIngredientToHousehold(
+      MASTER_CATALOG.find((i: { id: string }) => i.id === 'cat-pasta')!,
+    );
     seedHousehold([pasta]);
     const user = userEvent.setup();
     renderIngredients();

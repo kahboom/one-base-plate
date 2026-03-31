@@ -165,10 +165,7 @@ const mealWithYogurt = makeMeal('m-yogurt', 'Yogurt bowl', [
   'ing-broccoli',
 ]);
 
-const mealNoMatch = makeMeal('m-plain', 'Plain rice', [
-  'ing-rice',
-  'ing-broccoli',
-]);
+const mealNoMatch = makeMeal('m-plain', 'Plain rice', ['ing-rice', 'ing-broccoli']);
 
 const mealWithPatty = makeMeal('m-patty', 'Veggie patty meal', [
   'ing-sausage-patty',
@@ -219,7 +216,11 @@ describe('F075 — Grouped ingredient-family preferences', () => {
         hardNoFoods: ['greek yogurt'],
         hardNoFoodFamilyKeys: [],
       };
-      const exactResult = computePreferenceScore(mealWithYogurt, [toddler, adultExactHardNo], ingredients);
+      const exactResult = computePreferenceScore(
+        mealWithYogurt,
+        [toddler, adultExactHardNo],
+        ingredients,
+      );
 
       const familyResult = computePreferenceScore(mealWithYogurt, members, ingredients);
 
@@ -233,7 +234,11 @@ describe('F075 — Grouped ingredient-family preferences', () => {
         safeFoods: ['italian sausage'],
         safeFoodFamilyKeys: ['sausage'],
       };
-      const result = computePreferenceScore(mealWithSausage, [toddlerWithExact, adult], ingredients);
+      const result = computePreferenceScore(
+        mealWithSausage,
+        [toddlerWithExact, adult],
+        ingredients,
+      );
 
       // italian sausage should only be counted once (exact), not also as family
       const sausageExactMatches = result.safeFoodMatches.filter(
@@ -356,10 +361,7 @@ describe('F075 — Grouped ingredient-family preferences', () => {
 
     it('generateShortReason surfaces family match', () => {
       // Meal with only family match (no exact safe food match for anyone)
-      const membersNoExact: HouseholdMember[] = [
-        { ...toddler, safeFoods: [] },
-        adult,
-      ];
+      const membersNoExact: HouseholdMember[] = [{ ...toddler, safeFoods: [] }, adult];
       const reason = generateShortReason(mealWithSausage, membersNoExact, ingredients);
       expect(reason).toContain('sausage family');
     });
@@ -373,14 +375,7 @@ describe('F075 — Grouped ingredient-family preferences', () => {
       ];
       const meals = [mealWithSausage, mealNoMatch];
 
-      const rows = rankWeeklySuggestedMeals(
-        meals,
-        membersNoExact,
-        ingredients,
-        [],
-        [],
-        [],
-      );
+      const rows = rankWeeklySuggestedMeals(meals, membersNoExact, ingredients, [], [], []);
 
       // Sausage meal should rank higher due to family boost
       expect(rows[0]!.meal.id).toBe('m-sausage');

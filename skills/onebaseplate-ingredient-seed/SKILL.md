@@ -13,12 +13,12 @@ description: Edits OneBasePlate household ingredient seed data in JSON fixtures 
 
 ## How it fits the app
 
-| Piece | Role |
-| ----- | ---- |
-| `fixtures/households/*.json` | Source of truth per household (human-edited). |
-| `scripts/db-seed.ts` | Concatenates all `*.json` in that folder into one array written to `src/seed-data.json`. |
-| `src/storage.ts` → `seedIfNeeded()` | On first run, loads bundled `seed-data.json` into IndexedDB. |
-| `src/catalog.ts` → `MASTER_CATALOG` | **Separate** curated list for import/browse matching — not auto-synced from fixtures. |
+| Piece                               | Role                                                                                     |
+| ----------------------------------- | ---------------------------------------------------------------------------------------- |
+| `fixtures/households/*.json`        | Source of truth per household (human-edited).                                            |
+| `scripts/db-seed.ts`                | Concatenates all `*.json` in that folder into one array written to `src/seed-data.json`. |
+| `src/storage.ts` → `seedIfNeeded()` | On first run, loads bundled `seed-data.json` into IndexedDB.                             |
+| `src/catalog.ts` → `MASTER_CATALOG` | **Separate** curated list for import/browse matching — not auto-synced from fixtures.    |
 
 ## `Ingredient` JSON shape
 

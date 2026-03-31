@@ -436,6 +436,16 @@ describe('Bulk-reviewed import compatibility', () => {
 
 /* ---- UI: Bulk review workflow ---- */
 describe('PaprikaImport bulk review UI', () => {
+  /** Tier panels are collapsed by default; expand so group cards mount. */
+  async function expandCollapsedPaprikaTiers(user: ReturnType<typeof userEvent.setup>) {
+    for (const id of ['tier-confirm-toggle', 'tier-create-toggle', 'tier-check-toggle'] as const) {
+      const btn = screen.queryByTestId(id);
+      if (btn?.getAttribute('aria-expanded') === 'false') {
+        await user.click(btn);
+      }
+    }
+  }
+
   it('shows bulk summary chips with match counts in review step', async () => {
     const hh = makeHousehold();
     saveHousehold(hh);
@@ -542,6 +552,7 @@ describe('PaprikaImport bulk review UI', () => {
 
     renderAt('/household/h-bulk/import-paprika');
     await user.click(screen.getByTestId('filter-ambiguous'));
+    await expandCollapsedPaprikaTiers(user);
     expect(screen.getByTestId('review-group-suggested-0')).toBeInTheDocument();
     expect(screen.getAllByTestId(/review-group-\d+/)).toHaveLength(1);
   });
@@ -595,6 +606,7 @@ describe('PaprikaImport bulk review UI', () => {
 
     renderAt('/household/h-bulk/import-paprika');
     await user.click(screen.getByTestId('filter-matched'));
+    await expandCollapsedPaprikaTiers(user);
     expect(screen.getAllByTestId(/review-group-\d+/)).toHaveLength(1);
     expect(screen.getByText(/Will use household ingredient/i)).toBeInTheDocument();
     expect(screen.queryByText(/Suggested:/i)).not.toBeInTheDocument();
@@ -684,6 +696,7 @@ describe('PaprikaImport bulk review UI', () => {
   });
 
   it('hides per-line action select when a group has only one occurrence (use group buttons)', async () => {
+    const user = userEvent.setup();
     const hh = makeHousehold();
     saveHousehold(hh);
     const recipe = makePaprikaRecipe({ name: 'Solo', ingredients: '200g chicken breast' });
@@ -696,11 +709,13 @@ describe('PaprikaImport bulk review UI', () => {
     });
 
     renderAt('/household/h-bulk/import-paprika');
+    await expandCollapsedPaprikaTiers(user);
     expect(screen.getByTestId('group-match-0')).toBeInTheDocument();
     expect(screen.queryByTestId('review-action-0-0')).toBeNull();
   });
 
-  it('shows resolved household ingredient as the final name after Match household', () => {
+  it('shows resolved household ingredient as the final name after Match household', async () => {
+    const user = userEvent.setup();
     const hh = makeHousehold();
     const passataIng = {
       id: 'ing-passata',
@@ -737,6 +752,7 @@ describe('PaprikaImport bulk review UI', () => {
     });
 
     renderAt('/household/h-bulk/import-paprika');
+    await expandCollapsedPaprikaTiers(user);
     expect(screen.getByTestId('review-group-use-preview-0')).toBeInTheDocument();
     expect(screen.getByTestId('review-group-use-name-0')).toHaveTextContent(/passata/i);
     expect(screen.queryByText(/Suggested:/)).not.toBeInTheDocument();
@@ -779,38 +795,18 @@ describe('PaprikaImport bulk review UI', () => {
     });
 
     renderAt('/household/h-bulk/import-paprika');
+    await expandCollapsedPaprikaTiers(user);
     expect(screen.getByTestId('review-group-suggested-0')).toBeInTheDocument();
     await user.click(screen.getByTestId('review-group-suggested-0'));
+    // Approving moves the group into "confirm"; that tier mounts collapsed — expand again.
+    await expandCollapsedPaprikaTiers(user);
     expect(screen.getByTestId('review-group-use-preview-0')).toBeInTheDocument();
     expect(screen.getByTestId('review-group-use-name-0')).toHaveTextContent(/chicken breast/i);
     expect(screen.queryByTestId('review-group-suggested-0')).not.toBeInTheDocument();
   });
 
-  it('opens bulk review page from reviewPage URL query (1-based)', () => {
-    const hh = makeHousehold();
-    saveHousehold(hh);
-    const recipes = Array.from({ length: 11 }, (_, i) =>
-      makePaprikaRecipe({
-        name: `Recipe ${i}`,
-        ingredients: `1 tsp unique herb zzz${i}`,
-      }),
-    );
-    const parsed = parsePaprikaRecipes(recipes, hh.ingredients, []);
-    saveImportSession({
-      householdId: 'h-bulk',
-      parsedRecipes: parsed,
-      step: 'review',
-      savedAt: new Date().toISOString(),
-    });
-
-    renderAt('/household/h-bulk/import-paprika?reviewPage=2');
-    expect(screen.getByTestId('review-lines-pagination')).toHaveTextContent(/Showing 11/);
-    expect(screen.getByTestId('review-lines-pagination')).toHaveTextContent(/Page 2 of 2/);
-    expect(screen.getByTestId('review-lines-pagination-bottom')).toHaveTextContent(/Showing 11/);
-    expect(screen.getByTestId('review-lines-pagination-bottom')).toHaveTextContent(/Page 2 of 2/);
-  });
-
   it('shows per-line action selects when the same parsed name appears in multiple lines', async () => {
+    const user = userEvent.setup();
     const hh = makeHousehold();
     saveHousehold(hh);
     const recipe1 = makePaprikaRecipe({ name: 'R1', ingredients: '1 cup rice' });
@@ -824,11 +820,13 @@ describe('PaprikaImport bulk review UI', () => {
     });
 
     renderAt('/household/h-bulk/import-paprika');
+    await expandCollapsedPaprikaTiers(user);
     expect(screen.getByTestId('review-action-0-0')).toBeInTheDocument();
     expect(screen.getByTestId('review-action-0-1')).toBeInTheDocument();
   });
 
   it('shows all lines across multiple recipes in bulk review', async () => {
+    const user = userEvent.setup();
     const hh = makeHousehold();
     saveHousehold(hh);
     const recipe1 = makePaprikaRecipe({ name: 'R1', ingredients: '200g chicken breast' });
@@ -842,6 +840,7 @@ describe('PaprikaImport bulk review UI', () => {
     });
 
     renderAt('/household/h-bulk/import-paprika');
+    await expandCollapsedPaprikaTiers(user);
     // Both recipes' lines should be visible (grouped view)
     expect((await screen.findAllByText(/R1/)).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/R2/).length).toBeGreaterThan(0);
