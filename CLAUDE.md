@@ -10,7 +10,7 @@ This file contains a growing ruleset that improves over time. **At session start
 
 ### How it works
 
-1. When the user corrects you or you make a mistake, **immediately append a new rule** to the "Learned Rules" section at the bottom of this file.
+1. When the user corrects you or you make a mistake, **immediately append a new rule** to the "Learned Rules" section at the bottom of this file. Keep it short.
 2. Rules are numbered sequentially and written as clear, imperative instructions.
 3. Format: `N. [CATEGORY] Never/Always do X — because Y.`
 4. Categories: `[STYLE]`, `[CODE]`, `[ARCH]`, `[TOOL]`, `[PROCESS]`, `[DATA]`, `[UX]`, `[OTHER]`
@@ -35,7 +35,7 @@ This file contains a growing ruleset that improves over time. **At session start
 
 ---
 
-## About the OneBasePlate
+## About OneBasePlate
 
 Household meal-planning app: **one base meal, multiple assemblies**, merged grocery lists, and conflict-aware suggestions for picky eaters, texture needs, and preparation constraints. See `README.md` for product context and user-facing docs.
 
@@ -109,10 +109,14 @@ Aligned with `PRD.json` → `anthropicLongRunningAgentAlignment.sessionLoop`:
 5. Run targeted tests; update PRD `passes` only when verified.
 6. Commit with a clear message.
 
-When the user overrides this loop (e.g. hotfix only), follow their instructions.
+## Paprika recipe data
+
+If it is deemed beneficial to have a PaprikaImport file to test with (i.e. the importer/parser), there is a directory located at `.tmp-paprika` with a wide variety of recipes. These files should only be used or loaded if they are needed, in which case, use a sub-agent to handle them. These are not checked into git.
 
 ---
 
 ## Learned Rules
 
 <!-- New rules are appended below this line. Do not edit above this section. -->
+
+1. [ARCH] Agent-specific memory belongs in `.claude/agent-memory/<agent-name>.md`, not in this file — keeps Learned Rules short and avoids loading irrelevant specialist context into every agent’s context window. When a specialist agent (e.g. import-performance-scaling) produces durable findings, write them to its own memory file and add a “Read <path> at session start” instruction in the agent’s body.
