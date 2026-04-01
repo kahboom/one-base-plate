@@ -153,15 +153,16 @@ export default function RescueMode() {
         <Section title="What's tonight like?">
           <div data-testid="scenario-picker" className="grid gap-4 grid-cols-1 sm:grid-cols-3">
             {SCENARIOS.map((s) => (
-              <Card
+              <button
                 key={s.id}
+                type="button"
                 data-testid={`scenario-${s.id}`}
-                className="cursor-pointer text-center hover:border-brand"
+                className="w-full rounded-md border border-border-default bg-surface p-4 text-center cursor-pointer hover:border-brand shadow-card transition-shadow focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2"
                 onClick={() => handleScenario(s.id)}
               >
-                <strong className="text-lg">{s.label}</strong>
+                <strong className="block text-lg">{s.label}</strong>
                 <p className="mt-1 text-sm text-text-muted">{s.description}</p>
-              </Card>
+              </button>
             ))}
           </div>
         </Section>

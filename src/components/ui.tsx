@@ -133,7 +133,7 @@ const btnVariants: Record<ButtonVariant, string> = {
   primary:
     'border border-brand bg-brand text-white hover:bg-brand-hover enabled:active:scale-[0.98]',
   danger: 'border border-danger text-danger hover:bg-danger-light enabled:active:scale-[0.98]',
-  ghost: 'border-none bg-transparent text-brand hover:underline p-0 min-h-0 active:opacity-80',
+  ghost: 'border-none bg-transparent text-brand hover:underline p-0 active:opacity-80',
 };
 
 export function Button({
@@ -365,7 +365,7 @@ export function HouseholdNav({ householdId }: { householdId?: string }) {
 
 function navLinkClass(isActive: boolean) {
   const base =
-    'inline-flex items-center rounded-pill px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-out min-h-[36px] whitespace-nowrap enabled:active:scale-[0.98]';
+    'inline-flex items-center rounded-pill px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-out min-h-[44px] whitespace-nowrap enabled:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2';
   return isActive
     ? `${base} bg-brand text-white shadow-sm`
     : `${base} text-text-secondary hover:bg-brand-light hover:text-brand`;
@@ -373,7 +373,7 @@ function navLinkClass(isActive: boolean) {
 
 function secondaryNavLinkClass(isActive: boolean) {
   const base =
-    'inline-flex items-center rounded-md px-1 py-1 text-sm transition-all duration-200 ease-out min-h-[36px] whitespace-nowrap underline-offset-[6px] decoration-2';
+    'inline-flex items-center rounded-md px-2 sm:px-1 py-1 text-sm transition-all duration-200 ease-out min-h-[36px] whitespace-nowrap underline-offset-[6px] decoration-2 focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2';
   return isActive
     ? `${base} font-semibold text-brand underline decoration-brand`
     : `${base} font-medium text-text-secondary decoration-transparent hover:text-brand hover:underline hover:decoration-brand/35`;

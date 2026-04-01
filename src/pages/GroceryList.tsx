@@ -152,28 +152,32 @@ export default function GroceryList() {
                       <button
                         onClick={() => toggleOwned(item.ingredientId)}
                         data-testid={`toggle-owned-${item.ingredientId}`}
-                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border-2 transition-colors ${
-                          isOwned
-                            ? 'border-success bg-success text-white'
-                            : 'border-border-default bg-surface hover:border-brand'
-                        }`}
+                        className="group flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-sm focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2"
                         aria-label={
                           isOwned
                             ? `Mark ${item.name} as needed`
                             : `Mark ${item.name} as already have`
                         }
                       >
-                        {isOwned && (
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={3}
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
+                        <div
+                          className={`flex h-6 w-6 items-center justify-center rounded-sm border-2 transition-colors ${
+                            isOwned
+                              ? 'border-success bg-success text-white'
+                              : 'border-border-default bg-surface group-hover:border-brand'
+                          }`}
+                        >
+                          {isOwned && (
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={3}
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
                       </button>
                       <span
                         className={`text-sm font-medium ${isOwned ? 'line-through text-text-muted' : 'text-text-primary'}`}
@@ -187,7 +191,7 @@ export default function GroceryList() {
                         <Link
                           key={meal.id}
                           to={`/household/${householdId}/meal/${meal.id}`}
-                          className="text-xs text-brand hover:underline"
+                          className="text-sm py-1 inline-block text-brand hover:underline"
                           data-testid={`meal-link-${item.ingredientId}-${meal.id}`}
                         >
                           {meal.name}
