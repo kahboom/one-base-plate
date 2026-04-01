@@ -764,8 +764,17 @@ function DayCard({
   const [showOutcomeForm, setShowOutcomeForm] = useState(false);
   const [outcomeSelection, setOutcomeSelection] = useState<MealOutcomeResult | null>(null);
   const [outcomeNotes, setOutcomeNotes] = useState('');
+  const justAssignedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showConfirmationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isEmpty = !dayPlan;
   const isHighEffort = meal?.difficulty === 'hard';
+
+  useEffect(() => {
+    return () => {
+      if (justAssignedTimeoutRef.current) clearTimeout(justAssignedTimeoutRef.current);
+      if (showConfirmationTimeoutRef.current) clearTimeout(showConfirmationTimeoutRef.current);
+    };
+  }, []);
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
@@ -778,10 +787,18 @@ function DayCard({
   }
 
   function triggerAssignFeedback() {
+    if (justAssignedTimeoutRef.current) clearTimeout(justAssignedTimeoutRef.current);
+    if (showConfirmationTimeoutRef.current) clearTimeout(showConfirmationTimeoutRef.current);
     setJustAssigned(true);
     setShowConfirmation(true);
-    setTimeout(() => setJustAssigned(false), 600);
-    setTimeout(() => setShowConfirmation(false), 800);
+    justAssignedTimeoutRef.current = setTimeout(() => {
+      justAssignedTimeoutRef.current = null;
+      setJustAssigned(false);
+    }, 600);
+    showConfirmationTimeoutRef.current = setTimeout(() => {
+      showConfirmationTimeoutRef.current = null;
+      setShowConfirmation(false);
+    }, 800);
   }
 
   function handleDrop(e: React.DragEvent) {

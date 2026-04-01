@@ -404,7 +404,7 @@ describe('F036: Consistent navigation across all household screens', () => {
       renderRoute('/household/h-nav/home');
       const nav = screen.getByRole('navigation', { name: 'Global navigation' });
       const link = within(nav).getByText('Meal planner');
-      expect(link.className).toContain('min-h-[36px]');
+      expect(link.className).toContain('min-h-[44px]');
     });
 
     it('active state changes when navigating to a different page', async () => {
