@@ -20,7 +20,7 @@ It is read at the start of every session and updated when new findings are confi
 **Type:** I/O sequencing / perceived responsiveness  
 **Pattern:** Sequentially `await`s each of 314 zip entries: `DecompressionStream` → buffer merge → `JSON.parse`. Correct and simple but produces a long uninterrupted main-thread run.  
 **Impact:** Perceived freeze during initial file load before any recipe appears on screen.  
-**Safe fix directions:** Yield between entries (`queueMicrotask` / `requestAnimationFrame`) with a "Parsing *k*/314" progress indicator; or offload to a Web Worker (larger change, only if yield-based approach is insufficient).  
+**Safe fix directions:** Yield between entries (`queueMicrotask` / `requestAnimationFrame`) with a "Parsing _k_/314" progress indicator; or offload to a Web Worker (larger change, only if yield-based approach is insufficient).  
 **Do not:** Skip parsing or JSON validation to go faster.
 
 ### 3. `saveImportSession` called on every `parsedRecipes` change — `src/pages/PaprikaImport.tsx` (useEffect)
@@ -50,6 +50,7 @@ It is read at the start of every session and updated when new findings are confi
 ## Bulk review UX: scaling issue (documented by paprika-import-qa agent)
 
 Not a performance issue per se, but interacts with render scaling:
+
 - "Approve all matches" only clears already-matched lines — does not reduce pending queue
 - "Create all new" floods household — does not reduce cognitive load
 - Tiered review (confirm / create / check) is the right direction; virtual scroll or larger page size reduces DOM pressure when tiers are expanded
@@ -86,6 +87,6 @@ Not a performance issue per se, but interacts with render scaling:
 
 ## Update log
 
-| Date       | Finding |
-| ---------- | ------- |
+| Date       | Finding                                                                                                                                                                                    |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 2026-03-31 | Initial audit — Entrees.paprikarecipes 314 recipes. Four hot paths identified: matchIngredient scans, sequential parsePaprikaFile, per-change saveImportSession, findIndex in tier render. |

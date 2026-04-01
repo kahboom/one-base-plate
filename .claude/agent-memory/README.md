@@ -4,11 +4,11 @@ Per-agent folders for **specialist** knowledge. Shared truths live in [`docs/ai/
 
 ## Layout (per agent)
 
-| File | Purpose |
-| ---- | ------- |
-| **`MEMORY.md`** | **Short** curated summary: current focus, last verified facts, 3–7 bullets max when possible. This is what should feel “injected” — keep it tight. |
-| **`<agent-name>.md`** (or `findings.md`) | Deeper notes: file pointers, edge cases, links to tests, optional checklists. |
-| **`patterns.md`**, **`checklists.md`** | Optional; only if they help humans maintain the agent without duplicating `docs/ai/`. |
+| File                                     | Purpose                                                                                                                                            |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`MEMORY.md`**                          | **Short** curated summary: current focus, last verified facts, 3–7 bullets max when possible. This is what should feel “injected” — keep it tight. |
+| **`<agent-name>.md`** (or `findings.md`) | Deeper notes: file pointers, edge cases, links to tests, optional checklists.                                                                      |
+| **`patterns.md`**, **`checklists.md`**   | Optional; only if they help humans maintain the agent without duplicating `docs/ai/`.                                                              |
 
 ## What belongs in `MEMORY.md`
 

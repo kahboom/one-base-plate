@@ -10,8 +10,9 @@
 The `MASTER_CATALOG` in `src/catalog.ts` currently has ~180 entries. The H001 household fixture has ~160 ingredient rows carrying full metadata (category, tags, shelfLifeHint, freezerFriendly, babySafeWithAdaptation, imageUrl). None of them have `catalogId` or `source` — they are all orphaned "manual" entries duplicating data that belongs in the catalog.
 
 This causes two problems:
+
 1. **Import matching suffers.** Any household that doesn't pre-seed these ingredients has to resolve them manually during Paprika import. 33 common ingredients have no catalog representation at all.
-2. **Fixture bloat.** H001 is ~3,100 lines. Most of that is ingredient metadata that duplicates (or should duplicate) the catalog. Household fixtures should describe what's *specific* to the household, not repeat the entire ingredient library.
+2. **Fixture bloat.** H001 is ~3,100 lines. Most of that is ingredient metadata that duplicates (or should duplicate) the catalog. Household fixtures should describe what's _specific_ to the household, not repeat the entire ingredient library.
 
 **Solution (Option A):** Expand the catalog, thin the fixtures to stubs, and have `db-seed.ts` hydrate full ingredient rows at build time by merging catalog metadata into fixture stubs.
 
@@ -19,16 +20,16 @@ This causes two problems:
 
 ## Pre-work: files to read before making changes
 
-| File | Why |
-|------|-----|
-| `docs/ai/ingredient-seed.md` | Fixture/seed workflow and schema reference |
-| `src/catalog.ts` | `CatalogIngredient` type, `c()` helper, `catalogIngredientToHousehold`, existing entries |
-| `src/types.ts` | `Ingredient` — `catalogId`, `source`, `aliases`, `familyKeys` |
-| `src/storage.ts` | `seedIfNeeded`, `backfillBundledSeedIngredientImageUrls`, `resetHouseholdIngredientsToSeed`, `countSeedIngredientsForHousehold` |
-| `scripts/db-seed.ts` | Current build script — reads fixture JSON, writes `src/seed-data.json` |
-| `src/recipe-parser.ts` | `REGIONAL_SYNONYM_CANONICAL` — confirm synonym consistency |
-| `src/lib/ingredientSynonyms.ts` | Search-level synonym groups |
-| `.cursor/agents/ingredient-ontology-steward.md` | Alias vs separate ingredient rules |
+| File                                            | Why                                                                                                                             |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/ai/ingredient-seed.md`                    | Fixture/seed workflow and schema reference                                                                                      |
+| `src/catalog.ts`                                | `CatalogIngredient` type, `c()` helper, `catalogIngredientToHousehold`, existing entries                                        |
+| `src/types.ts`                                  | `Ingredient` — `catalogId`, `source`, `aliases`, `familyKeys`                                                                   |
+| `src/storage.ts`                                | `seedIfNeeded`, `backfillBundledSeedIngredientImageUrls`, `resetHouseholdIngredientsToSeed`, `countSeedIngredientsForHousehold` |
+| `scripts/db-seed.ts`                            | Current build script — reads fixture JSON, writes `src/seed-data.json`                                                          |
+| `src/recipe-parser.ts`                          | `REGIONAL_SYNONYM_CANONICAL` — confirm synonym consistency                                                                      |
+| `src/lib/ingredientSynonyms.ts`                 | Search-level synonym groups                                                                                                     |
+| `.cursor/agents/ingredient-ontology-steward.md` | Alias vs separate ingredient rules                                                                                              |
 
 ---
 
@@ -38,46 +39,46 @@ For each of the 33 items below, either **add a new catalog entry** or **add an a
 
 ### New catalog entries to create
 
-| H001 name | Catalog id | Category | Tags | Freeze | Baby-safe | Aliases | Notes |
-|-----------|-----------|----------|------|--------|-----------|---------|-------|
-| almond flour | `cat-almond-flour` | pantry | `['staple']` | false | false | `['ground almonds']` | |
-| baguette | `cat-baguette` | carb | `['quick']` | true | true | `['french bread', 'french stick']` | |
-| bratwurst | `cat-bratwurst` | protein | `['quick']` | true | false | `['brats']` | |
-| brown lentils | `cat-brown-lentils` | protein | `['batch-friendly', 'staple']` | false | true | `['green lentils']` | Existing `cat-lentils` covers generic "lentils" — this is a specific variety |
-| butter beans | `cat-butter-beans` | protein | `['batch-friendly', 'staple']` | false | true | `['lima beans']` | |
-| chipolatas | `cat-chipolatas` | protein | `['quick']` | true | false | `['chipolata sausages']` | Distinct from `cat-sausages` |
-| chorizo | `cat-chorizo` | protein | `['quick', 'batch-friendly']` | true | false | `['spanish chorizo']` | |
-| cornmeal | `cat-cornmeal` | pantry | `['staple']` | false | false | `['polenta', 'corn meal']` | |
-| creme fraiche | `cat-creme-fraiche` | dairy | `['quick']` | false | false | `['crème fraîche']` | |
-| duck breast | `cat-duck-breast` | protein | `[]` | true | false | `['duck']` | |
-| halloumi | `cat-halloumi` | dairy | `['quick']` | true | true | `['halloumi cheese']` | |
-| lamb mince | `cat-lamb-mince` | protein | `['batch-friendly']` | true | false | `['ground lamb', 'minced lamb']` | |
-| lasagne sheets | `cat-lasagne-sheets` | carb | `['staple']` | false | true | `['lasagna sheets', 'lasagna noodles', 'lasagne']` | |
-| miso paste | `cat-miso-paste` | pantry | `['staple']` | false | false | `['miso', 'white miso', 'red miso']` | |
-| mixed frozen vegetables | `cat-mixed-frozen-veg` | freezer | `['quick', 'rescue']` | true | true | `['frozen mixed vegetables', 'frozen veg']` | |
-| paneer | `cat-paneer` | dairy | `['quick']` | true | true | `['paneer cheese', 'indian cottage cheese']` | |
-| pecorino | `cat-pecorino` | dairy | `['quick']` | true | true | `['pecorino romano', 'pecorino cheese']` | |
-| pork | `cat-pork` | protein | `['batch-friendly']` | true | false | `['pork loin', 'pork chops', 'pork tenderloin', 'pork fillet']` | Generic pork — distinct from `cat-ground-pork` |
-| queso fresco | `cat-queso-fresco` | dairy | `['quick']` | false | false | `['queso blanco']` | |
-| ramen noodles | `cat-ramen-noodles` | carb | `['quick']` | false | false | `['ramen', 'instant ramen', 'instant noodles']` | Distinct from generic `cat-noodles` |
-| rice flour | `cat-rice-flour` | pantry | `['staple']` | false | false | `['glutinous rice flour']` | |
-| sirloin steak | `cat-sirloin-steak` | protein | `['quick']` | true | false | `['sirloin', 'steak']` | |
-| sourdough bread | `cat-sourdough-bread` | carb | `['staple']` | true | true | `['sourdough']` | Distinct from `cat-bread` |
-| sun-dried tomatoes | `cat-sun-dried-tomatoes` | pantry | `['staple']` | false | false | `['sundried tomatoes', 'sun dried tomatoes']` | |
-| tahini | `cat-tahini` | pantry | `['staple']` | false | false | `['sesame paste']` | |
-| turkey breast | `cat-turkey-breast` | protein | `['quick']` | true | true | `['turkey']` | |
-| white wine vinegar | `cat-white-wine-vinegar` | pantry | `['staple']` | false | false | | Don't duplicate `'white vinegar'` alias from `cat-vinegar` |
-| wholemeal bread | `cat-wholemeal-bread` | carb | `['staple']` | true | true | `['whole wheat bread', 'brown bread']` | |
-| wholemeal flour | `cat-wholemeal-flour` | pantry | `['staple']` | false | false | `['whole wheat flour', 'wholewheat flour']` | Remove `'whole wheat flour'` from `cat-flour` aliases to avoid double-match |
+| H001 name               | Catalog id               | Category | Tags                           | Freeze | Baby-safe | Aliases                                                         | Notes                                                                        |
+| ----------------------- | ------------------------ | -------- | ------------------------------ | ------ | --------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| almond flour            | `cat-almond-flour`       | pantry   | `['staple']`                   | false  | false     | `['ground almonds']`                                            |                                                                              |
+| baguette                | `cat-baguette`           | carb     | `['quick']`                    | true   | true      | `['french bread', 'french stick']`                              |                                                                              |
+| bratwurst               | `cat-bratwurst`          | protein  | `['quick']`                    | true   | false     | `['brats']`                                                     |                                                                              |
+| brown lentils           | `cat-brown-lentils`      | protein  | `['batch-friendly', 'staple']` | false  | true      | `['green lentils']`                                             | Existing `cat-lentils` covers generic "lentils" — this is a specific variety |
+| butter beans            | `cat-butter-beans`       | protein  | `['batch-friendly', 'staple']` | false  | true      | `['lima beans']`                                                |                                                                              |
+| chipolatas              | `cat-chipolatas`         | protein  | `['quick']`                    | true   | false     | `['chipolata sausages']`                                        | Distinct from `cat-sausages`                                                 |
+| chorizo                 | `cat-chorizo`            | protein  | `['quick', 'batch-friendly']`  | true   | false     | `['spanish chorizo']`                                           |                                                                              |
+| cornmeal                | `cat-cornmeal`           | pantry   | `['staple']`                   | false  | false     | `['polenta', 'corn meal']`                                      |                                                                              |
+| creme fraiche           | `cat-creme-fraiche`      | dairy    | `['quick']`                    | false  | false     | `['crème fraîche']`                                             |                                                                              |
+| duck breast             | `cat-duck-breast`        | protein  | `[]`                           | true   | false     | `['duck']`                                                      |                                                                              |
+| halloumi                | `cat-halloumi`           | dairy    | `['quick']`                    | true   | true      | `['halloumi cheese']`                                           |                                                                              |
+| lamb mince              | `cat-lamb-mince`         | protein  | `['batch-friendly']`           | true   | false     | `['ground lamb', 'minced lamb']`                                |                                                                              |
+| lasagne sheets          | `cat-lasagne-sheets`     | carb     | `['staple']`                   | false  | true      | `['lasagna sheets', 'lasagna noodles', 'lasagne']`              |                                                                              |
+| miso paste              | `cat-miso-paste`         | pantry   | `['staple']`                   | false  | false     | `['miso', 'white miso', 'red miso']`                            |                                                                              |
+| mixed frozen vegetables | `cat-mixed-frozen-veg`   | freezer  | `['quick', 'rescue']`          | true   | true      | `['frozen mixed vegetables', 'frozen veg']`                     |                                                                              |
+| paneer                  | `cat-paneer`             | dairy    | `['quick']`                    | true   | true      | `['paneer cheese', 'indian cottage cheese']`                    |                                                                              |
+| pecorino                | `cat-pecorino`           | dairy    | `['quick']`                    | true   | true      | `['pecorino romano', 'pecorino cheese']`                        |                                                                              |
+| pork                    | `cat-pork`               | protein  | `['batch-friendly']`           | true   | false     | `['pork loin', 'pork chops', 'pork tenderloin', 'pork fillet']` | Generic pork — distinct from `cat-ground-pork`                               |
+| queso fresco            | `cat-queso-fresco`       | dairy    | `['quick']`                    | false  | false     | `['queso blanco']`                                              |                                                                              |
+| ramen noodles           | `cat-ramen-noodles`      | carb     | `['quick']`                    | false  | false     | `['ramen', 'instant ramen', 'instant noodles']`                 | Distinct from generic `cat-noodles`                                          |
+| rice flour              | `cat-rice-flour`         | pantry   | `['staple']`                   | false  | false     | `['glutinous rice flour']`                                      |                                                                              |
+| sirloin steak           | `cat-sirloin-steak`      | protein  | `['quick']`                    | true   | false     | `['sirloin', 'steak']`                                          |                                                                              |
+| sourdough bread         | `cat-sourdough-bread`    | carb     | `['staple']`                   | true   | true      | `['sourdough']`                                                 | Distinct from `cat-bread`                                                    |
+| sun-dried tomatoes      | `cat-sun-dried-tomatoes` | pantry   | `['staple']`                   | false  | false     | `['sundried tomatoes', 'sun dried tomatoes']`                   |                                                                              |
+| tahini                  | `cat-tahini`             | pantry   | `['staple']`                   | false  | false     | `['sesame paste']`                                              |                                                                              |
+| turkey breast           | `cat-turkey-breast`      | protein  | `['quick']`                    | true   | true      | `['turkey']`                                                    |                                                                              |
+| white wine vinegar      | `cat-white-wine-vinegar` | pantry   | `['staple']`                   | false  | false     |                                                                 | Don't duplicate `'white vinegar'` alias from `cat-vinegar`                   |
+| wholemeal bread         | `cat-wholemeal-bread`    | carb     | `['staple']`                   | true   | true      | `['whole wheat bread', 'brown bread']`                          |                                                                              |
+| wholemeal flour         | `cat-wholemeal-flour`    | pantry   | `['staple']`                   | false  | false     | `['whole wheat flour', 'wholewheat flour']`                     | Remove `'whole wheat flour'` from `cat-flour` aliases to avoid double-match  |
 
 ### Alias additions to existing catalog entries (not new entries)
 
-| H001 name | Existing catalog entry | Alias to add |
-|-----------|----------------------|--------------|
-| romaine lettuce | `cat-lettuce` | `'romaine lettuce'` (already has `'romaine'`) |
-| spring onions | `cat-green-onion` | `'spring onions'` (already has `'spring onion'` singular) |
-| prawn | `cat-prawns` | `'prawn'` (catalog name is plural, singular missing) |
-| turkey mince | `cat-ground-turkey` | `'turkey mince'`, `'minced turkey'` |
+| H001 name       | Existing catalog entry | Alias to add                                              |
+| --------------- | ---------------------- | --------------------------------------------------------- |
+| romaine lettuce | `cat-lettuce`          | `'romaine lettuce'` (already has `'romaine'`)             |
+| spring onions   | `cat-green-onion`      | `'spring onions'` (already has `'spring onion'` singular) |
+| prawn           | `cat-prawns`           | `'prawn'` (catalog name is plural, singular missing)      |
+| turkey mince    | `cat-ground-turkey`    | `'turkey mince'`, `'minced turkey'`                       |
 
 ### Placement
 
@@ -127,6 +128,7 @@ A stub with household overrides (e.g. custom aliases, familyKeys, imageUrl, extr
 ### What counts as a household override
 
 Include the field in the stub **only if**:
+
 - **`aliases`** — the fixture has aliases beyond what the catalog already provides
 - **`familyKeys`** — always household-specific (catalog doesn't have this field)
 - **`imageUrl`** — if the fixture has a local `/images/seed/` URL (catalog entries use Unsplash URLs or no image)
@@ -148,25 +150,25 @@ A few ingredients may not have a catalog match and are too niche to add. These s
 
 ### Mapping reference for non-obvious name→catalog links
 
-| H001 name | Catalog id |
-|-----------|-----------|
-| bread flour | `cat-bread-flour` (new) |
-| cheddar | `cat-cheddar-cheese` |
-| cherry tomatoes | `cat-tomatoes` |
-| double cream | `cat-heavy-cream` |
-| feta | `cat-feta-cheese` |
-| flour tortillas | `cat-wraps` |
-| fresh ginger | `cat-ginger` |
-| green cabbage | `cat-cabbage` |
-| mustard | `cat-mustard` |
-| parmesan | `cat-parmesan-cheese` |
-| plum tomatoes | `cat-tomatoes` |
-| romaine lettuce | `cat-lettuce` |
-| smoked paprika | `cat-paprika` |
-| spring onions | `cat-green-onion` |
-| tinned tuna | `cat-tuna` |
-| tomato ketchup | `cat-ketchup` |
-| turkey mince | `cat-ground-turkey` |
+| H001 name       | Catalog id              |
+| --------------- | ----------------------- |
+| bread flour     | `cat-bread-flour` (new) |
+| cheddar         | `cat-cheddar-cheese`    |
+| cherry tomatoes | `cat-tomatoes`          |
+| double cream    | `cat-heavy-cream`       |
+| feta            | `cat-feta-cheese`       |
+| flour tortillas | `cat-wraps`             |
+| fresh ginger    | `cat-ginger`            |
+| green cabbage   | `cat-cabbage`           |
+| mustard         | `cat-mustard`           |
+| parmesan        | `cat-parmesan-cheese`   |
+| plum tomatoes   | `cat-tomatoes`          |
+| romaine lettuce | `cat-lettuce`           |
+| smoked paprika  | `cat-paprika`           |
+| spring onions   | `cat-green-onion`       |
+| tinned tuna     | `cat-tuna`              |
+| tomato ketchup  | `cat-ketchup`           |
+| turkey mince    | `cat-ground-turkey`     |
 
 ### Rules
 
@@ -215,6 +217,7 @@ function hydrateIngredient(stub: FixtureIngredient, catalog: CatalogIngredient):
 ```
 
 Key points:
+
 - `id` and `name` always come from the fixture (stability)
 - `catalogId` comes from the fixture (it's the link)
 - `source` is set to `'catalog'` for all linked rows
@@ -249,6 +252,7 @@ npm test
 ```
 
 Expected results:
+
 - `db:seed` writes 2 households to `src/seed-data.json` — success
 - `typecheck` passes
 - Tests: all pass except the pre-existing `f076-paprika-auto-resolution` failure (ignore it)
@@ -268,6 +272,7 @@ Expected results:
 ### Smoke test (manual)
 
 After regeneration, run the app and:
+
 1. Reset to default state (Settings → Reset)
 2. Open the ingredient manager for H001
 3. Confirm all ~160 ingredients appear with correct names, categories, tags, and images

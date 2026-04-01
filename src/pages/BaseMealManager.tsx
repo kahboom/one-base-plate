@@ -568,13 +568,7 @@ function MealModal({
   );
 }
 
-function MealRow({
-  meal,
-  onClick,
-}: {
-  meal: BaseMeal;
-  onClick: () => void;
-}) {
+function MealRow({ meal, onClick }: { meal: BaseMeal; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -777,11 +771,7 @@ export default function BaseMealManager() {
       ) : (
         <div className="space-y-1.5" data-testid="meal-list">
           {visibleMeals.map((meal) => (
-            <MealRow
-              key={meal.id}
-              meal={meal}
-              onClick={() => setEditingId(meal.id)}
-            />
+            <MealRow key={meal.id} meal={meal} onClick={() => setEditingId(meal.id)} />
           ))}
           <div ref={mealListSentinelRef} className="h-px w-full" aria-hidden />
           {mealListHasMore && (

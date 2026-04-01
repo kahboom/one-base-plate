@@ -8,14 +8,14 @@ If two rules conflict, the **higher-numbered (newer)** rule wins. Do not delete 
 
 ## Where to record what
 
-| Kind of learning | Where |
-| ---------------- | ----- |
-| Stable shared facts (stack, paths) | [`canonical-state.md`](./canonical-state.md) |
-| Short constraint every agent should follow | This file (`docs/ai/global-rules.md`) |
-| Specialist / deep-dive findings for one agent | `.claude/agent-memory/<agent-name>/` (`MEMORY.md` + supporting files; see [`memory-system.md`](./memory-system.md)) |
-| Repeatable multi-step procedures | [`workflows/`](./workflows/) |
-| Architectural or product decision with context | [`decision-log.md`](./decision-log.md) |
-| Session / shipped work narrative | `agent-progress.md`, `CHANGELOG.md` |
+| Kind of learning                               | Where                                                                                                               |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Stable shared facts (stack, paths)             | [`canonical-state.md`](./canonical-state.md)                                                                        |
+| Short constraint every agent should follow     | This file (`docs/ai/global-rules.md`)                                                                               |
+| Specialist / deep-dive findings for one agent  | `.claude/agent-memory/<agent-name>/` (`MEMORY.md` + supporting files; see [`memory-system.md`](./memory-system.md)) |
+| Repeatable multi-step procedures               | [`workflows/`](./workflows/)                                                                                        |
+| Architectural or product decision with context | [`decision-log.md`](./decision-log.md)                                                                              |
+| Session / shipped work narrative               | `agent-progress.md`, `CHANGELOG.md`                                                                                 |
 
 ## Rules
 

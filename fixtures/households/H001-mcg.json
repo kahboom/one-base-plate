@@ -6,18 +6,8 @@
       "id": "M-Aaron",
       "name": "Aaron",
       "role": "adult",
-      "safeFoods": [
-        "salmon",
-        "chicken breast",
-        "broccoli",
-        "cod",
-        "pork"
-      ],
-      "hardNoFoods": [
-        "mushrooms",
-        "blue cheese",
-        "pasta"
-      ],
+      "safeFoods": ["salmon", "chicken breast", "broccoli", "cod", "pork"],
+      "hardNoFoods": ["mushrooms", "blue cheese", "pasta"],
       "preparationRules": [
         {
           "ingredient": "chicken breast",
@@ -41,11 +31,7 @@
         "ground beef",
         "sirloin steak"
       ],
-      "hardNoFoods": [
-        "salmon",
-        "aubergine",
-        "lamb"
-      ],
+      "hardNoFoods": ["salmon", "aubergine", "lamb"],
       "preparationRules": [
         {
           "ingredient": "pork",
@@ -60,13 +46,7 @@
       "id": "M-Indy",
       "name": "Indy",
       "role": "toddler",
-      "safeFoods": [
-        "sausages",
-        "bread",
-        "cheese",
-        "weetabix",
-        "ground beef"
-      ],
+      "safeFoods": ["sausages", "bread", "cheese", "weetabix", "ground beef"],
       "hardNoFoods": [],
       "preparationRules": [],
       "textureLevel": "soft",
@@ -77,17 +57,8 @@
       "id": "M-Orla",
       "name": "Órla",
       "role": "baby",
-      "safeFoods": [
-        "sweet potato",
-        "banana",
-        "avocado",
-        "rice"
-      ],
-      "hardNoFoods": [
-        "honey",
-        "whole nuts",
-        "raw egg"
-      ],
+      "safeFoods": ["sweet potato", "banana", "avocado", "rice"],
+      "hardNoFoods": ["honey", "whole nuts", "raw egg"],
       "preparationRules": [
         {
           "ingredient": "sweet potato",
@@ -163,9 +134,7 @@
       "id": "ing-aubergine",
       "name": "aubergine",
       "catalogId": "cat-aubergine",
-      "familyKeys": [
-        "nightshade"
-      ],
+      "familyKeys": ["nightshade"],
       "imageUrl": "/images/seed/ing-aubergine.png"
     },
     {
@@ -184,18 +153,14 @@
       "id": "ing-baguette",
       "name": "baguette",
       "catalogId": "cat-baguette",
-      "familyKeys": [
-        "bread"
-      ],
+      "familyKeys": ["bread"],
       "imageUrl": "/images/seed/ing-baguette.png"
     },
     {
       "id": "ing-beans",
       "name": "baked beans",
       "catalogId": "cat-baked-beans",
-      "familyKeys": [
-        "beans"
-      ],
+      "familyKeys": ["beans"],
       "imageUrl": "/images/seed/ing-beans.png"
     },
     {
@@ -214,9 +179,7 @@
       "id": "ing-basil",
       "name": "basil",
       "catalogId": "cat-basil",
-      "familyKeys": [
-        "pizza"
-      ],
+      "familyKeys": ["pizza"],
       "imageUrl": "/images/seed/ing-basil.png"
     },
     {
@@ -241,9 +204,7 @@
       "id": "ing-black-beans",
       "name": "black beans",
       "catalogId": "cat-black-beans",
-      "familyKeys": [
-        "beans"
-      ],
+      "familyKeys": ["beans"],
       "imageUrl": "/images/seed/ing-black-beans.png"
     },
     {
@@ -274,27 +235,21 @@
       "id": "ing-bratwurst",
       "name": "bratwurst",
       "catalogId": "cat-bratwurst",
-      "familyKeys": [
-        "sausage"
-      ],
+      "familyKeys": ["sausage"],
       "imageUrl": "/images/seed/ing-bratwurst.png"
     },
     {
       "id": "ing-bread",
       "name": "bread",
       "catalogId": "cat-bread",
-      "familyKeys": [
-        "bread"
-      ],
+      "familyKeys": ["bread"],
       "imageUrl": "/images/seed/ing-bread.png"
     },
     {
       "id": "ing-bread-flour",
       "name": "bread flour",
       "catalogId": "cat-bread-flour",
-      "familyKeys": [
-        "flour"
-      ],
+      "familyKeys": ["flour"],
       "imageUrl": "/images/seed/ing-bread-flour.png"
     },
     {
@@ -307,18 +262,14 @@
       "id": "ing-breadsticks",
       "name": "breadsticks",
       "catalogId": "cat-breadsticks",
-      "familyKeys": [
-        "bread"
-      ],
+      "familyKeys": ["bread"],
       "imageUrl": "/images/seed/ing-breadsticks.png"
     },
     {
       "id": "ing-burger-buns",
       "name": "burger buns",
       "catalogId": "cat-hamburger-buns",
-      "familyKeys": [
-        "bread"
-      ],
+      "familyKeys": ["bread"],
       "imageUrl": "/images/seed/ing-burger-buns.png"
     },
     {
@@ -331,9 +282,7 @@
       "id": "ing-brown-lentils",
       "name": "brown lentils",
       "catalogId": "cat-brown-lentils",
-      "familyKeys": [
-        "beans"
-      ],
+      "familyKeys": ["beans"],
       "imageUrl": "/images/seed/ing-brown-lentils.png"
     },
     {
@@ -352,9 +301,7 @@
       "id": "ing-butter-beans",
       "name": "butter beans",
       "catalogId": "cat-butter-beans",
-      "familyKeys": [
-        "beans"
-      ],
+      "familyKeys": ["beans"],
       "imageUrl": "/images/seed/ing-butter-beans.png"
     },
     {
@@ -367,9 +314,7 @@
       "id": "ing-cannellini-beans",
       "name": "cannellini beans",
       "catalogId": "cat-cannellini-beans",
-      "familyKeys": [
-        "beans"
-      ],
+      "familyKeys": ["beans"],
       "imageUrl": "/images/seed/ing-cannellini-beans.png"
     },
     {
@@ -406,27 +351,21 @@
       "id": "ing-cheddar",
       "name": "cheddar",
       "catalogId": "cat-cheddar-cheese",
-      "familyKeys": [
-        "cheese"
-      ],
+      "familyKeys": ["cheese"],
       "imageUrl": "/images/seed/ing-cheddar.png"
     },
     {
       "id": "ing-cheese",
       "name": "cheese",
       "catalogId": "cat-cheese",
-      "familyKeys": [
-        "cheese"
-      ],
+      "familyKeys": ["cheese"],
       "imageUrl": "/images/seed/ing-cheese.png"
     },
     {
       "id": "ing-cherry-tomatoes",
       "name": "cherry tomatoes",
       "catalogId": "cat-tomatoes",
-      "familyKeys": [
-        "tomato"
-      ],
+      "familyKeys": ["tomato"],
       "imageUrl": "/images/seed/ing-cherry-tomatoes.png"
     },
     {
@@ -445,9 +384,7 @@
       "id": "ing-chickpeas",
       "name": "chickpeas",
       "catalogId": "cat-chickpeas",
-      "familyKeys": [
-        "beans"
-      ],
+      "familyKeys": ["beans"],
       "imageUrl": "/images/seed/ing-chickpeas.png"
     },
     {
@@ -460,9 +397,7 @@
       "id": "ing-chipolatas",
       "name": "chipolatas",
       "catalogId": "cat-chipolatas",
-      "familyKeys": [
-        "sausage"
-      ],
+      "familyKeys": ["sausage"],
       "imageUrl": "/images/seed/ing-chipolatas.png"
     },
     {
@@ -475,9 +410,7 @@
       "id": "ing-chorizo",
       "name": "chorizo",
       "catalogId": "cat-chorizo",
-      "familyKeys": [
-        "sausage"
-      ],
+      "familyKeys": ["sausage"],
       "imageUrl": "/images/seed/ing-chorizo.png"
     },
     {
@@ -514,27 +447,21 @@
       "id": "ing-corn-tortillas",
       "name": "corn tortillas",
       "catalogId": "cat-corn-tortillas",
-      "familyKeys": [
-        "tortilla"
-      ],
+      "familyKeys": ["tortilla"],
       "imageUrl": "/images/seed/ing-corn-tortillas.png"
     },
     {
       "id": "ing-corn-on-the-cob",
       "name": "corn on the cob",
       "catalogId": "cat-corn-on-the-cob",
-      "familyKeys": [
-        "corn"
-      ],
+      "familyKeys": ["corn"],
       "imageUrl": "/images/seed/ing-corn-on-the-cob.png"
     },
     {
       "id": "ing-corn-kernels",
       "name": "corn kernels",
       "catalogId": "cat-corn-kernels",
-      "familyKeys": [
-        "corn"
-      ],
+      "familyKeys": ["corn"],
       "imageUrl": "/images/seed/ing-corn-kernels.png"
     },
     {
@@ -547,9 +474,7 @@
       "id": "ing-cornmeal",
       "name": "cornmeal",
       "catalogId": "cat-cornmeal",
-      "familyKeys": [
-        "flour"
-      ],
+      "familyKeys": ["flour"],
       "imageUrl": "/images/seed/ing-cornmeal.png"
     },
     {
@@ -574,9 +499,7 @@
       "id": "ing-cream-cheese",
       "name": "cream cheese",
       "catalogId": "cat-cream-cheese",
-      "familyKeys": [
-        "cheese"
-      ],
+      "familyKeys": ["cheese"],
       "imageUrl": "/images/seed/ing-cream-cheese.png"
     },
     {
@@ -661,9 +584,7 @@
       "id": "ing-feta",
       "name": "feta",
       "catalogId": "cat-feta-cheese",
-      "familyKeys": [
-        "cheese"
-      ],
+      "familyKeys": ["cheese"],
       "imageUrl": "/images/seed/ing-feta.png"
     },
     {
@@ -682,18 +603,14 @@
       "id": "ing-flour",
       "name": "flour",
       "catalogId": "cat-flour",
-      "familyKeys": [
-        "flour"
-      ],
+      "familyKeys": ["flour"],
       "imageUrl": "/images/seed/ing-flour.png"
     },
     {
       "id": "ing-flour-tortillas",
       "name": "flour tortillas",
       "catalogId": "cat-wraps",
-      "familyKeys": [
-        "tortilla"
-      ],
+      "familyKeys": ["tortilla"],
       "imageUrl": "/images/seed/ing-flour-tortillas.png"
     },
     {
@@ -730,9 +647,7 @@
       "id": "ing-goat-cheese",
       "name": "goat cheese",
       "catalogId": "cat-goat-cheese",
-      "familyKeys": [
-        "cheese"
-      ],
+      "familyKeys": ["cheese"],
       "imageUrl": "/images/seed/ing-goat-cheese.png"
     },
     {
@@ -763,9 +678,7 @@
       "id": "ing-halloumi",
       "name": "halloumi",
       "catalogId": "cat-halloumi",
-      "familyKeys": [
-        "cheese"
-      ],
+      "familyKeys": ["cheese"],
       "imageUrl": "/images/seed/ing-halloumi.png"
     },
     {
@@ -778,18 +691,14 @@
       "id": "ing-hot-dog-bun",
       "name": "hot dog bun",
       "catalogId": "cat-hot-dog-bun",
-      "familyKeys": [
-        "bread"
-      ],
+      "familyKeys": ["bread"],
       "imageUrl": "/images/seed/ing-hot-dog-bun.png"
     },
     {
       "id": "ing-hot-dog",
       "name": "hot dog",
       "catalogId": "cat-hot-dog",
-      "familyKeys": [
-        "sausage"
-      ],
+      "familyKeys": ["sausage"],
       "imageUrl": "/images/seed/ing-hot-dog.png"
     },
     {
@@ -797,9 +706,7 @@
       "name": "hummus",
       "catalogId": "cat-hummus",
       "imageUrl": "/images/seed/ing-hummus.png",
-      "aliases": [
-        "houmus"
-      ]
+      "aliases": ["houmus"]
     },
     {
       "id": "ing-icing-sugar",
@@ -811,9 +718,7 @@
       "id": "ing-italian-sausage",
       "name": "italian sausage",
       "catalogId": "cat-italian-sausage",
-      "familyKeys": [
-        "sausage"
-      ],
+      "familyKeys": ["sausage"],
       "imageUrl": "/images/seed/ing-italian-sausage.png"
     },
     {
@@ -838,9 +743,7 @@
       "id": "ing-kidney-beans",
       "name": "kidney beans",
       "catalogId": "cat-kidney-beans",
-      "familyKeys": [
-        "beans"
-      ],
+      "familyKeys": ["beans"],
       "imageUrl": "/images/seed/ing-kidney-beans.png"
     },
     {
@@ -859,9 +762,7 @@
       "id": "ing-lasagne-sheets",
       "name": "lasagne sheets",
       "catalogId": "cat-lasagne-sheets",
-      "familyKeys": [
-        "pasta"
-      ],
+      "familyKeys": ["pasta"],
       "imageUrl": "/images/seed/ing-lasagne-sheets.png"
     },
     {
@@ -922,10 +823,7 @@
       "id": "ing-mozzarella",
       "name": "mozzarella",
       "catalogId": "cat-mozzarella",
-      "familyKeys": [
-        "cheese",
-        "pizza"
-      ],
+      "familyKeys": ["cheese", "pizza"],
       "imageUrl": "/images/seed/ing-mozzarella.png"
     },
     {
@@ -998,9 +896,7 @@
       "id": "ing-orecchiette",
       "name": "orecchiette",
       "catalogId": "cat-orecchiette",
-      "familyKeys": [
-        "pasta"
-      ],
+      "familyKeys": ["pasta"],
       "imageUrl": "/images/seed/ing-orecchiette.png"
     },
     {
@@ -1013,9 +909,7 @@
       "id": "ing-parmesan",
       "name": "parmesan",
       "catalogId": "cat-parmesan-cheese",
-      "familyKeys": [
-        "cheese"
-      ],
+      "familyKeys": ["cheese"],
       "imageUrl": "/images/seed/ing-parmesan.png"
     },
     {
@@ -1034,18 +928,14 @@
       "id": "ing-passata",
       "name": "passata",
       "catalogId": "cat-passata",
-      "familyKeys": [
-        "tomato"
-      ],
+      "familyKeys": ["tomato"],
       "imageUrl": "/images/seed/ing-passata.png"
     },
     {
       "id": "ing-pasta",
       "name": "pasta",
       "catalogId": "cat-pasta",
-      "familyKeys": [
-        "pasta"
-      ],
+      "familyKeys": ["pasta"],
       "imageUrl": "/images/seed/ing-pasta.png"
     },
     {
@@ -1082,9 +972,7 @@
       "id": "ing-pecorino",
       "name": "pecorino",
       "catalogId": "cat-pecorino",
-      "familyKeys": [
-        "cheese"
-      ],
+      "familyKeys": ["cheese"],
       "imageUrl": "/images/seed/ing-pecorino.png"
     },
     {
@@ -1103,18 +991,14 @@
       "id": "ing-pinto-beans",
       "name": "pinto beans",
       "catalogId": "cat-pinto-beans",
-      "familyKeys": [
-        "beans"
-      ],
+      "familyKeys": ["beans"],
       "imageUrl": "/images/seed/ing-pinto-beans.png"
     },
     {
       "id": "ing-pita-bread",
       "name": "pita bread",
       "catalogId": "cat-pitta",
-      "familyKeys": [
-        "bread"
-      ],
+      "familyKeys": ["bread"],
       "imageUrl": "/images/seed/ing-pita-bread.png"
     },
     {
@@ -1127,9 +1011,7 @@
       "id": "ing-plum-tomatoes",
       "name": "plum tomatoes",
       "catalogId": "cat-tomatoes",
-      "familyKeys": [
-        "tomato"
-      ],
+      "familyKeys": ["tomato"],
       "imageUrl": "/images/seed/ing-plum-tomatoes.png"
     },
     {
@@ -1202,27 +1084,21 @@
       "id": "ing-rice-flour",
       "name": "rice flour",
       "catalogId": "cat-rice-flour",
-      "familyKeys": [
-        "flour"
-      ],
+      "familyKeys": ["flour"],
       "imageUrl": "/images/seed/ing-rice-flour.png"
     },
     {
       "id": "ing-ricotta",
       "name": "ricotta",
       "catalogId": "cat-ricotta",
-      "familyKeys": [
-        "cheese"
-      ],
+      "familyKeys": ["cheese"],
       "imageUrl": "/images/seed/ing-ricotta.png"
     },
     {
       "id": "ing-risotto-rice",
       "name": "risotto rice",
       "catalogId": "cat-risotto-rice",
-      "familyKeys": [
-        "rice"
-      ],
+      "familyKeys": ["rice"],
       "imageUrl": "/images/seed/ing-risotto-rice.png"
     },
     {
@@ -1241,9 +1117,7 @@
       "id": "ing-rye-flour",
       "name": "rye flour",
       "catalogId": "cat-rye-flour",
-      "familyKeys": [
-        "flour"
-      ],
+      "familyKeys": ["flour"],
       "imageUrl": "/images/seed/ing-rye-flour.png"
     },
     {
@@ -1310,9 +1184,7 @@
       "id": "ing-sourdough-bread",
       "name": "sourdough bread",
       "catalogId": "cat-sourdough-bread",
-      "familyKeys": [
-        "bread"
-      ],
+      "familyKeys": ["bread"],
       "imageUrl": "/images/seed/ing-sourdough-bread.png"
     },
     {
@@ -1325,9 +1197,7 @@
       "id": "ing-spaghetti",
       "name": "spaghetti",
       "catalogId": "cat-spaghetti",
-      "familyKeys": [
-        "pasta"
-      ],
+      "familyKeys": ["pasta"],
       "imageUrl": "/images/seed/ing-spaghetti.png"
     },
     {
@@ -1370,9 +1240,7 @@
       "id": "ing-sun-dried-tomatoes",
       "name": "sun-dried tomatoes",
       "catalogId": "cat-sun-dried-tomatoes",
-      "familyKeys": [
-        "tomato"
-      ],
+      "familyKeys": ["tomato"],
       "imageUrl": "/images/seed/ing-sun-dried-tomatoes.png"
     },
     {
@@ -1403,9 +1271,7 @@
       "id": "ing-tinned-tomatoes",
       "name": "tinned tomatoes",
       "catalogId": "cat-tinned-tomatoes",
-      "familyKeys": [
-        "tomato"
-      ],
+      "familyKeys": ["tomato"],
       "imageUrl": "/images/seed/ing-tinned-tomatoes.png"
     },
     {
@@ -1424,27 +1290,21 @@
       "id": "ing-tomato-ketchup",
       "name": "tomato ketchup",
       "catalogId": "cat-ketchup",
-      "familyKeys": [
-        "tomato"
-      ],
+      "familyKeys": ["tomato"],
       "imageUrl": "/images/seed/ing-tomato-ketchup.png"
     },
     {
       "id": "ing-tomato-paste",
       "name": "tomato paste",
       "catalogId": "cat-tomato-paste",
-      "familyKeys": [
-        "tomato"
-      ],
+      "familyKeys": ["tomato"],
       "imageUrl": "/images/seed/ing-tomato-paste.png"
     },
     {
       "id": "ing-tomato-sauce",
       "name": "tomato sauce",
       "catalogId": "cat-tomato-sauce",
-      "familyKeys": [
-        "tomato"
-      ],
+      "familyKeys": ["tomato"],
       "imageUrl": "/images/seed/ing-tomato-sauce.png"
     },
     {
@@ -1511,18 +1371,14 @@
       "id": "ing-wholemeal-bread",
       "name": "wholemeal bread",
       "catalogId": "cat-wholemeal-bread",
-      "familyKeys": [
-        "bread"
-      ],
+      "familyKeys": ["bread"],
       "imageUrl": "/images/seed/ing-wholemeal-bread.png"
     },
     {
       "id": "ing-wholemeal-flour",
       "name": "wholemeal flour",
       "catalogId": "cat-wholemeal-flour",
-      "familyKeys": [
-        "flour"
-      ],
+      "familyKeys": ["flour"],
       "imageUrl": "/images/seed/ing-wholemeal-flour.png"
     },
     {
@@ -1549,10 +1405,7 @@
       "id": "rec-taco-chicken",
       "name": "Grilled taco chicken",
       "imageUrl": "/images/seed/rec-taco-chicken.png",
-      "tags": [
-        "batch-friendly",
-        "freezer-friendly"
-      ],
+      "tags": ["batch-friendly", "freezer-friendly"],
       "components": [
         {
           "id": "mc-rtc-1",
@@ -1602,10 +1455,7 @@
       "id": "rec-black-bean-filling",
       "name": "Black bean taco filling",
       "imageUrl": "/images/seed/rec-black-bean-filling.png",
-      "tags": [
-        "batch-friendly",
-        "quick"
-      ],
+      "tags": ["batch-friendly", "quick"],
       "components": [
         {
           "id": "mc-rbb-1",
@@ -1655,10 +1505,7 @@
       "id": "rec-yogurt-lime-sauce",
       "name": "Quick yogurt-lime sauce",
       "imageUrl": "/images/seed/rec-yogurt-lime-sauce.png",
-      "tags": [
-        "quick",
-        "sauce"
-      ],
+      "tags": ["quick", "sauce"],
       "components": [
         {
           "id": "mc-ryls-1",
@@ -1689,10 +1536,7 @@
       "id": "rec-pizza-dough",
       "name": "Basic pizza dough",
       "imageUrl": "/images/seed/rec-pizza-dough.png",
-      "tags": [
-        "batch-friendly",
-        "freezer-friendly"
-      ],
+      "tags": ["batch-friendly", "freezer-friendly"],
       "components": [
         {
           "id": "mc-rpd-1",
@@ -1731,12 +1575,7 @@
       "id": "rec-pizza-sauce",
       "name": "Quick pizza sauce",
       "imageUrl": "/images/seed/rec-pizza-sauce.png",
-      "tags": [
-        "quick",
-        "batch-friendly",
-        "freezer-friendly",
-        "sauce"
-      ],
+      "tags": ["quick", "batch-friendly", "freezer-friendly", "sauce"],
       "components": [
         {
           "id": "mc-rps-1",
@@ -1774,10 +1613,7 @@
       "id": "rec-tray-pizza",
       "name": "Simple tray pizza",
       "imageUrl": "/images/seed/rec-tray-pizza.png",
-      "tags": [
-        "whole-meal",
-        "batch-friendly"
-      ],
+      "tags": ["whole-meal", "batch-friendly"],
       "components": [
         {
           "id": "mc-rtp-1",
@@ -1816,11 +1652,7 @@
       "id": "rec-pasta-bake-sauce",
       "name": "Basic pasta bake sauce",
       "imageUrl": "/images/seed/rec-pasta-bake-sauce.png",
-      "tags": [
-        "batch-friendly",
-        "freezer-friendly",
-        "sauce"
-      ],
+      "tags": ["batch-friendly", "freezer-friendly", "sauce"],
       "components": [
         {
           "id": "mc-rpbs-1",
@@ -1864,11 +1696,7 @@
       "id": "rec-roasted-broccoli",
       "name": "Roasted broccoli",
       "imageUrl": "/images/seed/rec-roasted-broccoli.png",
-      "tags": [
-        "quick",
-        "batch-friendly",
-        "prep-ahead"
-      ],
+      "tags": ["quick", "batch-friendly", "prep-ahead"],
       "components": [
         {
           "id": "mc-rrb-1",
@@ -1900,11 +1728,7 @@
       "id": "rec-seasoned-rice",
       "name": "Plain seasoned rice",
       "imageUrl": "/images/seed/rec-seasoned-rice.png",
-      "tags": [
-        "quick",
-        "batch-friendly",
-        "bowl"
-      ],
+      "tags": ["quick", "batch-friendly", "bowl"],
       "components": [
         {
           "id": "mc-rsr-1",
@@ -1930,12 +1754,7 @@
       "id": "rec-cheese-sauce",
       "name": "Simple cheese sauce",
       "imageUrl": "/images/seed/rec-cheese-sauce.png",
-      "tags": [
-        "quick",
-        "rescue-friendly",
-        "kid-friendly",
-        "sauce"
-      ],
+      "tags": ["quick", "rescue-friendly", "kid-friendly", "sauce"],
       "components": [
         {
           "id": "mc-rcs-1",
@@ -1979,12 +1798,7 @@
       "id": "rec-tomato-soup",
       "name": "Simple tomato soup",
       "imageUrl": "/images/seed/rec-tomato-soup.png",
-      "tags": [
-        "quick",
-        "soup",
-        "batch-friendly",
-        "freezer-friendly"
-      ],
+      "tags": ["quick", "soup", "batch-friendly", "freezer-friendly"],
       "components": [
         {
           "id": "mc-rts-1",
@@ -2027,9 +1841,7 @@
     {
       "id": "rec-spaghetti-bolognese",
       "name": "Spaghetti bolognese",
-      "tags": [
-        "batch-friendly"
-      ],
+      "tags": ["batch-friendly"],
       "components": [
         {
           "id": "mc-sb-1",
@@ -2102,9 +1914,7 @@
       "estimatedTimeMinutes": 30,
       "difficulty": "easy",
       "rescueEligible": true,
-      "wasteReuseHints": [
-        "Leftover pasta works for next-day lunch"
-      ]
+      "wasteReuseHints": ["Leftover pasta works for next-day lunch"]
     },
     {
       "id": "bm-salmon-rice",
@@ -2168,9 +1978,7 @@
         {
           "id": "mc-bm-tn-1",
           "ingredientId": "ing-chicken",
-          "alternativeIngredientIds": [
-            "ing-black-beans"
-          ],
+          "alternativeIngredientIds": ["ing-black-beans"],
           "role": "protein",
           "quantity": "600g",
           "prepNote": "Grill with taco spices",
@@ -2368,18 +2176,13 @@
       "estimatedTimeMinutes": 40,
       "difficulty": "easy",
       "rescueEligible": true,
-      "wasteReuseHints": [
-        "Leftovers reheat well for lunch",
-        "Sauce freezes in batches"
-      ]
+      "wasteReuseHints": ["Leftovers reheat well for lunch", "Sauce freezes in batches"]
     },
     {
       "id": "bm-rice-bowl",
       "name": "Rice bowl",
       "imageUrl": "/images/seed/bm-rice-bowl.png",
-      "tags": [
-        "bowl"
-      ],
+      "tags": ["bowl"],
       "components": [
         {
           "id": "mc-bm-rb-1",
@@ -2400,9 +2203,7 @@
         {
           "id": "mc-bm-rb-2",
           "ingredientId": "ing-chicken",
-          "alternativeIngredientIds": [
-            "ing-tofu"
-          ],
+          "alternativeIngredientIds": ["ing-tofu"],
           "role": "protein",
           "quantity": "500g",
           "prepNote": "Grill or pan-fry"
@@ -2455,9 +2256,7 @@
       "id": "bm-rescue-cheesy-pasta",
       "name": "Cheesy pasta (rescue)",
       "imageUrl": "/images/seed/bm-rescue-cheesy-pasta.png",
-      "tags": [
-        "rescue"
-      ],
+      "tags": ["rescue"],
       "components": [
         {
           "id": "mc-bm-rcp-1",
@@ -2500,9 +2299,7 @@
       "estimatedTimeMinutes": 15,
       "difficulty": "easy",
       "rescueEligible": true,
-      "wasteReuseHints": [
-        "Add leftover veg to bulk it out"
-      ]
+      "wasteReuseHints": ["Add leftover veg to bulk it out"]
     }
   ],
   "weeklyPlans": [],

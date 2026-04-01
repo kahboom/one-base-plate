@@ -77,7 +77,11 @@ beforeEach(() => {
 
 describe('F076 auto-resolution pre-pass', () => {
   it('auto-resolves household exact/strong match → action "use", autoResolved flag set', () => {
-    const chickenBreast = makeIngredient({ id: 'ing-chicken', name: 'chicken breast', category: 'protein' });
+    const chickenBreast = makeIngredient({
+      id: 'ing-chicken',
+      name: 'chicken breast',
+      category: 'protein',
+    });
     const hh = makeHousehold([chickenBreast]);
     const recipe = makePaprikaRecipe({ ingredients: '300g chicken breast' });
     // parsePaprikaRecipes already resolves exact/strong household matches and sets autoResolved
@@ -95,7 +99,10 @@ describe('F076 auto-resolution pre-pass', () => {
     const recipe = makePaprikaRecipe({ ingredients: '1 head broccoli' });
     const parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
     const line = parsed[0]!.parsedLines[0]!;
-    if (line.status === 'catalog' && (line.confidenceBand === 'exact' || line.confidenceBand === 'strong')) {
+    if (
+      line.status === 'catalog' &&
+      (line.confidenceBand === 'exact' || line.confidenceBand === 'strong')
+    ) {
       expect(line.action).toBe('create');
       expect(line.resolutionStatus).toBe('resolved');
       expect(line.autoResolved).toBe(true);
@@ -215,7 +222,11 @@ describe('F076 staple deduplication', () => {
 
 describe('F076 autoResolved in ImportMapping', () => {
   it('auto-resolved "use" mapping carries autoResolved: true', () => {
-    const chickenBreast = makeIngredient({ id: 'ing-chicken', name: 'chicken breast', category: 'protein' });
+    const chickenBreast = makeIngredient({
+      id: 'ing-chicken',
+      name: 'chicken breast',
+      category: 'protein',
+    });
     const hh = makeHousehold([chickenBreast]);
     const raw = makePaprikaRecipe({ ingredients: '300g chicken breast' });
     let parsed = parsePaprikaRecipes([raw], hh.ingredients, []);
@@ -250,7 +261,12 @@ describe('F076 autoResolved in ImportMapping', () => {
     const key = parsed[0]!.parsedLines[0]!.groupKey!;
     parsed = applyGroupResolution(parsed, key, {
       kind: 'create',
-      draft: { canonicalName: 'mystery spice', category: 'pantry', tags: [], retainImportAlias: false },
+      draft: {
+        canonicalName: 'mystery spice',
+        category: 'pantry',
+        tags: [],
+        retainImportAlias: false,
+      },
     });
 
     const { recipe } = buildDraftRecipe(raw, parsed[0]!.parsedLines, hh.ingredients);
@@ -283,7 +299,11 @@ describe('F076 autoResolved in ImportMapping', () => {
 
 describe('F076 revertAutoResolvedGroup', () => {
   it('restores an auto-resolved group to pending and clears autoResolved flag', () => {
-    const chickenBreast = makeIngredient({ id: 'ing-chicken', name: 'chicken breast', category: 'protein' });
+    const chickenBreast = makeIngredient({
+      id: 'ing-chicken',
+      name: 'chicken breast',
+      category: 'protein',
+    });
     const hh = makeHousehold([chickenBreast]);
     const recipe = makePaprikaRecipe({ ingredients: '300g chicken breast' });
     let parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
@@ -307,22 +327,24 @@ describe('F076 revertAutoResolvedGroup', () => {
     const raw = makePaprikaRecipe({ ingredients: '1 tsp salt\n1 tbsp xyzmanual9837' });
     let parsed = parsePaprikaRecipes([raw], hh.ingredients, []);
     // manually resolve the mystery ingredient
-    const mysteryKey = parsed[0]!.parsedLines
-      .find((l) => l.name.includes('xyzmanual'))
-      ?.groupKey ?? '';
+    const mysteryKey =
+      parsed[0]!.parsedLines.find((l) => l.name.includes('xyzmanual'))?.groupKey ?? '';
     if (mysteryKey) {
       parsed = applyGroupResolution(parsed, mysteryKey, {
         kind: 'create',
-        draft: { canonicalName: 'mystery spice', category: 'pantry', tags: [], retainImportAlias: false },
+        draft: {
+          canonicalName: 'mystery spice',
+          category: 'pantry',
+          tags: [],
+          retainImportAlias: false,
+        },
       });
     }
     parsed = autoResolveHighConfidence(parsed);
 
     // Revert the salt group
-    const saltKey = (
-      parsed[0]!.parsedLines.find((l) => l.name === 'salt')?.groupKey ??
-      groupKeyForParsedName('salt')
-    )!;
+    const saltKey = (parsed[0]!.parsedLines.find((l) => l.name === 'salt')?.groupKey ??
+      groupKeyForParsedName('salt'))!;
     const reverted = revertAutoResolvedGroup(parsed, saltKey);
 
     // Salt line should now be pending
@@ -340,7 +362,11 @@ describe('F076 revertAutoResolvedGroup', () => {
   });
 
   it('draft gate blocks finalize after revert until group is re-resolved', () => {
-    const chickenBreast = makeIngredient({ id: 'ing-chicken', name: 'chicken breast', category: 'protein' });
+    const chickenBreast = makeIngredient({
+      id: 'ing-chicken',
+      name: 'chicken breast',
+      category: 'protein',
+    });
     const hh = makeHousehold([chickenBreast]);
     const recipe = makePaprikaRecipe({ ingredients: '300g chicken breast' });
     let parsed = parsePaprikaRecipes([recipe], hh.ingredients, []);
@@ -374,7 +400,8 @@ describe('F076 draft gate with Tier 3 (low-confidence pending) lines', () => {
     const hh = makeHousehold([]);
     const raw = makePaprikaRecipe({ ingredients: '2 tbsp xyzobscurething9837' });
     let parsed = parsePaprikaRecipes([raw], hh.ingredients, []);
-    const key = (parsed[0]!.parsedLines[0]!.groupKey ?? groupKeyForParsedName(parsed[0]!.parsedLines[0]!.name))!;
+    const key = (parsed[0]!.parsedLines[0]!.groupKey ??
+      groupKeyForParsedName(parsed[0]!.parsedLines[0]!.name))!;
     parsed = applyGroupResolution(parsed, key, { kind: 'ignore' });
     expect(canFinalizePaprikaImport(parsed)).toBe(true);
   });
@@ -429,12 +456,17 @@ describe('F076 Tier 2 batch create correctness', () => {
     // Apply resolution once; should propagate to all occurrences
     parsed = applyGroupResolution(parsed, firstKey, {
       kind: 'create',
-      draft: { canonicalName: 'xyzunique9837', category: 'pantry', tags: [], retainImportAlias: false },
+      draft: {
+        canonicalName: 'xyzunique9837',
+        category: 'pantry',
+        tags: [],
+        retainImportAlias: false,
+      },
     });
 
     // All lines for that groupKey should now have the same createDraft
     for (const line of parsed[0]!.parsedLines) {
-      const k = (line.groupKey ?? groupKeyForParsedName(line.name)) ?? '';
+      const k = line.groupKey ?? groupKeyForParsedName(line.name) ?? '';
       if (k !== firstKey) continue;
       expect(line.createDraft?.canonicalName).toBe('xyzunique9837');
       expect(line.resolutionStatus).toBe('resolved');
@@ -448,7 +480,11 @@ describe('F076 Tier 2 batch create correctness', () => {
 
 describe('F076 Tier 1 group propagation', () => {
   it('applyGroupResolution propagates "use" to all occurrences sharing the same groupKey', () => {
-    const chickenBreast = makeIngredient({ id: 'ing-chicken', name: 'chicken breast', category: 'protein' });
+    const chickenBreast = makeIngredient({
+      id: 'ing-chicken',
+      name: 'chicken breast',
+      category: 'protein',
+    });
     const hh = makeHousehold([chickenBreast]);
     const r1 = makePaprikaRecipe({ name: 'A', ingredients: '300g chicken breast' });
     const r2 = makePaprikaRecipe({ name: 'B', ingredients: '200g chicken breast, diced' });
@@ -463,7 +499,7 @@ describe('F076 Tier 1 group propagation', () => {
 
     for (const recipe of parsed) {
       for (const line of recipe.parsedLines) {
-        if (((line.groupKey ?? groupKeyForParsedName(line.name)) ?? '') === key) {
+        if ((line.groupKey ?? groupKeyForParsedName(line.name) ?? '') === key) {
           expect(line.action).toBe('use');
           expect(line.resolutionStatus).toBe('resolved');
         }

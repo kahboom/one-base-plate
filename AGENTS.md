@@ -6,16 +6,16 @@
 
 ## Reference docs
 
-| Topic | Doc |
-| ----- | --- |
-| Stack, commands, repo layout | [`docs/ai/repo-map.md`](docs/ai/repo-map.md) |
-| Conventions, PRD session loop, Paprika test data | [`docs/ai/conventions.md`](docs/ai/conventions.md) |
-| Ingredient fixtures / seed workflow | [`docs/ai/ingredient-seed.md`](docs/ai/ingredient-seed.md) |
-| Shared facts (canonical) | [`docs/ai/canonical-state.md`](docs/ai/canonical-state.md) |
-| Layered memory (what goes where) | [`docs/ai/memory-system.md`](docs/ai/memory-system.md) |
-| Reusable workflows | [`docs/ai/workflows/`](docs/ai/workflows/) |
-| Global rules (corrections, constraints) | [`docs/ai/global-rules.md`](docs/ai/global-rules.md) |
-| Architectural decisions | [`docs/ai/decision-log.md`](docs/ai/decision-log.md) |
+| Topic                                            | Doc                                                        |
+| ------------------------------------------------ | ---------------------------------------------------------- |
+| Stack, commands, repo layout                     | [`docs/ai/repo-map.md`](docs/ai/repo-map.md)               |
+| Conventions, PRD session loop, Paprika test data | [`docs/ai/conventions.md`](docs/ai/conventions.md)         |
+| Ingredient fixtures / seed workflow              | [`docs/ai/ingredient-seed.md`](docs/ai/ingredient-seed.md) |
+| Shared facts (canonical)                         | [`docs/ai/canonical-state.md`](docs/ai/canonical-state.md) |
+| Layered memory (what goes where)                 | [`docs/ai/memory-system.md`](docs/ai/memory-system.md)     |
+| Reusable workflows                               | [`docs/ai/workflows/`](docs/ai/workflows/)                 |
+| Global rules (corrections, constraints)          | [`docs/ai/global-rules.md`](docs/ai/global-rules.md)       |
+| Architectural decisions                          | [`docs/ai/decision-log.md`](docs/ai/decision-log.md)       |
 
 **Sources of truth:** `PRD.json` (features, `passes`, uiSpec refs), `agent-progress.md` (session log), `CHANGELOG.md` (history).
 

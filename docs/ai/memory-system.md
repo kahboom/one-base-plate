@@ -4,13 +4,13 @@ OneBasePlate uses **shared durable docs** plus **per-agent memory** under `.clau
 
 ## Layers (what goes where)
 
-| Layer | Location | Contents |
-| ----- | -------- | -------- |
-| **Canonical facts** | [`canonical-state.md`](./canonical-state.md) | Stack pins, paths, sources of truth — short table, rarely edited |
-| **Global rules** | [`global-rules.md`](./global-rules.md) | One-line numbered constraints **every** agent must follow |
-| **Decisions** | [`decision-log.md`](./decision-log.md) | Why we chose X (architecture/product), with date |
-| **Workflows** | [`workflows/`](./workflows/) | Reusable how-to steps (PRD slice, seed workflow pointers) |
-| **Specialist memory** | `.claude/agent-memory/<agent-name>/` | Discoveries, hot paths, checklists for **that** role only |
+| Layer                 | Location                                     | Contents                                                         |
+| --------------------- | -------------------------------------------- | ---------------------------------------------------------------- |
+| **Canonical facts**   | [`canonical-state.md`](./canonical-state.md) | Stack pins, paths, sources of truth — short table, rarely edited |
+| **Global rules**      | [`global-rules.md`](./global-rules.md)       | One-line numbered constraints **every** agent must follow        |
+| **Decisions**         | [`decision-log.md`](./decision-log.md)       | Why we chose X (architecture/product), with date                 |
+| **Workflows**         | [`workflows/`](./workflows/)                 | Reusable how-to steps (PRD slice, seed workflow pointers)        |
+| **Specialist memory** | `.claude/agent-memory/<agent-name>/`         | Discoveries, hot paths, checklists for **that** role only        |
 
 ## Per-agent directory layout
 

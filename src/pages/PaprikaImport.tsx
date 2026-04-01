@@ -1189,231 +1189,230 @@ export default function PaprikaImport() {
 
           {/* ── Guided triage (tier groups; collapsed by default — content mounts when expanded) ── */}
           <div className="space-y-4" data-testid="review-tiered">
-              {[
-                {
-                  tier: 'confirm' as ReviewTier,
-                  title: 'Confirm suggestions',
-                  subtitle: 'High-confidence matches — tap to confirm or change',
-                  groups: tierData.confirm,
-                  pending: tierData.confirmPending,
-                  variant: 'success' as const,
-                },
-                {
-                  tier: 'create' as ReviewTier,
-                  title: 'New ingredients to create',
-                  subtitle: 'No match found — review names and categories',
-                  groups: tierData.create,
-                  pending: tierData.createPending,
-                  variant: 'info' as const,
-                },
-                {
-                  tier: 'check' as ReviewTier,
-                  title: 'Lines to check',
-                  subtitle: 'Low-confidence or ambiguous — needs your attention',
-                  groups: tierData.check,
-                  pending: tierData.checkPending,
-                  variant: 'warning' as const,
-                },
-              ].map(
-                ({ tier, title, subtitle, groups: tierGroups, pending: tierPending, variant }) => {
-                  if (tierGroups.length === 0) return null;
-                  const isDone = tierPending === 0;
-                  const tierCollapsed = collapsedTiers[tier];
-                  return (
-                    <div
-                      key={tier}
-                      className="rounded-lg border border-border-light"
-                      data-testid={`tier-${tier}`}
+            {[
+              {
+                tier: 'confirm' as ReviewTier,
+                title: 'Confirm suggestions',
+                subtitle: 'High-confidence matches — tap to confirm or change',
+                groups: tierData.confirm,
+                pending: tierData.confirmPending,
+                variant: 'success' as const,
+              },
+              {
+                tier: 'create' as ReviewTier,
+                title: 'New ingredients to create',
+                subtitle: 'No match found — review names and categories',
+                groups: tierData.create,
+                pending: tierData.createPending,
+                variant: 'info' as const,
+              },
+              {
+                tier: 'check' as ReviewTier,
+                title: 'Lines to check',
+                subtitle: 'Low-confidence or ambiguous — needs your attention',
+                groups: tierData.check,
+                pending: tierData.checkPending,
+                variant: 'warning' as const,
+              },
+            ].map(
+              ({ tier, title, subtitle, groups: tierGroups, pending: tierPending, variant }) => {
+                if (tierGroups.length === 0) return null;
+                const isDone = tierPending === 0;
+                const tierCollapsed = collapsedTiers[tier];
+                return (
+                  <div
+                    key={tier}
+                    className="rounded-lg border border-border-light"
+                    data-testid={`tier-${tier}`}
+                  >
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+                      onClick={() => toggleTierCollapse(tier)}
+                      aria-expanded={!tierCollapsed}
+                      data-testid={`tier-${tier}-toggle`}
                     >
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-                        onClick={() => toggleTierCollapse(tier)}
-                        aria-expanded={!tierCollapsed}
-                        data-testid={`tier-${tier}-toggle`}
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-text-primary">{title}</span>
-                            <Chip variant={isDone ? 'success' : variant} className="text-[10px]">
-                              {isDone ? 'Done' : `${tierPending} pending`}
-                            </Chip>
-                            <span className="text-xs text-text-muted">
-                              {tierGroups.length} group{tierGroups.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                          <p className="mt-0.5 text-xs text-text-muted">{subtitle}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-text-primary">{title}</span>
+                          <Chip variant={isDone ? 'success' : variant} className="text-[10px]">
+                            {isDone ? 'Done' : `${tierPending} pending`}
+                          </Chip>
+                          <span className="text-xs text-text-muted">
+                            {tierGroups.length} group{tierGroups.length !== 1 ? 's' : ''}
+                          </span>
                         </div>
-                        <span className="shrink-0 text-text-muted" aria-hidden>
-                          {tierCollapsed ? '▸' : '▾'}
-                        </span>
-                      </button>
+                        <p className="mt-0.5 text-xs text-text-muted">{subtitle}</p>
+                      </div>
+                      <span className="shrink-0 text-text-muted" aria-hidden>
+                        {tierCollapsed ? '▸' : '▾'}
+                      </span>
+                    </button>
 
-                      {!tierCollapsed && (
-                        <div className="space-y-1 border-t border-border-light px-3 py-3">
-                          {tierGroups.map((group) => {
-                            const gi = reviewGroups.findIndex((g) => g.groupKey === group.groupKey);
-                            const sample = group.lines[0]!.line;
-                            const band = sample.confidenceBand;
-                            const recipeNames = Array.from(
-                              new Set(group.lines.map((r) => r.line.recipeName)),
-                            );
-                            const resolvedHouseholdName =
-                              sample.action === 'use' && sample.resolutionStatus === 'resolved'
-                                ? (sample.matchedIngredient?.name ??
-                                  ingredients.find((ing) => ing.id === sample.manualIngredientId)
-                                    ?.name)
-                                : undefined;
-                            return (
-                              <Card
-                                key={group.groupKey}
-                                data-testid={`review-group-${gi}`}
-                                className={`!p-3 shadow-none ${sample.resolutionStatus === 'resolved' ? 'opacity-60' : ''}`}
-                              >
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                  <div className="min-w-0 flex-1 space-y-1">
-                                    <div className="flex items-start gap-2.5">
-                                      {sample.matchedCatalog?.imageUrl ? (
-                                        <img
-                                          src={sample.matchedCatalog.imageUrl}
-                                          alt=""
-                                          loading="lazy"
-                                          decoding="async"
-                                          className="h-10 w-10 shrink-0 rounded-md border border-border-light bg-bg object-cover"
-                                          data-testid={`review-group-catalog-suggestion-thumb-${gi}`}
-                                          onError={(e) => e.currentTarget.classList.add('hidden')}
-                                        />
-                                      ) : null}
-                                      <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-semibold text-text-primary">
-                                          {toSentenceCase(group.parsedName)}
-                                        </p>
-                                        <p className="text-[11px] text-text-muted">
-                                          {group.lines.length} occurrence
-                                          {group.lines.length !== 1 ? 's' : ''} ·{' '}
-                                          {recipeNames.length} recipe
-                                          {recipeNames.length !== 1 ? 's' : ''}
-                                          {sample.resolutionStatus === 'pending' && (
-                                            <Chip variant="warning" className="ml-2 text-[10px]">
-                                              Pending
-                                            </Chip>
-                                          )}
-                                          {band && (
-                                            <Chip variant="neutral" className="ml-1 text-[10px]">
-                                              {band}
-                                            </Chip>
-                                          )}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="flex flex-wrap gap-1">
-                                      {resolvedHouseholdName && (
-                                        <div
-                                          className="w-full rounded-md border border-brand/25 bg-brand/5 px-2.5 py-2"
-                                          data-testid={`review-group-use-preview-${gi}`}
-                                        >
-                                          <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-                                            Will use household ingredient
-                                          </p>
-                                          <p
-                                            className="text-sm font-medium text-text-primary"
-                                            data-testid={`review-group-use-name-${gi}`}
-                                          >
-                                            {toSentenceCase(resolvedHouseholdName)}
-                                          </p>
-                                          <p className="mt-0.5 text-[11px] text-text-muted">
-                                            This is the name stored on the ingredient and used in
-                                            meals and groceries.
-                                          </p>
-                                        </div>
-                                      )}
-                                      {sample.resolutionStatus === 'pending' &&
-                                        sample.matchedIngredient && (
-                                          <Chip
-                                            variant="success"
-                                            className="max-w-full cursor-pointer truncate text-[10px] hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand"
-                                            role="button"
-                                            tabIndex={0}
-                                            title="Use suggested household match"
-                                            aria-label={`Use suggested match: ${sample.matchedIngredient.name}`}
-                                            data-testid={`review-group-suggested-${gi}`}
-                                            onClick={() =>
-                                              approveSuggestedHouseholdMatch(
-                                                group.groupKey,
-                                                sample.matchedIngredient,
-                                              )
-                                            }
-                                            onKeyDown={(e) => {
-                                              if (e.key !== 'Enter' && e.key !== ' ') return;
-                                              e.preventDefault();
-                                              approveSuggestedHouseholdMatch(
-                                                group.groupKey,
-                                                sample.matchedIngredient,
-                                              );
-                                            }}
-                                          >
-                                            Suggested: {sample.matchedIngredient.name}
+                    {!tierCollapsed && (
+                      <div className="space-y-1 border-t border-border-light px-3 py-3">
+                        {tierGroups.map((group) => {
+                          const gi = reviewGroups.findIndex((g) => g.groupKey === group.groupKey);
+                          const sample = group.lines[0]!.line;
+                          const band = sample.confidenceBand;
+                          const recipeNames = Array.from(
+                            new Set(group.lines.map((r) => r.line.recipeName)),
+                          );
+                          const resolvedHouseholdName =
+                            sample.action === 'use' && sample.resolutionStatus === 'resolved'
+                              ? (sample.matchedIngredient?.name ??
+                                ingredients.find((ing) => ing.id === sample.manualIngredientId)
+                                  ?.name)
+                              : undefined;
+                          return (
+                            <Card
+                              key={group.groupKey}
+                              data-testid={`review-group-${gi}`}
+                              className={`!p-3 shadow-none ${sample.resolutionStatus === 'resolved' ? 'opacity-60' : ''}`}
+                            >
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0 flex-1 space-y-1">
+                                  <div className="flex items-start gap-2.5">
+                                    {sample.matchedCatalog?.imageUrl ? (
+                                      <img
+                                        src={sample.matchedCatalog.imageUrl}
+                                        alt=""
+                                        loading="lazy"
+                                        decoding="async"
+                                        className="h-10 w-10 shrink-0 rounded-md border border-border-light bg-bg object-cover"
+                                        data-testid={`review-group-catalog-suggestion-thumb-${gi}`}
+                                        onError={(e) => e.currentTarget.classList.add('hidden')}
+                                      />
+                                    ) : null}
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-sm font-semibold text-text-primary">
+                                        {toSentenceCase(group.parsedName)}
+                                      </p>
+                                      <p className="text-[11px] text-text-muted">
+                                        {group.lines.length} occurrence
+                                        {group.lines.length !== 1 ? 's' : ''} · {recipeNames.length}{' '}
+                                        recipe
+                                        {recipeNames.length !== 1 ? 's' : ''}
+                                        {sample.resolutionStatus === 'pending' && (
+                                          <Chip variant="warning" className="ml-2 text-[10px]">
+                                            Pending
                                           </Chip>
                                         )}
-                                      {sample.resolutionStatus === 'pending' &&
-                                        sample.matchedCatalog && (
-                                          <div
-                                            className="max-w-full space-y-0.5"
-                                            data-testid={`review-group-catalog-suggestion-${gi}`}
-                                          >
-                                            <div className="min-w-0 space-y-0.5">
-                                              <Chip
-                                                variant="info"
-                                                className="max-w-full truncate text-[10px]"
-                                              >
-                                                Catalog suggestion:{' '}
-                                                {toSentenceCase(sample.matchedCatalog.name)}
-                                              </Chip>
-                                              <p className="text-[10px] text-text-muted">
-                                                Not yet in your household
-                                              </p>
-                                            </div>
-                                          </div>
+                                        {band && (
+                                          <Chip variant="neutral" className="ml-1 text-[10px]">
+                                            {band}
+                                          </Chip>
                                         )}
+                                      </p>
                                     </div>
-                                    {sample.action === 'create' && sample.createDraft && (
+                                  </div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {resolvedHouseholdName && (
                                       <div
-                                        className="rounded-md border border-brand/25 bg-brand/5 px-2.5 py-2"
-                                        data-testid={`review-group-create-preview-${gi}`}
+                                        className="w-full rounded-md border border-brand/25 bg-brand/5 px-2.5 py-2"
+                                        data-testid={`review-group-use-preview-${gi}`}
                                       >
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-                                          Will create as
+                                          Will use household ingredient
                                         </p>
                                         <p
                                           className="text-sm font-medium text-text-primary"
-                                          data-testid={`review-group-create-canonical-${gi}`}
+                                          data-testid={`review-group-use-name-${gi}`}
                                         >
-                                          {toSentenceCase(
-                                            normalizeIngredientName(
-                                              sample.createDraft.canonicalName,
-                                            ),
-                                          )}
+                                          {toSentenceCase(resolvedHouseholdName)}
                                         </p>
                                         <p className="mt-0.5 text-[11px] text-text-muted">
-                                          {sample.createDraft.category}
-                                          {(sample.createDraft.tags?.length ?? 0) > 0 &&
-                                            ` · ${(sample.createDraft.tags ?? []).join(', ')}`}
-                                          {sample.createDraft.retainImportAlias &&
-                                            ' · alias from import kept'}
+                                          This is the name stored on the ingredient and used in
+                                          meals and groceries.
                                         </p>
-                                        <Button
-                                          small
-                                          className="mt-2"
-                                          onClick={() => openCreateModalForGroup(group.groupKey)}
-                                          data-testid={`group-edit-create-${gi}`}
-                                        >
-                                          Edit name &amp; details
-                                        </Button>
                                       </div>
                                     )}
+                                    {sample.resolutionStatus === 'pending' &&
+                                      sample.matchedIngredient && (
+                                        <Chip
+                                          variant="success"
+                                          className="max-w-full cursor-pointer truncate text-[10px] hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand"
+                                          role="button"
+                                          tabIndex={0}
+                                          title="Use suggested household match"
+                                          aria-label={`Use suggested match: ${sample.matchedIngredient.name}`}
+                                          data-testid={`review-group-suggested-${gi}`}
+                                          onClick={() =>
+                                            approveSuggestedHouseholdMatch(
+                                              group.groupKey,
+                                              sample.matchedIngredient,
+                                            )
+                                          }
+                                          onKeyDown={(e) => {
+                                            if (e.key !== 'Enter' && e.key !== ' ') return;
+                                            e.preventDefault();
+                                            approveSuggestedHouseholdMatch(
+                                              group.groupKey,
+                                              sample.matchedIngredient,
+                                            );
+                                          }}
+                                        >
+                                          Suggested: {sample.matchedIngredient.name}
+                                        </Chip>
+                                      )}
+                                    {sample.resolutionStatus === 'pending' &&
+                                      sample.matchedCatalog && (
+                                        <div
+                                          className="max-w-full space-y-0.5"
+                                          data-testid={`review-group-catalog-suggestion-${gi}`}
+                                        >
+                                          <div className="min-w-0 space-y-0.5">
+                                            <Chip
+                                              variant="info"
+                                              className="max-w-full truncate text-[10px]"
+                                            >
+                                              Catalog suggestion:{' '}
+                                              {toSentenceCase(sample.matchedCatalog.name)}
+                                            </Chip>
+                                            <p className="text-[10px] text-text-muted">
+                                              Not yet in your household
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )}
                                   </div>
-                                  <div className="flex shrink-0 flex-wrap gap-1">
-                                    {sample.autoResolved && sample.resolutionStatus === 'resolved' && (
+                                  {sample.action === 'create' && sample.createDraft && (
+                                    <div
+                                      className="rounded-md border border-brand/25 bg-brand/5 px-2.5 py-2"
+                                      data-testid={`review-group-create-preview-${gi}`}
+                                    >
+                                      <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                                        Will create as
+                                      </p>
+                                      <p
+                                        className="text-sm font-medium text-text-primary"
+                                        data-testid={`review-group-create-canonical-${gi}`}
+                                      >
+                                        {toSentenceCase(
+                                          normalizeIngredientName(sample.createDraft.canonicalName),
+                                        )}
+                                      </p>
+                                      <p className="mt-0.5 text-[11px] text-text-muted">
+                                        {sample.createDraft.category}
+                                        {(sample.createDraft.tags?.length ?? 0) > 0 &&
+                                          ` · ${(sample.createDraft.tags ?? []).join(', ')}`}
+                                        {sample.createDraft.retainImportAlias &&
+                                          ' · alias from import kept'}
+                                      </p>
+                                      <Button
+                                        small
+                                        className="mt-2"
+                                        onClick={() => openCreateModalForGroup(group.groupKey)}
+                                        data-testid={`group-edit-create-${gi}`}
+                                      >
+                                        Edit name &amp; details
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex shrink-0 flex-wrap gap-1">
+                                  {sample.autoResolved &&
+                                    sample.resolutionStatus === 'resolved' && (
                                       <Button
                                         small
                                         onClick={() =>
@@ -1425,163 +1424,168 @@ export default function PaprikaImport() {
                                         Undo
                                       </Button>
                                     )}
-                                    <Button
-                                      small
-                                      variant="primary"
-                                      onClick={() => setMatchPickerGroupKey(group.groupKey)}
-                                      data-testid={`group-match-${gi}`}
-                                    >
-                                      Match household
-                                    </Button>
-                                    <Button
-                                      small
-                                      onClick={() => {
-                                        setCatalogSearch('');
-                                        setCatalogPickerGroupKey(group.groupKey);
-                                      }}
-                                      data-testid={`group-catalog-${gi}`}
-                                    >
-                                      Pick from catalog
-                                    </Button>
-                                    <Button
-                                      small
-                                      onClick={() => openCreateModalForGroup(group.groupKey)}
-                                      data-testid={`group-create-${gi}`}
-                                    >
-                                      {sample.createDraft ? 'Edit create' : 'Create new'}
-                                    </Button>
-                                    <Button
-                                      small
-                                      onClick={() =>
-                                        applyResolutionToGroup(group.groupKey, { kind: 'ignore' })
-                                      }
-                                      data-testid={`group-ignore-${gi}`}
-                                    >
-                                      Ignore all
-                                    </Button>
-                                  </div>
+                                  <Button
+                                    small
+                                    variant="primary"
+                                    onClick={() => setMatchPickerGroupKey(group.groupKey)}
+                                    data-testid={`group-match-${gi}`}
+                                  >
+                                    Match household
+                                  </Button>
+                                  <Button
+                                    small
+                                    onClick={() => {
+                                      setCatalogSearch('');
+                                      setCatalogPickerGroupKey(group.groupKey);
+                                    }}
+                                    data-testid={`group-catalog-${gi}`}
+                                  >
+                                    Pick from catalog
+                                  </Button>
+                                  <Button
+                                    small
+                                    onClick={() => openCreateModalForGroup(group.groupKey)}
+                                    data-testid={`group-create-${gi}`}
+                                  >
+                                    {sample.createDraft ? 'Edit create' : 'Create new'}
+                                  </Button>
+                                  <Button
+                                    small
+                                    onClick={() =>
+                                      applyResolutionToGroup(group.groupKey, { kind: 'ignore' })
+                                    }
+                                    data-testid={`group-ignore-${gi}`}
+                                  >
+                                    Ignore all
+                                  </Button>
                                 </div>
+                              </div>
 
-                                <div className="mt-3 space-y-2 border-t border-border-light pt-2">
-                                  <p className="text-[10px] font-medium uppercase text-text-muted">
-                                    {group.lines.length > 1 ? 'Per-line override' : 'Source line'}
+                              <div className="mt-3 space-y-2 border-t border-border-light pt-2">
+                                <p className="text-[10px] font-medium uppercase text-text-muted">
+                                  {group.lines.length > 1 ? 'Per-line override' : 'Source line'}
+                                </p>
+                                {group.lines.length === 1 && (
+                                  <p className="text-[11px] text-text-muted">
+                                    Resolve this ingredient using the buttons above; per-line
+                                    actions appear when the same name appears in more than one
+                                    recipe line.
                                   </p>
-                                  {group.lines.length === 1 && (
-                                    <p className="text-[11px] text-text-muted">
-                                      Resolve this ingredient using the buttons above; per-line
-                                      actions appear when the same name appears in more than one
-                                      recipe line.
-                                    </p>
-                                  )}
-                                  {group.lines.map((ref, j) => {
-                                    const line = ref.line;
-                                    const globalRecipeIdx = ref.globalRecipeIdx;
-                                    const lineIdx = ref.lineIdx;
-                                    const lineKey = `${globalRecipeIdx}-${lineIdx}-${j}`;
-                                    return (
-                                      <div
-                                        key={lineKey}
-                                        data-testid={`review-line-${gi}-${j}`}
-                                        className="rounded border border-border-light/60 bg-bg/40 p-2"
-                                      >
-                                        <div className="flex flex-wrap items-center gap-2">
-                                          <span className="min-w-0 flex-1 truncate text-[11px] text-text-secondary">
-                                            {line.recipeName}: {line.raw}
-                                          </span>
-                                          {group.lines.length > 1 && (
-                                            <Select
-                                              value={line.action}
-                                              onChange={(e) => {
-                                                const v = e.target.value as PaprikaReviewLine['action'];
-                                                const patch: Partial<PaprikaReviewLine> = {
-                                                  action: v,
-                                                };
-                                                if (v === 'use' && line.matchedIngredient) {
-                                                  patch.manualIngredientId = line.matchedIngredient.id;
-                                                }
-                                                if (
-                                                  v === 'create' &&
-                                                  line.status === 'unmatched' &&
-                                                  !line.matchedCatalog
-                                                ) {
-                                                  patch.matchedIngredient = null;
-                                                  patch.matchedCatalog = null;
-                                                }
-                                                updateReviewLine(globalRecipeIdx, lineIdx, patch);
-                                              }}
-                                              className="w-[min(100%,10rem)] py-1 text-xs"
-                                              data-testid={`review-action-${gi}-${j}`}
-                                            >
-                                              {line.action === 'pending' && (
-                                                <option value="pending">Needs resolution</option>
-                                              )}
-                                              {(line.matchedIngredient || line.manualIngredientId) && (
-                                                <option value="use">Use household match</option>
-                                              )}
-                                              <option value="create">
-                                                {line.matchedCatalog
-                                                  ? 'Add from catalog'
-                                                  : 'Create new (manual)'}
-                                              </option>
-                                              <option value="ignore">Ignore</option>
-                                            </Select>
-                                          )}
-                                          {line.action === 'create' && !line.matchedCatalog && (
-                                            <Select
-                                              value={line.newCategory}
-                                              onChange={(e) =>
-                                                updateReviewLine(globalRecipeIdx, lineIdx, {
-                                                  newCategory: e.target.value as IngredientCategory,
-                                                })
+                                )}
+                                {group.lines.map((ref, j) => {
+                                  const line = ref.line;
+                                  const globalRecipeIdx = ref.globalRecipeIdx;
+                                  const lineIdx = ref.lineIdx;
+                                  const lineKey = `${globalRecipeIdx}-${lineIdx}-${j}`;
+                                  return (
+                                    <div
+                                      key={lineKey}
+                                      data-testid={`review-line-${gi}-${j}`}
+                                      className="rounded border border-border-light/60 bg-bg/40 p-2"
+                                    >
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="min-w-0 flex-1 truncate text-[11px] text-text-secondary">
+                                          {line.recipeName}: {line.raw}
+                                        </span>
+                                        {group.lines.length > 1 && (
+                                          <Select
+                                            value={line.action}
+                                            onChange={(e) => {
+                                              const v = e.target
+                                                .value as PaprikaReviewLine['action'];
+                                              const patch: Partial<PaprikaReviewLine> = {
+                                                action: v,
+                                              };
+                                              if (v === 'use' && line.matchedIngredient) {
+                                                patch.manualIngredientId =
+                                                  line.matchedIngredient.id;
                                               }
-                                              className="w-[min(100%,7.5rem)] py-1 text-xs"
-                                              data-testid={`review-category-${gi}-${j}`}
-                                            >
-                                              {CATEGORY_OPTIONS.map((c) => (
-                                                <option key={c} value={c}>
-                                                  {c}
-                                                </option>
-                                              ))}
-                                            </Select>
-                                          )}
-                                        </div>
-                                        {line.createDraft && (
-                                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border-light/50 pt-2">
-                                            <p className="text-[11px] text-text-secondary">
-                                              <span className="text-text-muted">Will create as </span>
-                                              <span
-                                                className="font-medium text-text-primary"
-                                                data-testid={`review-line-create-canonical-${gi}-${j}`}
-                                              >
-                                                {toSentenceCase(
-                                                  normalizeIngredientName(line.createDraft.canonicalName),
-                                                )}
-                                              </span>
-                                            </p>
-                                            <Button
-                                              type="button"
-                                              small
-                                              onClick={() => openCreateModalForGroup(group.groupKey)}
-                                              data-testid={`review-line-edit-create-${gi}-${j}`}
-                                            >
-                                              Edit
-                                            </Button>
-                                          </div>
+                                              if (
+                                                v === 'create' &&
+                                                line.status === 'unmatched' &&
+                                                !line.matchedCatalog
+                                              ) {
+                                                patch.matchedIngredient = null;
+                                                patch.matchedCatalog = null;
+                                              }
+                                              updateReviewLine(globalRecipeIdx, lineIdx, patch);
+                                            }}
+                                            className="w-[min(100%,10rem)] py-1 text-xs"
+                                            data-testid={`review-action-${gi}-${j}`}
+                                          >
+                                            {line.action === 'pending' && (
+                                              <option value="pending">Needs resolution</option>
+                                            )}
+                                            {(line.matchedIngredient ||
+                                              line.manualIngredientId) && (
+                                              <option value="use">Use household match</option>
+                                            )}
+                                            <option value="create">
+                                              {line.matchedCatalog
+                                                ? 'Add from catalog'
+                                                : 'Create new (manual)'}
+                                            </option>
+                                            <option value="ignore">Ignore</option>
+                                          </Select>
+                                        )}
+                                        {line.action === 'create' && !line.matchedCatalog && (
+                                          <Select
+                                            value={line.newCategory}
+                                            onChange={(e) =>
+                                              updateReviewLine(globalRecipeIdx, lineIdx, {
+                                                newCategory: e.target.value as IngredientCategory,
+                                              })
+                                            }
+                                            className="w-[min(100%,7.5rem)] py-1 text-xs"
+                                            data-testid={`review-category-${gi}-${j}`}
+                                          >
+                                            {CATEGORY_OPTIONS.map((c) => (
+                                              <option key={c} value={c}>
+                                                {c}
+                                              </option>
+                                            ))}
+                                          </Select>
                                         )}
                                       </div>
-                                    );
-                                  })}
-                                </div>
-                              </Card>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                },
-              )}
-            </div>
+                                      {line.createDraft && (
+                                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border-light/50 pt-2">
+                                          <p className="text-[11px] text-text-secondary">
+                                            <span className="text-text-muted">Will create as </span>
+                                            <span
+                                              className="font-medium text-text-primary"
+                                              data-testid={`review-line-create-canonical-${gi}-${j}`}
+                                            >
+                                              {toSentenceCase(
+                                                normalizeIngredientName(
+                                                  line.createDraft.canonicalName,
+                                                ),
+                                              )}
+                                            </span>
+                                          </p>
+                                          <Button
+                                            type="button"
+                                            small
+                                            onClick={() => openCreateModalForGroup(group.groupKey)}
+                                            data-testid={`review-line-edit-create-${gi}-${j}`}
+                                          >
+                                            Edit
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              },
+            )}
+          </div>
 
           {reviewGroups.length === 0 &&
             (reviewFilter === 'ambiguous' || reviewFilter === 'exceptions') && (

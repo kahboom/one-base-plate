@@ -130,7 +130,8 @@ const btnBase =
 const btnVariants: Record<ButtonVariant, string> = {
   default:
     'border border-border-default bg-surface text-text-primary hover:bg-bg hover:shadow-card enabled:active:scale-[0.98]',
-  primary: 'border border-brand bg-brand text-white hover:bg-brand-hover enabled:active:scale-[0.98]',
+  primary:
+    'border border-brand bg-brand text-white hover:bg-brand-hover enabled:active:scale-[0.98]',
   danger: 'border border-danger text-danger hover:bg-danger-light enabled:active:scale-[0.98]',
   ghost: 'border-none bg-transparent text-brand hover:underline p-0 min-h-0 active:opacity-80',
 };

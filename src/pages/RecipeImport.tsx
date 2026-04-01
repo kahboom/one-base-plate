@@ -77,7 +77,8 @@ export default function RecipeImport() {
       const result = parseRecipeText(recipeText, ingredients);
       const lines: ReviewLine[] = result.lines.map((line) => ({
         ...line,
-        action: line.status === 'unmatched' ? 'ignore' : line.status === 'catalog' ? 'create' : 'use',
+        action:
+          line.status === 'unmatched' ? 'ignore' : line.status === 'catalog' ? 'create' : 'use',
         newCategory: line.matchedCatalog?.category ?? 'pantry',
       }));
       setReviewLines(lines);

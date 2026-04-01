@@ -44,15 +44,17 @@ const unresolvedCatalogRefs: string[] = [];
 
 const households = files.map((f) => {
   const household = JSON.parse(readFileSync(join(fixturesDir, f), 'utf-8'));
-  household.ingredients = (household.ingredients ?? []).map((ingredient: Ingredient & { catalogId?: string }) => {
-    if (!ingredient.catalogId) return ingredient;
-    const catalog = catalogById.get(ingredient.catalogId);
-    if (!catalog) {
-      unresolvedCatalogRefs.push(`${household.id}:${ingredient.id}:${ingredient.catalogId}`);
-      return ingredient;
-    }
-    return hydrateIngredient(ingredient, catalog);
-  });
+  household.ingredients = (household.ingredients ?? []).map(
+    (ingredient: Ingredient & { catalogId?: string }) => {
+      if (!ingredient.catalogId) return ingredient;
+      const catalog = catalogById.get(ingredient.catalogId);
+      if (!catalog) {
+        unresolvedCatalogRefs.push(`${household.id}:${ingredient.id}:${ingredient.catalogId}`);
+        return ingredient;
+      }
+      return hydrateIngredient(ingredient, catalog);
+    },
+  );
   return household;
 });
 

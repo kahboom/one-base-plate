@@ -5,12 +5,12 @@
  *
  * Requires OPENAI_API_KEY in .env (see .env.example).
  */
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const root = join(__dirname, '..')
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = join(__dirname, '..');
 
 // Add or remove items here to generate them in a batch.
 // Set `dish: true` for plated / prepared foods (softer “no props” negative).
@@ -22,11 +22,14 @@ const ITEMS = [
     subject:
       'a few slender uncooked chipolata sausages in a loose row, thin pale-pink links, no packaging',
   },
-  { id: 'ing-carrots', subject: 'exactly three whole carrots with very short trimmed stems, no leafy tops at all, laid side by side at a gentle diagonal, smooth orange skin, nothing else in the image' },
+  {
+    id: 'ing-carrots',
+    subject:
+      'exactly three whole carrots with very short trimmed stems, no leafy tops at all, laid side by side at a gentle diagonal, smooth orange skin, nothing else in the image',
+  },
   {
     id: 'rec-spaghetti-bolognese',
-    subject:
-      'a simple bowl of spaghetti with meat bolognese sauce, readable and unfussy',
+    subject: 'a simple bowl of spaghetti with meat bolognese sauce, readable and unfussy',
     dish: true,
   },
   {
@@ -158,7 +161,8 @@ const ITEMS = [
   },
   {
     id: 'ing-blueberries',
-    subject: 'a small neat cluster of plump fresh blueberries, dusty blue-purple with a natural bloom, natural size variation, no stems, no leaves, no bowl, nothing else',
+    subject:
+      'a small neat cluster of plump fresh blueberries, dusty blue-purple with a natural bloom, natural size variation, no stems, no leaves, no bowl, nothing else',
   },
   {
     id: 'ing-banana',
@@ -166,8 +170,7 @@ const ITEMS = [
   },
   {
     id: 'ing-bacon',
-    subject:
-      'several raw streaky bacon rashers, pink meat and creamy white fat marbling, uncooked',
+    subject: 'several raw streaky bacon rashers, pink meat and creamy white fat marbling, uncooked',
   },
   {
     id: 'ing-beans',
@@ -182,7 +185,8 @@ const ITEMS = [
   },
   {
     id: 'ing-apple',
-    subject: 'one single whole red apple with a short stem, natural red skin with subtle variation, simple three-quarter view, nothing else in the image',
+    subject:
+      'one single whole red apple with a short stem, natural red skin with subtle variation, simple three-quarter view, nothing else in the image',
   },
   {
     id: 'ing-arepa',
@@ -191,7 +195,8 @@ const ITEMS = [
   },
   {
     id: 'ing-eggs',
-    subject: 'three whole brown chicken eggs arranged in a simple loose cluster, smooth natural shells, no carton, no bowl, nothing else in the image',
+    subject:
+      'three whole brown chicken eggs arranged in a simple loose cluster, smooth natural shells, no carton, no bowl, nothing else in the image',
   },
   {
     id: 'ing-flour',
@@ -209,8 +214,7 @@ const ITEMS = [
   },
   {
     id: 'ing-sirloin-steak',
-    subject:
-      'one raw sirloin steak with light marbling, simple three-quarter view, no grill marks',
+    subject: 'one raw sirloin steak with light marbling, simple three-quarter view, no grill marks',
   },
   {
     id: 'ing-pita-bread',
@@ -218,11 +222,13 @@ const ITEMS = [
   },
   {
     id: 'ing-spinach',
-    subject: 'a single compact bunch of fresh spinach with stems gathered together, deep green, viewed from a slight angle, no scattered or loose leaves around it, nothing else in the image',
+    subject:
+      'a single compact bunch of fresh spinach with stems gathered together, deep green, viewed from a slight angle, no scattered or loose leaves around it, nothing else in the image',
   },
   {
     id: 'ing-broccoli',
-    subject: 'a single whole fresh broccoli head with a short thick stalk, vivid deep green, centered in the frame, three-quarter view, only one broccoli, no second head, no loose florets, nothing else in the image',
+    subject:
+      'a single whole fresh broccoli head with a short thick stalk, vivid deep green, centered in the frame, three-quarter view, only one broccoli, no second head, no loose florets, nothing else in the image',
   },
   {
     id: 'ing-strawberries',
@@ -247,7 +253,8 @@ const ITEMS = [
   },
   {
     id: 'ing-onion',
-    subject: 'one single whole brown cooking onion with dry papery skin and a short root end, three-quarter view, nothing else in the image',
+    subject:
+      'one single whole brown cooking onion with dry papery skin and a short root end, three-quarter view, nothing else in the image',
   },
   {
     id: 'ing-oats',
@@ -332,8 +339,7 @@ const ITEMS = [
   },
   {
     id: 'ing-red-onion',
-    subject:
-      'one whole red onion with glossy deep purple-red papery skin and a short root end',
+    subject: 'one whole red onion with glossy deep purple-red papery skin and a short root end',
   },
   {
     id: 'ing-peas',
@@ -1179,8 +1185,7 @@ const ITEMS = [
   },
   {
     id: 'ing-poppy-seeds',
-    subject:
-      'a small loose pile of tiny blue-black poppy seeds, dry, matte, no packaging',
+    subject: 'a small loose pile of tiny blue-black poppy seeds, dry, matte, no packaging',
   },
   {
     id: 'ing-pickled-onions',
@@ -1188,65 +1193,71 @@ const ITEMS = [
       'a small shallow bowl of whole small pearl pickled onions in pale vinegar brine, silverskin style, light pinkish skins, no jar label, no readable text',
     dish: true,
   },
-]
+];
 
 function getPrompt(subject, { dish = false } = {}) {
   const mid = dish
     ? 'Hand-drawn watercolor, light pencil outline with soft watercolor wash.'
-    : 'Hand-drawn watercolor ingredient study, light pencil outline with soft watercolor wash.'
+    : 'Hand-drawn watercolor ingredient study, light pencil outline with soft watercolor wash.';
   const layout = dish
     ? 'Minimal cookbook-style food painting of one dish, delicate and clean, lots of negative space around the bowl.'
-    : 'Minimal cookbook-style spot art, delicate and clean, lots of negative space.'
+    : 'Minimal cookbook-style spot art, delicate and clean, lots of negative space.';
   const neg = dish
     ? 'Negative: no photorealism, no vector icon style, no heavy outlines, no cluttered background, no text, no packaging, no scattered cutlery or extra props.'
-    : 'Negative: no photorealism, no vector icon style, no heavy outlines, no cluttered background, no text, no extra props.'
+    : 'Negative: no photorealism, no vector icon style, no heavy outlines, no cluttered background, no text, no extra props.';
   return [
     `A simple watercolor food illustration of ${subject}.`,
     mid,
     'Isolated on a pure white background.',
     layout,
     neg,
-  ].join(' ')
+  ].join(' ');
 }
 
-const key = process.env.OPENAI_API_KEY
+const key = process.env.OPENAI_API_KEY;
 if (!key?.trim()) {
-  console.error('Missing OPENAI_API_KEY. Run: node --env-file=.env scripts/generate-seed-image.mjs')
-  process.exit(1)
+  console.error(
+    'Missing OPENAI_API_KEY. Run: node --env-file=.env scripts/generate-seed-image.mjs',
+  );
+  process.exit(1);
 }
 
-const BATCH_SIZE = 5
-const BATCH_DELAY_MS = 3000
+const BATCH_SIZE = 5;
+const BATCH_DELAY_MS = 3000;
 
-const dir = join(root, 'public/images/seed')
-mkdirSync(dir, { recursive: true })
+const dir = join(root, 'public/images/seed');
+mkdirSync(dir, { recursive: true });
 
-const skipExisting = process.argv.includes('--skip-existing')
-const onlyIds = process.argv.slice(2).map((s) => s.trim()).filter(Boolean).filter((s) => s !== '--skip-existing')
-let toGenerate = onlyIds.length ? ITEMS.filter((i) => onlyIds.includes(i.id)) : ITEMS
+const skipExisting = process.argv.includes('--skip-existing');
+const onlyIds = process.argv
+  .slice(2)
+  .map((s) => s.trim())
+  .filter(Boolean)
+  .filter((s) => s !== '--skip-existing');
+let toGenerate = onlyIds.length ? ITEMS.filter((i) => onlyIds.includes(i.id)) : ITEMS;
 if (onlyIds.length) {
-  const missing = onlyIds.filter((id) => !ITEMS.some((i) => i.id === id))
+  const missing = onlyIds.filter((id) => !ITEMS.some((i) => i.id === id));
   if (missing.length) {
-    console.error(`Unknown seed image id(s): ${missing.join(', ')}`)
-    console.error(`Known: ${ITEMS.map((i) => i.id).join(', ')}`)
-    process.exit(1)
+    console.error(`Unknown seed image id(s): ${missing.join(', ')}`);
+    console.error(`Known: ${ITEMS.map((i) => i.id).join(', ')}`);
+    process.exit(1);
   }
 }
 
 if (skipExisting) {
-  const before = toGenerate.length
-  toGenerate = toGenerate.filter((i) => !existsSync(join(dir, `${i.id}.png`)))
-  const skipped = before - toGenerate.length
-  if (skipped) console.log(`--skip-existing: skipping ${skipped} image(s) that already exist`)
+  const before = toGenerate.length;
+  toGenerate = toGenerate.filter((i) => !existsSync(join(dir, `${i.id}.png`)));
+  const skipped = before - toGenerate.length;
+  if (skipped) console.log(`--skip-existing: skipping ${skipped} image(s) that already exist`);
 }
 
 if (toGenerate.length === 0) {
-  console.log('Nothing to generate.')
-  process.exit(0)
+  console.log('Nothing to generate.');
+  process.exit(0);
 }
 
 async function generateOne(item) {
-  console.log(`Generating ${item.id}...`)
+  console.log(`Generating ${item.id}...`);
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: {
@@ -1261,53 +1272,53 @@ async function generateOne(item) {
       quality: 'standard',
       response_format: 'url',
     }),
-  })
+  });
 
-  const data = await res.json()
+  const data = await res.json();
   if (!res.ok) {
-    console.error(`OpenAI API error for ${item.id}:`, JSON.stringify(data, null, 2))
-    return false
+    console.error(`OpenAI API error for ${item.id}:`, JSON.stringify(data, null, 2));
+    return false;
   }
 
-  const url = data.data?.[0]?.url
+  const url = data.data?.[0]?.url;
   if (!url) {
-    console.error(`Unexpected response for ${item.id}:`, data)
-    return false
+    console.error(`Unexpected response for ${item.id}:`, data);
+    return false;
   }
 
-  const imgRes = await fetch(url)
+  const imgRes = await fetch(url);
   if (!imgRes.ok) {
-    console.error(`Failed to download image for ${item.id}:`, imgRes.status)
-    return false
+    console.error(`Failed to download image for ${item.id}:`, imgRes.status);
+    return false;
   }
 
-  const buf = Buffer.from(await imgRes.arrayBuffer())
-  const outPath = join(dir, `${item.id}.png`)
-  writeFileSync(outPath, buf)
-  console.log(`Wrote ${outPath}`)
-  return true
+  const buf = Buffer.from(await imgRes.arrayBuffer());
+  const outPath = join(dir, `${item.id}.png`);
+  writeFileSync(outPath, buf);
+  console.log(`Wrote ${outPath}`);
+  return true;
 }
 
-console.log(`Generating ${toGenerate.length} image(s) in batches of ${BATCH_SIZE}...`)
+console.log(`Generating ${toGenerate.length} image(s) in batches of ${BATCH_SIZE}...`);
 
-let ok = 0
-let fail = 0
+let ok = 0;
+let fail = 0;
 for (let i = 0; i < toGenerate.length; i += BATCH_SIZE) {
-  const batch = toGenerate.slice(i, i + BATCH_SIZE)
-  const batchNum = Math.floor(i / BATCH_SIZE) + 1
-  const totalBatches = Math.ceil(toGenerate.length / BATCH_SIZE)
-  console.log(`\n--- Batch ${batchNum}/${totalBatches} (${batch.map((b) => b.id).join(', ')}) ---`)
+  const batch = toGenerate.slice(i, i + BATCH_SIZE);
+  const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+  const totalBatches = Math.ceil(toGenerate.length / BATCH_SIZE);
+  console.log(`\n--- Batch ${batchNum}/${totalBatches} (${batch.map((b) => b.id).join(', ')}) ---`);
 
-  const results = await Promise.allSettled(batch.map((item) => generateOne(item)))
+  const results = await Promise.allSettled(batch.map((item) => generateOne(item)));
   for (const r of results) {
-    if (r.status === 'fulfilled' && r.value) ok++
-    else fail++
+    if (r.status === 'fulfilled' && r.value) ok++;
+    else fail++;
   }
 
   if (i + BATCH_SIZE < toGenerate.length) {
-    console.log(`Waiting ${BATCH_DELAY_MS / 1000}s before next batch...`)
-    await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS))
+    console.log(`Waiting ${BATCH_DELAY_MS / 1000}s before next batch...`);
+    await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
   }
 }
 
-console.log(`\nDone: ${ok} generated, ${fail} failed, ${toGenerate.length} total.`)
+console.log(`\nDone: ${ok} generated, ${fail} failed, ${toGenerate.length} total.`);
