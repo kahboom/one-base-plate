@@ -183,6 +183,8 @@ export interface ImportMapping {
   finalCanonicalName?: string;
   importAliasRetained?: boolean;
   explicitIgnore?: boolean;
+  /** Set when this mapping was resolved automatically by the pre-pass (still reversible) */
+  autoResolved?: boolean;
 }
 
 export interface AssemblyVariant {

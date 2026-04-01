@@ -556,6 +556,37 @@ export function autoResolveHighConfidenceWithStats(recipes: ParsedPaprikaRecipe[
   };
 }
 
+/**
+ * Revert all lines in a group that were auto-resolved by `autoResolveHighConfidence`.
+ * Only touches lines where `autoResolved === true` (manual overrides are untouched).
+ * Restores each line to `resolutionStatus: 'pending'` with `action: 'pending'` and
+ * clears auto-set fields so the user can make an explicit choice.
+ */
+export function revertAutoResolvedGroup(
+  recipes: ParsedPaprikaRecipe[],
+  groupKey: string,
+): ParsedPaprikaRecipe[] {
+  return recipes.map((recipe) => {
+    const updatedLines = recipe.parsedLines.map((line) => {
+      const lineGroupKey = line.groupKey ?? groupKeyForParsedName(line.name);
+      if (lineGroupKey !== groupKey) return line;
+      if (!line.autoResolved) return line;
+      return {
+        ...line,
+        action: 'pending' as const,
+        resolutionStatus: 'pending' as const,
+        autoResolved: undefined,
+        manualIngredientId: undefined,
+        createDraft: undefined,
+        lowConfidenceAccepted: undefined,
+        explicitIgnore: undefined,
+        perLineOverride: undefined,
+      };
+    });
+    return { ...recipe, parsedLines: updatedLines };
+  });
+}
+
 export function canFinalizePaprikaImport(recipes: ParsedPaprikaRecipe[]): boolean {
   for (const recipe of recipes) {
     if (!recipe.selected) continue;
@@ -744,12 +775,23 @@ export function parsePaprikaLineFromRaw(
   const gk = groupKeyForParsedName(name);
   let action: PaprikaReviewLine['action'];
   let resolutionStatus: 'pending' | 'resolved';
+  let autoResolved: true | undefined;
   if (status === 'matched') {
     action = 'use';
-    resolutionStatus = confidenceBand === 'low' ? 'pending' : 'resolved';
+    if (confidenceBand === 'low') {
+      resolutionStatus = 'pending';
+    } else {
+      resolutionStatus = 'resolved';
+      autoResolved = true;
+    }
   } else if (status === 'catalog') {
     action = 'create';
-    resolutionStatus = confidenceBand === 'low' ? 'pending' : 'resolved';
+    if (confidenceBand === 'low') {
+      resolutionStatus = 'pending';
+    } else {
+      resolutionStatus = 'resolved';
+      autoResolved = true;
+    }
   } else {
     action = 'pending';
     resolutionStatus = 'pending';
@@ -771,6 +813,7 @@ export function parsePaprikaLineFromRaw(
     recipeIndex,
     recipeName,
     resolutionStatus,
+    autoResolved,
     groupKey: gk,
     parserSuggestedIngredientId: ingredient?.id,
     parserSuggestedCatalogId: catalogItem?.id,
@@ -982,6 +1025,7 @@ export function buildDraftRecipe(
         confidenceBand: line.confidenceBand,
         parserSuggestedIngredientId: line.parserSuggestedIngredientId,
         parserSuggestedCatalogId: line.parserSuggestedCatalogId,
+        autoResolved: line.autoResolved,
       });
     } else if (line.action === 'create') {
       let ing: Ingredient;
@@ -1044,6 +1088,7 @@ export function buildDraftRecipe(
         confidenceBand: line.confidenceBand,
         parserSuggestedIngredientId: line.parserSuggestedIngredientId,
         parserSuggestedCatalogId: line.parserSuggestedCatalogId,
+        autoResolved: line.autoResolved,
       });
     }
   }

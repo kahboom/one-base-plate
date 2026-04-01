@@ -5,6 +5,7 @@ import App from './App';
 import {
   initStorage,
   seedIfNeeded,
+  backfillBundledSeedIngredientImageUrls,
   runMigrationIfNeeded,
   runRecipeRefMigrationIfNeeded,
   runStripWholeMealTagsIfNeeded,
@@ -20,6 +21,7 @@ initTheme();
 void (async () => {
   await initStorage();
   await seedIfNeeded();
+  backfillBundledSeedIngredientImageUrls();
   runMigrationIfNeeded();
   runRecipeRefMigrationIfNeeded();
   runStripWholeMealTagsIfNeeded();

@@ -349,10 +349,9 @@ describe('F051 Paprika ingredient parser hardening', () => {
       expect(m.catalogItem?.id).toBe('cat-monterey-jack-cheese');
     });
 
-    it('does not map cream to Cream cheese', () => {
+    it('maps cream to Cream (not Cream cheese)', () => {
       const m = matchIngredient('cream', emptyHousehold, MASTER_CATALOG);
-      expect(m.catalogItem).toBeNull();
-      expect(m.status).toBe('unmatched');
+      expect(m.catalogItem?.id).toBe('cat-cream');
     });
 
     it('does not map dry bread crumbs to Bread', () => {

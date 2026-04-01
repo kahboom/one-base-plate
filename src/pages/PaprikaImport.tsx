@@ -25,6 +25,7 @@ import {
   countLowConfidencePending,
   refreshPaprikaSessionParsedLines,
   autoResolveHighConfidenceWithStats,
+  revertAutoResolvedGroup,
   PAPRIKA_INGREDIENT_PARSER_VERSION,
 } from '../paprika-parser';
 import type {
@@ -69,7 +70,7 @@ const CATEGORY_OPTIONS: IngredientCategory[] = [
 ];
 
 /** Default page size for Paprika import recipe list */
-const PAPRIKA_IMPORT_PAGE_SIZE = 10;
+const PAPRIKA_IMPORT_PAGE_SIZE = 50;
 
 type ReviewFilter = 'all' | 'exceptions' | 'ambiguous' | 'ignored' | 'matched' | 'low-confidence';
 
@@ -246,6 +247,13 @@ export default function PaprikaImport() {
       let recipes = migrateLegacyPaprikaRecipes(session.parsedRecipes);
       if ((session.importParserVersion ?? 0) < PAPRIKA_INGREDIENT_PARSER_VERSION) {
         recipes = refreshPaprikaSessionParsedLines(recipes, household?.ingredients ?? []);
+      }
+      // Run auto-resolve pre-pass on restored review sessions so the triage queue
+      // is already reduced when the user returns to the review step.
+      if (session.step === 'review') {
+        const { recipes: autoResolved, stats } = autoResolveHighConfidenceWithStats(recipes);
+        recipes = autoResolved;
+        if (stats.total > 0) setAutoResolveStats(stats);
       }
       setParsedRecipes(recipes);
       setStep(session.step);
@@ -525,6 +533,10 @@ export default function PaprikaImport() {
     [],
   );
 
+  const handleRevertAutoResolvedGroup = useCallback((groupKey: string) => {
+    setParsedRecipes((prev) => revertAutoResolvedGroup(prev, groupKey));
+  }, []);
+
   const handleBatchCreateAll = useCallback(() => {
     for (const group of batchCreateRows) {
       const sample = group.lines[0]!.line;
@@ -627,6 +639,10 @@ export default function PaprikaImport() {
 
   function handleStartReview() {
     if (selectedRecipes.length === 0) return;
+    // Run auto-resolve pre-pass before entering review so the queue is already reduced.
+    const { recipes: autoResolved, stats } = autoResolveHighConfidenceWithStats(parsedRecipes);
+    setParsedRecipes(autoResolved);
+    if (stats.total > 0) setAutoResolveStats(stats);
     setStep('review');
   }
 
@@ -1379,6 +1395,18 @@ export default function PaprikaImport() {
                                     )}
                                   </div>
                                   <div className="flex shrink-0 flex-wrap gap-1">
+                                    {sample.autoResolved && sample.resolutionStatus === 'resolved' && (
+                                      <Button
+                                        small
+                                        onClick={() =>
+                                          handleRevertAutoResolvedGroup(group.groupKey)
+                                        }
+                                        data-testid={`group-revert-auto-${gi}`}
+                                        title="Undo auto-resolution and choose manually"
+                                      >
+                                        Undo
+                                      </Button>
+                                    )}
                                     <Button
                                       small
                                       variant="primary"

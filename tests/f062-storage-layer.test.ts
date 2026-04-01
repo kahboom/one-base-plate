@@ -7,6 +7,7 @@ import {
   initStorage,
   loadHouseholds,
   mergeSeedRecipesForHousehold,
+  backfillBundledSeedIngredientImageUrls,
   resetAppStorageForTests,
   resetHouseholdIngredientsToSeed,
   saveHousehold,
@@ -152,6 +153,57 @@ describe('mergeSeedRecipesForHousehold', () => {
       weeklyPlans: [],
     });
     expect(mergeSeedRecipesForHousehold('h-no-seed')).toBe(false);
+  });
+});
+
+describe('backfillBundledSeedIngredientImageUrls', () => {
+  it('fills missing ingredient imageUrl from bundled seed for H001', async () => {
+    const seed = seedData as unknown as Household[];
+    const seedH001 = seed.find((h) => h.id === 'H001')!;
+    const carrotsSeed = seedH001.ingredients.find((i) => i.id === 'ing-carrots')!;
+    expect(carrotsSeed.imageUrl).toBeDefined();
+
+    await initStorage();
+    saveHousehold({
+      id: 'H001',
+      name: 'McG',
+      members: [],
+      ingredients: [{ ...carrotsSeed, imageUrl: undefined }],
+      baseMeals: [],
+      weeklyPlans: [],
+    });
+
+    expect(backfillBundledSeedIngredientImageUrls()).toBe(true);
+    const h = loadHouseholds().find((x) => x.id === 'H001')!;
+    expect(h.ingredients[0]!.imageUrl).toBe(carrotsSeed.imageUrl);
+  });
+
+  it('does not overwrite an existing household imageUrl', async () => {
+    await initStorage();
+    saveHousehold({
+      id: 'H001',
+      name: 'McG',
+      members: [],
+      ingredients: [
+        {
+          id: 'ing-carrots',
+          name: 'carrots',
+          category: 'veg',
+          tags: [],
+          shelfLifeHint: '2 weeks',
+          freezerFriendly: true,
+          babySafeWithAdaptation: true,
+          imageUrl: 'https://example.com/custom.png',
+        },
+      ],
+      baseMeals: [],
+      weeklyPlans: [],
+    });
+
+    expect(backfillBundledSeedIngredientImageUrls()).toBe(false);
+    expect(loadHouseholds().find((x) => x.id === 'H001')!.ingredients[0]!.imageUrl).toBe(
+      'https://example.com/custom.png',
+    );
   });
 });
 

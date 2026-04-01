@@ -1215,6 +1215,8 @@ const COMPOUND_WHERE_FIRST_TOKEN_ALONE_IS_WRONG = new Set([
   'olive oil',
   'sesame oil',
   'peanut butter',
+  'almond butter',
+  'nut butter',
   'tomato paste',
   'tomato sauce',
 ]);

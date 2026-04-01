@@ -6,6 +6,37 @@
 - Run tests before marking any feature as passing
 - Commit after each completed feature
 
+### 2026-04-01 — Seed images: sirloin, pita, spinach, strawberries, tinned tomatoes
+
+- **What:** Generated watercolor PNGs for `ing-sirloin-steak`, `ing-pita-bread`, `ing-spinach`, `ing-strawberries`, `ing-tinned-tomatoes`; added `ITEMS` entries in `scripts/generate-seed-image.mjs`; wired `imageUrl` on those rows in `fixtures/households/H001-mcg.json`; ran `npm run db:seed`.
+- **Verified:** `npm test`, `npm run typecheck`.
+
+### 2026-03-31 — F076: Paprika import auto-resolution and tiered triage
+
+- **What:** Implemented F076 — auto-resolve pre-pass, `autoResolved` flag on `ImportMapping`, `revertAutoResolvedGroup` with Undo button, page size 10→50.
+- **Parser:** `parsePaprikaLineFromRaw` now sets `autoResolved: true` on exact/strong household and catalog matches so every auto-resolved line carries the audit flag. `autoResolveHighConfidenceWithStats` covers the remaining staple-match case for unmatched lines.
+- **New function:** `revertAutoResolvedGroup` in `paprika-parser.ts` — resets any `autoResolved` line in a group to `pending` without touching manual overrides.
+- **UI:** `handleStartReview` runs the auto-resolve pre-pass before entering the review step; session restore runs it too. Undo button appears on every auto-resolved group card. `PAPRIKA_IMPORT_PAGE_SIZE` raised from 10 to 50.
+- **Types:** `ImportMapping.autoResolved?: boolean` added; `buildDraftRecipe` propagates the flag to both `use` and `create` mapping entries.
+- **Tests:** 20 new tests in `tests/f076-paprika-auto-resolution.test.tsx`; all 85 test files pass, typecheck clean.
+
+### 2026-03-31 — Seed image: chipolatas
+
+- **What:** Generated `public/images/seed/ing-chipolatas.png`, wired `ing-chipolatas` in `H001-mcg.json`, regenerated `src/seed-data.json`. Added `ing-chipolatas` to `ITEMS` in `scripts/generate-seed-image.mjs`; single-image run: `node --env-file=.env scripts/generate-seed-image.mjs ing-chipolatas`.
+- **Verified:** `npm run db:seed`, `npm test` (f071), `npm run typecheck`.
+
+### 2026-03-31 — Seed images: chicken, sausage, carrots, bolognese, cheeses
+
+- **What:** Generated watercolor PNGs for `ing-chicken`, `ing-italian-sausage`, `ing-carrots`, `ing-cheddar`, `ing-paneer`, `ing-halloumi`, and `rec-spaghetti-bolognese`. Added library recipe `rec-spaghetti-bolognese` to H001 (was not in seed before) with `imageUrl`.
+- **Script:** `generate-seed-image.mjs` — optional `dish: true` for plated prompts (softer negatives around the bowl).
+- **Verified:** `npm run db:seed`, `npm test`, `npm run typecheck`.
+
+### 2026-03-31 — Batch seed image generation (watercolor)
+
+- **What:** Updated `scripts/generate-seed-image.mjs` to support batch generation. Generated 5 seed images (avocado, broccoli, garlic, lemon, salmon) using the new watercolor style.
+- **Fixture:** Wired the new images into `fixtures/households/H001-mcg.json` and regenerated `src/seed-data.json`.
+- **Verified:** `npm test`, `npm run typecheck`.
+
 ### 2026-03-31 — Seed image style update (watercolor)
 
 - **What:** Replaced the editorial/photorealistic seed image style with a simple watercolor food illustration aesthetic.

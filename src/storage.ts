@@ -427,6 +427,38 @@ export function mergeSeedRecipesForHousehold(householdId: string): boolean {
   return true;
 }
 
+/**
+ * For each stored household that exists in bundled seed, copy `imageUrl` from the seed
+ * row when the live ingredient has the same `id` but no `imageUrl`. First install already
+ * gets images via `seedIfNeeded()`; this keeps long-lived local data aligned when seed
+ * assets are added later. Does not overwrite a non-empty household `imageUrl`.
+ */
+export function backfillBundledSeedIngredientImageUrls(): boolean {
+  const seedHouseholds = seedData as unknown as Household[];
+  const households = loadHouseholds();
+  let anyChanged = false;
+  const next = households.map((h) => {
+    const seedH = seedHouseholds.find((s) => s.id === h.id);
+    if (!seedH?.ingredients?.length) return h;
+    const seedMap = new Map(seedH.ingredients.map((i) => [i.id, i]));
+    let hChanged = false;
+    const ingredients = h.ingredients.map((ing) => {
+      if (ing.imageUrl) return ing;
+      const s = seedMap.get(ing.id);
+      if (!s?.imageUrl) return ing;
+      hChanged = true;
+      return { ...ing, imageUrl: s.imageUrl };
+    });
+    if (!hChanged) return h;
+    anyChanged = true;
+    return { ...h, ingredients };
+  });
+  if (anyChanged) {
+    saveHouseholds(next);
+  }
+  return anyChanged;
+}
+
 export function exportHouseholdsJSON(householdIds?: string[]): string {
   const all = loadHouseholds();
   const data = householdIds ? all.filter((h) => householdIds.includes(h.id)) : all;

@@ -435,6 +435,7 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c('cat-breadsticks', 'Breadsticks', 'snack', ['quick', 'rescue'], false, true),
   c('cat-hummus', 'Hummus', 'snack', ['quick'], false, true),
   c('cat-peanut-butter', 'Peanut butter', 'snack', ['quick', 'staple'], false, false),
+  c('cat-almond-butter', 'Almond butter', 'snack', ['quick', 'staple'], false, false, ['nut butter']),
 
   // Freezer
   c('cat-frozen-peas', 'Frozen peas', 'freezer', ['quick', 'rescue'], true, true),
@@ -580,6 +581,209 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   ]),
   c('cat-cornstarch', 'Cornstarch', 'pantry', ['staple'], false, false, ['cornflour']),
   c('cat-mayonnaise', 'Mayonnaise', 'pantry', ['staple'], false, false, ['mayo']),
+
+  // ── Common staples (F076 expansion) ──
+
+  // Salt & water
+  c('cat-salt', 'Salt', 'pantry', ['staple'], false, false, [
+    'table salt',
+    'fine salt',
+    'sea salt',
+    'coarse salt',
+    'flaky salt',
+  ]),
+  c('cat-water', 'Water', 'pantry', ['staple'], false, true),
+
+  // Oils & fats
+  c('cat-vegetable-oil', 'Vegetable oil', 'pantry', ['staple'], false, false, [
+    'canola oil',
+    'rapeseed oil',
+    'cooking oil',
+    'neutral oil',
+  ]),
+  c('cat-coconut-oil', 'Coconut oil', 'pantry', ['staple'], false, false),
+  c('cat-cooking-spray', 'Cooking spray', 'pantry', ['staple'], false, false, [
+    'nonstick spray',
+    'non-stick cooking spray',
+    'nonstick cooking spray',
+  ]),
+
+  // Baking basics
+  c('cat-baking-soda', 'Baking soda', 'pantry', ['staple'], false, false, [
+    'bicarbonate of soda',
+    'bicarb',
+  ]),
+  c('cat-baking-powder', 'Baking powder', 'pantry', ['staple'], false, false),
+  c('cat-brown-sugar', 'Brown sugar', 'pantry', ['staple'], false, false, [
+    'light brown sugar',
+    'dark brown sugar',
+    'demerara sugar',
+    'muscovado sugar',
+  ]),
+  c('cat-powdered-sugar', 'Powdered sugar', 'pantry', ['staple'], false, false, [
+    'confectioners sugar',
+    'icing sugar',
+  ]),
+  c('cat-vanilla-extract', 'Vanilla extract', 'pantry', ['staple'], false, false, [
+    'vanilla',
+    'pure vanilla extract',
+    'vanilla essence',
+  ]),
+
+  // Herbs & spices
+  c('cat-cinnamon', 'Cinnamon', 'pantry', ['staple'], false, false, ['ground cinnamon']),
+  c('cat-nutmeg', 'Nutmeg', 'pantry', ['staple'], false, false, ['ground nutmeg']),
+  c('cat-thyme', 'Thyme', 'pantry', ['staple'], false, false, ['dried thyme', 'fresh thyme']),
+  c('cat-rosemary', 'Rosemary', 'pantry', ['staple'], false, false, [
+    'dried rosemary',
+    'fresh rosemary',
+  ]),
+  c('cat-bay-leaves', 'Bay leaves', 'pantry', ['staple'], false, false, ['bay leaf']),
+  c('cat-cayenne-pepper', 'Cayenne pepper', 'pantry', ['staple'], false, false, ['cayenne']),
+  c('cat-red-pepper-flakes', 'Red pepper flakes', 'pantry', ['staple'], false, false, [
+    'crushed red pepper',
+    'crushed red pepper flakes',
+    'chilli flakes',
+    'chili flakes',
+  ]),
+  c('cat-turmeric', 'Turmeric', 'pantry', ['staple'], false, false, ['ground turmeric']),
+  c('cat-curry-powder', 'Curry powder', 'pantry', ['staple'], false, false),
+  c('cat-dried-parsley', 'Parsley', 'pantry', ['staple'], false, false, [
+    'dried parsley',
+    'fresh parsley',
+    'flat leaf parsley',
+    'italian parsley',
+    'curly parsley',
+  ]),
+  c('cat-dried-dill', 'Dill', 'pantry', ['staple'], false, false, [
+    'dried dill',
+    'fresh dill',
+    'dill weed',
+  ]),
+  c('cat-coriander-ground', 'Ground coriander', 'pantry', ['staple'], false, false, [
+    'coriander powder',
+  ]),
+  c('cat-allspice', 'Allspice', 'pantry', ['staple'], false, false, ['ground allspice']),
+  c('cat-cloves', 'Cloves', 'pantry', ['staple'], false, false, ['ground cloves', 'whole cloves']),
+
+  // Condiments & sauces
+  c('cat-ketchup', 'Ketchup', 'pantry', ['staple'], false, false, ['tomato ketchup', 'catsup']),
+  c('cat-bbq-sauce', 'BBQ sauce', 'pantry', ['staple'], false, false, ['barbecue sauce']),
+  c('cat-tomato-sauce', 'Tomato sauce', 'pantry', ['staple'], false, true, [
+    'marinara sauce',
+    'pizza sauce',
+  ]),
+  c('cat-rice-vinegar', 'Rice vinegar', 'pantry', ['staple'], false, false, [
+    'rice wine vinegar',
+    'seasoned rice vinegar',
+  ]),
+  c('cat-balsamic-vinegar', 'Balsamic vinegar', 'pantry', ['staple'], false, false, [
+    'balsamic glaze',
+  ]),
+  c('cat-maple-syrup', 'Maple syrup', 'pantry', ['staple'], false, false, ['pure maple syrup']),
+  c('cat-lemon-juice', 'Lemon juice', 'pantry', ['staple'], false, true, [
+    'fresh lemon juice',
+    'bottled lemon juice',
+  ]),
+  c('cat-lime-juice', 'Lime juice', 'pantry', ['staple'], false, true, [
+    'fresh lime juice',
+    'bottled lime juice',
+  ]),
+  c('cat-fish-sauce', 'Fish sauce', 'pantry', ['staple'], false, false),
+  c('cat-hoisin-sauce', 'Hoisin sauce', 'pantry', ['staple'], false, false),
+
+  // Proteins
+  c('cat-bacon', 'Bacon', 'protein', ['quick'], true, false, [
+    'streaky bacon',
+    'back bacon',
+    'bacon rashers',
+    'turkey bacon',
+  ]),
+  c('cat-italian-sausage', 'Italian sausage', 'protein', ['batch-friendly'], true, false, [
+    'mild italian sausage',
+    'hot italian sausage',
+    'sweet italian sausage',
+  ]),
+  c('cat-ground-pork', 'Ground pork', 'protein', ['batch-friendly'], true, false, ['pork mince']),
+  c('cat-kidney-beans', 'Kidney beans', 'protein', ['batch-friendly', 'staple'], false, true, [
+    'red kidney beans',
+    'canned kidney beans',
+  ]),
+  c('cat-cannellini-beans', 'Cannellini beans', 'protein', ['batch-friendly', 'staple'], false, true, [
+    'white beans',
+    'great northern beans',
+    'navy beans',
+  ]),
+  c('cat-pinto-beans', 'Pinto beans', 'protein', ['batch-friendly', 'staple'], false, true, [
+    'canned pinto beans',
+    'refried beans',
+  ]),
+
+  // Dairy
+  c('cat-cream', 'Cream', 'dairy', ['staple'], false, false, [
+    'single cream',
+    'light cream',
+    'half and half',
+    'half & half',
+    'pouring cream',
+  ]),
+  c('cat-buttermilk', 'Buttermilk', 'dairy', [], false, false),
+  c('cat-feta-cheese', 'Feta cheese', 'dairy', ['quick'], false, false, [
+    'feta',
+    'crumbled feta',
+  ]),
+  c('cat-swiss-cheese', 'Swiss cheese', 'dairy', ['quick'], true, false, ['gruyere', 'gruyère']),
+
+  // Vegetables
+  c('cat-shallot', 'Shallot', 'veg', ['staple'], false, false, ['shallots']),
+  c('cat-chives', 'Chives', 'veg', ['quick'], false, false, ['fresh chives']),
+  c('cat-butternut-squash', 'Butternut squash', 'veg', ['batch-friendly', 'mashable'], true, true),
+  c('cat-corn', 'Corn', 'veg', ['quick'], true, true, [
+    'corn on the cob',
+    'corn kernels',
+    'fresh corn',
+    'canned corn',
+    'whole kernel corn',
+  ]),
+
+  // Fruits
+  c('cat-lemon', 'Lemon', 'fruit', ['quick', 'staple'], false, true, ['lemons']),
+  c('cat-pineapple', 'Pineapple', 'fruit', ['quick'], true, true, [
+    'canned pineapple',
+    'pineapple chunks',
+    'crushed pineapple',
+  ]),
+  c('cat-cranberries', 'Cranberries', 'fruit', ['quick'], true, false, [
+    'dried cranberries',
+    'fresh cranberries',
+  ]),
+
+  // Carbs
+  c('cat-quinoa', 'Quinoa', 'carb', ['batch-friendly'], false, true, [
+    'white quinoa',
+    'red quinoa',
+    'tricolor quinoa',
+  ]),
+  c('cat-panko', 'Panko breadcrumbs', 'pantry', ['staple'], false, false, ['panko']),
+
+  // Nuts & seeds
+  c('cat-almonds', 'Almonds', 'pantry', ['staple'], false, false, [
+    'sliced almonds',
+    'slivered almonds',
+    'whole almonds',
+    'almond',
+  ]),
+  c('cat-walnuts', 'Walnuts', 'pantry', ['staple'], false, false, [
+    'walnut pieces',
+    'walnut halves',
+  ]),
+  c('cat-pecans', 'Pecans', 'pantry', ['staple'], false, false, [
+    'pecan halves',
+    'pecan pieces',
+  ]),
+  c('cat-pine-nuts', 'Pine nuts', 'pantry', ['staple'], false, false, ['pignoli']),
+  c('cat-peanuts', 'Peanuts', 'pantry', ['staple'], false, false, ['roasted peanuts']),
+  c('cat-cashews', 'Cashews', 'pantry', ['staple'], false, false, ['cashew nuts', 'raw cashews']),
 ];
 
 export function searchCatalog(query: string): CatalogIngredient[] {

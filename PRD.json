@@ -2325,6 +2325,34 @@
         "S006",
         "S010"
       ]
+    },
+    {
+      "id": "F076",
+      "phase": 2,
+      "priority": "P0",
+      "category": "ux",
+      "description": "Paprika import auto-resolution and tiered triage: reduce pending review queue on large imports through a smart pre-pass, curated staples seed, and three-tier review UX",
+      "steps": [
+        "Treat import review queue size as a product-quality metric: a successful large import (100+ recipes) must not require per-line manual intervention on the majority of ingredient groups.",
+        "Implement a smart auto-resolution pre-pass that runs before showing the review UI: (a) exact or strong household matches → auto-set action to 'use existing'; (b) exact or strong catalog matches → auto-set action to 'add from catalog'; (c) ingredient name matches a built-in staples list entry → auto-set action to 'create' with the staple's preset category. All auto-resolved lines must be marked with an explicit autoResolved flag in ImportMapping and remain visible and reversible in the review UI.",
+        "Ship a curated staples list of approximately 50 common pantry, dairy, and condiment ingredients (e.g. salt, pepper, water, oil, butter, sugar, flour, garlic, onion, milk, eggs, lemon, lime, vinegar, honey, stock, cream, cornstarch, tomato paste). Each entry has a canonical lowercase name, preset category, and optional aliases. Managed by the ingredient ontology steward — not a separate data structure; staples feed into MASTER_CATALOG with clear provenance.",
+        "Replace the flat paginated ingredient review list with three progressive tiers: Tier 1 'Confirm suggestions' (high-confidence matches, tap to accept or swap); Tier 2 'New ingredients to create' (no match found — shows inferred name and category, editable per-row or in bulk before writing); Tier 3 'Lines to check' (low-confidence or ambiguous — explicit human decision required before these can be resolved). Each tier collapses when all items in it are handled.",
+        "Add a 'Create all' batch action inside Tier 2 that opens a preview list (name + inferred category per row, with inline category picker and optional rename), then creates all at once on confirm. This replaces the existing coarse 'Create all unmatched (N)' button, which must not create entries without a preview step.",
+        "Increase default page size from 10 to 50 within each tier, or add virtual scrolling, to reduce pagination burden inside tiers that still have many items.",
+        "Preserve all existing safeguards: draft gate (no finalize while unresolved lines remain), import mapping auditability (originalSourceLine, confidence, autoResolved, chosen action), duplicate prevention (do not create a household ingredient when a strong existing match is available), grouped resolution (apply-to-all across same normalized name), and resumable sessions.",
+        "Do not lower CATALOG_MIN globally. Do not auto-resolve all lines silently. Auto-resolved lines must be individually reversible.",
+        "Verify end-to-end: after auto-resolution pre-pass, a fresh 100-recipe import should show fewer than 40% of groups as pending in Tier 2 or Tier 3. Verify Tier 1 actions propagate correctly to all matching groups. Verify draft gate still blocks finalize when Tier 3 lines remain unresolved.",
+        "Add regression tests covering: auto-resolution pre-pass outcomes for household match, catalog match, and staple match; staple list entries do not create duplicates if household ingredient already exists; Tier 2 batch create with preview writes correct names and categories; Tier 3 low-confidence lines are not auto-resolved; autoResolved ImportMapping flag is set and preserved in session; reversing an auto-resolved line restores it to pending correctly."
+      ],
+      "passes": true,
+      "dependencies": [
+        "F049",
+        "F050"
+      ],
+      "acceptanceRefs": [
+        "S007",
+        "S010"
+      ]
     }
   ],
   "milestones": [
