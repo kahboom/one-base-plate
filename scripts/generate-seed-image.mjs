@@ -591,6 +591,21 @@ const ITEMS = [
     dish: true,
   },
   {
+    id: 'ing-beef-stock-cube',
+    subject:
+      'a single small beef stock bouillon cube with soft brown and reddish-brown tones, plain foil-wrapped rectangular block with absolutely no text or logos, isolated on white',
+  },
+  {
+    id: 'ing-chicken-stock-cube',
+    subject:
+      'a single small chicken bouillon stock cube with gentle golden-yellow and pale amber tones, plain wrapped block with no labels, isolated on white',
+  },
+  {
+    id: 'ing-vegetable-stock-cube',
+    subject:
+      'a single small vegetable stock bouillon cube with soft muted green and herb-toned color, plain wrapped block with no text, isolated on white',
+  },
+  {
     id: 'ing-chili-powder',
     subject:
       'a small neat mound of vibrant red-orange chili powder in a simple shallow ceramic dish, bold warm dried spice color, soft shadow inside only',

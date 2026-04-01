@@ -207,6 +207,26 @@ export const COMMON_STAPLES: CommonStaple[] = [
   },
   { name: 'beef broth', aliases: ['beef stock', 'low sodium beef broth'], category: 'pantry' },
   {
+    name: 'beef stock cube',
+    aliases: ['beef bouillon', 'beef bouillon cube', 'beef stock cubes'],
+    category: 'pantry',
+  },
+  {
+    name: 'chicken stock cube',
+    aliases: ['chicken bouillon', 'chicken bouillon cube', 'chicken stock cubes'],
+    category: 'pantry',
+  },
+  {
+    name: 'vegetable stock cube',
+    aliases: [
+      'vegetable bouillon',
+      'vegetable bouillon cube',
+      'vegetable stock cubes',
+      'veggie stock cube',
+    ],
+    category: 'pantry',
+  },
+  {
     name: 'breadcrumbs',
     aliases: [
       'bread crumbs',

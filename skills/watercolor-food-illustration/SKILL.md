@@ -90,6 +90,35 @@ If the subject is challenging to illustrate clearly:
 - **Multiple components needed:** Keep them sparse and well separated. Avoid overlapping them into an unreadable pile.
 - **Ambiguous food:** Prioritize recognizability over artistic flourish. Exaggerate the defining characteristic slightly (e.g., the texture of bread crust) to ensure it reads correctly at a glance.
 
+## BOUILLON, STOCK CUBES, AND CONCENTRATED BROTH
+
+Recipes often list **bouillon**, **stock cubes**, **broth cubes**, or **instant stock** (granules). Treat these as **small packaged or loose concentrates**, not as a bowl of liquid stock — liquid stock is a different illustration.
+
+**Shared composition (thumbnail-safe):**
+
+- Show **one or two small cubes** (slightly rounded edges, simple foil-wrapped block **without any text or logos**) **or** a **small neat pile of granules** on white — not both unless you need extra clarity.
+- Use **subtle color wash** on the cube or granules to signal flavor; keep outlines light so it still reads as watercolor spot art, not a branded product shot.
+- **Do not** add typography, nutrition panels, or recognizable commercial packaging.
+
+**Beef bouillon / beef stock cube**
+
+- **Subject cues:** warm **brown to deep reddish-brown** wash; slightly “rich savory” tone without looking like raw meat.
+- **Example `subject` strings:** “a single small beef stock bouillon cube with soft brown watercolor wash”, “a few loose beef bouillon granules with subtle reddish-brown tones”, “two small wrapped beef broth cubes, plain foil, no labels”.
+
+**Chicken bouillon / chicken stock cube**
+
+- **Subject cues:** **golden yellow to pale amber** wash; lighter and warmer than beef, not orange like cheese.
+- **Example `subject` strings:** “a single small chicken bouillon cube with gentle golden-yellow watercolor”, “a small mound of chicken stock granules with soft amber wash”.
+
+**Vegetable bouillon / vegetable stock cube**
+
+- **Subject cues:** **muted green, olive, or herb-toned** wash; can read slightly “garden” or savory-green — distinct from chicken (yellow) and beef (brown).
+- **Example `subject` strings:** “a single small vegetable stock cube with soft green herb-toned watercolor”, “vegetable bouillon granules with subtle olive-green wash”.
+
+**Synonyms to illustrate the same way:** stock cube, bouillon cube, broth cube, instant bouillon, stock pot / concentrate cube (still no brand marks).
+
+**If the recipe line is ambiguous** (“beef stock or broth”): prefer the **cube or granules** treatment when the string clearly means concentrate; use a **simple cup or small bowl of brown liquid** only when the ingredient is explicitly liquid stock or broth.
+
 ## QUALITY BAR
 
 **A good output should:**
@@ -153,3 +182,9 @@ A simple painted menu illustration of a ceramic mug filled with black coffee. Ha
 **Prompt:**
 A delicate watercolor food illustration of a garlic bulb next to a few fresh basil leaves. Light editorial cookbook spot art, soft watercolor washes with understated outlines. Minimal and clean, isolated on a plain white background, top-down angle.
 **Negative:** no photorealism, no heavy outlines, no vector icon style, no text, no busy background.
+
+### Example 6: Concentrated stock (Beef bouillon / stock cube)
+
+**Prompt:**
+A simple watercolor food illustration of a single small beef stock bouillon cube with a soft brown and reddish-brown watercolor wash, plain wrapped block with no text or branding. Hand-drawn ingredient study, light pencil outline, isolated on a pure white background, lots of negative space.
+**Negative:** no photorealism, no vector icon style, no labels or logos, no bowl of liquid soup, no cluttered background.

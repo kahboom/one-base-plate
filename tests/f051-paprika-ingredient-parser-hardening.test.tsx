@@ -210,6 +210,29 @@ describe('F051 Paprika ingredient parser hardening', () => {
       expect(r.prepNotes).toContain('good');
     });
 
+    it('parses "dill a handful" as dill with trailing measure in prep notes', () => {
+      const r = parseIngredientLine('dill a handful');
+      expect(r.name.toLowerCase()).toBe('dill');
+      expect(r.prepNotes.some((n) => n.includes('handful'))).toBe(true);
+    });
+
+    it('parses "Knob of butter" as butter with knob phrase in prep notes', () => {
+      const r = parseIngredientLine('Knob of butter');
+      expect(r.name.toLowerCase()).toBe('butter');
+      expect(r.prepNotes.some((n) => n.includes('knob'))).toBe(true);
+    });
+
+    it('parses "Ground beef or 1 lb ground turkey" as ground beef', () => {
+      const r = parseIngredientLine('Ground beef or 1 lb ground turkey');
+      expect(r.name.toLowerCase()).toContain('ground beef');
+      expect(r.prepNotes.some((n) => n.includes('or ') && n.includes('turkey'))).toBe(true);
+    });
+
+    it('does not strip "cream or milk" (no quantity-led alternative)', () => {
+      const r = parseIngredientLine('cream or milk');
+      expect(r.name.toLowerCase()).toMatch(/cream or milk/);
+    });
+
     it('parses "an avocado"', () => {
       const r = parseIngredientLine('An avocado');
       expect(r.quantity).toBe('1');

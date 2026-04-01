@@ -23,6 +23,34 @@ function ing(id: string, name: string, category: Ingredient['category'] = 'veg')
   };
 }
 
+describe('F064 — Trailing "a handful" after ingredient name', () => {
+  it('dill a handful → exact household match to dill', () => {
+    const r = parseIngredientLine('dill a handful');
+    expect(r.name.toLowerCase()).toBe('dill');
+    const m = matchIngredient(r.name, [ing('h1', 'dill')]);
+    expect(m.ingredient?.name).toBe('dill');
+    expect(m.confidenceBand).toBe('exact');
+  });
+});
+
+describe('F064 — Knob of / inline or alternative', () => {
+  it('Knob of butter → exact household match to butter', () => {
+    const r = parseIngredientLine('Knob of butter');
+    expect(r.name.toLowerCase()).toBe('butter');
+    const m = matchIngredient(r.name, [ing('h1', 'butter')]);
+    expect(m.ingredient?.name).toBe('butter');
+    expect(m.confidenceBand).toBe('exact');
+  });
+
+  it('Ground beef or 1 lb ground turkey → exact household match to ground beef', () => {
+    const r = parseIngredientLine('Ground beef or 1 lb ground turkey');
+    expect(r.name.toLowerCase()).toContain('ground beef');
+    const m = matchIngredient(r.name, [ing('h1', 'ground beef')]);
+    expect(m.ingredient?.name).toBe('ground beef');
+    expect(m.confidenceBand).toBe('exact');
+  });
+});
+
 describe('F064 — Packaging word stripping', () => {
   it('400g can chopped tomatoes → tomatoes', () => {
     const r = parseIngredientLine('400g can chopped tomatoes');
@@ -418,6 +446,24 @@ describe('F064 — Catalog matching for new entries', () => {
     const m = matchIngredient('chicken stock', [], MASTER_CATALOG);
     expect(m.status).toBe('catalog');
     expect(m.catalogItem?.id).toBe('cat-chicken-stock');
+  });
+
+  it('beef bouillon matches cat-beef-stock-cube', () => {
+    const m = matchIngredient('beef bouillon', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-beef-stock-cube');
+  });
+
+  it('chicken stock cube matches cat-chicken-stock-cube', () => {
+    const m = matchIngredient('chicken stock cube', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-chicken-stock-cube');
+  });
+
+  it('vegetable bouillon matches cat-vegetable-stock-cube', () => {
+    const m = matchIngredient('vegetable bouillon', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-vegetable-stock-cube');
   });
 
   it('leeks matches cat-leek', () => {

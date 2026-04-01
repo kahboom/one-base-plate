@@ -469,11 +469,58 @@ export function parseLeadingQuantityPrefix(
 /** "Rosemary 3 sprigs" → name rosemary, move count+unit into prep notes. */
 function stripTrailingCountMeasureSuffix(name: string, prepNotes: string[]): string {
   const re =
-    /\s+(\d+)\s+(sprigs?|stalks?|stems?|bunches?|heads?|cloves?|slices?|pieces?|sticks?|fillets?|leaves?)\s*$/i;
+    /\s+(\d+)\s+(sprigs?|stalks?|stems?|bunches?|heads?|cloves?|slices?|pieces?|sticks?|fillets?|leaves?|handfuls?)\s*$/i;
   const m = name.match(re);
   if (!m || m.index === undefined) return name;
   prepNotes.push(`${m[1]} ${m[2]!.toLowerCase()}`);
   return name.slice(0, m.index).trim();
+}
+
+/** "dill a handful" / "cilantro a good handful" → name only; measure → prep notes. */
+function stripTrailingArticleHandfulSuffix(name: string, prepNotes: string[]): string {
+  const re =
+    /\s+(a|an)\s+(?:good\s+|generous\s+|scant\s+|heaping\s+|large\s+|small\s+|big\s+)?handfuls?\s*$/i;
+  const m = name.match(re);
+  if (!m || m.index === undefined) return name;
+  prepNotes.push(name.slice(m.index).trim().toLowerCase());
+  return name.slice(0, m.index).trim();
+}
+
+/** "knob of butter" / "a small knob of butter" → butter; leading phrase → prep notes. */
+function stripLeadingKnobOfPrefix(name: string, prepNotes: string[]): string {
+  const n = name.trim();
+  if (!n) return name;
+  const re =
+    /^(?:a|an|one|the\s+)?(?:small\s+|large\s+|good\s+)?knobs?\s+of\s+/i;
+  const m = n.match(re);
+  if (!m) return name;
+  prepNotes.push(m[0].trim().toLowerCase().replace(/\s+/g, ' '));
+  return n.slice(m[0].length).trim();
+}
+
+/** True when `rest` starts like a second quantity/ingredient line (after inline " or "). */
+function inlineOrRestIsQuantityLed(rest: string): boolean {
+  const t = rest.trimStart();
+  return (
+    /^[\d¼½¾⅓⅔⅛⅜⅝⅞.]/.test(t) ||
+    /^(a\s+few|a\s+couple(?:\s+of)?|several|some|few)\b/i.test(t) ||
+    /^an?\b\s+/i.test(t)
+  );
+}
+
+/**
+ * "Ground beef or 1 lb ground turkey" → ground beef; alternative → prep notes.
+ * Skips "cream or milk" (no quantity-led tail).
+ */
+function stripInlineOrQuantityAlternative(name: string, prepNotes: string[]): string {
+  const idx = name.search(/\s+or\s+/i);
+  if (idx < 0) return name;
+  const rest = name.slice(idx).replace(/^\s+or\s+/i, '').trimStart();
+  if (!inlineOrRestIsQuantityLed(rest)) return name;
+  const left = name.slice(0, idx).trim();
+  if (!left) return name;
+  prepNotes.push(`or ${rest}`.toLowerCase());
+  return left;
 }
 
 function stripRedundantPackagingLead(name: string): string {
@@ -693,6 +740,8 @@ function finalizeCanonicalName(namePart: string, unitRaw: string, prepNotes: str
     return ' ';
   });
   namePart2 = peelLeadingCommaDescriptorClauses(namePart2, prepNotes);
+  namePart2 = stripLeadingKnobOfPrefix(namePart2, prepNotes);
+  namePart2 = stripInlineOrQuantityAlternative(namePart2, prepNotes);
   const commaParts = namePart2
     .split(',')
     .map((part) => part.trim())
@@ -709,6 +758,7 @@ function finalizeCanonicalName(namePart: string, unitRaw: string, prepNotes: str
   canonical = canonical.replace(/^quantity\s+/i, '').trim();
   canonical = stripTrailingPrepPhrases(canonical, prepNotes);
   canonical = stripTrailingCountMeasureSuffix(canonical, prepNotes);
+  canonical = stripTrailingArticleHandfulSuffix(canonical, prepNotes);
   canonical = canonical.replace(/\s+leaves?\b/i, '').trim();
   canonical = canonical.replace(/\s+/g, ' ').trim();
   canonical = applyIngredientMatchSynonyms(canonical);
@@ -983,6 +1033,8 @@ export function parseIngredientLine(line: string): {
     })
     .trim();
   cleaned = peelLeadingCommaDescriptorClauses(cleaned, prepNotes);
+  cleaned = stripLeadingKnobOfPrefix(cleaned, prepNotes);
+  cleaned = stripInlineOrQuantityAlternative(cleaned, prepNotes);
   const commaParts = cleaned
     .split(',')
     .map((part) => part.trim())
@@ -1000,6 +1052,7 @@ export function parseIngredientLine(line: string): {
   canonical = stripLeadingSizeDescriptors(canonical, prepNotes);
   canonical = stripTrailingPrepPhrases(canonical, prepNotes);
   canonical = stripTrailingCountMeasureSuffix(canonical, prepNotes);
+  canonical = stripTrailingArticleHandfulSuffix(canonical, prepNotes);
   canonical = canonical.replace(/\s+/g, ' ').trim();
   canonical = applyIngredientMatchSynonyms(canonical);
 
@@ -1216,6 +1269,9 @@ const COMPOUND_WHERE_FIRST_TOKEN_ALONE_IS_WRONG = new Set([
   'beef broth',
   'vegetable stock',
   'vegetable broth',
+  'beef stock cube',
+  'chicken stock cube',
+  'vegetable stock cube',
   'taco seasoning',
   'olive oil',
   'sesame oil',

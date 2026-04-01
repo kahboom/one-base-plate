@@ -304,6 +304,18 @@
         "imageUrl": "/images/seed/ing-beef-stock.png"
       },
       {
+        "category": "pantry",
+        "tags": ["staple"],
+        "shelfLifeHint": "",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": false,
+        "id": "ing-beef-stock-cube",
+        "name": "beef stock cube",
+        "catalogId": "cat-beef-stock-cube",
+        "source": "catalog",
+        "imageUrl": "/images/seed/ing-beef-stock-cube.png"
+      },
+      {
         "category": "veg",
         "tags": ["quick"],
         "shelfLifeHint": "",
@@ -662,6 +674,18 @@
         "catalogId": "cat-chicken-stock",
         "source": "catalog",
         "imageUrl": "/images/seed/ing-chicken-stock.png"
+      },
+      {
+        "category": "pantry",
+        "tags": ["staple"],
+        "shelfLifeHint": "",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": false,
+        "id": "ing-chicken-stock-cube",
+        "name": "chicken stock cube",
+        "catalogId": "cat-chicken-stock-cube",
+        "source": "catalog",
+        "imageUrl": "/images/seed/ing-chicken-stock-cube.png"
       },
       {
         "category": "protein",
@@ -2537,6 +2561,18 @@
         "catalogId": "cat-vegetable-stock",
         "source": "catalog",
         "imageUrl": "/images/seed/ing-vegetable-stock.png"
+      },
+      {
+        "category": "pantry",
+        "tags": ["staple"],
+        "shelfLifeHint": "",
+        "freezerFriendly": false,
+        "babySafeWithAdaptation": false,
+        "id": "ing-vegetable-stock-cube",
+        "name": "vegetable stock cube",
+        "catalogId": "cat-vegetable-stock-cube",
+        "source": "catalog",
+        "imageUrl": "/images/seed/ing-vegetable-stock-cube.png"
       },
       {
         "category": "pantry",

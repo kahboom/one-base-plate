@@ -195,6 +195,12 @@
       "imageUrl": "/images/seed/ing-beef-stock.png"
     },
     {
+      "id": "ing-beef-stock-cube",
+      "name": "beef stock cube",
+      "catalogId": "cat-beef-stock-cube",
+      "imageUrl": "/images/seed/ing-beef-stock-cube.png"
+    },
+    {
       "id": "ing-beetroot",
       "name": "beetroot",
       "catalogId": "cat-beetroot",
@@ -379,6 +385,12 @@
       "name": "chicken stock",
       "catalogId": "cat-chicken-stock",
       "imageUrl": "/images/seed/ing-chicken-stock.png"
+    },
+    {
+      "id": "ing-chicken-stock-cube",
+      "name": "chicken stock cube",
+      "catalogId": "cat-chicken-stock-cube",
+      "imageUrl": "/images/seed/ing-chicken-stock-cube.png"
     },
     {
       "id": "ing-chickpeas",
@@ -1336,6 +1348,12 @@
       "name": "vegetable stock",
       "catalogId": "cat-vegetable-stock",
       "imageUrl": "/images/seed/ing-vegetable-stock.png"
+    },
+    {
+      "id": "ing-vegetable-stock-cube",
+      "name": "vegetable stock cube",
+      "catalogId": "cat-vegetable-stock-cube",
+      "imageUrl": "/images/seed/ing-vegetable-stock-cube.png"
     },
     {
       "id": "ing-water",

@@ -1461,18 +1461,25 @@ export default function PaprikaImport() {
                                 </div>
                               </div>
 
-                              <div className="mt-3 space-y-2 border-t border-border-light pt-2">
-                                <p className="text-[10px] font-medium uppercase text-text-muted">
+                              <details className="mt-3 border-t border-border-light pt-2 group">
+                                <summary className="flex cursor-pointer select-none items-center gap-1 text-[10px] font-medium uppercase text-text-muted hover:text-text-primary">
                                   {group.lines.length > 1 ? 'Per-line override' : 'Source line'}
-                                </p>
-                                {group.lines.length === 1 && (
-                                  <p className="text-[11px] text-text-muted">
-                                    Resolve this ingredient using the buttons above; per-line
-                                    actions appear when the same name appears in more than one
-                                    recipe line.
-                                  </p>
-                                )}
-                                {group.lines.map((ref, j) => {
+                                  <span
+                                    className="text-[10px] opacity-70 transition-transform group-open:rotate-180"
+                                    aria-hidden
+                                  >
+                                    ▾
+                                  </span>
+                                </summary>
+                                <div className="mt-2 space-y-2">
+                                  {group.lines.length === 1 && (
+                                    <p className="text-[11px] text-text-muted">
+                                      Resolve this ingredient using the buttons above; per-line
+                                      actions appear when the same name appears in more than one
+                                      recipe line.
+                                    </p>
+                                  )}
+                                  {group.lines.map((ref, j) => {
                                   const line = ref.line;
                                   const globalRecipeIdx = ref.globalRecipeIdx;
                                   const lineIdx = ref.lineIdx;
@@ -1575,7 +1582,8 @@ export default function PaprikaImport() {
                                     </div>
                                   );
                                 })}
-                              </div>
+                                </div>
+                              </details>
                             </Card>
                           );
                         })}
