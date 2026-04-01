@@ -16,11 +16,11 @@ import {
   computeMealOverlap,
 } from '../../src/planner';
 
-import fixtureH002 from '../../fixtures/households/H002-two-adults-toddler-baby.json';
+import seedData from '../../src/seed-data.json';
 import { householdLayoutRouteBranch } from '../householdLayoutRoutes';
 
 function loadFixture(): Household {
-  const h = fixtureH002 as Household;
+  const h = (seedData as Household[]).find((household) => household.id === 'H002') as Household;
   saveHousehold(h);
   return h;
 }

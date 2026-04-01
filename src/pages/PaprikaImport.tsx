@@ -157,6 +157,7 @@ export default function PaprikaImport() {
   const [postImportRecipes, setPostImportRecipes] = useState<Recipe[]>([]);
   const [postImportBatchId, setPostImportBatchId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [isParsingImport, setIsParsingImport] = useState(false);
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('all');
   const [sessionSavedAt, setSessionSavedAt] = useState<string | null>(null);
   const [selectPage, setSelectPage] = useState(0);
@@ -292,6 +293,7 @@ export default function PaprikaImport() {
     const file = e.target.files?.[0];
     if (!file) return;
     setError('');
+    setIsParsingImport(true);
 
     try {
       const recipes = await parsePaprikaFile(file);
@@ -306,6 +308,9 @@ export default function PaprikaImport() {
     } catch (err) {
       console.error('Paprika import parse failed', err);
       setError('Failed to parse file. Make sure it is a valid .paprikarecipes export.');
+    } finally {
+      setIsParsingImport(false);
+      e.target.value = '';
     }
   }
 
@@ -749,20 +754,33 @@ export default function PaprikaImport() {
       />
 
       {step === 'upload' && (
-        <div data-testid="paprika-upload-step">
+        <div data-testid="paprika-upload-step" aria-busy={isParsingImport}>
           <Card className="mb-4">
             <FieldLabel label="Upload .paprikarecipes file">
               <input
                 type="file"
                 accept=".paprikarecipes"
                 onChange={handleFileUpload}
-                className="block w-full text-sm text-text-primary file:mr-4 file:rounded-md file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-dark"
+                disabled={isParsingImport}
+                className="block w-full text-sm text-text-primary file:mr-4 file:rounded-md file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
                 data-testid="paprika-file-input"
               />
             </FieldLabel>
             <p className="mt-2 text-sm text-text-muted">
               Export your recipes from Paprika as a .paprikarecipes file, then upload it here.
             </p>
+            {isParsingImport && (
+              <div
+                className="mt-3 flex items-center gap-2 text-sm text-text-secondary"
+                data-testid="paprika-parse-loading"
+              >
+                <span
+                  className="size-4 shrink-0 animate-spin rounded-full border-2 border-brand border-t-transparent"
+                  aria-hidden
+                />
+                <span>Reading and parsing your export…</span>
+              </div>
+            )}
           </Card>
 
           {error && (

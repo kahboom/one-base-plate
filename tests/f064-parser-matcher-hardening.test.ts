@@ -680,10 +680,10 @@ describe('F064 — Flour variant catalog aliases', () => {
     expect(m.confidenceBand).toBe('exact');
   });
 
-  it('whole wheat pastry flour matches catalog flour', () => {
+  it('whole wheat pastry flour matches catalog wholemeal flour', () => {
     const m = matchIngredient('whole wheat pastry flour', [], MASTER_CATALOG);
     expect(m.status).toBe('catalog');
-    expect(m.catalogItem?.id).toBe('cat-flour');
-    expect(m.confidenceBand).toBe('exact');
+    expect(m.catalogItem?.id).toBe('cat-wholemeal-flour');
+    expect(m.confidenceBand).toBe('strong');
   });
 });

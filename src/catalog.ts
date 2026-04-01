@@ -123,7 +123,10 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     ['beef mince', 'mince meat', 'mince beef', 'ground meat'],
     CAT_IMG.groundBeef,
   ),
-  c('cat-ground-turkey', 'Ground turkey', 'protein', ['quick'], true, true),
+  c('cat-ground-turkey', 'Ground turkey', 'protein', ['quick'], true, true, [
+    'turkey mince',
+    'minced turkey',
+  ]),
   c(
     'cat-salmon',
     'Salmon',
@@ -150,7 +153,11 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'cod',
     'cod fish',
     'cod seafood',
-  ]),
+  ], '/images/seed/ing-cod.png'),
+  c('cat-tilapia', 'Tilapia', 'protein', ['quick'], true, true, [
+    'tilapia fillets',
+    'tilapia fillet',
+  ], '/images/seed/ing-tilapia.png'),
   c(
     'cat-tuna',
     'Tuna (canned)',
@@ -158,10 +165,10 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     ['quick', 'staple', 'rescue'],
     false,
     true,
-    undefined,
+    ['tinned tuna', 'canned tuna', 'tuna in oil', 'tuna in water'],
     CAT_IMG.tuna,
   ),
-  c('cat-prawns', 'Prawns', 'protein', ['quick'], true, false, ['shrimp']),
+  c('cat-prawns', 'Prawns', 'protein', ['quick'], true, false, ['shrimp', 'prawn']),
   c('cat-tofu', 'Tofu', 'protein', ['quick'], false, true),
   c(
     'cat-eggs',
@@ -251,7 +258,7 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'instant old fashioned oats',
   ]),
   c('cat-pitta', 'Pitta bread', 'carb', ['quick'], false, false, ['pita bread', 'pitas']),
-  c('cat-gnocchi', 'Gnocchi', 'carb', ['quick'], false, true),
+  c('cat-gnocchi', 'Gnocchi', 'carb', ['quick'], false, true, undefined, '/images/seed/ing-gnocchi.png'),
   c('cat-hamburger-buns', 'Hamburger buns', 'carb', ['quick'], false, false, ['burger buns']),
   c('cat-tortellini', 'Tortellini', 'carb', ['quick'], true, true),
 
@@ -374,10 +381,13 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c('cat-leek', 'Leek', 'veg', ['quick'], false, true, ['leeks', 'baby leeks']),
   c('cat-cabbage', 'Cabbage', 'veg', ['staple'], false, true, [
     'savoy cabbage',
-    'red cabbage',
     'green cabbage',
-    'purple cabbage',
   ]),
+  c('cat-red-cabbage', 'Red cabbage', 'veg', ['staple'], false, true, [
+    'red cabbage',
+    'purple cabbage',
+  ], '/images/seed/ing-red-cabbage.png'),
+  c('cat-green-cabbage', 'Green cabbage', 'veg', ['staple'], false, true, undefined, '/images/seed/ing-green-cabbage.png'),
   c('cat-kale', 'Kale', 'veg', ['quick', 'mashable'], true, true),
 
   // Fruit
@@ -392,8 +402,9 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     true,
     true,
     undefined,
-    CAT_IMG.strawberries,
+    '/images/seed/ing-strawberries.png',
   ),
+  c('cat-watermelon', 'Watermelon', 'fruit', ['quick'], false, true, undefined, '/images/seed/ing-watermelon.png'),
   c('cat-grapes', 'Grapes', 'fruit', ['quick'], false, false),
   c('cat-orange', 'Orange', 'fruit', ['quick'], false, true, [
     'navel oranges',
@@ -430,9 +441,15 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   ),
   c('cat-butter', 'Butter', 'dairy', ['staple'], true, true, undefined, CAT_IMG.butter),
   c('cat-cream-cheese', 'Cream cheese', 'dairy', ['quick'], false, true),
+  c('cat-goat-cheese', 'Goat cheese', 'dairy', ['quick'], false, true, ['goats cheese', 'chèvre'], '/images/seed/ing-goat-cheese.png'),
 
   // Snacks
   c('cat-crackers', 'Crackers', 'snack', ['quick', 'rescue'], false, false),
+  c('cat-water-crackers', 'Water crackers', 'snack', ['quick'], false, false, undefined, '/images/seed/ing-water-crackers.png'),
+  c('cat-digestive-biscuit', 'Digestive biscuit', 'snack', ['quick'], false, true, [
+    'digestive biscuits',
+    'digestives',
+  ], '/images/seed/ing-digestive-biscuit.png'),
   c('cat-rice-cakes', 'Rice cakes', 'snack', ['quick', 'rescue'], false, true),
   c('cat-breadsticks', 'Breadsticks', 'snack', ['quick', 'rescue'], false, true),
   c('cat-hummus', 'Hummus', 'snack', ['quick'], false, true),
@@ -471,17 +488,14 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     [
       'all purpose flour',
       'all-purpose flour',
-      'whole wheat flour',
-      'whole wheat pastry flour',
       'plain flour',
-      'bread flour',
     ],
     CAT_IMG.flour,
   ),
   c('cat-baked-beans', 'Baked beans', 'pantry', ['quick', 'rescue', 'staple'], false, true),
   c('cat-pesto', 'Pesto', 'pantry', ['quick'], false, false),
-  c('cat-garlic-powder', 'Garlic powder', 'pantry', ['staple'], false, false),
-  c('cat-onion-powder', 'Onion powder', 'pantry', ['staple'], false, false),
+  c('cat-garlic-powder', 'Garlic powder', 'pantry', ['staple'], false, false, undefined, '/images/seed/ing-garlic-powder.png'),
+  c('cat-onion-powder', 'Onion powder', 'pantry', ['staple'], false, false, undefined, '/images/seed/ing-onion-powder.png'),
   c('cat-parmesan-cheese', 'Parmesan cheese', 'dairy', ['quick', 'staple'], true, true, [
     'parmesan',
   ]),
@@ -492,8 +506,8 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c('cat-worcestershire-sauce', 'Worcestershire sauce', 'pantry', ['staple'], false, false, [
     'worcestershire',
   ]),
-  c('cat-breadcrumbs', 'Breadcrumbs', 'pantry', ['staple'], false, false),
-  c('cat-green-onion', 'Green onion', 'veg', ['quick'], false, false, ['spring onion']),
+  c('cat-breadcrumbs', 'Breadcrumbs', 'pantry', ['staple'], false, false, undefined, '/images/seed/ing-breadcrumbs.png'),
+  c('cat-green-onion', 'Green onion', 'veg', ['quick'], false, false, ['spring onion', 'spring onions']),
   c('cat-red-onion', 'Red onion', 'veg', ['staple'], false, false),
   c('cat-kosher-salt', 'Kosher salt', 'pantry', ['staple'], false, false),
   c('cat-black-pepper', 'Black pepper', 'pantry', ['staple'], false, false),
@@ -530,7 +544,7 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     ['quick'],
     false,
     false,
-    ['iceberg lettuce', 'romaine'],
+    ['iceberg lettuce', 'romaine', 'romaine lettuce'],
     CAT_IMG.lettuce,
   ),
 
@@ -553,7 +567,7 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c('cat-italian-seasoning', 'Italian seasoning', 'pantry', ['staple'], false, false),
   c('cat-oregano', 'Oregano', 'pantry', ['staple'], false, false, ['dried oregano']),
   c('cat-basil', 'Basil', 'veg', ['quick'], false, false, ['fresh basil']),
-  c('cat-tomato-paste', 'Tomato paste', 'pantry', ['staple'], false, true, ['tomato concentrate']),
+  c('cat-tomato-paste', 'Tomato paste', 'pantry', ['staple'], false, true, ['tomato concentrate'], '/images/seed/ing-tomato-paste.png'),
   c('cat-sugar', 'Sugar', 'pantry', ['staple'], false, false, ['granulated sugar', 'white sugar']),
 
   // Pasta bake ingredients
@@ -577,10 +591,16 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'white vinegar',
     'apple cider vinegar',
   ]),
-  c('cat-mustard', 'Mustard', 'pantry', ['staple'], false, false, [
-    'dijon mustard',
+  c('cat-mustard', 'Yellow mustard', 'pantry', ['staple'], false, false, [
+    'mustard',
+    'american mustard',
     'yellow mustard',
+    'prepared mustard',
   ]),
+  c('cat-dijon-mustard', 'Dijon mustard', 'pantry', ['staple'], false, false, [
+    'dijon',
+    'dijon mustard',
+  ], '/images/seed/ing-dijon-mustard.png'),
   c('cat-cornstarch', 'Cornstarch', 'pantry', ['staple'], false, false, ['cornflour']),
   c('cat-mayonnaise', 'Mayonnaise', 'pantry', ['staple'], false, false, ['mayo']),
 
@@ -631,6 +651,12 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'pure vanilla extract',
     'vanilla essence',
   ]),
+  c('cat-chocolate-chips', 'Chocolate chips', 'pantry', ['staple'], false, false, [
+    'chocolate chips',
+    'chocolate morsels',
+  ], '/images/seed/ing-chocolate-chips.png'),
+  c('cat-wheat-germ', 'Wheat germ', 'pantry', ['staple'], false, true, ['wheatgerm'], '/images/seed/ing-wheat-germ.png'),
+  c('cat-rye-flour', 'Rye flour', 'pantry', ['staple'], false, true, ['rye'], '/images/seed/ing-rye-flour.png'),
 
   // Herbs & spices
   c('cat-cinnamon', 'Cinnamon', 'pantry', ['staple'], false, false, ['ground cinnamon']),
@@ -640,6 +666,7 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'dried rosemary',
     'fresh rosemary',
   ]),
+  c('cat-sage', 'Sage', 'pantry', ['staple'], false, false, ['dried sage', 'fresh sage'], '/images/seed/ing-sage.png'),
   c('cat-bay-leaves', 'Bay leaves', 'pantry', ['staple'], false, false, ['bay leaf']),
   c('cat-cayenne-pepper', 'Cayenne pepper', 'pantry', ['staple'], false, false, ['cayenne']),
   c('cat-red-pepper-flakes', 'Red pepper flakes', 'pantry', ['staple'], false, false, [
@@ -650,6 +677,7 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   ]),
   c('cat-turmeric', 'Turmeric', 'pantry', ['staple'], false, false, ['ground turmeric']),
   c('cat-curry-powder', 'Curry powder', 'pantry', ['staple'], false, false),
+  c('cat-curry-paste', 'Curry paste', 'pantry', ['staple'], false, false, undefined, '/images/seed/ing-curry-paste.png'),
   c('cat-dried-parsley', 'Parsley', 'pantry', ['staple'], false, false, [
     'dried parsley',
     'fresh parsley',
@@ -669,12 +697,12 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c('cat-cloves', 'Cloves', 'pantry', ['staple'], false, false, ['ground cloves', 'whole cloves']),
 
   // Condiments & sauces
-  c('cat-ketchup', 'Ketchup', 'pantry', ['staple'], false, false, ['tomato ketchup', 'catsup']),
+  c('cat-ketchup', 'Ketchup', 'pantry', ['staple'], false, false, ['tomato ketchup', 'catsup'], '/images/seed/ing-tomato-ketchup.png'),
   c('cat-bbq-sauce', 'BBQ sauce', 'pantry', ['staple'], false, false, ['barbecue sauce']),
   c('cat-tomato-sauce', 'Tomato sauce', 'pantry', ['staple'], false, true, [
     'marinara sauce',
     'pizza sauce',
-  ]),
+  ], '/images/seed/ing-tomato-sauce.png'),
   c('cat-rice-vinegar', 'Rice vinegar', 'pantry', ['staple'], false, false, [
     'rice wine vinegar',
     'seasoned rice vinegar',
@@ -739,7 +767,7 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   // Vegetables
   c('cat-shallot', 'Shallot', 'veg', ['staple'], false, false, ['shallots']),
   c('cat-chives', 'Chives', 'veg', ['quick'], false, false, ['fresh chives']),
-  c('cat-butternut-squash', 'Butternut squash', 'veg', ['batch-friendly', 'mashable'], true, true),
+  c('cat-butternut-squash', 'Butternut squash', 'veg', ['batch-friendly', 'mashable'], true, true, undefined, '/images/seed/ing-butternut-squash.png'),
   c('cat-corn', 'Corn', 'veg', ['quick'], true, true, [
     'corn on the cob',
     'corn kernels',
@@ -786,6 +814,72 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
   c('cat-pine-nuts', 'Pine nuts', 'pantry', ['staple'], false, false, ['pignoli']),
   c('cat-peanuts', 'Peanuts', 'pantry', ['staple'], false, false, ['roasted peanuts']),
   c('cat-cashews', 'Cashews', 'pantry', ['staple'], false, false, ['cashew nuts', 'raw cashews']),
+  c('cat-almond-flour', 'Almond flour', 'pantry', ['staple'], false, false, ['ground almonds']),
+  c('cat-baguette', 'Baguette', 'carb', ['quick'], true, true, ['french bread', 'french stick']),
+  c('cat-bratwurst', 'Bratwurst', 'protein', ['quick'], true, false, ['brats']),
+  c('cat-bread-flour', 'Bread flour', 'pantry', ['staple'], false, false),
+  c('cat-brown-lentils', 'Brown lentils', 'protein', ['batch-friendly', 'staple'], false, true, [
+    'green lentils',
+  ]),
+  c('cat-butter-beans', 'Butter beans', 'protein', ['batch-friendly', 'staple'], false, true, [
+    'lima beans',
+  ]),
+  c('cat-chipolatas', 'Chipolatas', 'protein', ['quick'], true, false, ['chipolata sausages']),
+  c('cat-chorizo', 'Chorizo', 'protein', ['quick', 'batch-friendly'], true, false, ['spanish chorizo']),
+  c('cat-cornmeal', 'Cornmeal', 'pantry', ['staple'], false, false, ['polenta', 'corn meal']),
+  c('cat-creme-fraiche', 'Creme fraiche', 'dairy', ['quick'], false, false, ['crème fraîche']),
+  c('cat-duck-breast', 'Duck breast', 'protein', [], true, false, ['duck']),
+  c('cat-halloumi', 'Halloumi', 'dairy', ['quick'], true, true, ['halloumi cheese']),
+  c('cat-lamb-mince', 'Lamb mince', 'protein', ['batch-friendly'], true, false, [
+    'ground lamb',
+    'minced lamb',
+  ]),
+  c('cat-lasagne-sheets', 'Lasagne sheets', 'carb', ['staple'], false, true, [
+    'lasagna sheets',
+    'lasagna noodles',
+    'lasagne',
+  ]),
+  c('cat-miso-paste', 'Miso paste', 'pantry', ['staple'], false, false, [
+    'miso',
+    'white miso',
+    'red miso',
+  ]),
+  c('cat-mixed-frozen-veg', 'Mixed frozen vegetables', 'freezer', ['quick', 'rescue'], true, true, [
+    'frozen mixed vegetables',
+    'frozen veg',
+  ]),
+  c('cat-paneer', 'Paneer', 'dairy', ['quick'], true, true, ['paneer cheese', 'indian cottage cheese']),
+  c('cat-pecorino', 'Pecorino', 'dairy', ['quick'], true, true, ['pecorino romano', 'pecorino cheese']),
+  c('cat-pork', 'Pork', 'protein', ['batch-friendly'], true, false, [
+    'pork loin',
+    'pork chops',
+    'pork tenderloin',
+    'pork fillet',
+  ]),
+  c('cat-queso-fresco', 'Queso fresco', 'dairy', ['quick'], false, false, ['queso blanco']),
+  c('cat-ramen-noodles', 'Ramen noodles', 'carb', ['quick'], false, false, [
+    'ramen',
+    'instant ramen',
+    'instant noodles',
+  ]),
+  c('cat-rice-flour', 'Rice flour', 'pantry', ['staple'], false, false, ['glutinous rice flour']),
+  c('cat-sirloin-steak', 'Sirloin steak', 'protein', ['quick'], true, false, ['sirloin', 'steak']),
+  c('cat-sourdough-bread', 'Sourdough bread', 'carb', ['staple'], true, true, ['sourdough']),
+  c('cat-sun-dried-tomatoes', 'Sun-dried tomatoes', 'pantry', ['staple'], false, false, [
+    'sundried tomatoes',
+    'sun dried tomatoes',
+  ]),
+  c('cat-tahini', 'Tahini', 'pantry', ['staple'], false, false, ['sesame paste']),
+  c('cat-turkey-breast', 'Turkey breast', 'protein', ['quick'], true, true, ['turkey']),
+  c('cat-white-wine-vinegar', 'White wine vinegar', 'pantry', ['staple'], false, false),
+  c('cat-wholemeal-bread', 'Wholemeal bread', 'carb', ['staple'], true, true, [
+    'whole wheat bread',
+    'brown bread',
+  ]),
+  c('cat-wholemeal-flour', 'Wholemeal flour', 'pantry', ['staple'], false, false, [
+    'whole wheat flour',
+    'wholewheat flour',
+  ]),
 ];
 
 export function searchCatalog(query: string): CatalogIngredient[] {

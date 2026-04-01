@@ -793,6 +793,126 @@ const ITEMS = [
     subject:
       'a loose nest of dry uncooked ramen noodles, pale golden thin curly strands in a loose coiled bundle, no packaging or broth',
   },
+  {
+    id: 'ing-goat-cheese',
+    subject:
+      'one small soft log of fresh white goat cheese with a chalky matte rind, simple three-quarter view, no packaging or label',
+  },
+  {
+    id: 'ing-garlic-powder',
+    subject:
+      'a small neat mound of fine pale beige garlic powder in a simple shallow ceramic dish, soft shadow inside only',
+  },
+  {
+    id: 'ing-gnocchi',
+    subject:
+      'a loose small pile of dry uncooked potato gnocchi, ridged oval dumplings in warm off-white tones, no sauce, no packaging',
+  },
+  {
+    id: 'ing-green-cabbage',
+    subject:
+      'one compact half head of green cabbage showing pale inner leaves and waxy outer green layers, cut face visible, simple three-quarter view',
+  },
+  {
+    id: 'ing-tomato-ketchup',
+    subject:
+      'a small plain white ramekin of glossy bright red tomato ketchup, smooth surface, no bottle label or branding',
+    dish: true,
+  },
+  {
+    id: 'ing-tomato-paste',
+    subject:
+      'a small plain white ramekin of thick deep red tomato paste, dense smooth concentrate, no tube or label',
+    dish: true,
+  },
+  {
+    id: 'ing-tomato-sauce',
+    subject:
+      'a small shallow bowl of smooth red tomato pasta sauce, simple and readable, no jar branding',
+    dish: true,
+  },
+  {
+    id: 'ing-tinned-tuna',
+    subject:
+      'one plain unlabeled metal tin of tuna in oil, simple side view, pull-tab top, no readable text or branding',
+  },
+  {
+    id: 'ing-red-cabbage',
+    subject:
+      'one wedge slice of red cabbage showing vivid purple layers and white core, crisp texture, simple three-quarter view',
+  },
+  {
+    id: 'ing-dijon-mustard',
+    subject:
+      'a small plain white ramekin of smooth pale brown dijon mustard, subtle grain, distinctly not bright yellow, no jar label',
+    dish: true,
+  },
+  {
+    id: 'ing-cod',
+    subject:
+      'one raw boneless cod fillet, bright white flaky fish with a slight translucency, simple three-quarter view, no packaging',
+  },
+  {
+    id: 'ing-tilapia',
+    subject:
+      'one raw tilapia fillet, pale pink-white mild fish, simple three-quarter view, no packaging',
+  },
+  {
+    id: 'ing-butternut-squash',
+    subject:
+      'one whole small butternut squash, beige neck and deep orange bulb, smooth skin, simple three-quarter view, uncut',
+  },
+  {
+    id: 'ing-breadcrumbs',
+    subject:
+      'a shallow bowl of dry fine golden breadcrumbs, even crumb texture, simple ceramic bowl, soft shadow inside only',
+  },
+  {
+    id: 'ing-sage',
+    subject:
+      'one small sprig of fresh culinary sage, soft silvery-green oval leaves on a thin stem, gentle three-quarter view, nothing else in the image',
+  },
+  {
+    id: 'ing-water-crackers',
+    subject:
+      'a short neat stack of square thin water crackers, pale golden with subtle baked flecks, crisp edges, no packaging',
+  },
+  {
+    id: 'ing-onion-powder',
+    subject:
+      'a small neat mound of fine pale tan onion powder in a simple shallow ceramic dish, soft shadow inside only',
+  },
+  {
+    id: 'ing-curry-paste',
+    subject:
+      'a small plain white ramekin of thick red-brown curry paste, rich spice paste texture, no jar label',
+    dish: true,
+  },
+  {
+    id: 'ing-digestive-biscuit',
+    subject:
+      'a small loose stack of round golden digestive biscuits, even baked color, simple wheat biscuit look, no packaging sleeve',
+  },
+  {
+    id: 'ing-watermelon',
+    subject:
+      'one generous wedge slice of watermelon with deep pink-red flesh, black seeds, and a band of pale rind, simple side view',
+  },
+  {
+    id: 'ing-wheat-germ',
+    subject:
+      'a small neat mound of toasted wheat germ in a simple shallow ceramic bowl, golden flaky meal texture, soft shadow inside only',
+  },
+  {
+    id: 'ing-chocolate-chips',
+    subject:
+      'a small loose pile of dark brown chocolate chips, teardrop morsel shape, matte chocolate, natural size variation, no packaging',
+  },
+  {
+    id: 'ing-rye-flour',
+    subject:
+      'a neat mound of fine grey-brown rye flour in a simple shallow ceramic bowl, slightly coarse wholegrain tone, soft shadow inside only',
+  },
 ]
 
 function getPrompt(subject, { dish = false } = {}) {

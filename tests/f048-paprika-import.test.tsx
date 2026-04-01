@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import App from '../src/App';
@@ -12,6 +12,7 @@ import {
   paprikaPhotoDataToDataUrl,
   paprikaRecipeImageUrl,
 } from '../src/paprika-parser';
+import * as paprikaParserApi from '../src/paprika-parser';
 import type { PaprikaRecipe, PaprikaReviewLine } from '../src/paprika-parser';
 import type { Household, BaseMeal, Recipe } from '../src/types';
 
@@ -460,6 +461,44 @@ describe('F048 - Paprika import UI', () => {
     await userEvent.upload(input, badFile);
 
     expect(screen.getByTestId('paprika-error')).toBeInTheDocument();
+  });
+
+  it('disables file input and shows loading while parse is in progress', async () => {
+    let releaseParse!: (recipes: PaprikaRecipe[]) => void;
+    const parsePromise = new Promise<PaprikaRecipe[]>((resolve) => {
+      releaseParse = resolve;
+    });
+    const spy = vi.spyOn(paprikaParserApi, 'parsePaprikaFile').mockReturnValue(parsePromise);
+
+    try {
+      saveHousehold(makeHousehold());
+      renderAt('/household/h-paprika/import-paprika');
+
+      const input = screen.getByTestId('paprika-file-input') as HTMLInputElement;
+      const file = new File(['x'], 'test.paprikarecipes', {
+        type: 'application/octet-stream',
+      });
+
+      await act(async () => {
+        await userEvent.upload(input, file);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('paprika-parse-loading')).toBeInTheDocument();
+        expect(input).toBeDisabled();
+      });
+
+      await act(async () => {
+        releaseParse([makePaprikaRecipe()]);
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('paprika-parse-loading')).not.toBeInTheDocument();
+      });
+      expect(screen.getByTestId('paprika-select-step')).toBeInTheDocument();
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('Import Paprika button exists on Settings', () => {

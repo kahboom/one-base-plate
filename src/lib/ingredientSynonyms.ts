@@ -13,8 +13,15 @@ export const SYNONYM_GROUPS: readonly (readonly string[])[] = [
   ['aubergine', 'eggplant'],
   ['coriander', 'cilantro'],
   ['rocket', 'arugula'],
-  // Plurals included so "shrimps" or "prawns" also expand correctly
   ['prawn', 'prawns', 'shrimp', 'shrimps'],
+  // Spelling variants
+  ['yogurt', 'yoghurt'],
+  // Regional name variants (multi-word phrases work too)
+  ['ground beef', 'beef mince', 'minced beef'],
+  ['ground chicken', 'chicken mince', 'minced chicken'],
+  ['ground lamb', 'lamb mince', 'minced lamb'],
+  ['ground turkey', 'turkey mince', 'minced turkey'],
+  ['ground pork', 'pork mince'],
 ];
 
 const _synonymMap = new Map<string, readonly string[]>();

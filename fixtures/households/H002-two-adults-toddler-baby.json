@@ -102,129 +102,65 @@
   ],
   "ingredients": [
     {
-      "id": "ing-pasta",
-      "name": "pasta",
-      "category": "carb",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true
-    },
-    {
-      "id": "ing-rice",
-      "name": "rice",
-      "category": "carb",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true
-    },
-    {
-      "id": "ing-chicken",
-      "name": "chicken breast",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
-    },
-    {
-      "id": "ing-salmon",
-      "name": "salmon",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "2 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
-    },
-    {
-      "id": "ing-broccoli",
-      "name": "broccoli",
-      "category": "veg",
-      "tags": [],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
-    },
-    {
-      "id": "ing-peas",
-      "name": "peas",
-      "category": "freezer",
-      "tags": [
-        "rescue"
-      ],
-      "shelfLifeHint": "months",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
-    },
-    {
-      "id": "ing-sweet-potato",
-      "name": "sweet potato",
-      "category": "veg",
-      "tags": [
-        "mashable"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true
-    },
-    {
-      "id": "ing-cheese",
-      "name": "cheese",
-      "category": "dairy",
-      "tags": [],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
-      "imageUrl": "/images/seed/ing-cheese.png"
-    },
-    {
-      "id": "ing-tomato-sauce",
-      "name": "tomato sauce",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "id": "ing-beans",
+      "name": "baked beans",
+      "catalogId": "cat-baked-beans"
     },
     {
       "id": "ing-bread",
       "name": "bread",
-      "category": "carb",
-      "tags": [
-        "rescue"
-      ],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-bread"
+    },
+    {
+      "id": "ing-broccoli",
+      "name": "broccoli",
+      "catalogId": "cat-broccoli"
+    },
+    {
+      "id": "ing-cheese",
+      "name": "cheese",
+      "catalogId": "cat-cheese",
+      "imageUrl": "/images/seed/ing-cheese.png"
+    },
+    {
+      "id": "ing-chicken",
+      "name": "chicken breast",
+      "catalogId": "cat-chicken-breast"
     },
     {
       "id": "ing-fishfingers",
       "name": "fish fingers",
-      "category": "freezer",
-      "tags": [
-        "rescue"
-      ],
-      "shelfLifeHint": "months",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-fish-fingers"
     },
     {
-      "id": "ing-beans",
-      "name": "baked beans",
-      "category": "pantry",
-      "tags": [
-        "rescue"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "id": "ing-pasta",
+      "name": "pasta",
+      "catalogId": "cat-pasta"
+    },
+    {
+      "id": "ing-peas",
+      "name": "peas",
+      "catalogId": "cat-frozen-peas"
+    },
+    {
+      "id": "ing-rice",
+      "name": "rice",
+      "catalogId": "cat-rice"
+    },
+    {
+      "id": "ing-salmon",
+      "name": "salmon",
+      "catalogId": "cat-salmon"
+    },
+    {
+      "id": "ing-sweet-potato",
+      "name": "sweet potato",
+      "catalogId": "cat-sweet-potato"
+    },
+    {
+      "id": "ing-tomato-sauce",
+      "name": "tomato sauce",
+      "catalogId": "cat-tomato-sauce"
     }
   ],
   "recipes": [],

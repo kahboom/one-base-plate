@@ -112,79 +112,39 @@
   ],
   "ingredients": [
     {
-      "id": "ing-almond-flour",
-      "name": "almond flour",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
-      "imageUrl": "/images/seed/ing-almond-flour.png"
-    },
-    {
       "id": "ing-almond-butter",
       "name": "almond butter",
-      "aliases": [
-        "nut butter"
-      ],
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-almond-butter",
       "imageUrl": "/images/seed/ing-almond-butter.png"
+    },
+    {
+      "id": "ing-almond-flour",
+      "name": "almond flour",
+      "catalogId": "cat-almond-flour",
+      "imageUrl": "/images/seed/ing-almond-flour.png"
     },
     {
       "id": "ing-apple",
       "name": "apple",
-      "imageUrl": "/images/seed/ing-apple.png",
-      "category": "fruit",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-apple",
+      "imageUrl": "/images/seed/ing-apple.png"
     },
     {
       "id": "ing-arepa",
       "name": "arepa",
-      "imageUrl": "/images/seed/ing-arepa.png",
-      "category": "carb",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-arepa",
+      "imageUrl": "/images/seed/ing-arepa.png"
     },
     {
       "id": "ing-asparagus",
       "name": "asparagus",
-      "category": "veg",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-asparagus",
       "imageUrl": "/images/seed/ing-asparagus.png"
     },
     {
       "id": "ing-aubergine",
       "name": "aubergine",
-      "category": "veg",
-      "aliases": [
-        "eggplant"
-      ],
-      "tags": [],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-aubergine",
       "familyKeys": [
         "nightshade"
       ],
@@ -193,160 +153,91 @@
     {
       "id": "ing-avocado",
       "name": "avocado",
-      "category": "fruit",
-      "tags": [
-        "quick",
-        "mashable"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-avocado",
       "imageUrl": "/images/seed/ing-avocado.png"
     },
     {
       "id": "ing-bacon",
       "name": "bacon",
-      "imageUrl": "/images/seed/ing-bacon.png",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-bacon",
+      "imageUrl": "/images/seed/ing-bacon.png"
     },
     {
       "id": "ing-baguette",
       "name": "baguette",
-      "imageUrl": "/images/seed/ing-baguette.png",
-      "category": "carb",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "2 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-baguette",
       "familyKeys": [
         "bread"
-      ]
+      ],
+      "imageUrl": "/images/seed/ing-baguette.png"
     },
     {
       "id": "ing-beans",
       "name": "baked beans",
-      "imageUrl": "/images/seed/ing-beans.png",
-      "category": "pantry",
-      "tags": [
-        "rescue"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-baked-beans",
       "familyKeys": [
         "beans"
-      ]
+      ],
+      "imageUrl": "/images/seed/ing-beans.png"
     },
     {
       "id": "ing-balsamic-vinegar",
       "name": "balsamic vinegar",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-balsamic-vinegar",
       "imageUrl": "/images/seed/ing-balsamic-vinegar.png"
     },
     {
       "id": "ing-banana",
       "name": "banana",
-      "imageUrl": "/images/seed/ing-banana.png",
-      "category": "fruit",
-      "tags": [
-        "quick",
-        "mashable"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-banana",
+      "imageUrl": "/images/seed/ing-banana.png"
     },
     {
       "id": "ing-basil",
       "name": "basil",
+      "catalogId": "cat-basil",
       "familyKeys": [
         "pizza"
       ],
-      "category": "veg",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
       "imageUrl": "/images/seed/ing-basil.png"
-    },
-    {
-      "id": "ing-black-pepper",
-      "name": "black pepper",
-      "aliases": [
-        "pepper",
-        "ground pepper"
-      ],
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
-      "imageUrl": "/images/seed/ing-black-pepper.png"
     },
     {
       "id": "ing-bay-leaves",
       "name": "bay leaves",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-bay-leaves",
       "imageUrl": "/images/seed/ing-bay-leaves.png"
+    },
+    {
+      "id": "ing-beef-stock",
+      "name": "beef stock",
+      "catalogId": "cat-beef-stock",
+      "imageUrl": "/images/seed/ing-beef-stock.png"
     },
     {
       "id": "ing-black-beans",
       "name": "black beans",
-      "category": "protein",
-      "tags": [
-        "batch-friendly",
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-black-beans",
       "familyKeys": [
         "beans"
       ],
       "imageUrl": "/images/seed/ing-black-beans.png"
     },
     {
+      "id": "ing-black-pepper",
+      "name": "black pepper",
+      "catalogId": "cat-black-pepper",
+      "imageUrl": "/images/seed/ing-black-pepper.png"
+    },
+    {
       "id": "ing-blueberries",
       "name": "blueberries",
-      "imageUrl": "/images/seed/ing-blueberries.png",
-      "category": "fruit",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-blueberries",
+      "imageUrl": "/images/seed/ing-blueberries.png"
     },
     {
       "id": "ing-bratwurst",
       "name": "bratwurst",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-bratwurst",
       "familyKeys": [
         "sausage"
       ],
@@ -355,39 +246,37 @@
     {
       "id": "ing-bread",
       "name": "bread",
-      "category": "carb",
-      "tags": [
-        "rescue"
-      ],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-bread",
       "familyKeys": [
         "bread"
       ],
       "imageUrl": "/images/seed/ing-bread.png"
     },
     {
+      "id": "ing-bread-flour",
+      "name": "bread flour",
+      "catalogId": "cat-bread-flour",
+      "familyKeys": [
+        "flour"
+      ],
+      "imageUrl": "/images/seed/ing-bread-flour.png"
+    },
+    {
+      "id": "ing-breadcrumbs",
+      "name": "breadcrumbs",
+      "catalogId": "cat-breadcrumbs",
+      "imageUrl": "/images/seed/ing-breadcrumbs.png"
+    },
+    {
       "id": "ing-broccoli",
       "name": "broccoli",
-      "category": "veg",
-      "tags": [],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-broccoli",
       "imageUrl": "/images/seed/ing-broccoli.png"
     },
     {
       "id": "ing-brown-lentils",
       "name": "brown lentils",
-      "category": "pantry",
-      "tags": [
-        "staple",
-        "batch-friendly"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-brown-lentils",
       "familyKeys": [
         "beans"
       ],
@@ -396,39 +285,28 @@
     {
       "id": "ing-butter",
       "name": "butter",
-      "imageUrl": "/images/seed/ing-butter.png",
-      "category": "dairy",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-butter",
+      "imageUrl": "/images/seed/ing-butter.png"
     },
     {
       "id": "ing-butter-beans",
       "name": "butter beans",
-      "category": "pantry",
-      "tags": [],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-butter-beans",
       "familyKeys": [
         "beans"
       ],
       "imageUrl": "/images/seed/ing-butter-beans.png"
     },
     {
+      "id": "ing-butternut-squash",
+      "name": "butternut squash",
+      "catalogId": "cat-butternut-squash",
+      "imageUrl": "/images/seed/ing-butternut-squash.png"
+    },
+    {
       "id": "ing-cannellini-beans",
       "name": "cannellini beans",
-      "category": "pantry",
-      "tags": [
-        "batch-friendly",
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-cannellini-beans",
       "familyKeys": [
         "beans"
       ],
@@ -437,31 +315,19 @@
     {
       "id": "ing-carrots",
       "name": "carrots",
-      "category": "veg",
-      "tags": [],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-carrots",
       "imageUrl": "/images/seed/ing-carrots.png"
     },
     {
       "id": "ing-celery",
       "name": "celery",
-      "category": "veg",
-      "tags": [],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-celery",
       "imageUrl": "/images/seed/ing-celery.png"
     },
     {
       "id": "ing-cheddar",
       "name": "cheddar",
-      "category": "dairy",
-      "tags": [],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-cheddar-cheese",
       "familyKeys": [
         "cheese"
       ],
@@ -470,11 +336,7 @@
     {
       "id": "ing-cheese",
       "name": "cheese",
-      "category": "dairy",
-      "tags": [],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-cheese",
       "familyKeys": [
         "cheese"
       ],
@@ -483,13 +345,7 @@
     {
       "id": "ing-cherry-tomatoes",
       "name": "cherry tomatoes",
-      "category": "veg",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-tomatoes",
       "familyKeys": [
         "tomato"
       ],
@@ -498,48 +354,19 @@
     {
       "id": "ing-chicken",
       "name": "chicken breast",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-chicken-breast",
       "imageUrl": "/images/seed/ing-chicken.png"
     },
     {
       "id": "ing-chicken-stock",
       "name": "chicken stock",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-chicken-stock",
       "imageUrl": "/images/seed/ing-chicken-stock.png"
-    },
-    {
-      "id": "ing-beef-stock",
-      "name": "beef stock",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
-      "imageUrl": "/images/seed/ing-beef-stock.png"
     },
     {
       "id": "ing-chickpeas",
       "name": "chickpeas",
-      "category": "pantry",
-      "tags": [
-        "staple",
-        "batch-friendly"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-chickpeas",
       "familyKeys": [
         "beans"
       ],
@@ -548,36 +375,28 @@
     {
       "id": "ing-chili-powder",
       "name": "chili powder",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-chili-powder",
       "imageUrl": "/images/seed/ing-chili-powder.png"
     },
     {
       "id": "ing-chipolatas",
       "name": "chipolatas",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-chipolatas",
       "familyKeys": [
         "sausage"
       ],
       "imageUrl": "/images/seed/ing-chipolatas.png"
     },
     {
+      "id": "ing-chocolate-chips",
+      "name": "chocolate chips",
+      "catalogId": "cat-chocolate-chips",
+      "imageUrl": "/images/seed/ing-chocolate-chips.png"
+    },
+    {
       "id": "ing-chorizo",
       "name": "chorizo",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-chorizo",
       "familyKeys": [
         "sausage"
       ],
@@ -586,68 +405,40 @@
     {
       "id": "ing-cilantro",
       "name": "cilantro",
-      "category": "veg",
-      "aliases": [
-        "coriander",
-        "fresh coriander"
-      ],
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-cilantro",
       "imageUrl": "/images/seed/ing-cilantro.png"
     },
     {
       "id": "ing-coconut-milk",
       "name": "coconut milk",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-coconut-milk",
       "imageUrl": "/images/seed/ing-coconut-milk.png"
     },
     {
       "id": "ing-coconut-oil",
       "name": "coconut oil",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-coconut-oil",
       "imageUrl": "/images/seed/ing-coconut-oil.png"
+    },
+    {
+      "id": "ing-cod",
+      "name": "cod",
+      "catalogId": "cat-cod",
+      "imageUrl": "/images/seed/ing-cod.png"
     },
     {
       "id": "ing-corn-tortillas",
       "name": "corn tortillas",
-      "imageUrl": "/images/seed/ing-corn-tortillas.png",
-      "category": "carb",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-corn-tortillas",
       "familyKeys": [
         "tortilla"
-      ]
+      ],
+      "imageUrl": "/images/seed/ing-corn-tortillas.png"
     },
     {
       "id": "ing-cornmeal",
       "name": "cornmeal",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-cornmeal",
       "familyKeys": [
         "flour"
       ],
@@ -656,38 +447,19 @@
     {
       "id": "ing-courgette",
       "name": "courgette",
-      "category": "veg",
-      "aliases": [
-        "zucchini",
-        "zucchini squash"
-      ],
-      "tags": [],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-courgette",
       "imageUrl": "/images/seed/ing-courgette.png"
     },
     {
       "id": "ing-couscous",
       "name": "couscous",
-      "category": "carb",
-      "tags": [
-        "quick",
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-couscous",
       "imageUrl": "/images/seed/ing-couscous.png"
     },
     {
       "id": "ing-cream-cheese",
       "name": "cream cheese",
-      "category": "dairy",
-      "tags": [],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-cream-cheese",
       "familyKeys": [
         "cheese"
       ],
@@ -696,77 +468,61 @@
     {
       "id": "ing-creme-fraiche",
       "name": "creme fraiche",
-      "category": "dairy",
-      "tags": [],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-creme-fraiche",
       "imageUrl": "/images/seed/ing-creme-fraiche.png"
     },
     {
       "id": "ing-cumin",
       "name": "cumin",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-cumin",
       "imageUrl": "/images/seed/ing-cumin.png"
+    },
+    {
+      "id": "ing-curry-paste",
+      "name": "curry paste",
+      "catalogId": "cat-curry-paste",
+      "imageUrl": "/images/seed/ing-curry-paste.png"
+    },
+    {
+      "id": "ing-digestive-biscuit",
+      "name": "digestive biscuit",
+      "catalogId": "cat-digestive-biscuit",
+      "imageUrl": "/images/seed/ing-digestive-biscuit.png"
+    },
+    {
+      "id": "ing-dijon-mustard",
+      "name": "dijon mustard",
+      "catalogId": "cat-dijon-mustard",
+      "imageUrl": "/images/seed/ing-dijon-mustard.png"
     },
     {
       "id": "ing-double-cream",
       "name": "double cream",
-      "category": "dairy",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-heavy-cream",
       "imageUrl": "/images/seed/ing-double-cream.png"
     },
     {
       "id": "ing-duck-breast",
       "name": "duck breast",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-duck-breast",
       "imageUrl": "/images/seed/ing-duck-breast.png"
     },
     {
       "id": "ing-edamame",
       "name": "edamame",
-      "category": "freezer",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "months",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-edamame",
       "imageUrl": "/images/seed/ing-edamame.png"
     },
     {
       "id": "ing-eggs",
       "name": "eggs",
-      "imageUrl": "/images/seed/ing-eggs.png",
-      "category": "protein",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "3 weeks",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "catalogId": "cat-eggs",
+      "imageUrl": "/images/seed/ing-eggs.png"
     },
     {
       "id": "ing-feta",
       "name": "feta",
-      "category": "dairy",
-      "tags": [],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-feta-cheese",
       "familyKeys": [
         "cheese"
       ],
@@ -775,40 +531,22 @@
     {
       "id": "ing-fishfingers",
       "name": "fish fingers",
-      "category": "freezer",
-      "tags": [
-        "rescue"
-      ],
-      "shelfLifeHint": "months",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-fish-fingers",
       "imageUrl": "/images/seed/ing-fishfingers.png"
     },
     {
       "id": "ing-flour",
       "name": "flour",
-      "imageUrl": "/images/seed/ing-flour.png",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-flour",
       "familyKeys": [
         "flour"
-      ]
+      ],
+      "imageUrl": "/images/seed/ing-flour.png"
     },
     {
       "id": "ing-flour-tortillas",
       "name": "flour tortillas",
-      "category": "carb",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-wraps",
       "familyKeys": [
         "tortilla"
       ]
@@ -816,100 +554,58 @@
     {
       "id": "ing-fresh-ginger",
       "name": "fresh ginger",
-      "category": "veg",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "3 weeks",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-ginger",
       "imageUrl": "/images/seed/ing-fresh-ginger.png"
     },
     {
       "id": "ing-garlic",
       "name": "garlic",
-      "category": "veg",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-garlic",
       "imageUrl": "/images/seed/ing-garlic.png"
     },
     {
       "id": "ing-garlic-powder",
       "name": "garlic powder",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "catalogId": "cat-garlic-powder",
+      "imageUrl": "/images/seed/ing-garlic-powder.png"
     },
     {
       "id": "ing-gnocchi",
       "name": "gnocchi",
-      "category": "carb",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-gnocchi",
+      "imageUrl": "/images/seed/ing-gnocchi.png"
     },
     {
       "id": "ing-goat-cheese",
       "name": "goat cheese",
-      "category": "dairy",
-      "tags": [],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-goat-cheese",
       "familyKeys": [
         "cheese"
-      ]
+      ],
+      "imageUrl": "/images/seed/ing-goat-cheese.png"
     },
     {
       "id": "ing-green-beans",
       "name": "green beans",
-      "category": "veg",
-      "tags": [],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-green-beans",
       "imageUrl": "/images/seed/ing-green-beans.png"
     },
     {
       "id": "ing-green-cabbage",
       "name": "green cabbage",
-      "category": "veg",
-      "tags": [],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-cabbage",
+      "imageUrl": "/images/seed/ing-green-cabbage.png"
     },
     {
       "id": "ing-ground-beef",
       "name": "ground beef",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-ground-beef",
       "imageUrl": "/images/seed/ing-ground-beef.png"
     },
     {
       "id": "ing-halloumi",
       "name": "halloumi",
-      "category": "dairy",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-halloumi",
       "familyKeys": [
         "cheese"
       ],
@@ -918,39 +614,22 @@
     {
       "id": "ing-honey",
       "name": "honey",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-honey",
       "imageUrl": "/images/seed/ing-honey.png"
     },
     {
       "id": "ing-hummus",
       "name": "hummus",
+      "catalogId": "cat-hummus",
+      "imageUrl": "/images/seed/ing-hummus.png",
       "aliases": [
         "houmus"
-      ],
-      "category": "pantry",
-      "tags": [
-        "quick",
-        "staple"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
-      "imageUrl": "/images/seed/ing-hummus.png"
+      ]
     },
     {
       "id": "ing-italian-sausage",
       "name": "italian sausage",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-italian-sausage",
       "familyKeys": [
         "sausage"
       ],
@@ -959,36 +638,19 @@
     {
       "id": "ing-italian-seasoning",
       "name": "italian seasoning",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-italian-seasoning",
       "imageUrl": "/images/seed/ing-italian-seasoning.png"
     },
     {
       "id": "ing-kale",
       "name": "kale",
-      "category": "veg",
-      "tags": [],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-kale",
       "imageUrl": "/images/seed/ing-kale.png"
     },
     {
       "id": "ing-kidney-beans",
       "name": "kidney beans",
-      "category": "pantry",
-      "tags": [
-        "staple",
-        "batch-friendly"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-kidney-beans",
       "familyKeys": [
         "beans"
       ],
@@ -997,23 +659,13 @@
     {
       "id": "ing-lamb-mince",
       "name": "lamb mince",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-lamb-mince",
       "imageUrl": "/images/seed/ing-lamb-mince.png"
     },
     {
       "id": "ing-lasagne-sheets",
       "name": "lasagne sheets",
-      "category": "carb",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-lasagne-sheets",
       "familyKeys": [
         "pasta"
       ],
@@ -1022,95 +674,49 @@
     {
       "id": "ing-lemon",
       "name": "lemon",
-      "category": "fruit",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-lemon",
       "imageUrl": "/images/seed/ing-lemon.png"
     },
     {
       "id": "ing-lettuce",
       "name": "lettuce",
-      "category": "veg",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-lettuce",
       "imageUrl": "/images/seed/ing-lettuce.png"
     },
     {
       "id": "ing-lime",
       "name": "lime",
-      "category": "fruit",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-lime",
       "imageUrl": "/images/seed/ing-lime.png"
     },
     {
       "id": "ing-maple-syrup",
       "name": "maple syrup",
-      "category": "pantry",
-      "tags": [],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-maple-syrup",
       "imageUrl": "/images/seed/ing-maple-syrup.png"
     },
     {
       "id": "ing-milk",
       "name": "milk",
-      "category": "dairy",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-milk",
       "imageUrl": "/images/seed/ing-milk.png"
     },
     {
       "id": "ing-miso-paste",
       "name": "miso paste",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-miso-paste",
       "imageUrl": "/images/seed/ing-miso-paste.png"
     },
     {
       "id": "ing-mixed-frozen-vegetables",
       "name": "mixed frozen vegetables",
-      "category": "freezer",
-      "tags": [
-        "rescue"
-      ],
-      "shelfLifeHint": "months",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-mixed-frozen-veg",
       "imageUrl": "/images/seed/ing-mixed-frozen-vegetables.png"
     },
     {
       "id": "ing-mozzarella",
       "name": "mozzarella",
-      "category": "dairy",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-mozzarella",
       "familyKeys": [
         "cheese",
         "pizza"
@@ -1120,116 +726,67 @@
     {
       "id": "ing-mushrooms",
       "name": "mushrooms",
-      "category": "veg",
-      "tags": [],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-mushrooms",
       "imageUrl": "/images/seed/ing-mushrooms.png"
     },
     {
       "id": "ing-mustard",
       "name": "mustard",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-mustard",
       "imageUrl": "/images/seed/ing-mustard.png"
     },
     {
       "id": "ing-noodles",
       "name": "noodles",
-      "category": "carb",
-      "tags": [
-        "quick",
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-noodles",
       "imageUrl": "/images/seed/ing-noodles.png"
     },
     {
       "id": "ing-oats",
       "name": "oats",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-oats",
       "imageUrl": "/images/seed/ing-oats.png"
     },
     {
       "id": "ing-olive-oil",
       "name": "olive oil",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-olive-oil",
       "imageUrl": "/images/seed/ing-olive-oil.png"
     },
     {
       "id": "ing-onion",
       "name": "onion",
-      "category": "veg",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-onion",
       "imageUrl": "/images/seed/ing-onion.png"
+    },
+    {
+      "id": "ing-onion-powder",
+      "name": "onion powder",
+      "catalogId": "cat-onion-powder",
+      "imageUrl": "/images/seed/ing-onion-powder.png"
     },
     {
       "id": "ing-orange",
       "name": "orange",
-      "category": "fruit",
-      "tags": [],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-orange",
       "imageUrl": "/images/seed/ing-orange.png"
     },
     {
       "id": "ing-oregano",
       "name": "oregano",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-oregano",
       "imageUrl": "/images/seed/ing-oregano.png"
     },
     {
       "id": "ing-paneer",
       "name": "paneer",
-      "category": "protein",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-paneer",
       "imageUrl": "/images/seed/ing-paneer.png"
     },
     {
       "id": "ing-parmesan",
       "name": "parmesan",
-      "category": "dairy",
-      "tags": [],
-      "shelfLifeHint": "long",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-parmesan-cheese",
       "familyKeys": [
         "cheese"
       ],
@@ -1238,26 +795,13 @@
     {
       "id": "ing-parsley",
       "name": "parsley",
-      "category": "veg",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-dried-parsley",
       "imageUrl": "/images/seed/ing-parsley.png"
     },
     {
       "id": "ing-passata",
       "name": "passata",
-      "category": "pantry",
-      "tags": [
-        "staple",
-        "batch-friendly"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-passata",
       "familyKeys": [
         "tomato"
       ],
@@ -1266,13 +810,7 @@
     {
       "id": "ing-pasta",
       "name": "pasta",
-      "category": "carb",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-pasta",
       "familyKeys": [
         "pasta"
       ],
@@ -1281,35 +819,19 @@
     {
       "id": "ing-peanut-butter",
       "name": "peanut butter",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-peanut-butter",
       "imageUrl": "/images/seed/ing-peanut-butter.png"
     },
     {
       "id": "ing-peas",
       "name": "peas",
-      "category": "freezer",
-      "tags": [
-        "rescue"
-      ],
-      "shelfLifeHint": "months",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-frozen-peas",
       "imageUrl": "/images/seed/ing-peas.png"
     },
     {
       "id": "ing-pecorino",
       "name": "pecorino",
-      "category": "dairy",
-      "tags": [],
-      "shelfLifeHint": "long",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-pecorino",
       "familyKeys": [
         "cheese"
       ],
@@ -1318,26 +840,13 @@
     {
       "id": "ing-peppers",
       "name": "peppers",
-      "category": "veg",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-peppers",
       "imageUrl": "/images/seed/ing-peppers.png"
     },
     {
       "id": "ing-pinto-beans",
       "name": "pinto beans",
-      "category": "pantry",
-      "tags": [
-        "staple",
-        "batch-friendly"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-pinto-beans",
       "familyKeys": [
         "beans"
       ],
@@ -1346,26 +855,16 @@
     {
       "id": "ing-pita-bread",
       "name": "pita bread",
-      "imageUrl": "/images/seed/ing-pita-bread.png",
-      "category": "carb",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-pitta",
       "familyKeys": [
         "bread"
-      ]
+      ],
+      "imageUrl": "/images/seed/ing-pita-bread.png"
     },
     {
       "id": "ing-plum-tomatoes",
       "name": "plum tomatoes",
-      "category": "veg",
-      "tags": [],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-tomatoes",
       "familyKeys": [
         "tomato"
       ],
@@ -1374,86 +873,61 @@
     {
       "id": "ing-pork",
       "name": "pork",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-pork",
       "imageUrl": "/images/seed/ing-pork.png"
     },
     {
       "id": "ing-potatoes",
       "name": "potatoes",
-      "imageUrl": "/images/seed/ing-potatoes.png",
-      "category": "carb",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-potatoes",
+      "imageUrl": "/images/seed/ing-potatoes.png"
     },
     {
       "id": "ing-prawn",
       "name": "prawn",
-      "category": "protein",
-      "aliases": [
-        "prawns",
-        "shrimp",
-        "shrimps"
-      ],
-      "tags": [],
-      "shelfLifeHint": "2 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-prawns",
       "imageUrl": "/images/seed/ing-prawn.png"
+    },
+    {
+      "id": "ing-queso-fresco",
+      "name": "queso fresco",
+      "catalogId": "cat-queso-fresco",
+      "imageUrl": "/images/seed/ing-queso-fresco.png"
     },
     {
       "id": "ing-quinoa",
       "name": "quinoa",
-      "category": "carb",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-quinoa",
       "imageUrl": "/images/seed/ing-quinoa.png"
+    },
+    {
+      "id": "ing-ramen-noodles",
+      "name": "ramen noodles",
+      "catalogId": "cat-ramen-noodles",
+      "imageUrl": "/images/seed/ing-ramen-noodles.png"
+    },
+    {
+      "id": "ing-red-cabbage",
+      "name": "red cabbage",
+      "catalogId": "cat-red-cabbage",
+      "imageUrl": "/images/seed/ing-red-cabbage.png"
     },
     {
       "id": "ing-red-onion",
       "name": "red onion",
-      "category": "veg",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "2 weeks",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-red-onion",
       "imageUrl": "/images/seed/ing-red-onion.png"
     },
     {
       "id": "ing-rice",
       "name": "rice",
-      "category": "carb",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-rice",
       "imageUrl": "/images/seed/ing-rice.png"
     },
     {
       "id": "ing-rice-flour",
       "name": "rice flour",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-rice-flour",
       "familyKeys": [
         "flour"
       ],
@@ -1462,11 +936,7 @@
     {
       "id": "ing-ricotta",
       "name": "ricotta",
-      "category": "dairy",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-ricotta",
       "familyKeys": [
         "cheese"
       ],
@@ -1475,105 +945,70 @@
     {
       "id": "ing-romaine-lettuce",
       "name": "romaine lettuce",
-      "category": "veg",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-lettuce",
       "imageUrl": "/images/seed/ing-romaine-lettuce.png"
     },
     {
       "id": "ing-rosemary",
       "name": "rosemary",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-rosemary",
       "imageUrl": "/images/seed/ing-rosemary.png"
     },
     {
-      "id": "ing-salt",
-      "name": "salt",
-      "aliases": [
-        "sea salt",
-        "table salt"
+      "id": "ing-rye-flour",
+      "name": "rye flour",
+      "catalogId": "cat-rye-flour",
+      "familyKeys": [
+        "flour"
       ],
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
-      "imageUrl": "/images/seed/ing-salt.png"
+      "imageUrl": "/images/seed/ing-rye-flour.png"
+    },
+    {
+      "id": "ing-sage",
+      "name": "sage",
+      "catalogId": "cat-sage",
+      "imageUrl": "/images/seed/ing-sage.png"
     },
     {
       "id": "ing-salmon",
       "name": "salmon",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "2 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-salmon",
       "imageUrl": "/images/seed/ing-salmon.png"
+    },
+    {
+      "id": "ing-salt",
+      "name": "salt",
+      "catalogId": "cat-salt",
+      "imageUrl": "/images/seed/ing-salt.png"
     },
     {
       "id": "ing-sesame-oil",
       "name": "sesame oil",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-sesame-oil",
       "imageUrl": "/images/seed/ing-sesame-oil.png"
     },
     {
       "id": "ing-sirloin-steak",
       "name": "sirloin steak",
-      "imageUrl": "/images/seed/ing-sirloin-steak.png",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-sirloin-steak",
+      "imageUrl": "/images/seed/ing-sirloin-steak.png"
     },
     {
       "id": "ing-smoked-paprika",
       "name": "smoked paprika",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-paprika",
       "imageUrl": "/images/seed/ing-smoked-paprika.png"
     },
     {
       "id": "ing-sour-cream",
       "name": "sour cream",
-      "category": "dairy",
-      "tags": [],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-sour-cream",
       "imageUrl": "/images/seed/ing-sour-cream.png"
     },
     {
       "id": "ing-sourdough-bread",
       "name": "sourdough bread",
-      "category": "carb",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-sourdough-bread",
       "familyKeys": [
         "bread"
       ],
@@ -1582,88 +1017,37 @@
     {
       "id": "ing-soy-sauce",
       "name": "soy sauce",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-soy-sauce",
       "imageUrl": "/images/seed/ing-soy-sauce.png"
     },
     {
       "id": "ing-spinach",
       "name": "spinach",
-      "imageUrl": "/images/seed/ing-spinach.png",
-      "category": "veg",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "5 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-spinach",
+      "imageUrl": "/images/seed/ing-spinach.png"
     },
     {
       "id": "ing-spring-onions",
       "name": "spring onions",
-      "category": "veg",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-green-onion",
       "imageUrl": "/images/seed/ing-spring-onions.png"
     },
     {
       "id": "ing-strawberries",
       "name": "strawberries",
-      "imageUrl": "/images/seed/ing-strawberries.png",
-      "category": "fruit",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true
-    },
-    {
-      "id": "ing-bread-flour",
-      "name": "bread flour",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
-      "familyKeys": [
-        "flour"
-      ],
-      "imageUrl": "/images/seed/ing-bread-flour.png"
+      "catalogId": "cat-strawberries",
+      "imageUrl": "/images/seed/ing-strawberries.png"
     },
     {
       "id": "ing-sugar",
       "name": "sugar",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-sugar",
       "imageUrl": "/images/seed/ing-sugar.png"
     },
     {
       "id": "ing-sun-dried-tomatoes",
       "name": "sun-dried tomatoes",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-sun-dried-tomatoes",
       "familyKeys": [
         "tomato"
       ],
@@ -1672,174 +1056,133 @@
     {
       "id": "ing-sweet-potato",
       "name": "sweet potato",
-      "category": "veg",
-      "tags": [
-        "mashable"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-sweet-potato",
       "imageUrl": "/images/seed/ing-sweet-potato.png"
     },
     {
       "id": "ing-tahini",
       "name": "tahini",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-tahini",
       "imageUrl": "/images/seed/ing-tahini.png"
     },
     {
       "id": "ing-thyme",
       "name": "thyme",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-thyme",
       "imageUrl": "/images/seed/ing-thyme.png"
+    },
+    {
+      "id": "ing-tilapia",
+      "name": "tilapia",
+      "catalogId": "cat-tilapia",
+      "imageUrl": "/images/seed/ing-tilapia.png"
     },
     {
       "id": "ing-tinned-tomatoes",
       "name": "tinned tomatoes",
-      "imageUrl": "/images/seed/ing-tinned-tomatoes.png",
-      "category": "pantry",
-      "tags": [
-        "staple",
-        "batch-friendly"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-tinned-tomatoes",
       "familyKeys": [
         "tomato"
-      ]
+      ],
+      "imageUrl": "/images/seed/ing-tinned-tomatoes.png"
     },
     {
       "id": "ing-tinned-tuna",
       "name": "tinned tuna",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "catalogId": "cat-tuna",
+      "imageUrl": "/images/seed/ing-tinned-tuna.png"
     },
     {
       "id": "ing-tofu",
       "name": "tofu",
-      "category": "protein",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-tofu",
       "imageUrl": "/images/seed/ing-tofu.png"
     },
     {
       "id": "ing-tomato-ketchup",
       "name": "tomato ketchup",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-ketchup",
       "familyKeys": [
         "tomato"
-      ]
+      ],
+      "imageUrl": "/images/seed/ing-tomato-ketchup.png"
     },
     {
       "id": "ing-tomato-paste",
       "name": "tomato paste",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-tomato-paste",
       "familyKeys": [
         "tomato"
-      ]
+      ],
+      "imageUrl": "/images/seed/ing-tomato-paste.png"
     },
     {
       "id": "ing-tomato-sauce",
       "name": "tomato sauce",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-tomato-sauce",
       "familyKeys": [
         "tomato"
-      ]
+      ],
+      "imageUrl": "/images/seed/ing-tomato-sauce.png"
     },
     {
       "id": "ing-turkey-breast",
       "name": "turkey breast",
-      "category": "protein",
-      "tags": [],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-turkey-breast",
       "imageUrl": "/images/seed/ing-turkey-breast.png"
+    },
+    {
+      "id": "ing-turkey-mince",
+      "name": "turkey mince",
+      "catalogId": "cat-ground-turkey",
+      "imageUrl": "/images/seed/ing-turkey-mince.png"
     },
     {
       "id": "ing-vanilla-extract",
       "name": "vanilla extract",
-      "category": "pantry",
-      "tags": [],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-vanilla-extract",
       "imageUrl": "/images/seed/ing-vanilla-extract.png"
     },
     {
       "id": "ing-vegetable-stock",
       "name": "vegetable stock",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-vegetable-stock",
       "imageUrl": "/images/seed/ing-vegetable-stock.png"
+    },
+    {
+      "id": "ing-water",
+      "name": "water",
+      "catalogId": "cat-water",
+      "imageUrl": "/images/seed/ing-water.png"
+    },
+    {
+      "id": "ing-water-crackers",
+      "name": "water crackers",
+      "catalogId": "cat-water-crackers",
+      "imageUrl": "/images/seed/ing-water-crackers.png"
+    },
+    {
+      "id": "ing-watermelon",
+      "name": "watermelon",
+      "catalogId": "cat-watermelon",
+      "imageUrl": "/images/seed/ing-watermelon.png"
+    },
+    {
+      "id": "ing-wheat-germ",
+      "name": "wheat germ",
+      "catalogId": "cat-wheat-germ",
+      "imageUrl": "/images/seed/ing-wheat-germ.png"
     },
     {
       "id": "ing-white-wine-vinegar",
       "name": "white wine vinegar",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-white-wine-vinegar",
       "imageUrl": "/images/seed/ing-white-wine-vinegar.png"
     },
     {
       "id": "ing-wholemeal-bread",
       "name": "wholemeal bread",
-      "category": "carb",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "3 days",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-wholemeal-bread",
       "familyKeys": [
         "bread"
       ],
@@ -1848,101 +1191,29 @@
     {
       "id": "ing-wholemeal-flour",
       "name": "wholemeal flour",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-wholemeal-flour",
       "familyKeys": [
         "flour"
       ],
       "imageUrl": "/images/seed/ing-wholemeal-flour.png"
     },
     {
-      "id": "ing-water",
-      "name": "water",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
-      "imageUrl": "/images/seed/ing-water.png"
-    },
-    {
       "id": "ing-worcestershire-sauce",
       "name": "worcestershire sauce",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-worcestershire-sauce",
       "imageUrl": "/images/seed/ing-worcestershire-sauce.png"
     },
     {
       "id": "ing-yeast",
       "name": "yeast",
-      "category": "pantry",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
+      "catalogId": "cat-yeast",
       "imageUrl": "/images/seed/ing-yeast.png"
     },
     {
       "id": "ing-yogurt",
       "name": "yogurt",
-      "category": "dairy",
-      "tags": [
-        "quick"
-      ],
-      "shelfLifeHint": "1 week",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
+      "catalogId": "cat-yogurt",
       "imageUrl": "/images/seed/ing-yogurt.png"
-    },
-    {
-      "id": "ing-turkey-mince",
-      "name": "turkey mince",
-      "category": "meat",
-      "tags": [
-        "protein"
-      ],
-      "shelfLifeHint": "short",
-      "freezerFriendly": true,
-      "babySafeWithAdaptation": true,
-      "imageUrl": "/images/seed/ing-turkey-mince.png"
-    },
-    {
-      "id": "ing-queso-fresco",
-      "name": "queso fresco",
-      "category": "dairy",
-      "tags": [
-        "cheese"
-      ],
-      "shelfLifeHint": "medium",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": false,
-      "imageUrl": "/images/seed/ing-queso-fresco.png"
-    },
-    {
-      "id": "ing-ramen-noodles",
-      "name": "ramen noodles",
-      "category": "carbs",
-      "tags": [
-        "staple"
-      ],
-      "shelfLifeHint": "long",
-      "freezerFriendly": false,
-      "babySafeWithAdaptation": true,
-      "imageUrl": "/images/seed/ing-ramen-noodles.png"
     }
   ],
   "recipes": [

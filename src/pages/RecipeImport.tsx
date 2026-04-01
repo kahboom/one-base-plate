@@ -48,6 +48,7 @@ export default function RecipeImport() {
   const [step, setStep] = useState<Step>('input');
   const [recipeText, setRecipeText] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
+  const [isParsing, setIsParsing] = useState(false);
   const [reviewLines, setReviewLines] = useState<ReviewLine[]>([]);
 
   const [draftName, setDraftName] = useState('');
@@ -69,15 +70,21 @@ export default function RecipeImport() {
     setLoaded(true);
   }, [householdId]);
 
-  function handleParse() {
-    const result = parseRecipeText(recipeText, ingredients);
-    const lines: ReviewLine[] = result.lines.map((line) => ({
-      ...line,
-      action: line.status === 'unmatched' ? 'ignore' : line.status === 'catalog' ? 'create' : 'use',
-      newCategory: line.matchedCatalog?.category ?? 'pantry',
-    }));
-    setReviewLines(lines);
-    setStep('review');
+  async function handleParse() {
+    setIsParsing(true);
+    await Promise.resolve();
+    try {
+      const result = parseRecipeText(recipeText, ingredients);
+      const lines: ReviewLine[] = result.lines.map((line) => ({
+        ...line,
+        action: line.status === 'unmatched' ? 'ignore' : line.status === 'catalog' ? 'create' : 'use',
+        newCategory: line.matchedCatalog?.category ?? 'pantry',
+      }));
+      setReviewLines(lines);
+      setStep('review');
+    } finally {
+      setIsParsing(false);
+    }
   }
 
   const matchedCount = useMemo(
@@ -205,16 +212,18 @@ export default function RecipeImport() {
                 value={sourceUrl}
                 onChange={(e) => setSourceUrl(e.target.value)}
                 placeholder="https://example.com/recipe"
+                readOnly={isParsing}
                 data-testid="import-source-url"
               />
             </FieldLabel>
 
             <FieldLabel label="Paste ingredient list" className="mt-4">
               <textarea
-                className="w-full rounded-lg border border-border-light bg-surface-card p-3 text-sm text-text-primary placeholder-text-muted focus:border-brand focus:outline-none"
+                className="w-full rounded-lg border border-border-light bg-surface-card p-3 text-sm text-text-primary placeholder-text-muted focus:border-brand focus:outline-none read-only:bg-surface-raised/50"
                 rows={10}
                 value={recipeText}
                 onChange={(e) => setRecipeText(e.target.value)}
+                readOnly={isParsing}
                 placeholder={
                   'Paste recipe ingredients here, one per line.\n\nExample:\n200g chicken breast\n1 cup rice\n2 carrots, diced\n1 tbsp olive oil'
                 }
@@ -226,11 +235,11 @@ export default function RecipeImport() {
           <ActionGroup>
             <Button
               variant="primary"
-              onClick={handleParse}
-              disabled={!recipeText.trim()}
+              onClick={() => void handleParse()}
+              disabled={!recipeText.trim() || isParsing}
               data-testid="import-parse-btn"
             >
-              Parse ingredients
+              {isParsing ? 'Parsing ingredients…' : 'Parse ingredients'}
             </Button>
             <Button onClick={() => navigate(`/household/${householdId}/recipes`)}>Cancel</Button>
           </ActionGroup>
