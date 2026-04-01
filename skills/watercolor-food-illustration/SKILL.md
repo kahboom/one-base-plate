@@ -2,13 +2,35 @@
 name: watercolor-food-illustration
 description: >-
   Visual style guidelines for generating simple watercolor food and ingredient
-  illustrations. Use when generating prompts for food imagery, seed images,
-  or any request for clean, hand-drawn editorial cookbook-style art.
+  illustrations. In OneBasePlate, batch-generate matching PNGs with
+  scripts/generate-seed-image.mjs (node --env-file=.env). Use when generating
+  prompts for food imagery, seed images, or any request for clean, hand-drawn
+  editorial cookbook-style art.
 ---
 
 # Watercolor Food Illustration Style
 
 This skill defines the visual style and prompting rules for creating simple, elegant watercolor food illustrations. It should be used whenever generating image prompts for ingredients, meals, or drinks that require a clean, hand-drawn, non-photorealistic look.
+
+## GENERATING SEED IMAGES IN THIS REPO (OneBasePlate)
+
+**Do not assume the shell has `OPENAI_API_KEY` set.** The key lives in `.env`; load it when invoking Node:
+
+```bash
+node --env-file=.env scripts/generate-seed-image.mjs
+```
+
+**Script:** [`scripts/generate-seed-image.mjs`](../../scripts/generate-seed-image.mjs) — calls the OpenAI Images API (DALL·E 3), writes **`public/images/seed/{id}.png`** (1024×1024). Prompt text is built to match this skill’s watercolor spot-art intent.
+
+**Workflow:**
+
+1. Add or edit entries in the script’s **`ITEMS`** array: `{ id, subject }` and optional **`dish: true`** for plated / prepared foods (softer negative prompt, bowl-focused layout).
+2. **`id`** must match the filename stem and seed data: ingredients use `ing-*`, recipes use `rec-*`. Reference in JSON as `imageUrl`: `/images/seed/{id}.png`.
+3. Run the full batch, or only specific ids:  
+   `node --env-file=.env scripts/generate-seed-image.mjs rec-tray-pizza ing-bacon`
+4. If the asset is new, set **`imageUrl`** on the ingredient or recipe in **`fixtures/households/`** (then **`npm run db:seed`** so **`src/seed-data.json`** stays in sync).
+
+Write **`subject`** strings using the composition and fallback rules below (clear food state, minimal props, no labels). The script wraps them in the shared style phrase; you normally **do not** hand-paste the full prompt unless debugging.
 
 ## WHEN TO USE / WHEN NOT TO USE
 
