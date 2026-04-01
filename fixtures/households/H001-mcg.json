@@ -6,8 +6,18 @@
       "id": "M-Aaron",
       "name": "Aaron",
       "role": "adult",
-      "safeFoods": ["salmon", "chicken breast", "broccoli", "cod", "pork"],
-      "hardNoFoods": ["mushrooms", "blue cheese", "pasta"],
+      "safeFoods": [
+        "salmon",
+        "chicken breast",
+        "broccoli",
+        "cod",
+        "pork"
+      ],
+      "hardNoFoods": [
+        "mushrooms",
+        "blue cheese",
+        "pasta"
+      ],
       "preparationRules": [
         {
           "ingredient": "chicken breast",
@@ -31,7 +41,11 @@
         "ground beef",
         "sirloin steak"
       ],
-      "hardNoFoods": ["salmon", "aubergine", "lamb"],
+      "hardNoFoods": [
+        "salmon",
+        "aubergine",
+        "lamb"
+      ],
       "preparationRules": [
         {
           "ingredient": "pork",
@@ -46,7 +60,13 @@
       "id": "M-Indy",
       "name": "Indy",
       "role": "toddler",
-      "safeFoods": ["sausages", "bread", "cheese", "weetabix", "ground beef"],
+      "safeFoods": [
+        "sausages",
+        "bread",
+        "cheese",
+        "weetabix",
+        "ground beef"
+      ],
       "hardNoFoods": [],
       "preparationRules": [],
       "textureLevel": "soft",
@@ -57,8 +77,17 @@
       "id": "M-Orla",
       "name": "Órla",
       "role": "baby",
-      "safeFoods": ["sweet potato", "banana", "avocado", "rice"],
-      "hardNoFoods": ["honey", "whole nuts", "raw egg"],
+      "safeFoods": [
+        "sweet potato",
+        "banana",
+        "avocado",
+        "rice"
+      ],
+      "hardNoFoods": [
+        "honey",
+        "whole nuts",
+        "raw egg"
+      ],
       "preparationRules": [
         {
           "ingredient": "sweet potato",
@@ -86,17 +115,24 @@
       "id": "ing-almond-flour",
       "name": "almond flour",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-almond-flour.png"
     },
     {
       "id": "ing-almond-butter",
       "name": "almond butter",
-      "aliases": ["nut butter"],
+      "aliases": [
+        "nut butter"
+      ],
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
@@ -107,16 +143,32 @@
       "name": "apple",
       "imageUrl": "/images/seed/ing-apple.png",
       "category": "fruit",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
+      "babySafeWithAdaptation": true
+    },
+    {
+      "id": "ing-arepa",
+      "name": "arepa",
+      "imageUrl": "/images/seed/ing-arepa.png",
+      "category": "carb",
+      "tags": [
+        "quick"
+      ],
+      "shelfLifeHint": "3 days",
+      "freezerFriendly": true,
       "babySafeWithAdaptation": true
     },
     {
       "id": "ing-asparagus",
       "name": "asparagus",
       "category": "veg",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "5 days",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
@@ -126,18 +178,26 @@
       "id": "ing-aubergine",
       "name": "aubergine",
       "category": "veg",
+      "aliases": [
+        "eggplant"
+      ],
       "tags": [],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["nightshade"],
+      "familyKeys": [
+        "nightshade"
+      ],
       "imageUrl": "/images/seed/ing-aubergine.png"
     },
     {
       "id": "ing-avocado",
       "name": "avocado",
       "category": "fruit",
-      "tags": ["quick", "mashable"],
+      "tags": [
+        "quick",
+        "mashable"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -158,38 +218,52 @@
       "name": "baguette",
       "imageUrl": "/images/seed/ing-baguette.png",
       "category": "carb",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "2 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["bread"]
+      "familyKeys": [
+        "bread"
+      ]
     },
     {
       "id": "ing-beans",
       "name": "baked beans",
       "imageUrl": "/images/seed/ing-beans.png",
       "category": "pantry",
-      "tags": ["rescue"],
+      "tags": [
+        "rescue"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["beans"]
+      "familyKeys": [
+        "beans"
+      ]
     },
     {
       "id": "ing-balsamic-vinegar",
       "name": "balsamic vinegar",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-balsamic-vinegar.png"
     },
     {
       "id": "ing-banana",
       "name": "banana",
       "imageUrl": "/images/seed/ing-banana.png",
       "category": "fruit",
-      "tags": ["quick", "mashable"],
+      "tags": [
+        "quick",
+        "mashable"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true
@@ -197,19 +271,29 @@
     {
       "id": "ing-basil",
       "name": "basil",
-      "familyKeys": ["pizza"],
+      "familyKeys": [
+        "pizza"
+      ],
       "category": "veg",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "5 days",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-basil.png"
     },
     {
       "id": "ing-black-pepper",
       "name": "black pepper",
-      "aliases": ["pepper", "ground pepper"],
+      "aliases": [
+        "pepper",
+        "ground pepper"
+      ],
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
@@ -219,20 +303,28 @@
       "id": "ing-bay-leaves",
       "name": "bay leaves",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-bay-leaves.png"
     },
     {
       "id": "ing-black-beans",
       "name": "black beans",
       "category": "protein",
-      "tags": ["batch-friendly", "staple"],
+      "tags": [
+        "batch-friendly",
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["beans"],
+      "familyKeys": [
+        "beans"
+      ],
       "imageUrl": "/images/seed/ing-black-beans.png"
     },
     {
@@ -240,7 +332,9 @@
       "name": "blueberries",
       "imageUrl": "/images/seed/ing-blueberries.png",
       "category": "fruit",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true
@@ -253,18 +347,24 @@
       "shelfLifeHint": "3 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["sausage"],
+      "familyKeys": [
+        "sausage"
+      ],
       "imageUrl": "/images/seed/ing-bratwurst.png"
     },
     {
       "id": "ing-bread",
       "name": "bread",
       "category": "carb",
-      "tags": ["rescue"],
+      "tags": [
+        "rescue"
+      ],
       "shelfLifeHint": "3 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["bread"],
+      "familyKeys": [
+        "bread"
+      ],
       "imageUrl": "/images/seed/ing-bread.png"
     },
     {
@@ -281,18 +381,26 @@
       "id": "ing-brown-lentils",
       "name": "brown lentils",
       "category": "pantry",
-      "tags": ["staple", "batch-friendly"],
+      "tags": [
+        "staple",
+        "batch-friendly"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["beans"]
+      "familyKeys": [
+        "beans"
+      ],
+      "imageUrl": "/images/seed/ing-brown-lentils.png"
     },
     {
       "id": "ing-butter",
       "name": "butter",
       "imageUrl": "/images/seed/ing-butter.png",
       "category": "dairy",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "2 weeks",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true
@@ -305,17 +413,26 @@
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["beans"]
+      "familyKeys": [
+        "beans"
+      ],
+      "imageUrl": "/images/seed/ing-butter-beans.png"
     },
     {
       "id": "ing-cannellini-beans",
       "name": "cannellini beans",
       "category": "pantry",
-      "tags": ["batch-friendly", "staple"],
+      "tags": [
+        "batch-friendly",
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["beans"]
+      "familyKeys": [
+        "beans"
+      ],
+      "imageUrl": "/images/seed/ing-cannellini-beans.png"
     },
     {
       "id": "ing-carrots",
@@ -345,7 +462,9 @@
       "shelfLifeHint": "2 weeks",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["cheese"],
+      "familyKeys": [
+        "cheese"
+      ],
       "imageUrl": "/images/seed/ing-cheddar.png"
     },
     {
@@ -356,17 +475,24 @@
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["cheese"]
+      "familyKeys": [
+        "cheese"
+      ],
+      "imageUrl": "/images/seed/ing-cheese.png"
     },
     {
       "id": "ing-cherry-tomatoes",
       "name": "cherry tomatoes",
       "category": "veg",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "5 days",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["tomato"],
+      "familyKeys": [
+        "tomato"
+      ],
       "imageUrl": "/images/seed/ing-cherry-tomatoes.png"
     },
     {
@@ -383,30 +509,53 @@
       "id": "ing-chicken-stock",
       "name": "chicken stock",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-chicken-stock.png"
+    },
+    {
+      "id": "ing-beef-stock",
+      "name": "beef stock",
+      "category": "pantry",
+      "tags": [
+        "staple"
+      ],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-beef-stock.png"
     },
     {
       "id": "ing-chickpeas",
       "name": "chickpeas",
       "category": "pantry",
-      "tags": ["staple", "batch-friendly"],
+      "tags": [
+        "staple",
+        "batch-friendly"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["beans"],
+      "familyKeys": [
+        "beans"
+      ],
       "imageUrl": "/images/seed/ing-chickpeas.png"
     },
     {
       "id": "ing-chili-powder",
       "name": "chili powder",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-chili-powder.png"
     },
     {
       "id": "ing-chipolatas",
@@ -416,7 +565,9 @@
       "shelfLifeHint": "3 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["sausage"],
+      "familyKeys": [
+        "sausage"
+      ],
       "imageUrl": "/images/seed/ing-chipolatas.png"
     },
     {
@@ -427,23 +578,34 @@
       "shelfLifeHint": "2 weeks",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["sausage"],
+      "familyKeys": [
+        "sausage"
+      ],
       "imageUrl": "/images/seed/ing-chorizo.png"
     },
     {
       "id": "ing-cilantro",
       "name": "cilantro",
       "category": "veg",
-      "tags": ["quick"],
+      "aliases": [
+        "coriander",
+        "fresh coriander"
+      ],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "5 days",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-cilantro.png"
     },
     {
       "id": "ing-coconut-milk",
       "name": "coconut milk",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -453,36 +615,52 @@
       "id": "ing-coconut-oil",
       "name": "coconut oil",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-coconut-oil.png"
     },
     {
       "id": "ing-corn-tortillas",
       "name": "corn tortillas",
       "imageUrl": "/images/seed/ing-corn-tortillas.png",
       "category": "carb",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
-      "familyKeys": ["tortilla"]
+      "familyKeys": [
+        "tortilla"
+      ]
     },
     {
       "id": "ing-cornmeal",
       "name": "cornmeal",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["flour"]
+      "familyKeys": [
+        "flour"
+      ],
+      "imageUrl": "/images/seed/ing-cornmeal.png"
     },
     {
       "id": "ing-courgette",
       "name": "courgette",
       "category": "veg",
+      "aliases": [
+        "zucchini",
+        "zucchini squash"
+      ],
       "tags": [],
       "shelfLifeHint": "5 days",
       "freezerFriendly": true,
@@ -493,7 +671,10 @@
       "id": "ing-couscous",
       "name": "couscous",
       "category": "carb",
-      "tags": ["quick", "staple"],
+      "tags": [
+        "quick",
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -507,7 +688,10 @@
       "shelfLifeHint": "2 weeks",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["cheese"]
+      "familyKeys": [
+        "cheese"
+      ],
+      "imageUrl": "/images/seed/ing-cream-cheese.png"
     },
     {
       "id": "ing-creme-fraiche",
@@ -516,16 +700,20 @@
       "tags": [],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-creme-fraiche.png"
     },
     {
       "id": "ing-cumin",
       "name": "cumin",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-cumin.png"
     },
     {
       "id": "ing-double-cream",
@@ -534,7 +722,8 @@
       "tags": [],
       "shelfLifeHint": "3 days",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-double-cream.png"
     },
     {
       "id": "ing-duck-breast",
@@ -543,23 +732,29 @@
       "tags": [],
       "shelfLifeHint": "3 days",
       "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-duck-breast.png"
     },
     {
       "id": "ing-edamame",
       "name": "edamame",
       "category": "freezer",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "months",
       "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-edamame.png"
     },
     {
       "id": "ing-eggs",
       "name": "eggs",
       "imageUrl": "/images/seed/ing-eggs.png",
       "category": "protein",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "3 weeks",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false
@@ -572,14 +767,18 @@
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["cheese"],
+      "familyKeys": [
+        "cheese"
+      ],
       "imageUrl": "/images/seed/ing-feta.png"
     },
     {
       "id": "ing-fishfingers",
       "name": "fish fingers",
       "category": "freezer",
-      "tags": ["rescue"],
+      "tags": [
+        "rescue"
+      ],
       "shelfLifeHint": "months",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
@@ -590,27 +789,37 @@
       "name": "flour",
       "imageUrl": "/images/seed/ing-flour.png",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
-      "familyKeys": ["flour"]
+      "familyKeys": [
+        "flour"
+      ]
     },
     {
       "id": "ing-flour-tortillas",
       "name": "flour tortillas",
       "category": "carb",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["tortilla"]
+      "familyKeys": [
+        "tortilla"
+      ]
     },
     {
       "id": "ing-fresh-ginger",
       "name": "fresh ginger",
       "category": "veg",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "3 weeks",
       "freezerFriendly": true,
       "babySafeWithAdaptation": false,
@@ -620,7 +829,9 @@
       "id": "ing-garlic",
       "name": "garlic",
       "category": "veg",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "2 weeks",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
@@ -630,7 +841,9 @@
       "id": "ing-garlic-powder",
       "name": "garlic powder",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false
@@ -639,7 +852,9 @@
       "id": "ing-gnocchi",
       "name": "gnocchi",
       "category": "carb",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "3 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true
@@ -652,7 +867,9 @@
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["cheese"]
+      "familyKeys": [
+        "cheese"
+      ]
     },
     {
       "id": "ing-green-beans",
@@ -687,18 +904,24 @@
       "id": "ing-halloumi",
       "name": "halloumi",
       "category": "dairy",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "2 weeks",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["cheese"],
+      "familyKeys": [
+        "cheese"
+      ],
       "imageUrl": "/images/seed/ing-halloumi.png"
     },
     {
       "id": "ing-honey",
       "name": "honey",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
@@ -707,9 +930,14 @@
     {
       "id": "ing-hummus",
       "name": "hummus",
-      "aliases": ["houmus"],
+      "aliases": [
+        "houmus"
+      ],
       "category": "pantry",
-      "tags": ["quick", "staple"],
+      "tags": [
+        "quick",
+        "staple"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -723,17 +951,22 @@
       "shelfLifeHint": "3 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["sausage"],
+      "familyKeys": [
+        "sausage"
+      ],
       "imageUrl": "/images/seed/ing-italian-sausage.png"
     },
     {
       "id": "ing-italian-seasoning",
       "name": "italian seasoning",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-italian-seasoning.png"
     },
     {
       "id": "ing-kale",
@@ -749,11 +982,17 @@
       "id": "ing-kidney-beans",
       "name": "kidney beans",
       "category": "pantry",
-      "tags": ["staple", "batch-friendly"],
+      "tags": [
+        "staple",
+        "batch-friendly"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["beans"]
+      "familyKeys": [
+        "beans"
+      ],
+      "imageUrl": "/images/seed/ing-kidney-beans.png"
     },
     {
       "id": "ing-lamb-mince",
@@ -762,23 +1001,31 @@
       "tags": [],
       "shelfLifeHint": "3 days",
       "freezerFriendly": true,
-      "babySafeWithAdaptation": true
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-lamb-mince.png"
     },
     {
       "id": "ing-lasagne-sheets",
       "name": "lasagne sheets",
       "category": "carb",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["pasta"]
+      "familyKeys": [
+        "pasta"
+      ],
+      "imageUrl": "/images/seed/ing-lasagne-sheets.png"
     },
     {
       "id": "ing-lemon",
       "name": "lemon",
       "category": "fruit",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "2 weeks",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -788,7 +1035,9 @@
       "id": "ing-lettuce",
       "name": "lettuce",
       "category": "veg",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "5 days",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
@@ -798,7 +1047,9 @@
       "id": "ing-lime",
       "name": "lime",
       "category": "fruit",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -818,7 +1069,9 @@
       "id": "ing-milk",
       "name": "milk",
       "category": "dairy",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -828,16 +1081,21 @@
       "id": "ing-miso-paste",
       "name": "miso paste",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-miso-paste.png"
     },
     {
       "id": "ing-mixed-frozen-vegetables",
       "name": "mixed frozen vegetables",
       "category": "freezer",
-      "tags": ["rescue"],
+      "tags": [
+        "rescue"
+      ],
       "shelfLifeHint": "months",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
@@ -847,11 +1105,16 @@
       "id": "ing-mozzarella",
       "name": "mozzarella",
       "category": "dairy",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["cheese", "pizza"],
+      "familyKeys": [
+        "cheese",
+        "pizza"
+      ],
       "imageUrl": "/images/seed/ing-mozzarella.png"
     },
     {
@@ -868,7 +1131,9 @@
       "id": "ing-mustard",
       "name": "mustard",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
@@ -878,7 +1143,10 @@
       "id": "ing-noodles",
       "name": "noodles",
       "category": "carb",
-      "tags": ["quick", "staple"],
+      "tags": [
+        "quick",
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -888,7 +1156,9 @@
       "id": "ing-oats",
       "name": "oats",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -898,7 +1168,9 @@
       "id": "ing-olive-oil",
       "name": "olive oil",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -908,7 +1180,9 @@
       "id": "ing-onion",
       "name": "onion",
       "category": "veg",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "2 weeks",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
@@ -928,16 +1202,21 @@
       "id": "ing-oregano",
       "name": "oregano",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-oregano.png"
     },
     {
       "id": "ing-paneer",
       "name": "paneer",
       "category": "protein",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
@@ -951,14 +1230,18 @@
       "shelfLifeHint": "long",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["cheese"],
+      "familyKeys": [
+        "cheese"
+      ],
       "imageUrl": "/images/seed/ing-parmesan.png"
     },
     {
       "id": "ing-parsley",
       "name": "parsley",
       "category": "veg",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "5 days",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -968,28 +1251,40 @@
       "id": "ing-passata",
       "name": "passata",
       "category": "pantry",
-      "tags": ["staple", "batch-friendly"],
+      "tags": [
+        "staple",
+        "batch-friendly"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["tomato"]
+      "familyKeys": [
+        "tomato"
+      ],
+      "imageUrl": "/images/seed/ing-passata.png"
     },
     {
       "id": "ing-pasta",
       "name": "pasta",
       "category": "carb",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["pasta"],
+      "familyKeys": [
+        "pasta"
+      ],
       "imageUrl": "/images/seed/ing-pasta.png"
     },
     {
       "id": "ing-peanut-butter",
       "name": "peanut butter",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
@@ -999,7 +1294,9 @@
       "id": "ing-peas",
       "name": "peas",
       "category": "freezer",
-      "tags": ["rescue"],
+      "tags": [
+        "rescue"
+      ],
       "shelfLifeHint": "months",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
@@ -1013,13 +1310,18 @@
       "shelfLifeHint": "long",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["cheese"]
+      "familyKeys": [
+        "cheese"
+      ],
+      "imageUrl": "/images/seed/ing-pecorino.png"
     },
     {
       "id": "ing-peppers",
       "name": "peppers",
       "category": "veg",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": true,
       "babySafeWithAdaptation": false,
@@ -1029,22 +1331,32 @@
       "id": "ing-pinto-beans",
       "name": "pinto beans",
       "category": "pantry",
-      "tags": ["staple", "batch-friendly"],
+      "tags": [
+        "staple",
+        "batch-friendly"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["beans"]
+      "familyKeys": [
+        "beans"
+      ],
+      "imageUrl": "/images/seed/ing-pinto-beans.png"
     },
     {
       "id": "ing-pita-bread",
       "name": "pita bread",
       "imageUrl": "/images/seed/ing-pita-bread.png",
       "category": "carb",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "3 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["bread"]
+      "familyKeys": [
+        "bread"
+      ]
     },
     {
       "id": "ing-plum-tomatoes",
@@ -1054,7 +1366,9 @@
       "shelfLifeHint": "5 days",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["tomato"],
+      "familyKeys": [
+        "tomato"
+      ],
       "imageUrl": "/images/seed/ing-plum-tomatoes.png"
     },
     {
@@ -1072,26 +1386,35 @@
       "name": "potatoes",
       "imageUrl": "/images/seed/ing-potatoes.png",
       "category": "carb",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "2 weeks",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true
     },
     {
-      "id": "ing-prawns",
-      "name": "prawns",
+      "id": "ing-prawn",
+      "name": "prawn",
       "category": "protein",
+      "aliases": [
+        "prawns",
+        "shrimp",
+        "shrimps"
+      ],
       "tags": [],
       "shelfLifeHint": "2 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": false,
-      "imageUrl": "/images/seed/ing-prawns.png"
+      "imageUrl": "/images/seed/ing-prawn.png"
     },
     {
       "id": "ing-quinoa",
       "name": "quinoa",
       "category": "carb",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -1101,7 +1424,9 @@
       "id": "ing-red-onion",
       "name": "red onion",
       "category": "veg",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "2 weeks",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -1111,7 +1436,9 @@
       "id": "ing-rice",
       "name": "rice",
       "category": "carb",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -1121,11 +1448,16 @@
       "id": "ing-rice-flour",
       "name": "rice flour",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["flour"]
+      "familyKeys": [
+        "flour"
+      ],
+      "imageUrl": "/images/seed/ing-rice-flour.png"
     },
     {
       "id": "ing-ricotta",
@@ -1135,33 +1467,46 @@
       "shelfLifeHint": "3 days",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["cheese"],
+      "familyKeys": [
+        "cheese"
+      ],
       "imageUrl": "/images/seed/ing-ricotta.png"
     },
     {
       "id": "ing-romaine-lettuce",
       "name": "romaine lettuce",
       "category": "veg",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "5 days",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-romaine-lettuce.png"
     },
     {
       "id": "ing-rosemary",
       "name": "rosemary",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-rosemary.png"
     },
     {
       "id": "ing-salt",
       "name": "salt",
-      "aliases": ["sea salt", "table salt"],
+      "aliases": [
+        "sea salt",
+        "table salt"
+      ],
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -1181,10 +1526,13 @@
       "id": "ing-sesame-oil",
       "name": "sesame oil",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-sesame-oil.png"
     },
     {
       "id": "ing-sirloin-steak",
@@ -1200,10 +1548,13 @@
       "id": "ing-smoked-paprika",
       "name": "smoked paprika",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-smoked-paprika.png"
     },
     {
       "id": "ing-sour-cream",
@@ -1212,7 +1563,8 @@
       "tags": [],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-sour-cream.png"
     },
     {
       "id": "ing-sourdough-bread",
@@ -1222,14 +1574,18 @@
       "shelfLifeHint": "3 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["bread"],
+      "familyKeys": [
+        "bread"
+      ],
       "imageUrl": "/images/seed/ing-sourdough-bread.png"
     },
     {
       "id": "ing-soy-sauce",
       "name": "soy sauce",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
@@ -1240,7 +1596,9 @@
       "name": "spinach",
       "imageUrl": "/images/seed/ing-spinach.png",
       "category": "veg",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "5 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true
@@ -1249,36 +1607,48 @@
       "id": "ing-spring-onions",
       "name": "spring onions",
       "category": "veg",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-spring-onions.png"
     },
     {
       "id": "ing-strawberries",
       "name": "strawberries",
       "imageUrl": "/images/seed/ing-strawberries.png",
       "category": "fruit",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "3 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true
     },
     {
-      "id": "ing-strong-bread-flour",
-      "name": "strong bread flour",
+      "id": "ing-bread-flour",
+      "name": "bread flour",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["flour"]
+      "familyKeys": [
+        "flour"
+      ],
+      "imageUrl": "/images/seed/ing-bread-flour.png"
     },
     {
       "id": "ing-sugar",
       "name": "sugar",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
@@ -1288,17 +1658,24 @@
       "id": "ing-sun-dried-tomatoes",
       "name": "sun-dried tomatoes",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["tomato"]
+      "familyKeys": [
+        "tomato"
+      ],
+      "imageUrl": "/images/seed/ing-sun-dried-tomatoes.png"
     },
     {
       "id": "ing-sweet-potato",
       "name": "sweet potato",
       "category": "veg",
-      "tags": ["mashable"],
+      "tags": [
+        "mashable"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -1308,36 +1685,49 @@
       "id": "ing-tahini",
       "name": "tahini",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-tahini.png"
     },
     {
       "id": "ing-thyme",
       "name": "thyme",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-thyme.png"
     },
     {
       "id": "ing-tinned-tomatoes",
       "name": "tinned tomatoes",
       "imageUrl": "/images/seed/ing-tinned-tomatoes.png",
       "category": "pantry",
-      "tags": ["staple", "batch-friendly"],
+      "tags": [
+        "staple",
+        "batch-friendly"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["tomato"]
+      "familyKeys": [
+        "tomato"
+      ]
     },
     {
       "id": "ing-tinned-tuna",
       "name": "tinned tuna",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true
@@ -1346,7 +1736,9 @@
       "id": "ing-tofu",
       "name": "tofu",
       "category": "protein",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -1356,31 +1748,43 @@
       "id": "ing-tomato-ketchup",
       "name": "tomato ketchup",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["tomato"]
+      "familyKeys": [
+        "tomato"
+      ]
     },
     {
       "id": "ing-tomato-paste",
       "name": "tomato paste",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["tomato"]
+      "familyKeys": [
+        "tomato"
+      ]
     },
     {
       "id": "ing-tomato-sauce",
       "name": "tomato sauce",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["tomato"]
+      "familyKeys": [
+        "tomato"
+      ]
     },
     {
       "id": "ing-turkey-breast",
@@ -1399,51 +1803,70 @@
       "tags": [],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-vanilla-extract.png"
     },
     {
       "id": "ing-vegetable-stock",
       "name": "vegetable stock",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-vegetable-stock.png"
     },
     {
       "id": "ing-white-wine-vinegar",
       "name": "white wine vinegar",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-white-wine-vinegar.png"
     },
     {
       "id": "ing-wholemeal-bread",
       "name": "wholemeal bread",
       "category": "carb",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "3 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["bread"]
+      "familyKeys": [
+        "bread"
+      ],
+      "imageUrl": "/images/seed/ing-wholemeal-bread.png"
     },
     {
       "id": "ing-wholemeal-flour",
       "name": "wholemeal flour",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
-      "familyKeys": ["flour"]
+      "familyKeys": [
+        "flour"
+      ],
+      "imageUrl": "/images/seed/ing-wholemeal-flour.png"
     },
     {
       "id": "ing-water",
       "name": "water",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
@@ -1453,16 +1876,21 @@
       "id": "ing-worcestershire-sauce",
       "name": "worcestershire sauce",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": false
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-worcestershire-sauce.png"
     },
     {
       "id": "ing-yeast",
       "name": "yeast",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": false,
@@ -1472,11 +1900,49 @@
       "id": "ing-yogurt",
       "name": "yogurt",
       "category": "dairy",
-      "tags": ["quick"],
+      "tags": [
+        "quick"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true,
       "imageUrl": "/images/seed/ing-yogurt.png"
+    },
+    {
+      "id": "ing-turkey-mince",
+      "name": "turkey mince",
+      "category": "meat",
+      "tags": [
+        "protein"
+      ],
+      "shelfLifeHint": "short",
+      "freezerFriendly": true,
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-turkey-mince.png"
+    },
+    {
+      "id": "ing-queso-fresco",
+      "name": "queso fresco",
+      "category": "dairy",
+      "tags": [
+        "cheese"
+      ],
+      "shelfLifeHint": "medium",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": false,
+      "imageUrl": "/images/seed/ing-queso-fresco.png"
+    },
+    {
+      "id": "ing-ramen-noodles",
+      "name": "ramen noodles",
+      "category": "carbs",
+      "tags": [
+        "staple"
+      ],
+      "shelfLifeHint": "long",
+      "freezerFriendly": false,
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-ramen-noodles.png"
     }
   ],
   "recipes": [
@@ -1484,7 +1950,10 @@
       "id": "rec-taco-chicken",
       "name": "Grilled taco chicken",
       "imageUrl": "/images/seed/rec-taco-chicken.png",
-      "tags": ["batch-friendly", "freezer-friendly"],
+      "tags": [
+        "batch-friendly",
+        "freezer-friendly"
+      ],
       "components": [
         {
           "id": "mc-rtc-1",
@@ -1534,7 +2003,10 @@
       "id": "rec-black-bean-filling",
       "name": "Black bean taco filling",
       "imageUrl": "/images/seed/rec-black-bean-filling.png",
-      "tags": ["batch-friendly", "quick"],
+      "tags": [
+        "batch-friendly",
+        "quick"
+      ],
       "components": [
         {
           "id": "mc-rbb-1",
@@ -1584,7 +2056,10 @@
       "id": "rec-yogurt-lime-sauce",
       "name": "Quick yogurt-lime sauce",
       "imageUrl": "/images/seed/rec-yogurt-lime-sauce.png",
-      "tags": ["quick", "sauce"],
+      "tags": [
+        "quick",
+        "sauce"
+      ],
       "components": [
         {
           "id": "mc-ryls-1",
@@ -1615,7 +2090,10 @@
       "id": "rec-pizza-dough",
       "name": "Basic pizza dough",
       "imageUrl": "/images/seed/rec-pizza-dough.png",
-      "tags": ["batch-friendly", "freezer-friendly"],
+      "tags": [
+        "batch-friendly",
+        "freezer-friendly"
+      ],
       "components": [
         {
           "id": "mc-rpd-1",
@@ -1654,7 +2132,12 @@
       "id": "rec-pizza-sauce",
       "name": "Quick pizza sauce",
       "imageUrl": "/images/seed/rec-pizza-sauce.png",
-      "tags": ["quick", "batch-friendly", "freezer-friendly", "sauce"],
+      "tags": [
+        "quick",
+        "batch-friendly",
+        "freezer-friendly",
+        "sauce"
+      ],
       "components": [
         {
           "id": "mc-rps-1",
@@ -1692,7 +2175,10 @@
       "id": "rec-tray-pizza",
       "name": "Simple tray pizza",
       "imageUrl": "/images/seed/rec-tray-pizza.png",
-      "tags": ["whole-meal", "batch-friendly"],
+      "tags": [
+        "whole-meal",
+        "batch-friendly"
+      ],
       "components": [
         {
           "id": "mc-rtp-1",
@@ -1731,7 +2217,11 @@
       "id": "rec-pasta-bake-sauce",
       "name": "Basic pasta bake sauce",
       "imageUrl": "/images/seed/rec-pasta-bake-sauce.png",
-      "tags": ["batch-friendly", "freezer-friendly", "sauce"],
+      "tags": [
+        "batch-friendly",
+        "freezer-friendly",
+        "sauce"
+      ],
       "components": [
         {
           "id": "mc-rpbs-1",
@@ -1775,7 +2265,11 @@
       "id": "rec-roasted-broccoli",
       "name": "Roasted broccoli",
       "imageUrl": "/images/seed/rec-roasted-broccoli.png",
-      "tags": ["quick", "batch-friendly", "prep-ahead"],
+      "tags": [
+        "quick",
+        "batch-friendly",
+        "prep-ahead"
+      ],
       "components": [
         {
           "id": "mc-rrb-1",
@@ -1807,7 +2301,11 @@
       "id": "rec-seasoned-rice",
       "name": "Plain seasoned rice",
       "imageUrl": "/images/seed/rec-seasoned-rice.png",
-      "tags": ["quick", "batch-friendly", "bowl"],
+      "tags": [
+        "quick",
+        "batch-friendly",
+        "bowl"
+      ],
       "components": [
         {
           "id": "mc-rsr-1",
@@ -1833,7 +2331,12 @@
       "id": "rec-cheese-sauce",
       "name": "Simple cheese sauce",
       "imageUrl": "/images/seed/rec-cheese-sauce.png",
-      "tags": ["quick", "rescue-friendly", "kid-friendly", "sauce"],
+      "tags": [
+        "quick",
+        "rescue-friendly",
+        "kid-friendly",
+        "sauce"
+      ],
       "components": [
         {
           "id": "mc-rcs-1",
@@ -1877,7 +2380,12 @@
       "id": "rec-tomato-soup",
       "name": "Simple tomato soup",
       "imageUrl": "/images/seed/rec-tomato-soup.png",
-      "tags": ["quick", "soup", "batch-friendly", "freezer-friendly"],
+      "tags": [
+        "quick",
+        "soup",
+        "batch-friendly",
+        "freezer-friendly"
+      ],
       "components": [
         {
           "id": "mc-rts-1",
@@ -1920,7 +2428,9 @@
     {
       "id": "rec-spaghetti-bolognese",
       "name": "Spaghetti bolognese",
-      "tags": ["batch-friendly"],
+      "tags": [
+        "batch-friendly"
+      ],
       "components": [
         {
           "id": "mc-sb-1",
@@ -1993,7 +2503,9 @@
       "estimatedTimeMinutes": 30,
       "difficulty": "easy",
       "rescueEligible": true,
-      "wasteReuseHints": ["Leftover pasta works for next-day lunch"]
+      "wasteReuseHints": [
+        "Leftover pasta works for next-day lunch"
+      ]
     },
     {
       "id": "bm-salmon-rice",
@@ -2057,7 +2569,9 @@
         {
           "id": "mc-bm-tn-1",
           "ingredientId": "ing-chicken",
-          "alternativeIngredientIds": ["ing-black-beans"],
+          "alternativeIngredientIds": [
+            "ing-black-beans"
+          ],
           "role": "protein",
           "quantity": "600g",
           "prepNote": "Grill with taco spices",
@@ -2255,13 +2769,18 @@
       "estimatedTimeMinutes": 40,
       "difficulty": "easy",
       "rescueEligible": true,
-      "wasteReuseHints": ["Leftovers reheat well for lunch", "Sauce freezes in batches"]
+      "wasteReuseHints": [
+        "Leftovers reheat well for lunch",
+        "Sauce freezes in batches"
+      ]
     },
     {
       "id": "bm-rice-bowl",
       "name": "Rice bowl",
       "imageUrl": "/images/seed/bm-rice-bowl.png",
-      "tags": ["bowl"],
+      "tags": [
+        "bowl"
+      ],
       "components": [
         {
           "id": "mc-bm-rb-1",
@@ -2282,7 +2801,9 @@
         {
           "id": "mc-bm-rb-2",
           "ingredientId": "ing-chicken",
-          "alternativeIngredientIds": ["ing-tofu"],
+          "alternativeIngredientIds": [
+            "ing-tofu"
+          ],
           "role": "protein",
           "quantity": "500g",
           "prepNote": "Grill or pan-fry"
@@ -2335,7 +2856,9 @@
       "id": "bm-rescue-cheesy-pasta",
       "name": "Cheesy pasta (rescue)",
       "imageUrl": "/images/seed/bm-rescue-cheesy-pasta.png",
-      "tags": ["rescue"],
+      "tags": [
+        "rescue"
+      ],
       "components": [
         {
           "id": "mc-bm-rcp-1",
@@ -2378,7 +2901,9 @@
       "estimatedTimeMinutes": 15,
       "difficulty": "easy",
       "rescueEligible": true,
-      "wasteReuseHints": ["Add leftover veg to bulk it out"]
+      "wasteReuseHints": [
+        "Add leftover veg to bulk it out"
+      ]
     }
   ],
   "weeklyPlans": [],

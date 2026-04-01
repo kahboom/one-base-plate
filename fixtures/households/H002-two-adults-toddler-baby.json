@@ -6,8 +6,16 @@
       "id": "M001",
       "name": "Alex",
       "role": "adult",
-      "safeFoods": ["rice", "chicken breast", "broccoli", "pasta"],
-      "hardNoFoods": ["mushrooms", "blue cheese"],
+      "safeFoods": [
+        "rice",
+        "chicken breast",
+        "broccoli",
+        "pasta"
+      ],
+      "hardNoFoods": [
+        "mushrooms",
+        "blue cheese"
+      ],
       "preparationRules": [
         {
           "ingredient": "chicken breast",
@@ -26,19 +34,36 @@
       "id": "M002",
       "name": "Jordan",
       "role": "adult",
-      "safeFoods": ["pasta", "rice", "salmon", "avocado", "mushrooms"],
+      "safeFoods": [
+        "pasta",
+        "rice",
+        "salmon",
+        "avocado",
+        "mushrooms"
+      ],
       "hardNoFoods": [],
       "preparationRules": [],
       "textureLevel": "regular",
-      "allergens": ["tree nuts"],
+      "allergens": [
+        "tree nuts"
+      ],
       "notes": "Flexible eater, avoids tree nuts due to allergy."
     },
     {
       "id": "M003",
       "name": "Riley",
       "role": "toddler",
-      "safeFoods": ["pasta", "bread", "banana", "cheese", "peas"],
-      "hardNoFoods": ["spicy sauce", "raw onion"],
+      "safeFoods": [
+        "pasta",
+        "bread",
+        "banana",
+        "cheese",
+        "peas"
+      ],
+      "hardNoFoods": [
+        "spicy sauce",
+        "raw onion"
+      ],
       "preparationRules": [
         {
           "ingredient": "pasta",
@@ -53,8 +78,17 @@
       "id": "M004",
       "name": "Sam",
       "role": "baby",
-      "safeFoods": ["sweet potato", "banana", "avocado", "rice"],
-      "hardNoFoods": ["honey", "whole nuts", "raw egg"],
+      "safeFoods": [
+        "sweet potato",
+        "banana",
+        "avocado",
+        "rice"
+      ],
+      "hardNoFoods": [
+        "honey",
+        "whole nuts",
+        "raw egg"
+      ],
       "preparationRules": [
         {
           "ingredient": "sweet potato",
@@ -71,7 +105,9 @@
       "id": "ing-pasta",
       "name": "pasta",
       "category": "carb",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true
@@ -80,7 +116,9 @@
       "id": "ing-rice",
       "name": "rice",
       "category": "carb",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true
@@ -116,7 +154,9 @@
       "id": "ing-peas",
       "name": "peas",
       "category": "freezer",
-      "tags": ["rescue"],
+      "tags": [
+        "rescue"
+      ],
       "shelfLifeHint": "months",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true
@@ -125,7 +165,9 @@
       "id": "ing-sweet-potato",
       "name": "sweet potato",
       "category": "veg",
-      "tags": ["mashable"],
+      "tags": [
+        "mashable"
+      ],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true
@@ -137,13 +179,16 @@
       "tags": [],
       "shelfLifeHint": "1 week",
       "freezerFriendly": false,
-      "babySafeWithAdaptation": true
+      "babySafeWithAdaptation": true,
+      "imageUrl": "/images/seed/ing-cheese.png"
     },
     {
       "id": "ing-tomato-sauce",
       "name": "tomato sauce",
       "category": "pantry",
-      "tags": ["staple"],
+      "tags": [
+        "staple"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true
@@ -152,7 +197,9 @@
       "id": "ing-bread",
       "name": "bread",
       "category": "carb",
-      "tags": ["rescue"],
+      "tags": [
+        "rescue"
+      ],
       "shelfLifeHint": "3 days",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true
@@ -161,7 +208,9 @@
       "id": "ing-fishfingers",
       "name": "fish fingers",
       "category": "freezer",
-      "tags": ["rescue"],
+      "tags": [
+        "rescue"
+      ],
       "shelfLifeHint": "months",
       "freezerFriendly": true,
       "babySafeWithAdaptation": true
@@ -170,7 +219,9 @@
       "id": "ing-beans",
       "name": "baked beans",
       "category": "pantry",
-      "tags": ["rescue"],
+      "tags": [
+        "rescue"
+      ],
       "shelfLifeHint": "long",
       "freezerFriendly": false,
       "babySafeWithAdaptation": true
@@ -183,13 +234,21 @@
       "name": "Pasta with chicken and broccoli",
       "imageUrl": "/images/seed/bm-pasta-chicken.png",
       "components": [
-        { "ingredientId": "ing-pasta", "role": "carb", "quantity": "400g" },
+        {
+          "ingredientId": "ing-pasta",
+          "role": "carb",
+          "quantity": "400g"
+        },
         {
           "ingredientId": "ing-chicken",
           "role": "protein",
           "quantity": "500g"
         },
-        { "ingredientId": "ing-broccoli", "role": "veg", "quantity": "1 head" },
+        {
+          "ingredientId": "ing-broccoli",
+          "role": "veg",
+          "quantity": "1 head"
+        },
         {
           "ingredientId": "ing-tomato-sauce",
           "role": "sauce",
@@ -200,16 +259,30 @@
       "estimatedTimeMinutes": 30,
       "difficulty": "easy",
       "rescueEligible": true,
-      "wasteReuseHints": ["Leftover pasta works for next-day lunch"]
+      "wasteReuseHints": [
+        "Leftover pasta works for next-day lunch"
+      ]
     },
     {
       "id": "bm-salmon-rice",
       "name": "Salmon with rice and peas",
       "imageUrl": "/images/seed/bm-salmon-rice.png",
       "components": [
-        { "ingredientId": "ing-rice", "role": "carb", "quantity": "300g" },
-        { "ingredientId": "ing-salmon", "role": "protein", "quantity": "400g" },
-        { "ingredientId": "ing-peas", "role": "veg", "quantity": "200g" }
+        {
+          "ingredientId": "ing-rice",
+          "role": "carb",
+          "quantity": "300g"
+        },
+        {
+          "ingredientId": "ing-salmon",
+          "role": "protein",
+          "quantity": "400g"
+        },
+        {
+          "ingredientId": "ing-peas",
+          "role": "veg",
+          "quantity": "200g"
+        }
       ],
       "defaultPrep": "Cook rice. Pan-fry salmon. Heat peas.",
       "estimatedTimeMinutes": 25,
@@ -227,8 +300,16 @@
           "role": "protein",
           "quantity": "8 pieces"
         },
-        { "ingredientId": "ing-beans", "role": "veg", "quantity": "1 tin" },
-        { "ingredientId": "ing-bread", "role": "carb", "quantity": "4 slices" }
+        {
+          "ingredientId": "ing-beans",
+          "role": "veg",
+          "quantity": "1 tin"
+        },
+        {
+          "ingredientId": "ing-bread",
+          "role": "carb",
+          "quantity": "4 slices"
+        }
       ],
       "defaultPrep": "Oven fish fingers. Heat beans. Toast bread.",
       "estimatedTimeMinutes": 15,

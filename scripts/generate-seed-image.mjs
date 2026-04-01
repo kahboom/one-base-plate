@@ -22,7 +22,7 @@ const ITEMS = [
     subject:
       'a few slender uncooked chipolata sausages in a loose row, thin pale-pink links, no packaging',
   },
-  { id: 'ing-carrots', subject: 'three whole carrots with trimmed green tops' },
+  { id: 'ing-carrots', subject: 'exactly three whole carrots with very short trimmed stems, no leafy tops at all, laid side by side at a gentle diagonal, smooth orange skin, nothing else in the image' },
   {
     id: 'rec-spaghetti-bolognese',
     subject:
@@ -143,6 +143,11 @@ const ITEMS = [
       'a comforting bowl of elbow macaroni coated in smooth pale yellow cheese sauce, creamy and simple, mac-and-cheese style rescue meal',
     dish: true,
   },
+  {
+    id: 'ing-avocado',
+    subject:
+      'one single halved avocado showing the smooth large pit, bright green flesh graduating to pale yellow near the pit, dark green skin, three-quarter angle, nothing else in the image, no knife, no lime',
+  },
   { id: 'ing-cheddar', subject: 'a wedge of orange cheddar cheese' },
   { id: 'ing-paneer', subject: 'a rectangular block of white paneer cheese' },
   { id: 'ing-halloumi', subject: 'a few golden-brown grilled halloumi slices' },
@@ -153,7 +158,7 @@ const ITEMS = [
   },
   {
     id: 'ing-blueberries',
-    subject: 'a loose small pile of fresh blueberries, dusty blue-purple, natural variation in size',
+    subject: 'a small neat cluster of plump fresh blueberries, dusty blue-purple with a natural bloom, natural size variation, no stems, no leaves, no bowl, nothing else',
   },
   {
     id: 'ing-banana',
@@ -173,15 +178,20 @@ const ITEMS = [
   {
     id: 'ing-baguette',
     subject:
-      'one classic French baguette with a golden scored crust, simple diagonal three-quarter view, no basket',
+      'one single classic French baguette with a golden scored crust, placed horizontally and centered in the frame so both ends are fully visible, the full length fits within the image, pure white background, nothing else in the image, no crumbs, no basket, no cloth, no board',
   },
   {
     id: 'ing-apple',
-    subject: 'one whole apple with a short stem, subtle red blush over yellow-green skin, natural dimples',
+    subject: 'one single whole red apple with a short stem, natural red skin with subtle variation, simple three-quarter view, nothing else in the image',
+  },
+  {
+    id: 'ing-arepa',
+    subject:
+      'two thick round white-corn arepas, lightly griddled with subtle golden-brown marks, one showing a soft pale interior at the edge, stacked slightly offset, no fillings, no plate, nothing else in the image',
   },
   {
     id: 'ing-eggs',
-    subject: 'three whole brown chicken eggs in a loose gentle cluster, natural size variation, no carton',
+    subject: 'three whole brown chicken eggs arranged in a simple loose cluster, smooth natural shells, no carton, no bowl, nothing else in the image',
   },
   {
     id: 'ing-flour',
@@ -208,7 +218,11 @@ const ITEMS = [
   },
   {
     id: 'ing-spinach',
-    subject: 'a loose bunch of fresh spinach leaves with short stems, deep green, unfussy',
+    subject: 'a single compact bunch of fresh spinach with stems gathered together, deep green, viewed from a slight angle, no scattered or loose leaves around it, nothing else in the image',
+  },
+  {
+    id: 'ing-broccoli',
+    subject: 'a single whole fresh broccoli head with a short thick stalk, vivid deep green, centered in the frame, three-quarter view, only one broccoli, no second head, no loose florets, nothing else in the image',
   },
   {
     id: 'ing-strawberries',
@@ -233,7 +247,7 @@ const ITEMS = [
   },
   {
     id: 'ing-onion',
-    subject: 'one whole brown cooking onion with dry papery skin and a short root end',
+    subject: 'one single whole brown cooking onion with dry papery skin and a short root end, three-quarter view, nothing else in the image',
   },
   {
     id: 'ing-oats',
@@ -337,9 +351,9 @@ const ITEMS = [
       'one raw boneless pork loin chop with a thin fat edge, pale pink meat, simple three-quarter view, no packaging',
   },
   {
-    id: 'ing-prawns',
+    id: 'ing-prawn',
     subject:
-      'several raw whole prawns with shell on, natural grey-pink shells, curved shape, simple loose grouping, no packaging',
+      'one single large raw whole prawn with shell on, natural grey-translucent shell, gently curved shape, simple side view, nothing else in the image, no packaging, no bowl',
   },
   {
     id: 'ing-lime',
@@ -438,7 +452,7 @@ const ITEMS = [
   {
     id: 'ing-feta',
     subject:
-      'a wedge of white feta cheese with a slightly crumbly edge, cool matte surface, simple triangular cut, no brine tub',
+      'one single rectangular block of white feta cheese with a slightly crumbly surface, cool matte texture, clean cut edges, nothing else in the image, no brine tub, no bowl',
   },
   {
     id: 'ing-green-beans',
@@ -478,7 +492,7 @@ const ITEMS = [
   {
     id: 'ing-parsley',
     subject:
-      'a small loose bunch of fresh flat-leaf parsley, deep green serrated leaves with short stems, no rubber band clutter',
+      'one single small bunch of fresh flat-leaf parsley, bright deep green serrated leaves with short stems, simple upright view, nothing else in the image, no rubber band, no board',
   },
   {
     id: 'ing-peanut-butter',
@@ -522,6 +536,262 @@ const ITEMS = [
     id: 'ing-water',
     subject:
       'a simple clear glass of still water, three-quarter full, crystal-clear liquid, plain glass tumbler, no ice, no lemon',
+  },
+  {
+    id: 'ing-almond-flour',
+    subject:
+      'a neat mound of fine pale cream almond flour in a simple shallow ceramic bowl, finely ground meal with a slightly golden tint, soft shadow inside only',
+  },
+  {
+    id: 'ing-balsamic-vinegar',
+    subject:
+      'a small plain unmarked glass bottle of dark rich balsamic vinegar, deep brown-black liquid with a slight gloss, cork stopper, no label or branding',
+  },
+  {
+    id: 'ing-basil',
+    subject:
+      'a small loose bunch of fresh sweet basil with vivid bright green rounded leaves on short stems, gentle three-quarter view, nothing else in the image, no other herbs',
+  },
+  {
+    id: 'ing-bay-leaves',
+    subject:
+      'one single whole dried bay leaf, pale sage-green with clear natural vein detail, slightly curled edges, centered top-down view, nothing else in the image, only one leaf',
+  },
+  {
+    id: 'ing-brown-lentils',
+    subject:
+      'a shallow bowl of dry uncooked brown lentils, small flat discs in warm earthy brown tones, simple ceramic bowl, soft shadow inside only',
+  },
+  {
+    id: 'ing-butter-beans',
+    subject:
+      'a shallow bowl of large plump pale cream butter beans, smooth round-edged ovals, simple ceramic bowl, soft shadow inside only',
+  },
+  {
+    id: 'ing-cannellini-beans',
+    subject:
+      'a shallow bowl of dry uncooked cannellini beans, large smooth white kidney-shaped ovals, simple ceramic bowl, soft shadow inside only',
+  },
+  {
+    id: 'ing-chicken-stock',
+    subject:
+      'a small plain ceramic jug of golden amber chicken stock, warm clear liquid with a light sheen, simple jug shape, no label, gentle steam implied',
+    dish: true,
+  },
+  {
+    id: 'ing-beef-stock',
+    subject:
+      'a small plain ceramic jug of rich dark brown beef stock, deep glossy liquid, simple jug shape, no label, gentle steam implied',
+    dish: true,
+  },
+  {
+    id: 'ing-chili-powder',
+    subject:
+      'a small neat mound of vibrant red-orange chili powder in a simple shallow ceramic dish, bold warm dried spice color, soft shadow inside only',
+  },
+  {
+    id: 'ing-coconut-oil',
+    subject:
+      'a small plain glass jar of solid white coconut oil, smooth opaque surface, simple jar shape with a plain lid, no label or branding',
+  },
+  {
+    id: 'ing-cornmeal',
+    subject:
+      'a neat mound of golden-yellow cornmeal in a simple shallow ceramic bowl, coarse granular texture with a warm maize color, soft shadow inside only',
+  },
+  {
+    id: 'ing-cream-cheese',
+    subject:
+      'a small plain white ramekin of thick smooth cream cheese, soft scooped surface with gentle indent, cool matte white texture, no packaging',
+    dish: true,
+  },
+  {
+    id: 'ing-creme-fraiche',
+    subject:
+      'a small plain white ramekin of thick white creme fraiche, smooth cool surface, simple ceramic dish, no packaging or branding',
+    dish: true,
+  },
+  {
+    id: 'ing-cumin',
+    subject:
+      'a small neat mound of warm earthy brown ground cumin in a simple shallow ceramic dish, rich ochre-brown tone, soft shadow inside only',
+  },
+  {
+    id: 'ing-double-cream',
+    subject:
+      'a small plain ceramic jug of thick double cream being poured, opaque white liquid with visible viscosity, simple pourer shape, no label or branding',
+    dish: true,
+  },
+  {
+    id: 'ing-duck-breast',
+    subject:
+      'one raw boneless duck breast with a thick layer of pale cream fat scored in a crosshatch pattern on top, deep pink-red meat beneath, simple three-quarter view, no packaging',
+  },
+  {
+    id: 'ing-edamame',
+    subject:
+      'a small loose pile of bright vivid green edamame soybeans in their pods, plump and smooth, natural size variation, no packaging, no bowl',
+  },
+  {
+    id: 'ing-cheese',
+    subject:
+      'a small neat wedge of pale yellow hard cheese with a natural rind edge and two thin slices laid beside it, simple arrangement, no packaging or labels',
+  },
+  {
+    id: 'ing-lasagne-sheets',
+    subject:
+      'a small neat stack of dry flat lasagne pasta sheets, pale golden, slightly wavy edges, simple top-down angle, no packaging',
+  },
+  {
+    id: 'ing-kidney-beans',
+    subject:
+      'a shallow bowl of dry uncooked kidney beans, deep glossy red-brown kidney shapes, simple ceramic bowl, soft shadow inside only',
+  },
+  {
+    id: 'ing-italian-seasoning',
+    subject:
+      'a small neat mound of dried Italian herb seasoning blend in a simple shallow ceramic dish, mixed green-brown flecks, soft shadow inside only',
+  },
+  {
+    id: 'ing-passata',
+    subject:
+      'a plain unmarked glass bottle of smooth bright red passata tomato sauce, simple bottle shape, no label or branding, simple side view',
+  },
+  {
+    id: 'ing-oregano',
+    subject:
+      'a small neat mound of dried oregano in a simple shallow ceramic dish, dusty olive-green dried herb flecks, soft shadow inside only',
+  },
+  {
+    id: 'ing-pecorino',
+    subject:
+      'a small wedge of aged pecorino cheese with a hard pale rind edge and dense granular white interior, simple triangular cut, nothing else in the image',
+  },
+  {
+    id: 'ing-pinto-beans',
+    subject:
+      'a shallow bowl of dry uncooked pinto beans, speckled beige and rust-brown mottled pattern, simple ceramic bowl, soft shadow inside only',
+  },
+  {
+    id: 'ing-thyme',
+    subject:
+      'a small green cooking herb sprig with tiny rounded leaves along a thin stem, kitchen herb, gentle three-quarter view on white background',
+  },
+  {
+    id: 'ing-sun-dried-tomatoes',
+    subject:
+      'a small loose pile of sun-dried tomato halves, deep ruby-red and slightly wrinkled, glistening with oil, no jar packaging',
+  },
+  {
+    id: 'ing-bread-flour',
+    subject:
+      'a neat mound of white bread flour in a simple shallow ceramic bowl, fine smooth powder with a bright white tone, soft shadow inside only',
+  },
+  {
+    id: 'ing-tahini',
+    subject:
+      'a small plain white ramekin of thick pale golden tahini sesame paste, smooth swirled surface with a warm ivory tone, no jar label',
+    dish: true,
+  },
+  {
+    id: 'ing-spring-onions',
+    subject:
+      'a small loose bundle of fresh spring onions scallions, bright green tops and white bulb ends, trimmed, simple three-quarter view, nothing else in the image',
+  },
+  {
+    id: 'ing-rosemary',
+    subject:
+      'one fresh green cooking herb sprig with long narrow needle-like leaves along a thin stem, kitchen herb, simple side view on white background',
+  },
+  {
+    id: 'ing-romaine-lettuce',
+    subject:
+      'one whole romaine lettuce heart with crisp elongated pale-green leaves, slightly cupped, upright three-quarter view, no dressing',
+  },
+  {
+    id: 'ing-rice-flour',
+    subject:
+      'a neat mound of fine white rice flour in a simple shallow ceramic bowl, very smooth bright white powder, soft shadow inside only',
+  },
+  {
+    id: 'ing-worcestershire-sauce',
+    subject:
+      'a small plain unmarked glass bottle of dark rich Worcestershire sauce, deep brown-black liquid, simple bottle shape, cork or plain cap, no label or branding',
+  },
+  {
+    id: 'ing-wholemeal-bread',
+    subject:
+      'one whole UK-style wholemeal tin loaf with a split top, dark brown seeded crust, uncut, simple three-quarter view, no basket',
+  },
+  {
+    id: 'ing-white-wine-vinegar',
+    subject:
+      'a small plain unmarked glass bottle of clear pale white wine vinegar, simple bottle silhouette, cork stopper, no label or branding',
+  },
+  {
+    id: 'ing-vanilla-extract',
+    subject:
+      'a small plain dark glass bottle of vanilla extract, deep amber-brown liquid visible through glass, simple tall bottle shape, plain cap, no label or branding',
+  },
+  {
+    id: 'ing-vegetable-stock',
+    subject:
+      'a small plain ceramic jug of clear golden-amber vegetable stock, warm liquid with light sheen, simple jug shape, no label, gentle steam implied',
+    dish: true,
+  },
+  {
+    id: 'ing-wholemeal-flour',
+    subject:
+      'a neat mound of coarse wholemeal flour in a simple shallow ceramic bowl, warm brown-beige granular texture, soft shadow inside only',
+  },
+  {
+    id: 'ing-sour-cream',
+    subject:
+      'a small plain white ramekin of thick white sour cream, smooth cool surface with slight sheen, simple ceramic dish, no packaging',
+    dish: true,
+  },
+  {
+    id: 'ing-smoked-paprika',
+    subject:
+      'a small neat mound of deep brick-red smoked paprika in a simple shallow ceramic dish, rich smoky red tone, soft shadow inside only',
+  },
+  {
+    id: 'ing-sesame-oil',
+    subject:
+      'a small plain unmarked glass bottle of golden-amber sesame oil, warm toasted color, simple bottle silhouette, cork or plain cap, no label or branding',
+  },
+  {
+    id: 'ing-cilantro',
+    subject:
+      'a small loose bunch of fresh cilantro coriander with bright vivid green delicate leaves on thin stems, gentle three-quarter view, nothing else in the image',
+  },
+  {
+    id: 'ing-lamb-mince',
+    subject:
+      'a neat loose mound of raw ground lamb mince on a simple plain white shallow dish, pale pink with visible fat marbling, no packaging',
+    dish: true,
+  },
+  {
+    id: 'ing-turkey-mince',
+    subject:
+      'a neat loose mound of raw ground turkey mince on a simple plain white shallow dish, very pale pink-beige lean meat, no packaging',
+    dish: true,
+  },
+  {
+    id: 'ing-queso-fresco',
+    subject:
+      'a small rectangular block of crumbly white queso fresco cheese, soft matte surface with visible curd texture, simple three-quarter view, no packaging',
+  },
+  {
+    id: 'ing-miso-paste',
+    subject:
+      'a small plain white ramekin of smooth golden-brown miso paste, earthy warm tone, thick dense surface with a slight sheen, no packaging',
+    dish: true,
+  },
+  {
+    id: 'ing-ramen-noodles',
+    subject:
+      'a loose nest of dry uncooked ramen noodles, pale golden thin curly strands in a loose coiled bundle, no packaging or broth',
   },
 ]
 

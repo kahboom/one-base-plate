@@ -10,6 +10,7 @@
  * `npm run db:seed`.
  */
 import type { Ingredient, IngredientCategory } from './types';
+import { getSynonymForms } from './lib/ingredientSynonyms';
 
 export interface CatalogIngredient {
   id: string;
@@ -204,6 +205,7 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'flour tortillas',
     'soft tortillas',
   ]),
+  c('cat-arepa', 'Arepa', 'carb', ['quick'], true, true, ['arepas'], '/images/seed/ing-arepa.png'),
   c(
     'cat-potatoes',
     'Potatoes',
@@ -789,11 +791,12 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
 export function searchCatalog(query: string): CatalogIngredient[] {
   const q = query.toLowerCase().trim();
   if (!q) return [];
-  return MASTER_CATALOG.filter(
-    (item) =>
-      item.name.toLowerCase().includes(q) ||
-      (item.aliases ?? []).some((a) => a.toLowerCase().includes(q)),
-  );
+  const forms = getSynonymForms(q);
+  return MASTER_CATALOG.filter((item) => {
+    const nameLC = item.name.toLowerCase();
+    if (forms.some((f) => nameLC.includes(f))) return true;
+    return (item.aliases ?? []).some((a) => forms.some((f) => a.toLowerCase().includes(f)));
+  });
 }
 
 export function catalogIngredientToHousehold(

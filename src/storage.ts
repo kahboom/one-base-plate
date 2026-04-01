@@ -23,6 +23,7 @@ import {
   normalizeIngredientGroupKey,
   normalizeIngredientName,
 } from './lib/ingredientNameNormalize';
+import { getSynonymForms } from './lib/ingredientSynonyms';
 import seedData from './seed-data.json';
 import {
   DEFAULT_HOUSEHOLD_KEY,
@@ -600,13 +601,22 @@ export function normalizeIngredientForStorage(ing: Ingredient): Ingredient {
   return out;
 }
 
-/** True if trimmed query (lowercase) matches canonical name or any stored alias. */
+/**
+ * True if the trimmed query matches the ingredient's canonical name, any stored alias,
+ * or any regional synonym (e.g. "zucchini" matches "courgette" and vice versa).
+ */
 export function ingredientMatchesQuery(ing: Ingredient, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  if (ing.name.toLowerCase().includes(q)) return true;
+  const forms = getSynonymForms(q);
+  const nameLC = ing.name.toLowerCase();
+  for (const form of forms) {
+    if (nameLC.includes(form)) return true;
+  }
   for (const a of ing.aliases ?? []) {
-    if (a.includes(q)) return true;
+    for (const form of forms) {
+      if (a.includes(form)) return true;
+    }
   }
   return false;
 }
