@@ -1480,108 +1480,112 @@ export default function PaprikaImport() {
                                     </p>
                                   )}
                                   {group.lines.map((ref, j) => {
-                                  const line = ref.line;
-                                  const globalRecipeIdx = ref.globalRecipeIdx;
-                                  const lineIdx = ref.lineIdx;
-                                  const lineKey = `${globalRecipeIdx}-${lineIdx}-${j}`;
-                                  return (
-                                    <div
-                                      key={lineKey}
-                                      data-testid={`review-line-${gi}-${j}`}
-                                      className="rounded border border-border-light/60 bg-bg/40 p-2"
-                                    >
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <span className="min-w-0 flex-1 truncate text-[11px] text-text-secondary">
-                                          {line.recipeName}: {line.raw}
-                                        </span>
-                                        {group.lines.length > 1 && (
-                                          <Select
-                                            value={line.action}
-                                            onChange={(e) => {
-                                              const v = e.target
-                                                .value as PaprikaReviewLine['action'];
-                                              const patch: Partial<PaprikaReviewLine> = {
-                                                action: v,
-                                              };
-                                              if (v === 'use' && line.matchedIngredient) {
-                                                patch.manualIngredientId =
-                                                  line.matchedIngredient.id;
-                                              }
-                                              if (
-                                                v === 'create' &&
-                                                line.status === 'unmatched' &&
-                                                !line.matchedCatalog
-                                              ) {
-                                                patch.matchedIngredient = null;
-                                                patch.matchedCatalog = null;
-                                              }
-                                              updateReviewLine(globalRecipeIdx, lineIdx, patch);
-                                            }}
-                                            className="w-[min(100%,10rem)] py-1 text-xs"
-                                            data-testid={`review-action-${gi}-${j}`}
-                                          >
-                                            {line.action === 'pending' && (
-                                              <option value="pending">Needs resolution</option>
-                                            )}
-                                            {(line.matchedIngredient ||
-                                              line.manualIngredientId) && (
-                                              <option value="use">Use household match</option>
-                                            )}
-                                            <option value="create">
-                                              {line.matchedCatalog
-                                                ? 'Add from catalog'
-                                                : 'Create new (manual)'}
-                                            </option>
-                                            <option value="ignore">Ignore</option>
-                                          </Select>
-                                        )}
-                                        {line.action === 'create' && !line.matchedCatalog && (
-                                          <Select
-                                            value={line.newCategory}
-                                            onChange={(e) =>
-                                              updateReviewLine(globalRecipeIdx, lineIdx, {
-                                                newCategory: e.target.value as IngredientCategory,
-                                              })
-                                            }
-                                            className="w-[min(100%,7.5rem)] py-1 text-xs"
-                                            data-testid={`review-category-${gi}-${j}`}
-                                          >
-                                            {CATEGORY_OPTIONS.map((c) => (
-                                              <option key={c} value={c}>
-                                                {c}
+                                    const line = ref.line;
+                                    const globalRecipeIdx = ref.globalRecipeIdx;
+                                    const lineIdx = ref.lineIdx;
+                                    const lineKey = `${globalRecipeIdx}-${lineIdx}-${j}`;
+                                    return (
+                                      <div
+                                        key={lineKey}
+                                        data-testid={`review-line-${gi}-${j}`}
+                                        className="rounded border border-border-light/60 bg-bg/40 p-2"
+                                      >
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <span className="min-w-0 flex-1 truncate text-[11px] text-text-secondary">
+                                            {line.recipeName}: {line.raw}
+                                          </span>
+                                          {group.lines.length > 1 && (
+                                            <Select
+                                              value={line.action}
+                                              onChange={(e) => {
+                                                const v = e.target
+                                                  .value as PaprikaReviewLine['action'];
+                                                const patch: Partial<PaprikaReviewLine> = {
+                                                  action: v,
+                                                };
+                                                if (v === 'use' && line.matchedIngredient) {
+                                                  patch.manualIngredientId =
+                                                    line.matchedIngredient.id;
+                                                }
+                                                if (
+                                                  v === 'create' &&
+                                                  line.status === 'unmatched' &&
+                                                  !line.matchedCatalog
+                                                ) {
+                                                  patch.matchedIngredient = null;
+                                                  patch.matchedCatalog = null;
+                                                }
+                                                updateReviewLine(globalRecipeIdx, lineIdx, patch);
+                                              }}
+                                              className="w-[min(100%,10rem)] py-1 text-xs"
+                                              data-testid={`review-action-${gi}-${j}`}
+                                            >
+                                              {line.action === 'pending' && (
+                                                <option value="pending">Needs resolution</option>
+                                              )}
+                                              {(line.matchedIngredient ||
+                                                line.manualIngredientId) && (
+                                                <option value="use">Use household match</option>
+                                              )}
+                                              <option value="create">
+                                                {line.matchedCatalog
+                                                  ? 'Add from catalog'
+                                                  : 'Create new (manual)'}
                                               </option>
-                                            ))}
-                                          </Select>
+                                              <option value="ignore">Ignore</option>
+                                            </Select>
+                                          )}
+                                          {line.action === 'create' && !line.matchedCatalog && (
+                                            <Select
+                                              value={line.newCategory}
+                                              onChange={(e) =>
+                                                updateReviewLine(globalRecipeIdx, lineIdx, {
+                                                  newCategory: e.target.value as IngredientCategory,
+                                                })
+                                              }
+                                              className="w-[min(100%,7.5rem)] py-1 text-xs"
+                                              data-testid={`review-category-${gi}-${j}`}
+                                            >
+                                              {CATEGORY_OPTIONS.map((c) => (
+                                                <option key={c} value={c}>
+                                                  {c}
+                                                </option>
+                                              ))}
+                                            </Select>
+                                          )}
+                                        </div>
+                                        {line.createDraft && (
+                                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border-light/50 pt-2">
+                                            <p className="text-[11px] text-text-secondary">
+                                              <span className="text-text-muted">
+                                                Will create as{' '}
+                                              </span>
+                                              <span
+                                                className="font-medium text-text-primary"
+                                                data-testid={`review-line-create-canonical-${gi}-${j}`}
+                                              >
+                                                {toSentenceCase(
+                                                  normalizeIngredientName(
+                                                    line.createDraft.canonicalName,
+                                                  ),
+                                                )}
+                                              </span>
+                                            </p>
+                                            <Button
+                                              type="button"
+                                              small
+                                              onClick={() =>
+                                                openCreateModalForGroup(group.groupKey)
+                                              }
+                                              data-testid={`review-line-edit-create-${gi}-${j}`}
+                                            >
+                                              Edit
+                                            </Button>
+                                          </div>
                                         )}
                                       </div>
-                                      {line.createDraft && (
-                                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border-light/50 pt-2">
-                                          <p className="text-[11px] text-text-secondary">
-                                            <span className="text-text-muted">Will create as </span>
-                                            <span
-                                              className="font-medium text-text-primary"
-                                              data-testid={`review-line-create-canonical-${gi}-${j}`}
-                                            >
-                                              {toSentenceCase(
-                                                normalizeIngredientName(
-                                                  line.createDraft.canonicalName,
-                                                ),
-                                              )}
-                                            </span>
-                                          </p>
-                                          <Button
-                                            type="button"
-                                            small
-                                            onClick={() => openCreateModalForGroup(group.groupKey)}
-                                            data-testid={`review-line-edit-create-${gi}-${j}`}
-                                          >
-                                            Edit
-                                          </Button>
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
+                                    );
+                                  })}
                                 </div>
                               </details>
                             </Card>

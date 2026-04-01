@@ -490,8 +490,7 @@ function stripTrailingArticleHandfulSuffix(name: string, prepNotes: string[]): s
 function stripLeadingKnobOfPrefix(name: string, prepNotes: string[]): string {
   const n = name.trim();
   if (!n) return name;
-  const re =
-    /^(?:a|an|one|the\s+)?(?:small\s+|large\s+|good\s+)?knobs?\s+of\s+/i;
+  const re = /^(?:a|an|one|the\s+)?(?:small\s+|large\s+|good\s+)?knobs?\s+of\s+/i;
   const m = n.match(re);
   if (!m) return name;
   prepNotes.push(m[0].trim().toLowerCase().replace(/\s+/g, ' '));
@@ -515,7 +514,10 @@ function inlineOrRestIsQuantityLed(rest: string): boolean {
 function stripInlineOrQuantityAlternative(name: string, prepNotes: string[]): string {
   const idx = name.search(/\s+or\s+/i);
   if (idx < 0) return name;
-  const rest = name.slice(idx).replace(/^\s+or\s+/i, '').trimStart();
+  const rest = name
+    .slice(idx)
+    .replace(/^\s+or\s+/i, '')
+    .trimStart();
   if (!inlineOrRestIsQuantityLed(rest)) return name;
   const left = name.slice(0, idx).trim();
   if (!left) return name;
