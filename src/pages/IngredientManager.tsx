@@ -1223,7 +1223,7 @@ function IngredientTableRow({
   return (
     <button
       type="button"
-      className={`flex w-full items-center gap-3 rounded-md border bg-surface px-3 py-2.5 text-left transition-colors hover:bg-bg hover:shadow-card min-h-[48px] cursor-pointer ${
+      className={`flex w-full items-center gap-3 rounded-md border bg-surface px-3 py-2.5 text-left transition-all duration-200 ease-out hover:bg-bg hover:shadow-card min-h-[48px] cursor-pointer ${
         selected ? 'border-brand bg-brand/5' : 'border-border-light'
       }`}
       data-testid={`ingredient-row-${ingredient.id}`}

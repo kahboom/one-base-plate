@@ -999,6 +999,195 @@ const ITEMS = [
       'a shallow bowl of loose bright yellow sweetcorn kernels, plump individual kernels, simple ceramic bowl, soft shadow inside only, no cob, no husk',
     dish: true,
   },
+  {
+    id: 'ing-beetroot',
+    subject:
+      'two whole raw beetroots with deep magenta-purple skin, leafy tops trimmed to very short stubs, earthy root tails, simple three-quarter grouping, no knife',
+  },
+  {
+    id: 'ing-whiskey',
+    subject:
+      'a short plain glass tumbler with a modest pour of amber whiskey, no ice, no label, no bottle, no branding',
+  },
+  {
+    id: 'ing-bourbon',
+    subject:
+      'a short plain glass tumbler with a modest pour of deep golden American bourbon whiskey, warm copper-amber tone, no ice, no label, no bottle, no branding',
+  },
+  {
+    id: 'ing-lager',
+    subject:
+      'a simple tall beer glass with pale golden lager and a small neat white foam head, bright and clear, no bottle, no label, no branding, no logo',
+    dish: true,
+  },
+  {
+    id: 'ing-dark-beer',
+    subject:
+      'a simple beer glass with dark brown almost black beer and a thin tan foam head, rich stout-like color, no bottle, no label, no branding, no logo',
+    dish: true,
+  },
+  {
+    id: 'ing-molasses',
+    subject:
+      'a small clear glass jar of thick dark brown molasses with the wide mouth visible, rich glossy syrup, plain unlabeled jar',
+  },
+  {
+    id: 'ing-icing-sugar',
+    subject:
+      'a shallow ceramic bowl of fine snowy white powdered icing sugar as a soft sifted mound, delicate texture, no spoon',
+  },
+  {
+    id: 'ing-jacket-potato',
+    subject:
+      'one baked jacket potato with skin split open showing fluffy pale steamy interior, a small pat of melting butter, simple white plate',
+    dish: true,
+  },
+  {
+    id: 'ing-swede',
+    subject:
+      'one whole swede rutabaga with purple crown fading to creamy yellow body, waxy root skin, short trimmed root tail, three-quarter view',
+  },
+  {
+    id: 'ing-parsnip',
+    subject:
+      'three whole parsnips with creamy ivory tapered roots and short trimmed tops, gentle natural curves, grouped simply, no peelings',
+  },
+  {
+    id: 'ing-caster-sugar',
+    subject:
+      'a shallow bowl of fine white caster sugar crystals, slightly finer than granulated, soft sparkle, simple ceramic bowl, soft shadow inside only',
+  },
+  {
+    id: 'ing-coriander-seed',
+    subject:
+      'a small loose pile of whole dried coriander seeds, round tan ribbed seeds, natural variation, no powder, no mortar, nothing else',
+  },
+  {
+    id: 'ing-fenugreek-seed',
+    subject:
+      'a small loose cluster of whole fenugreek seeds, small amber-ochre angular seeds, readable texture, no powder, nothing else',
+  },
+  {
+    id: 'ing-bok-choy',
+    subject:
+      'one fresh baby bok choy with crisp white stalks and deep green spoon-shaped leaves, upright three-quarter view, no wok, no sauce',
+  },
+  {
+    id: 'ing-radish',
+    subject:
+      'a loose small bunch of round red radishes with short white roots and a little fresh green stem, no leaves spread everywhere, nothing else',
+  },
+  {
+    id: 'ing-fennel',
+    subject:
+      'one fresh fennel bulb with pale green-white layered base and delicate feathery green fronds on top, three-quarter view, no slicing board',
+  },
+  {
+    id: 'ing-turnip',
+    subject:
+      'two whole purple-top turnips with creamy white lower bodies, thin tap roots trimmed short, simple grouping, no soil clumps',
+  },
+  {
+    id: 'ing-sugar-snap-peas',
+    subject:
+      'a small loose pile of plump bright green sugar snap pea pods, crisp and slightly curved, visible peas inside, no snow peas, nothing else',
+  },
+  {
+    id: 'ing-mango',
+    subject:
+      'one whole ripe mango with smooth skin in warm yellow-orange-red blush, gentle oval shape, short stem stub, uncut, no leaves',
+  },
+  {
+    id: 'ing-pear',
+    subject:
+      'two whole fresh pears with natural green-gold skin and subtle russet speckles, classic teardrop silhouettes, short stems',
+  },
+  {
+    id: 'ing-peach',
+    subject:
+      'two whole fuzzy ripe peaches with soft pink-orange blush over warm yellow, natural dimple at stem end, no slices',
+  },
+  {
+    id: 'ing-plum',
+    subject:
+      'three small whole plums in deep purple-red skin with soft bloom, natural size variation, no leaves, no pit exposed',
+  },
+  {
+    id: 'ing-grapefruit',
+    subject:
+      'one whole pink grapefruit with slightly pebbled yellow-pink peel, round shape, short stem, uncut, no second fruit',
+  },
+  {
+    id: 'ing-semi-skimmed-milk',
+    subject:
+      'a simple clear drinking glass about three-quarters full of pale white milk, light and unfussy, no carton, no label, no branding',
+    dish: true,
+  },
+  {
+    id: 'ing-brown-rice',
+    subject:
+      'a shallow bowl of uncooked brown rice grains, long-grain style with natural tan-brown bran flecks, dry loose pile, soft shadow inside the bowl only',
+    dish: true,
+  },
+  {
+    id: 'ing-cornflakes',
+    subject:
+      'a small loose pile of golden toasted cornflakes cereal flakes, thin crisp texture, no milk, no bowl with branding, no box, no readable text',
+  },
+  {
+    id: 'ing-aptamil',
+    subject:
+      'a plain unlabeled round metal tin of white infant formula milk powder beside a small plastic scoop with a little powder on it, simple and clean, absolutely no brand name, no logo, no readable text on the tin',
+    dish: true,
+  },
+  {
+    id: 'ing-almonds',
+    subject:
+      'a small loose pile of whole natural almonds with brown skins, a few split to show pale interior, no shell, no packaging',
+  },
+  {
+    id: 'ing-peanuts',
+    subject:
+      'a small loose pile of shelled roasted peanuts, pinkish-tan skins, no shells, no red skins only, no packaging',
+  },
+  {
+    id: 'ing-cashews',
+    subject:
+      'a small loose pile of whole curved cashew nuts, creamy ivory color, no salt visible, no packaging',
+  },
+  {
+    id: 'ing-sesame-seeds',
+    subject:
+      'a small loose pile of mixed white and pale tan sesame seeds, tiny flat oval seeds, dry, no oil, no packaging',
+  },
+  {
+    id: 'ing-olives',
+    subject:
+      'a small shallow bowl of mixed black and deep purple kalamata-style olives with pits, light brine sheen, no jar label, no readable text',
+    dish: true,
+  },
+  {
+    id: 'ing-capers',
+    subject:
+      'a small shallow dish of tiny green capers in clear brine, simple ceramic dish, no jar, no label, no readable text',
+    dish: true,
+  },
+  {
+    id: 'ing-fish-sauce',
+    subject:
+      'a small plain glass bottle of dark amber fish sauce with a simple cork or plain stopper, side view, absolutely no label, no brand text, no logo',
+  },
+  {
+    id: 'ing-poppy-seeds',
+    subject:
+      'a small loose pile of tiny blue-black poppy seeds, dry, matte, no packaging',
+  },
+  {
+    id: 'ing-pickled-onions',
+    subject:
+      'a small shallow bowl of whole small pearl pickled onions in pale vinegar brine, silverskin style, light pinkish skins, no jar label, no readable text',
+    dish: true,
+  },
 ]
 
 function getPrompt(subject, { dish = false } = {}) {

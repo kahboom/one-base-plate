@@ -362,7 +362,7 @@ describe('F036: Consistent navigation across all household screens', () => {
       const nav = screen.getByRole('navigation', { name: 'Global navigation' });
       expect(nav.className).toContain('border');
       expect(nav.className).toContain('flex-wrap');
-      expect(nav.className).toMatch(/rounded-t-md|rounded-md/);
+      expect(nav.className).toMatch(/rounded-t-(?:md|lg)|rounded-md|rounded-lg/);
     });
 
     it('inactive nav links use pill styling with hover state', () => {

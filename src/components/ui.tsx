@@ -23,9 +23,28 @@ export function AppHeader() {
     <header className="mb-6 pb-4 border-b border-border-light">
       <Link
         to={homeHref}
-        className="text-2xl font-bold tracking-tight text-text-primary hover:text-brand transition-colors"
+        className="group inline-flex items-center gap-2.5 rounded-md py-0.5 text-text-primary transition-all duration-200 ease-out hover:text-brand focus-visible:outline-offset-4 active:scale-[0.98]"
       >
-        OneBasePlate
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand-light text-brand transition-colors duration-200 group-hover:bg-brand/15"
+          aria-hidden
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 2 5.8 0 5.1-3.5 8.2-10 12.2Z" />
+            <path d="M14.5 17.5c-1.5 1-3.5 1.5-5.5 1" />
+          </svg>
+        </span>
+        <span className="text-xl font-bold tracking-tight">OneBasePlate</span>
       </Link>
     </header>
   );
@@ -53,7 +72,7 @@ export function PageHeader({
 }) {
   return (
     <div className="mb-8">
-      <h1 className="text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">{title}</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">{title}</h1>
       {subtitle && (
         <p className="mt-2 text-sm text-text-secondary">
           {subtitleTo ? (
@@ -77,7 +96,7 @@ export function Card({
 }: { children: ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`rounded-md border border-border-light bg-surface p-4 shadow-card transition-shadow hover:shadow-card-hover ${className}`}
+      className={`rounded-md border border-border-light bg-surface p-4 shadow-card transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-card-hover ${className}`}
       {...props}
     >
       {children}
@@ -106,14 +125,14 @@ export function CardGrid({
 type ButtonVariant = 'default' | 'primary' | 'danger' | 'ghost';
 
 const btnBase =
-  'inline-flex items-center justify-center font-medium rounded-sm transition-colors cursor-pointer min-h-[44px] text-sm focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2';
+  'inline-flex items-center justify-center font-semibold rounded-md transition-all duration-200 ease-out cursor-pointer min-h-[44px] text-sm focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-45 disabled:pointer-events-none';
 
 const btnVariants: Record<ButtonVariant, string> = {
   default:
-    'border border-border-default bg-surface text-text-primary hover:bg-bg hover:shadow-card',
-  primary: 'border border-brand bg-brand text-white hover:bg-brand-hover',
-  danger: 'border border-danger text-danger hover:bg-danger-light',
-  ghost: 'border-none bg-transparent text-brand hover:underline p-0 min-h-0',
+    'border border-border-default bg-surface text-text-primary hover:bg-bg hover:shadow-card enabled:active:scale-[0.98]',
+  primary: 'border border-brand bg-brand text-white hover:bg-brand-hover enabled:active:scale-[0.98]',
+  danger: 'border border-danger text-danger hover:bg-danger-light enabled:active:scale-[0.98]',
+  ghost: 'border-none bg-transparent text-brand hover:underline p-0 min-h-0 active:opacity-80',
 };
 
 export function Button({
@@ -129,7 +148,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`${btnBase} ${small ? 'px-3 py-1.5 text-xs min-h-[36px]' : 'px-4 py-2'} ${btnVariants[variant]} disabled:cursor-not-allowed disabled:opacity-45 disabled:pointer-events-none ${className}`}
+      className={`${btnBase} ${small ? 'px-3 py-1.5 text-xs min-h-[36px]' : 'px-4 py-2'} ${btnVariants[variant]} ${className}`}
       {...props}
     />
   );
@@ -139,7 +158,7 @@ export function Button({
 export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`w-full rounded-sm border border-border-default bg-surface px-4 py-2 text-base text-text-primary min-h-[44px] transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light ${className}`}
+      className={`w-full rounded-md border border-border-default bg-surface px-4 py-2 text-base text-text-primary min-h-[44px] transition-all duration-200 ease-out focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light ${className}`}
       {...props}
     />
   );
@@ -152,7 +171,7 @@ export function Select({
 }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={`rounded-sm border border-border-default bg-surface px-4 py-2 text-base text-text-primary min-h-[44px] transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light ${className}`}
+      className={`rounded-md border border-border-default bg-surface px-4 py-2 text-base text-text-primary min-h-[44px] transition-all duration-200 ease-out focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light ${className}`}
       {...props}
     >
       {children}
@@ -256,9 +275,9 @@ export function NavBar({
   );
 }
 
-/** Primary destinations: pill bar inside the unified household nav card */
+/** Primary destinations: pill row inside the household nav stack */
 function globalNavRowClass() {
-  return 'flex flex-wrap items-center gap-1.5 rounded-t-md border-b border-border-light bg-surface px-2 py-2 sm:gap-2 sm:px-3';
+  return 'flex flex-wrap items-center gap-1.5 rounded-t-lg border-b border-border-light bg-surface px-2 py-2.5 sm:gap-2 sm:px-3';
 }
 
 export function GlobalNav({ householdId }: { householdId?: string }) {
@@ -301,8 +320,8 @@ export function SecondaryNav({ householdId }: { householdId?: string }) {
 
   return (
     <nav
-      className={`flex flex-wrap items-center gap-x-5 gap-y-1.5 px-3 py-2.5 sm:px-4 ${
-        showDividerAbove ? 'border-t border-border-light bg-bg' : 'bg-bg'
+      className={`flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-b-lg px-3 py-2.5 sm:px-4 ${
+        showDividerAbove ? 'border-t border-border-light/80 bg-bg' : 'bg-bg'
       }`}
       data-testid="section-nav"
       aria-label="Secondary navigation"
@@ -328,10 +347,10 @@ export function SecondaryNav({ householdId }: { householdId?: string }) {
 /** @deprecated Use SecondaryNav; kept for tests and incremental migration */
 export const SectionNav = SecondaryNav;
 
-/** Global + secondary navigation stack (PRD F053) — single card, secondary row is text links */
+/** Global + secondary navigation stack (PRD F053) — light shell, secondary row is text links */
 export function HouseholdNavStack({ householdId }: { householdId?: string }) {
   return (
-    <div className="mb-6 overflow-hidden rounded-md border border-border-light bg-surface shadow-card">
+    <div className="mb-6 overflow-hidden rounded-lg">
       <GlobalNav householdId={householdId} />
       <SecondaryNav householdId={householdId} />
     </div>
@@ -345,18 +364,18 @@ export function HouseholdNav({ householdId }: { householdId?: string }) {
 
 function navLinkClass(isActive: boolean) {
   const base =
-    'inline-flex items-center rounded-pill px-3 py-1.5 text-sm font-medium transition-colors min-h-[36px] whitespace-nowrap';
+    'inline-flex items-center rounded-pill px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-out min-h-[36px] whitespace-nowrap enabled:active:scale-[0.98]';
   return isActive
-    ? `${base} bg-brand text-white`
+    ? `${base} bg-brand text-white shadow-sm`
     : `${base} text-text-secondary hover:bg-brand-light hover:text-brand`;
 }
 
 function secondaryNavLinkClass(isActive: boolean) {
   const base =
-    'inline-flex items-center rounded-md px-0.5 py-1 text-sm transition-colors min-h-[36px] whitespace-nowrap';
+    'inline-flex items-center rounded-md px-1 py-1 text-sm transition-all duration-200 ease-out min-h-[36px] whitespace-nowrap underline-offset-[6px] decoration-2';
   return isActive
-    ? `${base} font-semibold text-brand`
-    : `${base} font-medium text-text-secondary hover:text-brand`;
+    ? `${base} font-semibold text-brand underline decoration-brand`
+    : `${base} font-medium text-text-secondary decoration-transparent hover:text-brand hover:underline hover:decoration-brand/35`;
 }
 
 /* ---------- Form row ---------- */
