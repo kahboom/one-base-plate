@@ -25,6 +25,9 @@ describe('F073 — Regional synonym matching', () => {
       expect(applyRegionalSynonyms('zucchini')).toBe('courgette');
       expect(applyRegionalSynonyms('arugula')).toBe('rocket');
       expect(applyRegionalSynonyms('shrimp')).toBe('prawns');
+      expect(applyRegionalSynonyms('beet')).toBe('beetroot');
+      expect(applyRegionalSynonyms('beets')).toBe('beetroot');
+      expect(applyRegionalSynonyms('rutabaga')).toBe('swede');
     });
   });
 
@@ -68,6 +71,20 @@ describe('F073 — Regional synonym matching', () => {
       const a = matchIngredient('shrimp', [ing('p', 'prawns')], []);
       expect(a.status).toBe('matched');
       const b = matchIngredient('prawns', [ing('p2', 'shrimp')], []);
+      expect(b.status).toBe('matched');
+    });
+
+    it('matches beet ↔ beetroot', () => {
+      const a = matchIngredient('beet', [ing('b', 'beetroot')], []);
+      expect(a.status).toBe('matched');
+      const b = matchIngredient('beetroot', [ing('b2', 'beet')], []);
+      expect(b.status).toBe('matched');
+    });
+
+    it('matches rutabaga ↔ swede', () => {
+      const a = matchIngredient('rutabaga', [ing('s', 'swede')], []);
+      expect(a.status).toBe('matched');
+      const b = matchIngredient('swede', [ing('s2', 'rutabaga')], []);
       expect(b.status).toBe('matched');
     });
   });

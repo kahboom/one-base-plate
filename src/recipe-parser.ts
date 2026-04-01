@@ -1070,6 +1070,11 @@ const REGIONAL_SYNONYM_CANONICAL: Readonly<Record<string, string>> = {
   prawn: 'prawns',
   shrimp: 'prawns',
   shrimps: 'prawns',
+  beetroot: 'beetroot',
+  beet: 'beetroot',
+  beets: 'beetroot',
+  swede: 'swede',
+  rutabaga: 'swede',
 };
 
 export function applyRegionalSynonyms(name: string): string {

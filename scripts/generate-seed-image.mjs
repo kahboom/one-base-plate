@@ -731,7 +731,7 @@ const ITEMS = [
   {
     id: 'ing-vanilla-extract',
     subject:
-      'a small plain dark glass bottle of vanilla extract, deep amber-brown liquid visible through glass, simple tall bottle shape, plain cap, no label or branding',
+      'a small plain dark glass bottle of vanilla extract with deep amber-brown liquid, plain cap, no label, beside one split vanilla bean pod showing tiny black seeds, gentle grouping',
   },
   {
     id: 'ing-vegetable-stock',
@@ -822,8 +822,7 @@ const ITEMS = [
   {
     id: 'ing-tomato-paste',
     subject:
-      'a small plain white ramekin of thick deep red tomato paste, dense smooth concentrate, no tube or label',
-    dish: true,
+      'one soft foil or metal tube of tomato paste lying at a gentle angle, twist cap, nostalgic plain packaging with a simple illustrated whole tomato on the tube front, no readable brand name or lettering',
   },
   {
     id: 'ing-tomato-sauce',
@@ -912,6 +911,93 @@ const ITEMS = [
     id: 'ing-rye-flour',
     subject:
       'a neat mound of fine grey-brown rye flour in a simple shallow ceramic bowl, slightly coarse wholegrain tone, soft shadow inside only',
+  },
+  {
+    id: 'ing-flour-tortillas',
+    subject:
+      'a short stack of four soft flour tortillas, pale off-white with light golden flecks, soft pliable rounds, slightly uneven handmade edges, no packaging',
+  },
+  {
+    id: 'ing-risotto-rice',
+    subject:
+      'a shallow bowl of dry uncooked arborio risotto rice, short plump pearly white grains with a subtle chalky sheen, simple ceramic bowl, soft shadow inside only',
+  },
+  {
+    id: 'ing-garlic-granules',
+    subject:
+      'a small neat pile of coarse garlic granules in a simple shallow ceramic dish, pale beige with visible grainy texture unlike fine powder, soft shadow inside only',
+  },
+  {
+    id: 'ing-onion-granules',
+    subject:
+      'a small neat pile of coarse onion granules in a simple shallow ceramic dish, warm tan with visible grainy texture, soft shadow inside only',
+  },
+  {
+    id: 'ing-spaghetti',
+    subject:
+      'a neat loose bundle of dry uncooked spaghetti, long thin golden strands, naturally grouped, no packaging',
+  },
+  {
+    id: 'ing-breadsticks',
+    subject:
+      'a loose bundle of several long thin grissini-style breadsticks, crisp golden-brown baked dough with a light salt fleck, simple diagonal grouping, no dip, no bowl, no packaging',
+  },
+  {
+    id: 'ing-burger-buns',
+    subject:
+      'one matched pair of burger buns only, top and bottom halves slightly separated to show completely empty insides, no patty, no cheese, no lettuce, no fillings, soft sesame-topped golden crust, no packaging or tray, nothing else in the image',
+  },
+  {
+    id: 'ing-hot-dog-bun',
+    subject:
+      'one empty split-top hot dog bun only, elongated pale golden roll with a clear open slit showing hollow empty interior, no sausage, no fillings, no condiments, no packaging, nothing else in the image',
+  },
+  {
+    id: 'ing-hot-dog',
+    subject:
+      'exactly one single uncooked frankfurter-style hot dog sausage, smooth pink casing, evenly cylindrical, gentle curve, no second sausage, no bun, no packaging, no grill marks, nothing else in the image',
+  },
+  {
+    id: 'ing-sauerkraut',
+    subject:
+      'a small shallow bowl of sauerkraut, shredded pale cabbage with a tangy fermented look, simple ceramic bowl, soft shadow inside only',
+    dish: true,
+  },
+  {
+    id: 'ing-pickles',
+    subject:
+      'a small loose pile of whole dill pickles, knobbly green cucumbers in brine sheen, no jar, no label',
+  },
+  {
+    id: 'ing-dill',
+    subject:
+      'one delicate sprig of fresh dill weed, feathery bright green fronds on thin stems, gentle three-quarter view, nothing else in the image',
+  },
+  {
+    id: 'ing-cucumber',
+    subject:
+      'one whole fresh cucumber with deep green waxy skin, gentle bumps, simple three-quarter view, uncut, no slices',
+  },
+  {
+    id: 'ing-orecchiette',
+    subject:
+      'a loose small pile of dry uncooked orecchiette pasta, small ear-shaped discs in warm pale golden tones, lightly ridged, no sauce, no packaging',
+  },
+  {
+    id: 'ing-ancho-chile',
+    subject:
+      'two whole dried ancho chiles, wide deep red-brown wrinkled poblano pods, matte dried skin, simple pairing, no stem clutter',
+  },
+  {
+    id: 'ing-corn-on-the-cob',
+    subject:
+      'two whole ears of corn on the cob with fresh green husks peeled back to show plump yellow kernels in neat rows, simple three-quarter view, no butter, no grill marks',
+  },
+  {
+    id: 'ing-corn-kernels',
+    subject:
+      'a shallow bowl of loose bright yellow sweetcorn kernels, plump individual kernels, simple ceramic bowl, soft shadow inside only, no cob, no husk',
+    dish: true,
   },
 ]
 
