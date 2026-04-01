@@ -1829,6 +1829,7 @@
       {
         "id": "rec-taco-chicken",
         "name": "Grilled taco chicken",
+        "imageUrl": "/images/seed/rec-taco-chicken.png",
         "tags": [
           "batch-friendly",
           "freezer-friendly"
@@ -1881,6 +1882,7 @@
       {
         "id": "rec-black-bean-filling",
         "name": "Black bean taco filling",
+        "imageUrl": "/images/seed/rec-black-bean-filling.png",
         "tags": [
           "batch-friendly",
           "quick"
@@ -1933,6 +1935,7 @@
       {
         "id": "rec-yogurt-lime-sauce",
         "name": "Quick yogurt-lime sauce",
+        "imageUrl": "/images/seed/rec-yogurt-lime-sauce.png",
         "tags": [
           "quick",
           "sauce"
@@ -1966,6 +1969,7 @@
       {
         "id": "rec-pizza-dough",
         "name": "Basic pizza dough",
+        "imageUrl": "/images/seed/rec-pizza-dough.png",
         "tags": [
           "batch-friendly",
           "freezer-friendly"
@@ -2007,6 +2011,7 @@
       {
         "id": "rec-pizza-sauce",
         "name": "Quick pizza sauce",
+        "imageUrl": "/images/seed/rec-pizza-sauce.png",
         "tags": [
           "quick",
           "batch-friendly",
@@ -2091,6 +2096,7 @@
       {
         "id": "rec-pasta-bake-sauce",
         "name": "Basic pasta bake sauce",
+        "imageUrl": "/images/seed/rec-pasta-bake-sauce.png",
         "tags": [
           "batch-friendly",
           "freezer-friendly",
@@ -2138,6 +2144,7 @@
       {
         "id": "rec-roasted-broccoli",
         "name": "Roasted broccoli",
+        "imageUrl": "/images/seed/rec-roasted-broccoli.png",
         "tags": [
           "quick",
           "batch-friendly",
@@ -2173,6 +2180,7 @@
       {
         "id": "rec-seasoned-rice",
         "name": "Plain seasoned rice",
+        "imageUrl": "/images/seed/rec-seasoned-rice.png",
         "tags": [
           "quick",
           "batch-friendly",
@@ -2202,6 +2210,7 @@
       {
         "id": "rec-cheese-sauce",
         "name": "Simple cheese sauce",
+        "imageUrl": "/images/seed/rec-cheese-sauce.png",
         "tags": [
           "quick",
           "rescue-friendly",
@@ -2250,6 +2259,7 @@
       {
         "id": "rec-tomato-soup",
         "name": "Simple tomato soup",
+        "imageUrl": "/images/seed/rec-tomato-soup.png",
         "tags": [
           "quick",
           "soup",
@@ -2346,6 +2356,7 @@
       {
         "id": "bm-pasta-chicken",
         "name": "Pasta with chicken and broccoli",
+        "imageUrl": "/images/seed/bm-pasta-chicken.png",
         "components": [
           {
             "ingredientId": "ing-pasta",
@@ -2379,6 +2390,7 @@
       {
         "id": "bm-salmon-rice",
         "name": "Salmon with rice and peas",
+        "imageUrl": "/images/seed/bm-salmon-rice.png",
         "components": [
           {
             "ingredientId": "ing-rice",
@@ -2405,6 +2417,7 @@
       {
         "id": "bm-fishfingers",
         "name": "Fish fingers with beans and bread",
+        "imageUrl": "/images/seed/bm-fishfingers.png",
         "components": [
           {
             "ingredientId": "ing-fishfingers",
@@ -2431,6 +2444,7 @@
       {
         "id": "bm-taco-night",
         "name": "Taco night",
+        "imageUrl": "/images/seed/bm-taco-night.png",
         "components": [
           {
             "id": "mc-bm-tn-1",
@@ -2514,6 +2528,7 @@
       {
         "id": "bm-pizza-night",
         "name": "Pizza night",
+        "imageUrl": "/images/seed/bm-pizza-night.png",
         "components": [
           {
             "id": "mc-bm-pn-1",
@@ -2585,6 +2600,7 @@
       {
         "id": "bm-pasta-bake",
         "name": "Pasta bake",
+        "imageUrl": "/images/seed/bm-pasta-bake.png",
         "components": [
           {
             "id": "mc-bm-pb-1",
@@ -2641,6 +2657,7 @@
       {
         "id": "bm-rice-bowl",
         "name": "Rice bowl",
+        "imageUrl": "/images/seed/bm-rice-bowl.png",
         "tags": [
           "bowl"
         ],
@@ -2718,6 +2735,7 @@
       {
         "id": "bm-rescue-cheesy-pasta",
         "name": "Cheesy pasta (rescue)",
+        "imageUrl": "/images/seed/bm-rescue-cheesy-pasta.png",
         "tags": [
           "rescue"
         ],
@@ -3004,6 +3022,7 @@
       {
         "id": "bm-pasta-chicken",
         "name": "Pasta with chicken and broccoli",
+        "imageUrl": "/images/seed/bm-pasta-chicken.png",
         "components": [
           {
             "ingredientId": "ing-pasta",
@@ -3037,6 +3056,7 @@
       {
         "id": "bm-salmon-rice",
         "name": "Salmon with rice and peas",
+        "imageUrl": "/images/seed/bm-salmon-rice.png",
         "components": [
           {
             "ingredientId": "ing-rice",
@@ -3063,6 +3083,7 @@
       {
         "id": "bm-fishfingers",
         "name": "Fish fingers with beans and bread",
+        "imageUrl": "/images/seed/bm-fishfingers.png",
         "components": [
           {
             "ingredientId": "ing-fishfingers",

@@ -374,7 +374,7 @@ export default function Planner() {
               <div className="w-full shrink-0 sm:w-40">
                 <MealImageSlot
                   variant="card"
-                  imageUrl={resolveMealImageUrl(selectedMeal, household.recipes ?? [])}
+                  imageUrl={resolveMealImageUrl(selectedMeal)}
                   alt=""
                   imageTestId="selected-meal-hero-image"
                   placeholderTestId="selected-meal-hero-placeholder"

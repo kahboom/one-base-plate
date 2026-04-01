@@ -5,7 +5,7 @@
  *
  * Requires OPENAI_API_KEY in .env (see .env.example).
  */
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -33,6 +33,114 @@ const ITEMS = [
     id: 'rec-tray-pizza',
     subject:
       'a rectangular tray-baked pizza with tomato sauce, melted mozzarella, and a few fresh basil leaves, golden crust, one cohesive pie',
+    dish: true,
+  },
+  {
+    id: 'rec-taco-chicken',
+    subject:
+      'grilled chicken breast sliced into strips with light char marks, seasoned and unfussy, simple white plate',
+    dish: true,
+  },
+  {
+    id: 'rec-black-bean-filling',
+    subject:
+      'a shallow bowl of partly mashed black beans in rich dark sauce with visible whole beans, simple rustic taco filling',
+    dish: true,
+  },
+  {
+    id: 'rec-yogurt-lime-sauce',
+    subject:
+      'a small bowl of creamy white yogurt sauce with a wedge of lime and a few fresh cilantro leaves on the side, simple and clean',
+    dish: true,
+  },
+  {
+    id: 'rec-pizza-dough',
+    subject:
+      'two smooth risen pizza dough balls resting in a simple wide ceramic bowl, soft pale dough, light oil sheen, no flour explosion',
+    dish: true,
+  },
+  {
+    id: 'rec-pizza-sauce',
+    subject:
+      'a simple bowl of thick red tomato pizza sauce with a few visible herb flecks, smooth and appetizing',
+    dish: true,
+  },
+  {
+    id: 'rec-pasta-bake-sauce',
+    subject:
+      'a saucepan of simmering chunky tomato pasta sauce with onion and herbs, rich red, readable and unfussy',
+    dish: true,
+  },
+  {
+    id: 'rec-roasted-broccoli',
+    subject:
+      'roasted broccoli florets with crispy browned tips on a simple white plate, light garlic visible, unfussy',
+    dish: true,
+  },
+  {
+    id: 'rec-seasoned-rice',
+    subject:
+      'a simple bowl of fluffy cooked white rice with a light gloss from oil, plain and minimal',
+    dish: true,
+  },
+  {
+    id: 'rec-cheese-sauce',
+    subject:
+      'a small saucepan of smooth pale yellow cheese sauce, creamy and thick, simple presentation',
+    dish: true,
+  },
+  {
+    id: 'rec-tomato-soup',
+    subject:
+      'a bowl of smooth orange-red tomato soup with a gentle swirl, simple and warm, no garnish clutter',
+    dish: true,
+  },
+  {
+    id: 'bm-pasta-chicken',
+    subject:
+      'a simple bowl of penne pasta with grilled chicken strips, broccoli florets, and tomato sauce, one cohesive family dinner plate',
+    dish: true,
+  },
+  {
+    id: 'bm-salmon-rice',
+    subject:
+      'a simple plate with a pan-seared salmon fillet, fluffy white rice, and bright green peas, clearly separated, unfussy',
+    dish: true,
+  },
+  {
+    id: 'bm-fishfingers',
+    subject:
+      'a kid-friendly plate with golden fish fingers, a small pool of baked beans in tomato sauce, and two triangles of buttered toast',
+    dish: true,
+  },
+  {
+    id: 'bm-taco-night',
+    subject:
+      'three soft corn tacos on a simple plate with visible fillings of seasoned meat, lettuce shreds, and a dollop of white crema, casual family taco night',
+    dish: true,
+  },
+  {
+    id: 'bm-pizza-night',
+    subject:
+      'a baked round pizza with tomato sauce and melted mozzarella, one slice slightly pulled for depth, golden crust, clearly finished pizza not raw dough',
+    dish: true,
+  },
+  {
+    id: 'bm-pasta-bake',
+    subject:
+      'a shallow baking dish of pasta bake with red sauce, visible penne, and a golden bubbly cheese crust on top',
+    dish: true,
+  },
+  {
+    id: 'bm-rice-bowl',
+    subject:
+      'a rice bowl with white rice, sliced grilled chicken, and roasted broccoli florets arranged in gentle sections, light soy drizzle implied, simple bowl meal',
+    dish: true,
+  },
+  {
+    id: 'bm-rescue-cheesy-pasta',
+    subject:
+      'a comforting bowl of elbow macaroni coated in smooth pale yellow cheese sauce, creamy and simple, mac-and-cheese style rescue meal',
     dish: true,
   },
   { id: 'ing-cheddar', subject: 'a wedge of orange cheddar cheese' },

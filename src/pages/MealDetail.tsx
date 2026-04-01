@@ -111,7 +111,7 @@ export function MealDetailContent({
       <Card data-testid="meal-hero" className="mb-6">
         <MealImageSlot
           variant="detail"
-          imageUrl={resolveMealImageUrl(meal, household.recipes ?? [])}
+          imageUrl={resolveMealImageUrl(meal)}
           alt={meal.name}
           imageTestId="meal-hero-image"
           placeholderTestId="meal-hero-image-placeholder"

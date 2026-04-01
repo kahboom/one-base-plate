@@ -8,6 +8,8 @@ import {
   loadHouseholds,
   mergeSeedRecipesForHousehold,
   backfillBundledSeedIngredientImageUrls,
+  backfillBundledSeedRecipeImageUrls,
+  backfillBundledSeedBaseMealImageUrls,
   resetAppStorageForTests,
   resetHouseholdIngredientsToSeed,
   saveHousehold,
@@ -203,6 +205,96 @@ describe('backfillBundledSeedIngredientImageUrls', () => {
     expect(backfillBundledSeedIngredientImageUrls()).toBe(false);
     expect(loadHouseholds().find((x) => x.id === 'H001')!.ingredients[0]!.imageUrl).toBe(
       'https://example.com/custom.png',
+    );
+  });
+});
+
+describe('backfillBundledSeedRecipeImageUrls', () => {
+  it('fills missing recipe imageUrl from bundled seed for H001', async () => {
+    const seed = seedData as unknown as Household[];
+    const seedH001 = seed.find((h) => h.id === 'H001')!;
+    const tacoSeed = seedH001.recipes!.find((r) => r.id === 'rec-taco-chicken')!;
+    expect(tacoSeed.imageUrl).toBeDefined();
+
+    await initStorage();
+    saveHousehold({
+      id: 'H001',
+      name: 'McG',
+      members: [],
+      ingredients: [],
+      recipes: [{ ...tacoSeed, imageUrl: undefined }],
+      baseMeals: [],
+      weeklyPlans: [],
+    });
+
+    expect(backfillBundledSeedRecipeImageUrls()).toBe(true);
+    const h = loadHouseholds().find((x) => x.id === 'H001')!;
+    expect(h.recipes![0]!.imageUrl).toBe(tacoSeed.imageUrl);
+  });
+
+  it('does not overwrite an existing household recipe imageUrl', async () => {
+    const seed = seedData as unknown as Household[];
+    const seedH001 = seed.find((h) => h.id === 'H001')!;
+    const tacoSeed = seedH001.recipes!.find((r) => r.id === 'rec-taco-chicken')!;
+
+    await initStorage();
+    saveHousehold({
+      id: 'H001',
+      name: 'McG',
+      members: [],
+      ingredients: [],
+      recipes: [{ ...tacoSeed, imageUrl: 'https://example.com/custom-recipe.png' }],
+      baseMeals: [],
+      weeklyPlans: [],
+    });
+
+    expect(backfillBundledSeedRecipeImageUrls()).toBe(false);
+    expect(loadHouseholds().find((x) => x.id === 'H001')!.recipes![0]!.imageUrl).toBe(
+      'https://example.com/custom-recipe.png',
+    );
+  });
+});
+
+describe('backfillBundledSeedBaseMealImageUrls', () => {
+  it('fills missing base meal imageUrl from bundled seed for H001', async () => {
+    const seed = seedData as unknown as Household[];
+    const seedH001 = seed.find((h) => h.id === 'H001')!;
+    const mealSeed = seedH001.baseMeals.find((m) => m.id === 'bm-pasta-chicken')!;
+    expect(mealSeed.imageUrl).toBeDefined();
+
+    await initStorage();
+    saveHousehold({
+      id: 'H001',
+      name: 'McG',
+      members: [],
+      ingredients: [],
+      baseMeals: [{ ...mealSeed, imageUrl: undefined }],
+      weeklyPlans: [],
+    });
+
+    expect(backfillBundledSeedBaseMealImageUrls()).toBe(true);
+    const h = loadHouseholds().find((x) => x.id === 'H001')!;
+    expect(h.baseMeals[0]!.imageUrl).toBe(mealSeed.imageUrl);
+  });
+
+  it('does not overwrite an existing household base meal imageUrl', async () => {
+    const seed = seedData as unknown as Household[];
+    const seedH001 = seed.find((h) => h.id === 'H001')!;
+    const mealSeed = seedH001.baseMeals.find((m) => m.id === 'bm-pasta-chicken')!;
+
+    await initStorage();
+    saveHousehold({
+      id: 'H001',
+      name: 'McG',
+      members: [],
+      ingredients: [],
+      baseMeals: [{ ...mealSeed, imageUrl: 'https://example.com/custom-meal.png' }],
+      weeklyPlans: [],
+    });
+
+    expect(backfillBundledSeedBaseMealImageUrls()).toBe(false);
+    expect(loadHouseholds().find((x) => x.id === 'H001')!.baseMeals[0]!.imageUrl).toBe(
+      'https://example.com/custom-meal.png',
     );
   });
 });

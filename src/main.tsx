@@ -6,6 +6,8 @@ import {
   initStorage,
   seedIfNeeded,
   backfillBundledSeedIngredientImageUrls,
+  backfillBundledSeedRecipeImageUrls,
+  backfillBundledSeedBaseMealImageUrls,
   runMigrationIfNeeded,
   runRecipeRefMigrationIfNeeded,
   runStripWholeMealTagsIfNeeded,
@@ -22,6 +24,8 @@ void (async () => {
   await initStorage();
   await seedIfNeeded();
   backfillBundledSeedIngredientImageUrls();
+  backfillBundledSeedRecipeImageUrls();
+  backfillBundledSeedBaseMealImageUrls();
   runMigrationIfNeeded();
   runRecipeRefMigrationIfNeeded();
   runStripWholeMealTagsIfNeeded();

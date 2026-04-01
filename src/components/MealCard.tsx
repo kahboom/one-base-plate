@@ -3,7 +3,6 @@ import type { BaseMeal, HouseholdMember, Ingredient, MealOutcome, Recipe } from 
 import type { OverlapResult, LearnedPatterns } from '../planner';
 import { computeMealOverlap, generateShortReason } from '../planner';
 import { countMealRecipes } from '../lib/componentRecipes';
-import { resolveMealImageUrl } from '../lib/mealImage';
 import { Chip, Button } from './ui';
 import MealImageSlot from './MealImageSlot';
 
@@ -11,7 +10,7 @@ export interface MealCardProps {
   meal: BaseMeal;
   members: HouseholdMember[];
   ingredients: Ingredient[];
-  /** Recipe library entries; used to resolve the meal image from attached whole-meal recipes. */
+  /** Accepted but no longer used for image resolution; kept for backward compatibility with callers. */
   recipes?: Recipe[];
   overlap?: OverlapResult;
   outcomes?: MealOutcome[];
@@ -51,7 +50,6 @@ export default function MealCard({
   meal,
   members,
   ingredients,
-  recipes = [],
   overlap: overlapProp,
   outcomes = [],
   patterns,
@@ -74,7 +72,7 @@ export default function MealCard({
   const tightTray = compact && showActionsWhenCompact;
   const cardImageVariant = tightTray ? 'card-tight' : compact ? 'card-compact' : 'card';
   const recipeCount = countMealRecipes(meal);
-  const displayImageUrl = resolveMealImageUrl(meal, recipes);
+  const displayImageUrl = meal.imageUrl;
 
   function handleDragStart(e: React.DragEvent) {
     e.dataTransfer.setData('application/meal-id', meal.id);

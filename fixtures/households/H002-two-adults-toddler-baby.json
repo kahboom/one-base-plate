@@ -181,6 +181,7 @@
     {
       "id": "bm-pasta-chicken",
       "name": "Pasta with chicken and broccoli",
+      "imageUrl": "/images/seed/bm-pasta-chicken.png",
       "components": [
         { "ingredientId": "ing-pasta", "role": "carb", "quantity": "400g" },
         {
@@ -204,6 +205,7 @@
     {
       "id": "bm-salmon-rice",
       "name": "Salmon with rice and peas",
+      "imageUrl": "/images/seed/bm-salmon-rice.png",
       "components": [
         { "ingredientId": "ing-rice", "role": "carb", "quantity": "300g" },
         { "ingredientId": "ing-salmon", "role": "protein", "quantity": "400g" },
@@ -218,6 +220,7 @@
     {
       "id": "bm-fishfingers",
       "name": "Fish fingers with beans and bread",
+      "imageUrl": "/images/seed/bm-fishfingers.png",
       "components": [
         {
           "ingredientId": "ing-fishfingers",

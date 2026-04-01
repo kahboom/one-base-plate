@@ -13,6 +13,13 @@ Use this for **architectural or product decisions** that need a dated, human-rea
 - **Links:** PR/issue/PRD if any
 ```
 
+### 2026-04-01 — Remove meal image inheritance (recipe fallback)
+
+- **Context:** `resolveMealImageUrl` was falling back from a base meal's own `imageUrl` to the primary attached recipe's `imageUrl` when the meal had no image. This caused meals to silently display a recipe's thumbnail rather than a blank placeholder, which was acceptable as a stopgap but obscured missing meal-specific art. All seed base meals now have dedicated `imageUrl` fields in fixtures, and the three boot-time backfill functions (`backfillBundledSeedIngredientImageUrls`, `backfillBundledSeedRecipeImageUrls`, `backfillBundledSeedBaseMealImageUrls`) ensure existing Dexie data is patched on next launch.
+- **Decision:** Strip the recipe-fallback branch from `resolveMealImageUrl` in `src/lib/mealImage.ts`. The function now returns only `meal.imageUrl`. The `recipes` parameter and `Recipe` import were removed; all call sites updated. The `recipes` prop on `MealCard` is retained (optional, ignored) for caller backward compatibility. The `MealRow` internal component in `BaseMealManager` also lost its unused `recipes` prop. Meals without an image now show the `MealImageSlot` placeholder photo icon, which is the correct intentional UX.
+- **Consequences:** Any household meal row that had no dedicated `imageUrl` and was relying on the recipe fallback will now show a placeholder until the user sets an image. Seed data users are covered by the backfill on next boot. No tests were asserting the removed fallback branch.
+- **Links:** [`src/lib/mealImage.ts`](../../src/lib/mealImage.ts), prior session [Watercolor base meal images](88c93fb6-26bd-4d97-b4e6-459f44a8a0ba)
+
 ### 2026-03-31 — Paprika import scale: staples seed + tiered triage, no AI
 
 - **Context:** Real-world Paprika imports (100+ recipes) produce 1000+ ingredient groups in review, with ~55% still pending after using current bulk actions. Root causes: volume amplification (every line across all selected recipes), first-import cold start (empty household has nothing to match against), conservative `CATALOG_MIN` threshold (0.86) leaving many valid ingredients unmatched, bulk actions too coarse ("Approve all" only clears already-matched lines; "Create all" floods the household with unvetted entries), and flat paginated review with no triage tiers. AI-assisted parsing was evaluated and deferred — the dominant failure modes are not parser comprehension failures but structural UX and catalog-coverage gaps.

@@ -459,6 +459,71 @@ export function backfillBundledSeedIngredientImageUrls(): boolean {
   return anyChanged;
 }
 
+/**
+ * For each stored household that exists in bundled seed, copy `imageUrl` from the seed recipe
+ * when the live row has the same `id` but no `imageUrl`. Matches
+ * {@link backfillBundledSeedIngredientImageUrls} so recipe thumbnails stay aligned when seed
+ * assets ship after first install (Dexie data is not re-imported automatically).
+ */
+export function backfillBundledSeedRecipeImageUrls(): boolean {
+  const seedHouseholds = seedData as unknown as Household[];
+  const households = loadHouseholds();
+  let anyChanged = false;
+  const next = households.map((h) => {
+    const seedH = seedHouseholds.find((s) => s.id === h.id);
+    const seedRecipes = seedH?.recipes;
+    if (!seedRecipes?.length) return h;
+    const seedMap = new Map(seedRecipes.map((r) => [r.id, r]));
+    let hChanged = false;
+    const recipes = (h.recipes ?? []).map((recipe) => {
+      if (recipe.imageUrl) return recipe;
+      const s = seedMap.get(recipe.id);
+      if (!s?.imageUrl) return recipe;
+      hChanged = true;
+      return { ...recipe, imageUrl: s.imageUrl };
+    });
+    if (!hChanged) return h;
+    anyChanged = true;
+    return { ...h, recipes };
+  });
+  if (anyChanged) {
+    saveHouseholds(next);
+  }
+  return anyChanged;
+}
+
+/**
+ * For each stored household that exists in bundled seed, copy `imageUrl` from the seed base meal
+ * when the live row has the same `id` but no `imageUrl`. Keeps long-lived Dexie data aligned when
+ * bundled meal hero images are added after first install.
+ */
+export function backfillBundledSeedBaseMealImageUrls(): boolean {
+  const seedHouseholds = seedData as unknown as Household[];
+  const households = loadHouseholds();
+  let anyChanged = false;
+  const next = households.map((h) => {
+    const seedH = seedHouseholds.find((s) => s.id === h.id);
+    const seedMeals = seedH?.baseMeals;
+    if (!seedMeals?.length) return h;
+    const seedMap = new Map(seedMeals.map((m) => [m.id, m]));
+    let hChanged = false;
+    const baseMeals = h.baseMeals.map((meal) => {
+      if (meal.imageUrl) return meal;
+      const s = seedMap.get(meal.id);
+      if (!s?.imageUrl) return meal;
+      hChanged = true;
+      return { ...meal, imageUrl: s.imageUrl };
+    });
+    if (!hChanged) return h;
+    anyChanged = true;
+    return { ...h, baseMeals };
+  });
+  if (anyChanged) {
+    saveHouseholds(next);
+  }
+  return anyChanged;
+}
+
 export function exportHouseholdsJSON(householdIds?: string[]): string {
   const all = loadHouseholds();
   const data = householdIds ? all.filter((h) => householdIds.includes(h.id)) : all;

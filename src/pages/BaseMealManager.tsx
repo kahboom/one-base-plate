@@ -188,7 +188,7 @@ function MealModal({
           <div className="flex min-w-0 flex-1 items-start gap-3">
             <MealImageSlot
               variant="modalHeader"
-              imageUrl={resolveMealImageUrl(meal, recipes)}
+              imageUrl={resolveMealImageUrl(meal)}
               alt=""
               imageTestId="meal-modal-header-image"
               placeholderTestId="meal-modal-header-image-placeholder"
@@ -570,11 +570,9 @@ function MealModal({
 
 function MealRow({
   meal,
-  recipes,
   onClick,
 }: {
   meal: BaseMeal;
-  recipes: Recipe[];
   onClick: () => void;
 }) {
   return (
@@ -587,7 +585,7 @@ function MealRow({
     >
       <MealImageSlot
         variant="row"
-        imageUrl={resolveMealImageUrl(meal, recipes)}
+        imageUrl={resolveMealImageUrl(meal)}
         alt=""
         imageTestId="meal-row-image"
         placeholderTestId="meal-row-image-placeholder"
@@ -782,7 +780,6 @@ export default function BaseMealManager() {
             <MealRow
               key={meal.id}
               meal={meal}
-              recipes={recipes}
               onClick={() => setEditingId(meal.id)}
             />
           ))}
