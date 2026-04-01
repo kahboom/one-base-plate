@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "seed": "npx tsx scripts/seed.ts",
     "db:seed": "npx tsx scripts/db-seed.ts",
-    "suggest:ingredient-merges": "npx tsx scripts/suggest-ingredient-merge-pairs.ts"
+    "suggest:ingredient-merges": "npx tsx scripts/suggest-ingredient-merge-pairs.ts",
+    "prepare": "husky"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.100.0",
@@ -43,6 +44,7 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "fake-indexeddb": "^6.2.5",
     "globals": "^15.15.0",
+    "husky": "^9.1.7",
     "jsdom": "^26.0.0",
     "prettier": "^3.6.2",
     "tailwindcss": "^4.2.1",
