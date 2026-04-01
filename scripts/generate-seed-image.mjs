@@ -550,11 +550,15 @@ if (!key?.trim()) {
   process.exit(1)
 }
 
+const BATCH_SIZE = 5
+const BATCH_DELAY_MS = 3000
+
 const dir = join(root, 'public/images/seed')
 mkdirSync(dir, { recursive: true })
 
-const onlyIds = process.argv.slice(2).map((s) => s.trim()).filter(Boolean)
-const toGenerate = onlyIds.length ? ITEMS.filter((i) => onlyIds.includes(i.id)) : ITEMS
+const skipExisting = process.argv.includes('--skip-existing')
+const onlyIds = process.argv.slice(2).map((s) => s.trim()).filter(Boolean).filter((s) => s !== '--skip-existing')
+let toGenerate = onlyIds.length ? ITEMS.filter((i) => onlyIds.includes(i.id)) : ITEMS
 if (onlyIds.length) {
   const missing = onlyIds.filter((id) => !ITEMS.some((i) => i.id === id))
   if (missing.length) {
@@ -564,7 +568,19 @@ if (onlyIds.length) {
   }
 }
 
-for (const item of toGenerate) {
+if (skipExisting) {
+  const before = toGenerate.length
+  toGenerate = toGenerate.filter((i) => !existsSync(join(dir, `${i.id}.png`)))
+  const skipped = before - toGenerate.length
+  if (skipped) console.log(`--skip-existing: skipping ${skipped} image(s) that already exist`)
+}
+
+if (toGenerate.length === 0) {
+  console.log('Nothing to generate.')
+  process.exit(0)
+}
+
+async function generateOne(item) {
   console.log(`Generating ${item.id}...`)
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
@@ -585,26 +601,48 @@ for (const item of toGenerate) {
   const data = await res.json()
   if (!res.ok) {
     console.error(`OpenAI API error for ${item.id}:`, JSON.stringify(data, null, 2))
-    continue
+    return false
   }
 
   const url = data.data?.[0]?.url
   if (!url) {
     console.error(`Unexpected response for ${item.id}:`, data)
-    continue
+    return false
   }
 
   const imgRes = await fetch(url)
   if (!imgRes.ok) {
     console.error(`Failed to download image for ${item.id}:`, imgRes.status)
-    continue
+    return false
   }
 
   const buf = Buffer.from(await imgRes.arrayBuffer())
   const outPath = join(dir, `${item.id}.png`)
   writeFileSync(outPath, buf)
   console.log(`Wrote ${outPath}`)
-  
-  // Wait a moment between requests to respect rate limits
-  await new Promise(resolve => setTimeout(resolve, 2000))
+  return true
 }
+
+console.log(`Generating ${toGenerate.length} image(s) in batches of ${BATCH_SIZE}...`)
+
+let ok = 0
+let fail = 0
+for (let i = 0; i < toGenerate.length; i += BATCH_SIZE) {
+  const batch = toGenerate.slice(i, i + BATCH_SIZE)
+  const batchNum = Math.floor(i / BATCH_SIZE) + 1
+  const totalBatches = Math.ceil(toGenerate.length / BATCH_SIZE)
+  console.log(`\n--- Batch ${batchNum}/${totalBatches} (${batch.map((b) => b.id).join(', ')}) ---`)
+
+  const results = await Promise.allSettled(batch.map((item) => generateOne(item)))
+  for (const r of results) {
+    if (r.status === 'fulfilled' && r.value) ok++
+    else fail++
+  }
+
+  if (i + BATCH_SIZE < toGenerate.length) {
+    console.log(`Waiting ${BATCH_DELAY_MS / 1000}s before next batch...`)
+    await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS))
+  }
+}
+
+console.log(`\nDone: ${ok} generated, ${fail} failed, ${toGenerate.length} total.`)
