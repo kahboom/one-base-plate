@@ -553,7 +553,7 @@
     {
       "id": "ing-dill",
       "name": "dill",
-      "catalogId": "cat-dried-dill",
+      "catalogId": "cat-fresh-dill",
       "imageUrl": "/images/seed/ing-dill.png"
     },
     {
@@ -628,7 +628,7 @@
     {
       "id": "ing-fresh-ginger",
       "name": "fresh ginger",
-      "catalogId": "cat-ginger",
+      "catalogId": "cat-fresh-ginger",
       "imageUrl": "/images/seed/ing-fresh-ginger.png"
     },
     {
@@ -859,7 +859,7 @@
     {
       "id": "ing-oats",
       "name": "oats",
-      "catalogId": "cat-oats",
+      "catalogId": "cat-rolled-oats",
       "imageUrl": "/images/seed/ing-oats.png"
     },
     {
@@ -933,7 +933,7 @@
     {
       "id": "ing-parsley",
       "name": "parsley",
-      "catalogId": "cat-dried-parsley",
+      "catalogId": "cat-fresh-parsley",
       "imageUrl": "/images/seed/ing-parsley.png"
     },
     {
@@ -1122,7 +1122,7 @@
     {
       "id": "ing-rosemary",
       "name": "rosemary",
-      "catalogId": "cat-rosemary",
+      "catalogId": "cat-fresh-rosemary",
       "imageUrl": "/images/seed/ing-rosemary.png"
     },
     {
@@ -1135,7 +1135,7 @@
     {
       "id": "ing-sage",
       "name": "sage",
-      "catalogId": "cat-sage",
+      "catalogId": "cat-fresh-sage",
       "imageUrl": "/images/seed/ing-sage.png"
     },
     {
@@ -1183,7 +1183,7 @@
     {
       "id": "ing-smoked-paprika",
       "name": "smoked paprika",
-      "catalogId": "cat-paprika",
+      "catalogId": "cat-smoked-paprika",
       "imageUrl": "/images/seed/ing-smoked-paprika.png"
     },
     {
@@ -1270,7 +1270,7 @@
     {
       "id": "ing-thyme",
       "name": "thyme",
-      "catalogId": "cat-thyme",
+      "catalogId": "cat-fresh-thyme",
       "imageUrl": "/images/seed/ing-thyme.png"
     },
     {
@@ -1414,7 +1414,7 @@
     {
       "id": "ing-yogurt",
       "name": "yogurt",
-      "catalogId": "cat-yogurt",
+      "catalogId": "cat-plain-yogurt",
       "imageUrl": "/images/seed/ing-yogurt.png"
     }
   ],

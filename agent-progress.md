@@ -6,6 +6,17 @@
 - Run tests before marking any feature as passing
 - Commit after each completed feature
 
+### 2026-04-02 — Catalog batch B: vinegar and rice vinegar splits
+
+- **What:** Replaced merged `cat-vinegar` with `cat-white-vinegar` and `cat-apple-cider-vinegar` (tight aliases). Split `cat-rice-vinegar` plain vs `cat-seasoned-rice-vinegar` (aliases: unseasoned / sushi-style). Aligned `COMMON_STAPLES` in `src/lib/commonStaples.ts` for Paprika staple bypass. Added four matcher assertions in `tests/f064-parser-matcher-hardening.test.ts`.
+- **Verified:** `npm run typecheck`, `npm test` (full suite).
+
+### 2026-04-02 — Catalog ontology batch C (fresh vs dried ginger & herbs)
+
+- **What:** Split `MASTER_CATALOG` per `plans/catalog-ontology-splits.md` batch C: `cat-fresh-ginger` / `cat-ground-ginger`; thyme, rosemary, sage, parsley, and dill each as fresh vs dried rows with tight aliases. Kept `cat-dried-parsley` and `cat-dried-dill` for dried-only rows; added `cat-fresh-parsley`, `cat-fresh-dill`, and fresh/dried pairs for thyme, rosemary, and sage. Updated `fixtures/households/H001-mcg.json` and `src/seed-data.json` `catalogId`s to fresh variants for seeded ginger, thyme, rosemary, sage, parsley, and dill.
+- **Tests:** Added `F064 — Catalog ontology batch C` cases in `tests/f064-parser-matcher-hardening.test.ts`.
+- **Verified:** `npm run typecheck`; `npx vitest run tests/f064-parser-matcher-hardening.test.ts`; `npm run db:seed` after fixture changes.
+
 ### 2026-04-01 — Seed images: sirloin, pita, spinach, strawberries, tinned tomatoes
 
 - **What:** Generated watercolor PNGs for `ing-sirloin-steak`, `ing-pita-bread`, `ing-spinach`, `ing-strawberries`, `ing-tinned-tomatoes`; added `ITEMS` entries in `scripts/generate-seed-image.mjs`; wired `imageUrl` on those rows in `fixtures/households/H001-mcg.json`; ran `npm run db:seed`.
@@ -1233,6 +1244,18 @@ All completed features satisfy their referenced screen acceptance criteria for t
 
 - **Refactor:** Split monolithic `AGENTS.md` / `CLAUDE.md` / `GEMINI.md` into a short shared [`AGENTS.md`](AGENTS.md) plus [`docs/ai/project-context.md`](docs/ai/project-context.md), [`repo-map.md`](docs/ai/repo-map.md), [`conventions.md`](docs/ai/conventions.md), [`ingredient-seed.md`](docs/ai/ingredient-seed.md), [`global-rules.md`](docs/ai/global-rules.md), [`decision-log.md`](docs/ai/decision-log.md). Vendor files point at `AGENTS.md` and Claude-specific memory/subagent paths.
 - **Rules model:** Global numbered rules → `docs/ai/global-rules.md`; decisions → `decision-log.md`; specialist → `.claude/agent-memory/`.
+
+### Batch A — Wrong-target alias removals (catalog ontology splits) (2026-04-02)
+
+- **Plan:** [`plans/catalog-ontology-splits.md`](plans/catalog-ontology-splits.md) — Batch A: remove overly broad aliases that cause false-positive catalog matching.
+- **Changes:**
+  - `cat-ground-beef`: removed `'ground meat'` alias (too generic — could match ground pork, turkey, etc.)
+  - `cat-sirloin-steak`: removed `'steak'` alias (too generic — could match any steak cut)
+  - `cat-almond-butter`: removed `'nut butter'` alias (too generic — could match peanut butter, cashew butter, etc.)
+  - `cat-sriracha`: removed `'hot sauce'` alias (too generic — could match any hot sauce)
+- **Test update:** `tests/f064-parser-matcher-hardening.test.ts` — updated test to expect `'ground meat'` to be unmatched (status `'unmatched'`) rather than matching `cat-ground-beef`.
+- **Verification:** `npm run typecheck && npm test` — all 1395 tests pass.
+- **Impact:** Import matching will no longer auto-match generic terms to specific products; users will need to explicitly select/create household ingredients for these generic terms.
 
 ## Next Task
 

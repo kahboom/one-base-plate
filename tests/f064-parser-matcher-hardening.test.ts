@@ -497,6 +497,129 @@ describe('F064 — Catalog matching for new entries', () => {
   });
 });
 
+describe('F064 — Catalog ontology batch C (fresh vs dried ginger & herbs)', () => {
+  it('fresh ginger and ginger root match cat-fresh-ginger', () => {
+    for (const name of ['fresh ginger', 'ginger root', 'ginger']) {
+      const m = matchIngredient(name, [], MASTER_CATALOG);
+      expect(m.status).toBe('catalog');
+      expect(m.catalogItem?.id).toBe('cat-fresh-ginger');
+    }
+  });
+
+  it('ground ginger matches cat-ground-ginger', () => {
+    const m = matchIngredient('ground ginger', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-ground-ginger');
+  });
+
+  it('dried thyme vs fresh thyme resolve to different catalog rows', () => {
+    const dried = matchIngredient('dried thyme', [], MASTER_CATALOG);
+    expect(dried.status).toBe('catalog');
+    expect(dried.catalogItem?.id).toBe('cat-dried-thyme');
+    const fresh = matchIngredient('fresh thyme', [], MASTER_CATALOG);
+    expect(fresh.status).toBe('catalog');
+    expect(fresh.catalogItem?.id).toBe('cat-fresh-thyme');
+  });
+
+  it('dried rosemary vs fresh rosemary resolve to different catalog rows', () => {
+    const dried = matchIngredient('dried rosemary', [], MASTER_CATALOG);
+    expect(dried.status).toBe('catalog');
+    expect(dried.catalogItem?.id).toBe('cat-dried-rosemary');
+    const fresh = matchIngredient('fresh rosemary', [], MASTER_CATALOG);
+    expect(fresh.status).toBe('catalog');
+    expect(fresh.catalogItem?.id).toBe('cat-fresh-rosemary');
+  });
+
+  it('dried sage vs fresh sage resolve to different catalog rows', () => {
+    const dried = matchIngredient('dried sage', [], MASTER_CATALOG);
+    expect(dried.status).toBe('catalog');
+    expect(dried.catalogItem?.id).toBe('cat-dried-sage');
+    const fresh = matchIngredient('fresh sage', [], MASTER_CATALOG);
+    expect(fresh.status).toBe('catalog');
+    expect(fresh.catalogItem?.id).toBe('cat-fresh-sage');
+  });
+
+  it('dried parsley vs fresh parsley resolve to different catalog rows', () => {
+    const dried = matchIngredient('dried parsley', [], MASTER_CATALOG);
+    expect(dried.status).toBe('catalog');
+    expect(dried.catalogItem?.id).toBe('cat-dried-parsley');
+    const fresh = matchIngredient('fresh parsley', [], MASTER_CATALOG);
+    expect(fresh.status).toBe('catalog');
+    expect(fresh.catalogItem?.id).toBe('cat-fresh-parsley');
+  });
+
+  it('dill weed matches dried row; fresh dill matches fresh row', () => {
+    const dried = matchIngredient('dill weed', [], MASTER_CATALOG);
+    expect(dried.status).toBe('catalog');
+    expect(dried.catalogItem?.id).toBe('cat-dried-dill');
+    const fresh = matchIngredient('fresh dill', [], MASTER_CATALOG);
+    expect(fresh.status).toBe('catalog');
+    expect(fresh.catalogItem?.id).toBe('cat-fresh-dill');
+  });
+});
+
+describe('F064 — Catalog ontology batch D (starches, legumes, tortillas, radish)', () => {
+  it('rice flour matches cat-rice-flour, not glutinous row', () => {
+    const m = matchIngredient('rice flour', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-rice-flour');
+  });
+
+  it('mochiko matches cat-glutinous-rice-flour', () => {
+    const m = matchIngredient('mochiko', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-glutinous-rice-flour');
+  });
+
+  it('glutinous rice flour matches cat-glutinous-rice-flour', () => {
+    const m = matchIngredient('glutinous rice flour', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-glutinous-rice-flour');
+  });
+
+  it('corn tortillas matches cat-corn-tortillas', () => {
+    const m = matchIngredient('corn tortillas', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-corn-tortillas');
+  });
+
+  it('taco shells matches cat-taco-shells', () => {
+    const m = matchIngredient('taco shells', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-taco-shells');
+  });
+
+  it('cannellini beans matches cat-cannellini-beans', () => {
+    const m = matchIngredient('cannellini beans', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-cannellini-beans');
+  });
+
+  it('great northern beans matches cat-great-northern-beans', () => {
+    const m = matchIngredient('great northern beans', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-great-northern-beans');
+  });
+
+  it('navy beans matches cat-navy-beans', () => {
+    const m = matchIngredient('navy beans', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-navy-beans');
+  });
+
+  it('radish matches cat-radish', () => {
+    const m = matchIngredient('radish', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-radish');
+  });
+
+  it('daikon matches cat-daikon', () => {
+    const m = matchIngredient('daikon', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-daikon');
+  });
+});
+
 describe('F064 — End-to-end parsing + matching', () => {
   it('400g can chopped tomatoes → catalog match to tomatoes', () => {
     const r = parseIngredientLine('400g can chopped tomatoes');
@@ -608,11 +731,11 @@ describe('F064 — Inline metric bracket stripping', () => {
     expect(r.name).toBe('ground meat');
   });
 
-  it('ground meat matches catalog ground beef', () => {
+  it('ground meat no longer matches catalog ground beef (alias removed per Batch A)', () => {
     const m = matchIngredient('ground meat', [], MASTER_CATALOG);
-    expect(m.status).toBe('catalog');
-    expect(m.catalogItem?.id).toBe('cat-ground-beef');
-    expect(m.confidenceBand).toBe('exact');
+    // After Batch A: 'ground meat' is no longer an alias for cat-ground-beef
+    // It should remain unmatched (user must pick or create household ingredient)
+    expect(m.status).toBe('unmatched');
   });
 });
 
@@ -731,5 +854,31 @@ describe('F064 — Flour variant catalog aliases', () => {
     expect(m.status).toBe('catalog');
     expect(m.catalogItem?.id).toBe('cat-wholemeal-flour');
     expect(m.confidenceBand).toBe('strong');
+  });
+});
+
+describe('F064 — Catalog vinegar / rice vinegar splits (batch B ontology)', () => {
+  it('white vinegar → cat-white-vinegar', () => {
+    const m = matchIngredient('white vinegar', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-white-vinegar');
+  });
+
+  it('apple cider vinegar → cat-apple-cider-vinegar', () => {
+    const m = matchIngredient('apple cider vinegar', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-apple-cider-vinegar');
+  });
+
+  it('rice wine vinegar → plain cat-rice-vinegar', () => {
+    const m = matchIngredient('rice wine vinegar', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-rice-vinegar');
+  });
+
+  it('seasoned rice vinegar → cat-seasoned-rice-vinegar', () => {
+    const m = matchIngredient('seasoned rice vinegar', [], MASTER_CATALOG);
+    expect(m.status).toBe('catalog');
+    expect(m.catalogItem?.id).toBe('cat-seasoned-rice-vinegar');
   });
 });

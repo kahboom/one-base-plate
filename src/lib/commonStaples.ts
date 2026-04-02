@@ -92,8 +92,23 @@ export const COMMON_STAPLES: CommonStaple[] = [
     category: 'pantry',
   },
   {
+    name: 'white vinegar',
+    aliases: ['distilled white vinegar', 'distilled vinegar'],
+    category: 'pantry',
+  },
+  {
+    name: 'apple cider vinegar',
+    aliases: ['cider vinegar', 'acv'],
+    category: 'pantry',
+  },
+  {
     name: 'rice vinegar',
-    aliases: ['rice wine vinegar', 'seasoned rice vinegar'],
+    aliases: ['rice wine vinegar', 'unseasoned rice vinegar'],
+    category: 'pantry',
+  },
+  {
+    name: 'seasoned rice vinegar',
+    aliases: ['sushi vinegar'],
     category: 'pantry',
   },
   { name: 'balsamic vinegar', aliases: ['balsamic', 'aged balsamic'], category: 'pantry' },
