@@ -85,13 +85,7 @@ Execution plan for splitting over-merged `MASTER_CATALOG` rows so distinct SKUs 
 
 ## Batch F — Optional / product judgment
 
-Defer unless import or prefs need it:
-
-- Whiskey styles (scotch / Irish vs generic).
-- Smoked vs sweet paprika; broccoli vs broccolini; orange vs mandarin.
-- Balsamic vs glaze; whole vs ground cloves/cinnamon/etc.
-
-**Size:** small PRs or backlog.
+**Done (2026-04-02):** Implemented in `MASTER_CATALOG` — whiskey (generic / scotch / Irish), sweet vs smoked paprika, broccoli vs broccolini, orange vs mandarin, balsamic vinegar vs glaze, ground vs stick cinnamon, ground vs whole cloves. Seeded `ing-smoked-paprika` uses `cat-smoked-paprika`. Matcher coverage: `F064 — Catalog ontology batch F` in `tests/f064-parser-matcher-hardening.test.ts`.
 
 ---
 

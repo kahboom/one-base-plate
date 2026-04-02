@@ -6,10 +6,22 @@
 - Run tests before marking any feature as passing
 - Commit after each completed feature
 
+### 2026-04-02 — Catalog ontology batch F (optional splits)
+
+- **What:** Per `plans/catalog-ontology-splits.md` batch F: split `cat-whiskey` vs `cat-scotch-whisky` vs `cat-irish-whiskey`; `cat-paprika` (sweet/mild/hungarian) vs `cat-smoked-paprika`; `cat-broccoli` vs `cat-broccolini`; `cat-orange` vs `cat-mandarin`; `cat-balsamic-vinegar` vs `cat-balsamic-glaze`; replaced merged `cat-cinnamon` with `cat-ground-cinnamon` and `cat-cinnamon-stick`; replaced merged `cat-cloves` with `cat-ground-cloves` and `cat-whole-cloves`. Updated `ing-smoked-paprika` → `catalogId: cat-smoked-paprika` in `fixtures/households/H001-mcg.json` and `src/seed-data.json`.
+- **Tests:** `F064 — Catalog ontology batch F` in `tests/f064-parser-matcher-hardening.test.ts`.
+- **Verified:** `npm run typecheck`; `npx vitest run tests/f044-ingredient-catalog.test.tsx tests/f076-paprika-auto-resolution.test.tsx tests/f064-parser-matcher-hardening.test.ts` (full `npm test` may hit unrelated UI timeouts in some environments).
+
 ### 2026-04-02 — Catalog batch B: vinegar and rice vinegar splits
 
 - **What:** Replaced merged `cat-vinegar` with `cat-white-vinegar` and `cat-apple-cider-vinegar` (tight aliases). Split `cat-rice-vinegar` plain vs `cat-seasoned-rice-vinegar` (aliases: unseasoned / sushi-style). Aligned `COMMON_STAPLES` in `src/lib/commonStaples.ts` for Paprika staple bypass. Added four matcher assertions in `tests/f064-parser-matcher-hardening.test.ts`.
 - **Verified:** `npm run typecheck`, `npm test` (full suite).
+
+### 2026-04-02 — Catalog ontology batch E (yogurt, bacon, tomatoes)
+
+- **What:** Per `plans/catalog-ontology-splits.md` batch E: replaced merged `cat-yogurt` with `cat-plain-yogurt` (default “yogurt”/yoghurt + plain/natural/low-fat aliases) and `cat-greek-yogurt` (greek + greek-style spellings). Split `cat-bacon` (pork aliases only) and added `cat-turkey-bacon`. Moved canned/stewed/chopped-style tomato phrases from `cat-tomatoes` to `cat-tinned-tomatoes` (plus Italian-style stewed/plum aliases); kept fresh tomato aliases on `cat-tomatoes`. Updated `ing-yogurt` → `catalogId: cat-plain-yogurt` in `fixtures/households/H001-mcg.json`; ran `npm run db:seed`.
+- **Tests:** `F064 — Catalog ontology batch E` in `tests/f064-parser-matcher-hardening.test.ts` (plain vs greek yogurt, bacon vs turkey bacon, chopped tomatoes → tinned).
+- **Verified:** `npm run typecheck`; `npx vitest run tests/f064-parser-matcher-hardening.test.ts tests/f070-catalog-materialization.test.tsx` (full `npm test` had unrelated UI timeouts in this environment).
 
 ### 2026-04-02 — Catalog ontology batch C (fresh vs dried ginger & herbs)
 

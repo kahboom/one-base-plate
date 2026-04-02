@@ -164,7 +164,7 @@ A few ingredients may not have a catalog match and are too niche to add. These s
 | parmesan        | `cat-parmesan-cheese`   |
 | plum tomatoes   | `cat-tomatoes`          |
 | romaine lettuce | `cat-lettuce`           |
-| smoked paprika  | `cat-paprika`           |
+| smoked paprika  | `cat-smoked-paprika`    |
 | spring onions   | `cat-green-onion`       |
 | tinned tuna     | `cat-tuna`              |
 | tomato ketchup  | `cat-ketchup`           |

@@ -303,6 +303,110 @@ describe('F064 — Tomato family matching', () => {
   });
 });
 
+describe('F064 — Catalog ontology batch E (yogurt, bacon, tinned tomatoes)', () => {
+  it('plain yogurt → cat-plain-yogurt', () => {
+    const m = matchIngredient('plain yogurt', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-plain-yogurt');
+  });
+
+  it('greek yogurt → cat-greek-yogurt', () => {
+    const m = matchIngredient('greek yogurt', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-greek-yogurt');
+  });
+
+  it('unspecified yogurt → cat-plain-yogurt', () => {
+    const m = matchIngredient('yogurt', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-plain-yogurt');
+  });
+
+  it('turkey bacon → cat-turkey-bacon', () => {
+    const m = matchIngredient('turkey bacon', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-turkey-bacon');
+  });
+
+  it('streaky bacon → cat-bacon', () => {
+    const m = matchIngredient('streaky bacon', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-bacon');
+  });
+
+  it('chopped tomatoes → cat-tinned-tomatoes', () => {
+    const m = matchIngredient('chopped tomatoes', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-tinned-tomatoes');
+  });
+});
+
+describe('F064 — Catalog ontology batch F (whiskey, paprika, citrus, broccoli, balsamic, cinnamon, cloves)', () => {
+  it('scotch → cat-scotch-whisky', () => {
+    const m = matchIngredient('scotch', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-scotch-whisky');
+  });
+
+  it('irish whiskey → cat-irish-whiskey', () => {
+    const m = matchIngredient('irish whiskey', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-irish-whiskey');
+  });
+
+  it('rye whiskey → generic cat-whiskey', () => {
+    const m = matchIngredient('rye whiskey', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-whiskey');
+  });
+
+  it('smoked paprika → cat-smoked-paprika', () => {
+    const m = matchIngredient('smoked paprika', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-smoked-paprika');
+  });
+
+  it('sweet paprika → cat-paprika', () => {
+    const m = matchIngredient('sweet paprika', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-paprika');
+  });
+
+  it('mandarin oranges → cat-mandarin', () => {
+    const m = matchIngredient('mandarin oranges', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-mandarin');
+  });
+
+  it('navel oranges → cat-orange', () => {
+    const m = matchIngredient('navel oranges', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-orange');
+  });
+
+  it('broccolini → cat-broccolini', () => {
+    const m = matchIngredient('broccolini', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-broccolini');
+  });
+
+  it('balsamic glaze → cat-balsamic-glaze', () => {
+    const m = matchIngredient('balsamic glaze', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-balsamic-glaze');
+  });
+
+  it('balsamic vinegar → cat-balsamic-vinegar', () => {
+    const m = matchIngredient('balsamic vinegar', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-balsamic-vinegar');
+  });
+
+  it('ground cinnamon → cat-ground-cinnamon', () => {
+    const m = matchIngredient('ground cinnamon', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-ground-cinnamon');
+  });
+
+  it('cinnamon sticks → cat-cinnamon-stick', () => {
+    const m = matchIngredient('cinnamon sticks', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-cinnamon-stick');
+  });
+
+  it('ground cloves → cat-ground-cloves', () => {
+    const m = matchIngredient('ground cloves', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-ground-cloves');
+  });
+
+  it('whole cloves → cat-whole-cloves', () => {
+    const m = matchIngredient('whole cloves', [], MASTER_CATALOG);
+    expect(m.catalogItem?.id).toBe('cat-whole-cloves');
+  });
+});
+
 describe('F064 — Unicode/accent preservation', () => {
   it('ñame parses cleanly with accent preserved', () => {
     const r = parseIngredientLine('1 lb ñame');
