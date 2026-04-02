@@ -1,10 +1,6 @@
 ---
 name: migration-sync-guardian
-description: >-
-  Migration and sync guardian for OneBasePlate. Use when changing schema,
-  Dexie/IndexedDB migrations, storage APIs, sync payloads, entity references,
-  imports/exports, or backwards compatibility. Demands explicit migration plans,
-  idempotency, and tests — no hand-waving or silent data drops.
+description: Migration and sync guardian for OneBasePlate. Use when changing schema, Dexie/IndexedDB migrations, storage APIs, sync payloads, entity references, imports/exports, or backwards compatibility. Demands explicit migration plans, idempotency, and tests — no hand-waving or silent data drops.
 model: inherit
 readonly: true
 ---

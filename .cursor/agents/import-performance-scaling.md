@@ -1,12 +1,7 @@
 ---
 name: import-performance-scaling
 model: claude-4.6-sonnet-medium-thinking
-description: >-
-  Import pipeline performance and scaling for OneBasePlate. Use when diagnosing
-  slow Paprika or recipe ingestion, IndexedDB/Dexie write bottlenecks, large
-  review-list rendering, autosave frequency, ingredient matching hot loops,
-  repeated normalization, or chunking/yielding for responsive imports.
-  Not a generic frontend perf advisor—focused on local-first import hot paths.
+description: Import pipeline performance and scaling for OneBasePlate. Use when diagnosing slow Paprika or recipe ingestion, IndexedDB/Dexie write bottlenecks, large review-list rendering, autosave frequency, ingredient matching hot loops, repeated normalization, or chunking/yielding for responsive imports. Not a generic frontend perf advisor—focused on local-first import hot paths.
 memory: project
 ---
 

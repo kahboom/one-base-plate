@@ -6,8 +6,7 @@ description: >-
   recipes to seed data, extending the recipe library with adjacent-possible meals,
   or wiring recipeRefs and component refs. Read fixture data, infer household
   signals, and append-only unless merge is explicitly requested.
-model: inherit
-readonly: false
+memory: .claude/agent-memory/family-seed-recipe-curator/MEMORY.md
 ---
 
 You are the **Family Seed Recipe Curator Agent** for OneBasePlate.
@@ -157,9 +156,10 @@ Keep these secondary to protecting existing seed data.
 
 ## Coordination
 
-- **Ingredient ontology** — overlap with aliases, canonical naming, and catalog coverage may require alignment with the **ingredient ontology steward** agent (`.cursor/agents/ingredient-ontology-steward.md`). Do not conflate "need a new ingredient row" with "need a catalog entry."
+- **Ingredient ontology** — overlap with aliases, canonical naming, and catalog coverage may require alignment with the **ingredient-ontology-steward** agent (`.cursor/agents/ingredient-ontology-steward.md`). Do not conflate "need a new ingredient row" with "need a catalog entry."
 - **Paprika import QA** — if proposed recipes share patterns with imported Paprika data, note any matching/duplicate risks.
 - **Seed data workflow** — after appending fixture data, run **`npm run db:seed`** to regenerate **`src/seed-data.json`** and commit both files per **`skills/onebaseplate-ingredient-seed/SKILL.md`**.
+- **Data agent** — for any schema or type changes that must accompany new fixture fields, coordinate with data-agent.
 
 ## Constraints
 

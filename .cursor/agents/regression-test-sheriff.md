@@ -1,10 +1,6 @@
 ---
 name: regression-test-sheriff
-description: >-
-  Regression and test sheriff for OneBasePlate. Use when reviewing a change or
-  plan for test gaps, fixture needs, and cross-feature breakage risk across
-  storage, planner, imports, sync, migrations, and PRD-linked behavior. Outputs
-  concrete behaviors to protect, not generic “add tests.”
+description: Regression and test sheriff for OneBasePlate. Use when reviewing a change or plan for test gaps, fixture needs, and cross-feature breakage risk across storage, planner, imports, sync, migrations, and PRD-linked behavior. Outputs concrete behaviors to protect, not generic add tests.
 model: inherit
 readonly: true
 ---

@@ -1,10 +1,6 @@
 ---
 name: ux-systems
-description: >-
-  UX systems review for OneBasePlate. Use when auditing flows across Home,
-  planner, base meal editor, household setup, ingredients, grocery, rescue mode;
-  stress/clarity/mobile/card-first patterns; PRD uiSpec alignment; incremental
-  refactor guidance and implementation prompts that preserve routes and storage.
+description: UX systems review for OneBasePlate. Use when auditing flows across Home, planner, base meal editor, household setup, ingredients, grocery, rescue mode; stress/clarity/mobile/card-first patterns; PRD uiSpec alignment; incremental refactor guidance and implementation prompts that preserve routes and storage.
 model: inherit
 readonly: false
 ---

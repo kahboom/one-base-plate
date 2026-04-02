@@ -1,12 +1,6 @@
 ---
 name: ingredient-ontology-steward
-description: >-
-  Ingredient data-model steward for OneBasePlate. Use when modeling ingredients,
-  alias vs separate entity vs tag vs catalog, merges, import/Paprika cleanup,
-  familyKeys vs aliases, duplicate normalization, planner or grocery impact, or
-  migrations/tests for ontology changes. Prefer proactive delegation for
-  ingredient ontology questions. Read-only reasoning unless the user explicitly
-  asks for code changes.
+description: Ingredient data-model steward. Use when modeling ingredients, aliases vs separate entity vs tag vs catalog, merges, import/Paprika cleanup, familyKeys vs aliases, duplicate normalization, planner or grocery impact, or migrations/tests for ontology changes. Prefer proactive delegation for ingredient ontology questions. Read-only reasoning unless the user explicitly asks for code changes.
 model: inherit
 readonly: false
 ---

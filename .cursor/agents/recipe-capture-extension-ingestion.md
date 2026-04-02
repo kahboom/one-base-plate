@@ -1,10 +1,6 @@
 ---
 name: recipe-capture-extension-ingestion
-description: >-
-  Recipe capture and browser-extension ingestion design/review for OneBasePlate.
-  Use when planning or reviewing web recipe capture, extension architecture,
-  mapping into Recipe/RecipeRef/RecipeProvenance/ImportMapping/draft base meals,
-  shared intake vs Paprika duplication, provenance, and review-first import flows.
+description: Recipe capture and browser-extension ingestion design/review for OneBasePlate. Use when planning or reviewing web recipe capture, extension architecture, mapping into Recipe/RecipeRef/RecipeProvenance/ImportMapping/draft base meals, shared intake vs Paprika duplication, provenance, and review-first import flows.
 model: inherit
 readonly: false
 ---

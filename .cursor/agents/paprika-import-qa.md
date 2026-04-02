@@ -1,11 +1,6 @@
 ---
 name: paprika-import-qa
-description: >-
-  Paprika import quality and QA for OneBasePlate. Use when judging import
-  quality at scale, triaging bad Paprika examples, planning parser/matcher/review
-  fixes, duplicate prevention, draft-meal gates, or regression tests for import.
-  Read PRD, agent-progress, and import code before recommending; exception-first
-  implementation prompts.
+description: Paprika import quality and QA for OneBasePlate. Use when judging import quality at scale, triaging bad Paprika examples, planning parser/matcher/review fixes, duplicate prevention, draft-meal gates, or regression tests for import. Read PRD, agent-progress, and import code before recommending; exception-first implementation prompts.
 model: inherit
 readonly: false
 ---

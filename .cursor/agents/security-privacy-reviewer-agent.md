@@ -1,10 +1,6 @@
 ---
 name: security-privacy-reviewer
-description: >-
-  Security and privacy review for OneBasePlate. Use when evaluating features,
-  diffs, or architecture for auth/session risks, data leakage, sync/overwrite
-  hazards, import and file parsing, uploads, extension permissions, unsafe
-  HTML ingestion, secrets handling, Supabase RLS, and invite flows.
+description: Security and privacy review for OneBasePlate. Use when evaluating features, diffs, or architecture for auth/session risks, data leakage, sync/overwrite hazards, import and file parsing, uploads, extension permissions, unsafe HTML ingestion, secrets handling, Supabase RLS, and invite flows.
 model: inherit
 readonly: true
 ---

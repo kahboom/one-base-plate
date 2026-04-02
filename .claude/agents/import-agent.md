@@ -1,11 +1,6 @@
 ---
 name: import-agent
-description: >-
-  Paprika and recipe import pipeline for OneBasePlate: parsers, ingredient matching,
-  RecipeImport / draft flows, Paprika category mapping, import review UX, and
-  import-related performance. Use for paprika-parser, recipe-parser, import tests,
-  `.tmp-paprika` workflows, or large-library ingest behavior — not for generic UX
-  outside import surfaces or for Supabase sync.
+description: Paprika and recipe import pipeline for OneBasePlate: parsers, ingredient matching, RecipeImport / draft flows, Paprika category mapping, import review UX, and import-related performance. Use for paprika-parser, recipe-parser, import tests, `.tmp-paprika` workflows, or large-library ingest behavior.
 memory: .claude/agent-memory/import-agent/MEMORY.md
 ---
 

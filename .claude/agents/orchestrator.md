@@ -18,6 +18,9 @@ You are the **Orchestrator** for OneBasePlate.
   - Screens, components, uiSpec, a11y → **ux-agent**
   - Types, Dexie, fixtures, seed, catalog, ingredients model → **data-agent**
   - Supabase, sync engine, offline queue, auth races → **sync-agent**
+  - Generate / append recipes and base meals to seed fixtures → **family-seed-recipe-curator**
+  - Test failures, typecheck errors, drive suite to green → **test-agent**
+  - CHANGELOG.md updates, release entry synthesis → **changelog-agent**
 - Keep **shared context** in [`docs/ai/canonical-state.md`](../../docs/ai/canonical-state.md) and [`docs/ai/global-rules.md`](../../docs/ai/global-rules.md); do not duplicate them in long form here.
 
 ## Boundaries
