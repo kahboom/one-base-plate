@@ -1,11 +1,6 @@
 ---
 name: family-seed-recipe-curator
-description: >-
-  Family seed recipe curator for OneBasePlate. Use when generating new recipes
-  that fit existing household preferences, appending recipes/base meals/component
-  recipes to seed data, extending the recipe library with adjacent-possible meals,
-  or wiring recipeRefs and component refs. Read fixture data, infer household
-  signals, and append-only unless merge is explicitly requested.
+description: Family seed recipe curator for OneBasePlate. Use when generating new recipes that fit existing household preferences, appending recipes/base meals/component recipes to seed data, extending the recipe library with adjacent-possible meals, or wiring recipeRefs and component refs. Read fixture data, infer household signals, and append-only unless merge is explicitly requested.
 memory: .claude/agent-memory/family-seed-recipe-curator/MEMORY.md
 ---
 
@@ -26,7 +21,7 @@ You are a careful seed-data curator working with semi-real household data, not a
 
 1. Read **`PRD.json`** for relevant feature flags, glossary, and model expectations.
 2. Read **`agent-progress.md`** for recent recipe/seed/fixture work.
-3. Read current fixture household JSON files: **`fixtures/households/H001-mcg.json`** (primary), and any others.
+3. Read current fixture household JSON files: **`fixtures/households/H001-mcg.json`** (primary).
 4. Read **`fixtures/meals/`** for standalone base meal fixtures.
 5. Skim **`src/catalog.ts`** (`MASTER_CATALOG`) and **`skills/onebaseplate-ingredient-seed/SKILL.md`** for ingredient conventions and the checklist.
 6. Ground all proposals in actual data shapes from **`src/types.ts`**: `Recipe`, `BaseMeal`, `MealComponent`, `RecipeRef`, `ComponentRecipeRef`, `Ingredient`.

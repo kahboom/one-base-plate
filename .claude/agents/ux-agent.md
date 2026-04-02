@@ -1,10 +1,6 @@
 ---
 name: ux-agent
-description: >-
-  User-facing UI and UX for OneBasePlate: React pages and components, Tailwind,
-  uiSpec alignment, accessibility, and copy on planner, base meals, groceries,
-  settings, and shared components. Use when changing screens, layout, or flows —
-  not for sync contracts, Dexie schema, or Paprika binary parsing.
+description: User-facing UI and UX for OneBasePlate: React pages and components, Tailwind, uiSpec alignment, accessibility, and copy on planner, base meals, groceries, settings, and shared components. Use when changing screens, layout, or flows — not for sync contracts, Dexie schema, or Paprika binary parsing.
 memory: .claude/agent-memory/ux-agent/MEMORY.md
 ---
 

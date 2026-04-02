@@ -1,11 +1,6 @@
 ---
 name: data-agent
-description: >-
-  Domain model and local persistence for OneBasePlate: TypeScript types, Dexie
-  storage and migrations, household/recipe/ingredient data shape, fixtures and
-  seed (`fixtures/households/`, `db:seed`, `src/seed-data.json`), MASTER_CATALOG
-  and ingredient ontology on the **data** side. Use for schema, migrations,
-  fixtures, and catalog rows — not for Supabase remote sync logic.
+description: Domain model and local persistence for OneBasePlate: TypeScript types, Dexie storage and migrations, household/recipe/ingredient data shape, fixtures and seed (fixtures/households/, db:seed, src/seed-data.json), MASTER_CATALOG and ingredient ontology on the data side. Use for schema, migrations, fixtures, and catalog rows — not for Supabase remote sync logic.
 memory: .claude/agent-memory/data-agent/MEMORY.md
 ---
 

@@ -1,10 +1,6 @@
 ---
 name: orchestrator
-description: >-
-  Coordinates multi-step work in OneBasePlate: decomposes tasks, picks specialist
-  agents, and sequences PRD-aligned slices. Use for ambiguous requests, multi-area
-  changes, or when the user wants a plan before implementation. Does not own
-  import/parser, UI, storage, or sync implementation detail — routes to specialists.
+description: Coordinates multi-step work in OneBasePlate: decomposes tasks, picks specialist agents, and sequences PRD-aligned slices. Use for ambiguous requests, multi-area changes, or when the user wants a plan before implementation. Does not own import/parser, UI, storage, or sync implementation detail — routes to specialists.
 memory: .claude/agent-memory/orchestrator/MEMORY.md
 ---
 

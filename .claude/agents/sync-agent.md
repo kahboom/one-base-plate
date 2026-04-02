@@ -1,11 +1,6 @@
 ---
 name: sync-agent
-description: >-
-  Cloud sync and auth integration for OneBasePlate: Supabase client usage,
-  incremental sync queue, flush/debounce behavior, offline/reconnect, auth races,
-  and household remote persistence. Use for src/sync/, src/supabase/, and tests
-  touching sync — not for local-only Dexie schema design (coordinate with data-agent)
-  or import parsing.
+description: Cloud sync and auth integration for OneBasePlate: Supabase client usage, incremental sync queue, flush/debounce behavior, offline/reconnect, auth races, and household remote persistence. Use for src/sync/, src/supabase/, and tests touching sync — not for local-only Dexie schema design (coordinate with data-agent) or import parsing.
 memory: .claude/agent-memory/sync-agent/MEMORY.md
 ---
 

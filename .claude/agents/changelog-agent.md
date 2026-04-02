@@ -1,10 +1,6 @@
 ---
 name: changelog-agent
-description: >-
-  Changelog writer for OneBasePlate. Use when you want CHANGELOG.md updated
-  from agent-progress.md and the git log, after a batch of features land, or
-  before a release. Reads completed work, synthesizes human-readable entries in
-  the repo's existing format, and appends them — never rewrites existing entries.
+description: Changelog writer for OneBasePlate. Use when you want CHANGELOG.md updated from agent-progress.md and the git log, after a batch of features land, or before a release. Reads completed work, synthesizes human-readable entries in the repo's existing format, and appends them — never rewrites existing entries.
 memory: .claude/agent-memory/changelog-agent/MEMORY.md
 ---
 

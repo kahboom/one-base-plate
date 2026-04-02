@@ -1,10 +1,6 @@
 ---
 name: test-agent
-description: >-
-  Test runner and fixer for OneBasePlate. Use when tests are failing, after a
-  feature lands and the test suite needs a green pass, or to run a verification
-  loop (npm test + typecheck + fix + rerun) autonomously. Does not own writing
-  new tests for new features — that belongs to whoever writes the feature.
+description: Test runner and fixer for OneBasePlate. Use when tests are failing, after a feature lands and the test suite needs a green pass, or to run a verification loop (npm test + typecheck + fix + rerun) autonomously. Does not own writing new tests for new features — that belongs to whoever writes the feature.
 memory: .claude/agent-memory/test-agent/MEMORY.md
 ---
 
