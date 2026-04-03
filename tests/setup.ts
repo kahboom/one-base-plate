@@ -4,6 +4,23 @@ import { beforeEach } from 'vitest';
 import { vi } from 'vitest';
 import { resetAppStorageForTests } from '../src/storage';
 
+// Node.js 25+ exposes a native localStorage global that lacks the full Storage
+// interface (no .clear(), .setItem(), etc.) unless --localstorage-file is provided.
+// When running under vitest/jsdom, the jsdom window's proper Storage is available
+// via globalThis.jsdom.window.localStorage — promote it to globalThis so tests
+// get the correct implementation.
+if (typeof localStorage === 'undefined' || typeof localStorage.clear !== 'function') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const jsdomWindow = (globalThis as any).jsdom?.window;
+  if (jsdomWindow?.localStorage) {
+    Object.defineProperty(globalThis, 'localStorage', {
+      value: jsdomWindow.localStorage,
+      writable: true,
+      configurable: true,
+    });
+  }
+}
+
 beforeEach(async () => {
   localStorage.clear();
   await resetAppStorageForTests();

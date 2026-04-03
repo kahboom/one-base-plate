@@ -1,5 +1,12 @@
 # OneBasePlate Agent Progress
 
+### 2026-04-03 — Fix: Node.js 25 native localStorage breaks jsdom test environment
+
+- **Root cause:** Node.js 25 exposes a native `localStorage` global. Without `--localstorage-file <path>`, this object lacks the full Storage interface (`clear`, `setItem`, etc. are missing). vitest's `populateGlobal` skips overriding globals that already exist in the Node process unless they are in its explicit `KEYS` allowlist — `localStorage` is not in that list — so the broken Node.js 25 `localStorage` remained as the test global instead of jsdom's proper Storage implementation.
+- **Fix:** Added a guard at the top of `tests/setup.ts` that detects when `localStorage.clear` is not a function and promotes `globalThis.jsdom.window.localStorage` (the jsdom Storage instance) to `globalThis.localStorage`.
+- **Also:** Added `environmentOptions.jsdom.url` to `vitest.config.ts` (belt-and-suspenders; the jsdom environment already defaults to `http://localhost:3000`).
+- **Result:** All 85 test files, 1436 tests pass; `npm run typecheck` clean.
+
 ## Conventions
 
 - Work on one feature at a time per the PRD implementation order
