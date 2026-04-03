@@ -39,6 +39,7 @@ import {
 import { getAppDb, recreateAppDb } from './storage/dexie-db';
 import { migrateLegacyIntoDexieIfNeeded } from './storage/migrate-v3';
 import { setPaprikaImportSessionMemory } from './storage/paprika-session-store';
+import { repairHouseholds } from './storage/household-repair';
 import { queueHouseholdSync, queueHouseholdDeleteSync, isAuthenticated } from './sync/sync-engine';
 import { isRemoteHouseholdRowId, remoteRowIdForHousehold } from './sync/remote-repository';
 
@@ -149,7 +150,7 @@ async function dexieSetHouseholds(households: Household[]): Promise<void> {
 export async function initStorage(): Promise<void> {
   await migrateLegacyIntoDexieIfNeeded();
   const fromDexie = await dexieGetHouseholds();
-  householdsCache = fromDexie ?? [];
+  householdsCache = fromDexie ? repairHouseholds(fromDexie) : [];
   const paprikaRow = await getAppDb().meta.get(META_PAPRIKA_SESSION);
   const raw = typeof paprikaRow?.value === 'string' ? paprikaRow.value : null;
   setPaprikaImportSessionMemory(raw);

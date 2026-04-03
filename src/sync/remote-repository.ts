@@ -1,6 +1,7 @@
 import type { Household } from '../types';
 import type { RemoteHousehold, HouseholdMember } from './types';
 import { getSupabaseClient } from '../supabase/client';
+import { repairHousehold } from '../storage/household-repair';
 
 /** `households.id` / `household_memberships.household_id` are UUIDs; local app ids may be strings like `H001`. */
 const REMOTE_HOUSEHOLD_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -20,7 +21,9 @@ export function remoteRowIdForHousehold(household: Household): string | null {
 
 /** When hydrating from `households` rows, attach `cloudHouseholdId` if the row PK ≠ embedded `data.id`. */
 export function mergeCloudHouseholdIdFromRemote(r: RemoteHousehold): Household {
-  const d = r.data;
+  // Repair the stored JSON blob before trusting it — the schema may have evolved since it was written.
+  // Pass `r.id` as a fallback when `data.id` is missing (e.g. very old row written before id was embedded).
+  const d = repairHousehold(r.data as unknown, r.id) ?? r.data;
   if (d.id === r.id) return d;
   return { ...d, cloudHouseholdId: r.id };
 }

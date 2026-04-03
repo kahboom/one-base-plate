@@ -11,7 +11,7 @@
       "preparationRules": [
         {
           "ingredient": "chicken breast",
-          "rule": "Must be sliced thin and fully cooked through, no pink"
+          "rule": "Fully cooked through, no pink"
         }
       ],
       "textureLevel": "regular",
@@ -27,6 +27,8 @@
         "cheese",
         "halloumi",
         "paneer",
+        "gnocchi",
+        "potatoes",
         "chicken breast",
         "ground beef",
         "sirloin steak"
@@ -46,7 +48,7 @@
       "id": "M-Indy",
       "name": "Indy",
       "role": "toddler",
-      "safeFoods": ["sausages", "bread", "cheese", "weetabix", "ground beef"],
+      "safeFoods": ["sausages", "cheese", "weetabix", "ground beef"],
       "hardNoFoods": [],
       "preparationRules": [],
       "textureLevel": "soft",
@@ -67,7 +69,7 @@
       ],
       "textureLevel": "mashable",
       "allergens": [],
-      "notes": "6 months, no teeth yet. BLW-style finger foods plus purees."
+      "notes": "8 months, one tooth. BLW-style finger foods plus purees."
     },
     {
       "id": "M-Lex",
@@ -78,7 +80,7 @@
       "preparationRules": [],
       "textureLevel": "regular",
       "allergens": [],
-      "notes": "Dog. Excluded from meal assembly."
+      "notes": "Dog. Excluded from meal assembly. Food must be very, very low in fat."
     }
   ],
   "ingredients": [
