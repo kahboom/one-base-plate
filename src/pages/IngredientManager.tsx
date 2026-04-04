@@ -41,6 +41,7 @@ import { sortIngredients, type IngredientSortKey, type SortDir } from '../lib/li
 import { PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE, type PageSize } from '../hooks/usePaginatedList';
 import { findIngredientReferences, type IngredientReference } from '../lib/ingredientRefs';
 import { getCatalogDefaultImageUrl, resolveIngredientImageUrl } from '../lib/ingredientImage';
+import { resolveThumbUrl } from '../lib/thumbUrl';
 import { useListKeyNav } from '../hooks/useListKeyNav';
 import {
   suggestIngredientMergePairs,
@@ -771,9 +772,12 @@ function IngredientModal({
                     {effectiveImageUrl ? (
                       <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-border-light bg-bg">
                         <img
-                          src={effectiveImageUrl}
+                          src={resolveThumbUrl(effectiveImageUrl, 'md')}
                           alt={ingredient.name || 'Ingredient'}
                           loading="lazy"
+                          decoding="async"
+                          width={80}
+                          height={80}
                           className="h-20 w-20 object-cover rounded-md"
                           data-testid={
                             ingredient.imageUrl
@@ -1257,9 +1261,12 @@ function IngredientTableRow({
         {/* Thumbnail */}
         {rowImageUrl ? (
           <img
-            src={rowImageUrl}
+            src={resolveThumbUrl(rowImageUrl, 'sm')}
             alt=""
             loading="lazy"
+            decoding="async"
+            width={32}
+            height={32}
             className="h-8 w-8 flex-shrink-0 rounded object-cover border border-border-light hidden sm:block"
             data-testid={`ingredient-list-thumb-${ingredient.id}`}
           />

@@ -294,6 +294,7 @@ export default function RecipeImport() {
                             src={line.matchedCatalog.imageUrl}
                             alt=""
                             loading="lazy"
+                            decoding="async"
                             className="mt-0.5 h-6 w-6 shrink-0 rounded object-cover border border-border-light"
                             data-testid={`review-catalog-suggestion-thumb-${i}`}
                           />

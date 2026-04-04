@@ -7,3 +7,4 @@ coverage/
 .env
 .env.local
 .tmp-paprika/
+public/images/seed/thumbs/

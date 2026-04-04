@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import type { ThumbSize } from '../lib/thumbUrl';
+import { resolveThumbUrl } from '../lib/thumbUrl';
 
 /** Heroicons photo (outline) */
 const PHOTO_ICON_PATH =
@@ -44,6 +46,10 @@ const VARIANT: Record<
     img: string;
     placeholder: string;
     icon: string;
+    thumbSize: ThumbSize;
+    width?: number;
+    height?: number;
+    lazy: boolean;
   }
 > = {
   row: {
@@ -52,6 +58,10 @@ const VARIANT: Record<
     placeholder:
       'flex h-full w-full items-center justify-center bg-gradient-to-br from-bg via-surface to-brand-light/35',
     icon: 'h-4 w-4 text-text-muted/50',
+    thumbSize: 'sm',
+    width: 32,
+    height: 32,
+    lazy: true,
   },
   modalHeader: {
     slot: 'h-20 w-20 shrink-0 overflow-hidden rounded-md border border-border-light sm:h-[5.5rem] sm:w-[5.5rem]',
@@ -59,6 +69,10 @@ const VARIANT: Record<
     placeholder:
       'flex h-full w-full items-center justify-center bg-gradient-to-br from-bg via-surface to-brand-light/35',
     icon: 'h-10 w-10 text-text-muted/50 sm:h-11 sm:w-11',
+    thumbSize: 'md',
+    width: 88,
+    height: 88,
+    lazy: true,
   },
   detail: {
     slot: 'mb-4 w-full overflow-hidden rounded-md border border-border-light',
@@ -66,6 +80,9 @@ const VARIANT: Record<
     placeholder:
       'flex min-h-[12rem] w-full items-center justify-center bg-gradient-to-br from-bg via-surface to-brand-light/35',
     icon: 'h-16 w-16 text-text-muted/50',
+    thumbSize: 'lg',
+    // Width can be highly variable on detail pages, leaving natural aspects
+    lazy: false,
   },
   editorPreview: {
     slot: 'mt-2 h-24 w-36 overflow-hidden rounded-md border border-border-light',
@@ -73,6 +90,10 @@ const VARIANT: Record<
     placeholder:
       'flex h-full w-full items-center justify-center bg-gradient-to-br from-bg via-surface to-brand-light/35',
     icon: 'h-10 w-10 text-text-muted/50',
+    thumbSize: 'md',
+    width: 144,
+    height: 96,
+    lazy: true,
   },
   'card-tight': {
     slot: 'mb-1.5 w-full overflow-hidden rounded-md border border-border-light',
@@ -80,6 +101,9 @@ const VARIANT: Record<
     placeholder:
       'flex h-[4.5rem] w-full items-center justify-center bg-gradient-to-br from-bg via-surface to-brand-light/35',
     icon: 'h-8 w-8 text-text-muted/45',
+    thumbSize: 'md',
+    height: 72,
+    lazy: true,
   },
   'card-compact': {
     slot: 'mb-1.5 w-full overflow-hidden rounded-md border border-border-light',
@@ -87,6 +111,9 @@ const VARIANT: Record<
     placeholder:
       'flex h-24 w-full items-center justify-center bg-gradient-to-br from-bg via-surface to-brand-light/35',
     icon: 'h-10 w-10 text-text-muted/45',
+    thumbSize: 'md',
+    height: 96,
+    lazy: true,
   },
   card: {
     slot: 'mb-1.5 w-full overflow-hidden rounded-md border border-border-light',
@@ -94,6 +121,9 @@ const VARIANT: Record<
     placeholder:
       'flex h-36 w-full items-center justify-center bg-gradient-to-br from-bg via-surface to-brand-light/35',
     icon: 'h-12 w-12 text-text-muted/45',
+    thumbSize: 'md',
+    height: 144,
+    lazy: true,
   },
 };
 
@@ -120,11 +150,15 @@ export default function MealImageSlot({
     <div className={cfg.slot}>
       {showImg ? (
         <img
-          src={imageUrl}
+          src={resolveThumbUrl(imageUrl, cfg.thumbSize)}
           alt={alt}
           className={cfg.img}
           data-testid={imageTestId}
           onError={() => setFailed(true)}
+          loading={cfg.lazy ? 'lazy' : undefined}
+          decoding="async"
+          width={cfg.width}
+          height={cfg.height}
         />
       ) : (
         <div
