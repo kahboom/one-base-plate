@@ -16,7 +16,7 @@ if (!existsSync(THUMB_DIR)) {
 }
 
 const files = readdirSync(SEED_DIR).filter(
-  (f) => f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.jpeg')
+  (f) => f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.jpeg'),
 );
 
 let processedCount = 0;
@@ -30,7 +30,7 @@ async function processFile(file) {
 
   const tasks = Object.entries(WIDTHS).map(async ([size, width]) => {
     const outPath = join(THUMB_DIR, `${basename}-${width}w.webp`);
-    
+
     // Skip if thumb exists and is newer than source
     if (existsSync(outPath)) {
       const outStats = statSync(outPath);
@@ -48,7 +48,7 @@ async function processFile(file) {
   });
 
   const results = await Promise.all(tasks);
-  const allSkipped = results.every(r => r.skipped);
+  const allSkipped = results.every((r) => r.skipped);
 
   if (allSkipped) {
     skippedCount++;
@@ -60,17 +60,19 @@ async function processFile(file) {
 
 async function main() {
   console.log(`Found ${files.length} seed images. Generating WebP thumbnails...`);
-  
+
   // Process in batches of 10 to avoid too many open files or high memory usage
   const batchSize = 10;
   for (let i = 0; i < files.length; i += batchSize) {
     const batch = files.slice(i, i + batchSize);
-    await Promise.all(batch.map(file => 
-      processFile(file).catch(err => {
-        console.error(`Error processing ${file}:`, err);
-        errorCount++;
-      })
-    ));
+    await Promise.all(
+      batch.map((file) =>
+        processFile(file).catch((err) => {
+          console.error(`Error processing ${file}:`, err);
+          errorCount++;
+        }),
+      ),
+    );
   }
 
   console.log('Done!');
