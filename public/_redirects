@@ -1,0 +1,2 @@
+# SPA fallback: serve the app shell for client-side routes (preserves path + query, e.g. ?page=2).
+/*    /index.html   200
