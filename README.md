@@ -43,17 +43,39 @@ On **Base Meals**, each meal’s edit modal includes optional **theme tags** und
 
 ## Manual Commands
 
+### Development
+
+| Command              | Description                              |
+| -------------------- | ---------------------------------------- |
+| `npm install`        | Install dependencies                     |
+| `npm run dev`        | Start Vite dev server                    |
+| `npm run build`      | TypeScript build + Vite production build |
+| `npm run preview`    | Preview production build                 |
+
+### Code Quality
+
+| Command               | Description                                                   |
+| --------------------- | ------------------------------------------------------------- |
+| `npm run lint`        | Run ESLint to check for code issues                           |
+| `npm run format`      | Run Prettier to fix formatting issues                         |
+| `npm run format:check`| Run Prettier to check formatting (CI-friendly)                 |
+| `npm run typecheck`   | TypeScript type check only (no emit)                          |
+
+### Testing
+
+| Command              | Description                      |
+| -------------------- | -------------------------------- |
+| `npm test`           | Run Vitest tests (single run)    |
+| `npm run test:watch` | Run Vitest in watch mode         |
+
+### Data & Fixtures
+
 | Command                                         | Description                                                   |
 | ----------------------------------------------- | ------------------------------------------------------------- |
-| `npm install`                                   | Install dependencies                                          |
-| `npm run dev`                                   | Start Vite dev server                                         |
-| `npm run build`                                 | TypeScript build + Vite production build                      |
-| `npm run preview`                               | Preview production build                                      |
-| `npm test`                                      | Run Vitest tests (single run)                                 |
-| `npm run test:watch`                            | Run Vitest in watch mode                                      |
-| `npm run typecheck`                             | TypeScript type check only                                    |
-| `npm run lint`                                  | Run ESLint                                                    |
 | `npm run db:seed`                               | Regenerate `src/seed-data.json` from fixture households       |
+| `npm run seed`                                  | Alias for `db:seed`                                           |
+| `npm run generate:thumbs`                       | Generate meal thumbnail images for the library                |
+| `npm run suggest:ingredient-merges`             | Suggest ingredient merge pairs from household data          |
 | `npm run db:migrate-ingredients -- --in <file>` | Normalize + dedupe ingredient data in exported household JSON |
 
 ---
@@ -78,7 +100,7 @@ On **Base Meals**, each meal’s edit modal includes optional **theme tags** und
 
 ## Requirements
 
-- Node.js (recommended: v18+)
+- Node.js (v20+ recommended; v24 LTS is current default)
 - npm
 
 ---
