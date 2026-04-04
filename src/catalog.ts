@@ -1397,7 +1397,10 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     ['dill', 'fresh dill', 'dill bunch', 'bunch dill'],
     '/images/seed/ing-dill.png',
   ),
-  c('cat-dried-dill', 'Dried dill', 'pantry', ['staple'], false, false, ['dried dill', 'dill weed']),
+  c('cat-dried-dill', 'Dried dill', 'pantry', ['staple'], false, false, [
+    'dried dill',
+    'dill weed',
+  ]),
   c('cat-coriander-ground', 'Ground coriander', 'pantry', ['staple'], false, false, [
     'coriander powder',
   ]),
@@ -1426,7 +1429,10 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'ground cloves',
     'clove powder',
   ]),
-  c('cat-whole-cloves', 'Whole cloves', 'pantry', ['staple'], false, false, ['whole cloves', 'dried cloves']),
+  c('cat-whole-cloves', 'Whole cloves', 'pantry', ['staple'], false, false, [
+    'whole cloves',
+    'dried cloves',
+  ]),
 
   // Condiments & sauces
   c(
@@ -1454,15 +1460,9 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     'rice wine vinegar',
     'unseasoned rice vinegar',
   ]),
-  c(
-    'cat-seasoned-rice-vinegar',
-    'Seasoned rice vinegar',
-    'pantry',
-    ['staple'],
-    false,
-    false,
-    ['sushi vinegar'],
-  ),
+  c('cat-seasoned-rice-vinegar', 'Seasoned rice vinegar', 'pantry', ['staple'], false, false, [
+    'sushi vinegar',
+  ]),
   c('cat-balsamic-vinegar', 'Balsamic vinegar', 'pantry', ['staple'], false, false, ['balsamic']),
   c('cat-balsamic-glaze', 'Balsamic glaze', 'pantry', ['staple'], false, false, [
     'balsamic glaze',
@@ -1599,15 +1599,10 @@ export const MASTER_CATALOG: CatalogIngredient[] = [
     true,
     ['great northerns', 'canned great northern beans'],
   ),
-  c(
-    'cat-navy-beans',
-    'Navy beans',
-    'protein',
-    ['batch-friendly', 'staple'],
-    false,
-    true,
-    ['navy bean', 'canned navy beans'],
-  ),
+  c('cat-navy-beans', 'Navy beans', 'protein', ['batch-friendly', 'staple'], false, true, [
+    'navy bean',
+    'canned navy beans',
+  ]),
   c('cat-pinto-beans', 'Pinto beans', 'protein', ['batch-friendly', 'staple'], false, true, [
     'canned pinto beans',
     'refried beans',

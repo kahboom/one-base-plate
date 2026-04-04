@@ -2,15 +2,15 @@
 
 ## Routing quick map
 
-| Signal in task                                       | Agent                    |
-| ---------------------------------------------------- | ------------------------ |
-| Paprika, parse, matchIngredient, import review       | import-agent             |
-| Screens, components, uiSpec, layout, a11y            | ux-agent                 |
-| types.ts, storage, fixtures, seed, catalog rows      | data-agent               |
-| sync engine, Supabase, queue, offline flush          | sync-agent               |
+| Signal in task                                       | Agent                      |
+| ---------------------------------------------------- | -------------------------- |
+| Paprika, parse, matchIngredient, import review       | import-agent               |
+| Screens, components, uiSpec, layout, a11y            | ux-agent                   |
+| types.ts, storage, fixtures, seed, catalog rows      | data-agent                 |
+| sync engine, Supabase, queue, offline flush          | sync-agent                 |
 | Generate / append recipes to seed fixtures           | family-seed-recipe-curator |
-| npm test failing, typecheck errors, get suite green  | test-agent               |
-| CHANGELOG.md out of date, synthesize release entries | changelog-agent          |
+| npm test failing, typecheck errors, get suite green  | test-agent                 |
+| CHANGELOG.md out of date, synthesize release entries | changelog-agent            |
 
 ## Definition
 

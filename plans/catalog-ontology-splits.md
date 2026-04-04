@@ -25,12 +25,12 @@ Execution plan for splitting over-merged `MASTER_CATALOG` rows so distinct SKUs 
 
 **Intent:** Stop false positives; new rows optional.
 
-| Item           | Action                                                                 |
-| -------------- | ---------------------------------------------------------------------- |
-| Ground beef    | Remove alias `ground meat` from `cat-ground-beef` (or accept unmatched until user picks). |
-| Sirloin steak  | Remove alias `steak` from `cat-sirloin-steak`.                         |
-| Almond butter  | Remove `nut butter`; add `cat-nut-butter` only if product needs a bucket. |
-| Sriracha       | Remove generic `hot sauce` or add `cat-hot-sauce` (prefer remove first). |
+| Item          | Action                                                                                    |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| Ground beef   | Remove alias `ground meat` from `cat-ground-beef` (or accept unmatched until user picks). |
+| Sirloin steak | Remove alias `steak` from `cat-sirloin-steak`.                                            |
+| Almond butter | Remove `nut butter`; add `cat-nut-butter` only if product needs a bucket.                 |
+| Sriracha      | Remove generic `hot sauce` or add `cat-hot-sauce` (prefer remove first).                  |
 
 **Suggested delegate:** import-focused + matcher tests. **Size:** ~1 short PR.
 
@@ -38,10 +38,10 @@ Execution plan for splitting over-merged `MASTER_CATALOG` rows so distinct SKUs 
 
 ## Batch B — Liquids / acids
 
-| Item          | Split                                                                 |
-| ------------- | --------------------------------------------------------------------- |
-| Vinegar       | `cat-white-vinegar` vs `cat-apple-cider-vinegar`; tight aliases each. |
-| Rice vinegar  | Plain vs seasoned rows.                                               |
+| Item         | Split                                                                 |
+| ------------ | --------------------------------------------------------------------- |
+| Vinegar      | `cat-white-vinegar` vs `cat-apple-cider-vinegar`; tight aliases each. |
+| Rice vinegar | Plain vs seasoned rows.                                               |
 
 **Suggested delegate:** data-agent + import regression check. **Size:** 1 PR.
 
@@ -60,12 +60,12 @@ Execution plan for splitting over-merged `MASTER_CATALOG` rows so distinct SKUs 
 
 ## Batch D — Starches, legumes, tortillas, radish
 
-| Item             | Split                                                                 |
-| ---------------- | --------------------------------------------------------------------- |
-| Rice flour       | `cat-rice-flour` vs `cat-glutinous-rice-flour` (mochiko); no cross-aliases. |
-| Corn tortillas   | Soft `cat-corn-tortillas` vs `cat-taco-shells`.                       |
+| Item             | Split                                                                        |
+| ---------------- | ---------------------------------------------------------------------------- |
+| Rice flour       | `cat-rice-flour` vs `cat-glutinous-rice-flour` (mochiko); no cross-aliases.  |
+| Corn tortillas   | Soft `cat-corn-tortillas` vs `cat-taco-shells`.                              |
 | Cannellini beans | Separate white bean types or strip cross-type aliases to true synonyms only. |
-| Radish           | `cat-radish` vs `cat-daikon`.                                         |
+| Radish           | `cat-radish` vs `cat-daikon`.                                                |
 
 **Size:** 1 PR, or split legumes vs the rest.
 
@@ -73,11 +73,11 @@ Execution plan for splitting over-merged `MASTER_CATALOG` rows so distinct SKUs 
 
 ## Batch E — Dairy, meat analog, tomatoes
 
-| Item      | Split                                                                 |
-| --------- | --------------------------------------------------------------------- |
-| Yogurt    | `cat-plain-yogurt` vs `cat-greek-yogurt` (spellings `yoghurt` as needed). |
-| Bacon     | `cat-bacon` (pork) vs `cat-turkey-bacon`.                             |
-| Tomatoes  | Canned/stewed-style phrases → `cat-tinned-tomatoes` (or dedicated row); fresh on fresh row. |
+| Item     | Split                                                                                       |
+| -------- | ------------------------------------------------------------------------------------------- |
+| Yogurt   | `cat-plain-yogurt` vs `cat-greek-yogurt` (spellings `yoghurt` as needed).                   |
+| Bacon    | `cat-bacon` (pork) vs `cat-turkey-bacon`.                                                   |
+| Tomatoes | Canned/stewed-style phrases → `cat-tinned-tomatoes` (or dedicated row); fresh on fresh row. |
 
 **Size:** 1 PR; likely `catalogId` updates in seed/fixtures for yogurt/bacon/tomato rows.
 
@@ -115,8 +115,8 @@ Execution plan for splitting over-merged `MASTER_CATALOG` rows so distinct SKUs 
 
 ## Delegation map
 
-| Batch | Primary                         | Support                          |
-| ----- | ------------------------------- | -------------------------------- |
-| A     | import-agent / test fixes       | —                                |
-| B–E   | data-agent (catalog + fixtures) | import-agent for matcher tests   |
+| Batch | Primary                         | Support                                                   |
+| ----- | ------------------------------- | --------------------------------------------------------- |
+| A     | import-agent / test fixes       | —                                                         |
+| B–E   | data-agent (catalog + fixtures) | import-agent for matcher tests                            |
 | C–E   | —                               | ingredient-ontology-steward (review aliases before merge) |

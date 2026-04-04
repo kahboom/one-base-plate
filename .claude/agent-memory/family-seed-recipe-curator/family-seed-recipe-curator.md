@@ -11,13 +11,13 @@
 
 ## Id prefixes (quick ref)
 
-| Entity                | Pattern                     |
-| --------------------- | --------------------------- |
-| Recipe                | `rec-{slug}`                |
-| Base meal             | `bm-{slug}`                 |
-| Ingredient            | `ing-{slug}`                |
-| MealComponent         | `mc-{parent-abbrev}-{n}`    |
-| ComponentRecipeRef    | `cr-{parent-abbrev}-{slug}` |
+| Entity             | Pattern                     |
+| ------------------ | --------------------------- |
+| Recipe             | `rec-{slug}`                |
+| Base meal          | `bm-{slug}`                 |
+| Ingredient         | `ing-{slug}`                |
+| MealComponent      | `mc-{parent-abbrev}-{n}`    |
+| ComponentRecipeRef | `cr-{parent-abbrev}-{slug}` |
 
 ## Common pitfalls
 

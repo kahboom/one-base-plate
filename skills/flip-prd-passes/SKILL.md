@@ -22,6 +22,7 @@ npm run typecheck                       # no type regressions
 If tests fail, **stop here** and fix them before flipping `passes`. Do not flip a feature as passing when the suite is red.
 
 Also confirm:
+
 - The uiSpec referenced in `PRD.json` for this feature (if any) matches what was implemented.
 - No critical `TODO` or `FIXME` comments were left in touched files relating to this feature.
 

@@ -1,6 +1,6 @@
 ---
 name: code-improvement
-description: "Code improvement specialist. Use proactively after substantive edits or when refactoring: scans requested files or diffs and suggests readability, performance, and best-practice improvements. For each finding, explains the issue, quotes current code, and supplies an improved version. Use for TypeScript/React/Vite code in this repo or paths the user names."
+description: 'Code improvement specialist. Use proactively after substantive edits or when refactoring: scans requested files or diffs and suggests readability, performance, and best-practice improvements. For each finding, explains the issue, quotes current code, and supplies an improved version. Use for TypeScript/React/Vite code in this repo or paths the user names.'
 model: inherit
 readonly: true
 ---

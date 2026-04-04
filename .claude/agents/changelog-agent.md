@@ -39,18 +39,22 @@ Match the existing entries exactly. Typical structure:
 ## [Unreleased] / YYYY-MM-DD
 
 ### Added
+
 - F0NN: Short description of what the feature does for users.
 
 ### Fixed
+
 - Brief description of bug fix.
 
 ### Changed
+
 - Brief description of change.
 ```
 
 Rules:
+
 - Use **feature IDs** (e.g. `F076`) when the work maps to a PRD feature.
-- Keep descriptions user-facing and concrete — what does it *do*, not what files changed.
+- Keep descriptions user-facing and concrete — what does it _do_, not what files changed.
 - Group under `Added`, `Fixed`, `Changed`, or `Removed` as appropriate.
 - If multiple related changes belong to one feature, group them under one entry rather than listing each file.
 - Do not mention agent names, internal tooling, or file paths in entries (unless a path is the user-visible thing being fixed).

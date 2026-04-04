@@ -35,11 +35,11 @@ Optional extra files: `patterns.md`, `checklists.md` — only when they stay mai
 
 ## Cursor / Claude placement guide
 
-| Agent belongs in `.claude/agents/` when...        | Agent belongs in `.cursor/agents/` when...       |
-| -------------------------------------------------- | ------------------------------------------------ |
-| It can complete work autonomously (no human needed) | It reviews, advises, or assists a human in the IDE |
-| It makes commits or edits files as its primary output | It is read-only or advisory by default         |
-| It has a narrow scope safe to run unattended       | It needs interactive back-and-forth to be useful |
+| Agent belongs in `.claude/agents/` when...            | Agent belongs in `.cursor/agents/` when...         |
+| ----------------------------------------------------- | -------------------------------------------------- |
+| It can complete work autonomously (no human needed)   | It reviews, advises, or assists a human in the IDE |
+| It makes commits or edits files as its primary output | It is read-only or advisory by default             |
+| It has a narrow scope safe to run unattended          | It needs interactive back-and-forth to be useful   |
 
 ## Cursor to Claude write-back convention
 

@@ -41,9 +41,9 @@ The PR template will remind you.
 
 ## Applied migrations
 
-| File | Description |
-|------|-------------|
-| `001_households.sql` | Initial `households` + `household_memberships` tables |
-| `002_invites.sql` | Household invite codes |
-| `003_fix_household_memberships_rls_recursion.sql` | RLS recursion fix for memberships |
-| `004_households_owner_select_update_rls.sql` | Owner-scoped select/update policies |
+| File                                              | Description                                           |
+| ------------------------------------------------- | ----------------------------------------------------- |
+| `001_households.sql`                              | Initial `households` + `household_memberships` tables |
+| `002_invites.sql`                                 | Household invite codes                                |
+| `003_fix_household_memberships_rls_recursion.sql` | RLS recursion fix for memberships                     |
+| `004_households_owner_select_update_rls.sql`      | Owner-scoped select/update policies                   |

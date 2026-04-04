@@ -30,14 +30,14 @@ npm run typecheck 2>&1 | tail -60
 
 **3. Triage each failure:**
 
-| Failure type | Action |
-|---|---|
-| Stale snapshot / fixture | Update the fixture or snapshot to match intentional change |
-| Type mismatch from recent type edit | Fix the type at the call site, not with `@ts-ignore` |
-| Production code broken | Find root cause, apply minimal fix |
-| Test assertion hiding real bug | **Stop** — surface to user / specialist |
-| Sync / Supabase domain | **Stop** — route to sync-agent |
-| Schema / migration domain | **Stop** — route to data-agent |
+| Failure type                        | Action                                                     |
+| ----------------------------------- | ---------------------------------------------------------- |
+| Stale snapshot / fixture            | Update the fixture or snapshot to match intentional change |
+| Type mismatch from recent type edit | Fix the type at the call site, not with `@ts-ignore`       |
+| Production code broken              | Find root cause, apply minimal fix                         |
+| Test assertion hiding real bug      | **Stop** — surface to user / specialist                    |
+| Sync / Supabase domain              | **Stop** — route to sync-agent                             |
+| Schema / migration domain           | **Stop** — route to data-agent                             |
 
 **4. Apply fix, then confirm:**
 
